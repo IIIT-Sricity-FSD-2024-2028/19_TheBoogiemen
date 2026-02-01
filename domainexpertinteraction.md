@@ -4,7 +4,7 @@
     Problem statement: ACADEMIC PROGRESS TRACKING AND OUTCOME PROGRESS
     Date of interaction: 01-02-2026
     Mode of interaction: video call
-    Duration (in-minutes): 60 Minutes
+    Duration (in-minutes): 45 Minutes
     Publicly accessible Video link: (https://drive.google.com/file/d/1YsFSNmpGSD2_qtTUb8JDGvkmbB2v28qW/view)
 ## Domain Expert Details
     Role/ designation (Do not include personal or sensitive information): Assistant Professor
