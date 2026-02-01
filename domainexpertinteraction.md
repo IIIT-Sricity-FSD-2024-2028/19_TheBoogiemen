@@ -12,7 +12,7 @@
     Nature of work: Lecturare
 ## Domain Context and Terminology
 - How would you describe the overall purpose of this problem statement in your daily work?
-    The overall purpose is to act as a centralized Safety Net that transforms academic management from a reactive process into a proactive one. In daily operations, it serves as a digital hub that ensures no student "falls through the cracks" by providing real-time visibility into their progress, from attendance to final graduation projects.
+-    The overall purpose is to act as a centralized Safety Net that transforms academic management from a reactive process into a proactive one. In daily operations, it serves as a digital hub that ensures no student "falls through the cracks" by providing real-time visibility into their progress, from attendance to final graduation projects.
 - What are the primary goals or outcomes of this problem statement?
     The primary outcomes include the Early Detection of Risk through Rule-Driven alerts, the Simplification of Administrative Tasks (like grading, attendance, and reporting), and the Streamlining of Project Mentorship through a structured digital workflow for honors and final year milestones.
 - List key terms used by the domain expert and their meanings (Copy these to definition.yml)
