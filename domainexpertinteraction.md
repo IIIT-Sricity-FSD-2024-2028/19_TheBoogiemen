@@ -5,11 +5,20 @@
     Date of interaction: 01-02-2026
     Mode of interaction: video call
     Duration (in-minutes): 45 Minutes
-    Publicly accessible Video link: (https://drive.google.com/file/d/1YsFSNmpGSD2_qtTUb8JDGvkmbB2v28qW/view)
+    Publicly accessible Video link: https://drive.google.com/file/d/1YsFSNmpGSD2_qtTUb8JDGvkmbB2v28qW/view
+
+	Date of interaction: 30-1-2026
+    Mode of interaction: video call
+    Duration (in-minutes): 37 Minutes
+    Publicly accessible Video link: https://youtu.be/iiqiA1UvfxU
 ## Domain Expert Details
     Role/ designation (Do not include personal or sensitive information): Assistant Professor
     Experience in the domain (Brief description of responsibilities and years of experience in domain): 25 years of experience
-    Nature of work: Lecturare
+    Nature of work: Lecturer
+
+	Role/ designation (Do not include personal or sensitive information): Software Developer
+    Experience in the domain (Brief description of responsibilities and years of experience in domain): 5+ years of experience
+    Nature of work: Team Lead
 ## Domain Context and Terminology
 - How would you describe the overall purpose of this problem statement in your daily work?
 	-    The overall purpose is to act as a centralized Safety Net that transforms academic management from a reactive process into a proactive one. In daily operations, it serves as a digital hub that ensures no student "falls through the cracks" by providing real-time visibility into their progress, from attendance to final graduation projects.
@@ -55,40 +64,40 @@ Description of at least 2-3 real workflows as explained by the domain expert
       3. The faculty is notified to review the submission.
       4. Faculty approves or requests revisions, updating the "State Machine" status.
   - Outcome / End condition
-      The milestone is finalized and archived in the Digital Filing Cabinet.
+  	-    The milestone is finalized and archived in the Digital Filing Cabinet.
  
 - Workflow 3
   - Trigger/start condition
-	    A scheduled time interval (e.g., end of month) or admin trigger.
+  	-    A scheduled time interval (e.g., end of month) or admin trigger.
   - Steps involved (in order)
       1. System joins data from Student, Grade, and Attendance tables.
       2. A progress report is automatically generated.
       3. The report is dispatched via the integrated notification gateway.
   - Outcome / End condition
-      Parents receive an up-to-date status report without manual teacher intervention.
+  	-   Parents receive an up-to-date status report without manual teacher intervention.
 
 ## Rules, Constraints, and Exceptions
 Document rules that govern how the domain operates.
   - Mandatory rules or policies:
-      Every administrative action must be recorded in an Audit Log for accountability
+	-    Every administrative action must be recorded in an Audit Log for accountability
   - Constraints or limitations:
-      High-frequency writes (like 50 teachers marking attendance at once) require Concurrency Control (Optimistic Locking) to maintain data integrity.
+  	-    High-frequency writes (like 50 teachers marking attendance at once) require Concurrency Control (Optimistic Locking) to maintain data integrity.
   - Common exceptions or edge cases:
-      Students who are "On Leave" must be distinguished from those "Absent" so they don't trigger false Alerts.
+  	-    Students who are "On Leave" must be distinguished from those "Absent" so they don't trigger false Alerts.
   - Situations where things usually go wrong: 
-      Delays often occur if external Third-Party Gateways (like Calendars) experience downtime.
+  	- Delays often occur if external Third-Party Gateways (like Calendars) experience downtime.
 ## Current challenges and pain points
 - What parts of this process are most difficult or inefficient?
-      Manually tracking whether a student is failing for weeks before anyone notices (the "Problem of Late Detection"). 
+	-  Manually tracking whether a student is failing for weeks before anyone notices (the "Problem of Late Detection"). 
 - Where do delays, errors, or misunderstandings usually occur?
-      Managing room bookings and physical paper-based attendance logs often leads to scheduling overlaps and lost data.
+	- Managing room bookings and physical paper-based attendance logs often leads to scheduling overlaps and lost data.
 - What information is hardest to track or manage today?
-      The exact progress of long-term research projects (Honors/BTP) and coordinating real-time updates for parents.
+	- The exact progress of long-term research projects (Honors/BTP) and coordinating real-time updates for parents.
  ## Assumptions & Clarifications
 - What assumptions made by the team that were confirmed
-      The team confirmed that Attendance and Assignment tracking are the core pillars of the system. It was validated that digital attendance must be marked in real-time and that assignments (specifically long-term BTP/Honors milestones) require a centralized "Digital Filing Cabinet" for secure storage and structured review.
+	- The team confirmed that Attendance and Assignment tracking are the core pillars of the system. It was validated that digital attendance must be marked in real-time and that assignments (specifically long-term BTP/Honors milestones) require a centralized "Digital Filing Cabinet" for secure storage and structured review.
 - What assumptions that were corrected 
-      Types of Assignments, Dynamic features which are not used, Student also	has to take effort in 2 way interactions, institution specific to more generalised
+	- Types of Assignments, Dynamic features which are not used, Student also	has to take effort in 2 way interactions, institution specific to more generalised
 - Open questions that need follow-up
-      What parameters are the true indicators of academic success, since different sets of parameters are used to judge success depending on the definition of academic progress and the analysis methodology used?
+	- What parameters are the true indicators of academic success, since different sets of parameters are used to judge success depending on the definition of academic progress and the analysis methodology used?
 
