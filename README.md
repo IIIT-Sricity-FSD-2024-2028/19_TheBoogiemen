@@ -25,18 +25,22 @@ The application addresses:
 
 **Problem Statement Actors and their description**
 
->> **The Student**
+>> **The Student**:
 The student is the primary beneficiary of the data. Their interaction with the system is focused on self-regulation and actionable tasks. They move from being passive recipients of grades to active trackers of their own syllabus and research progress as well as attendance tracking.
 
 
 
->> **The Teacher**
+>> **The Faculty**:
 The professor is the primary data generator. Their role is to input raw performance data and transform it into instructional insights. They require tools that allow them to identify "at-risk" students quickly and manage the mentorship of advanced research projects.
 
 
 
->> **The Academic Head**
+>> **The Academic Head**:
 The Academic Heads oversees the institutional integrity and logistics. They do not focus on individual learning gaps but rather on departmental performance, user provisioning, fee compliance, and the master academic calendar.
+
+
+
+
 
 
 **Feature Description**
@@ -59,6 +63,8 @@ The Academic Heads oversees the institutional integrity and logistics. They do n
 
 
 
+
+
 >> **Teacher Features**
 
 1. **Digital Gradebook**: Tools to add, update, and manage student marks with the ability to provide qualitative feedback.
@@ -72,6 +78,8 @@ The Academic Heads oversees the institutional integrity and logistics. They do n
 5. **At-Risk Identification**: Automated flags for students showing low attendance or poor performance trends, allowing for early intervention.
 
 6. **Mentorship Manager**: A system to review research milestones, provide feedback, and manage meeting availability for office hours.
+
+
 
 
 
