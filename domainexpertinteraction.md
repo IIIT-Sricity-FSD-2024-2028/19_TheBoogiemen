@@ -50,7 +50,7 @@ Description of at least 2-3 real workflows as explained by the domain expert
   - Trigger/start condition
 	    Student completes a project phase.
   - Steps involved (in order)
-	    1. Student uploads a file to the system.
+	  1. Student uploads a file to the system.
       2. File is stored in a decoupled storage system (like AWS S3).
       3. The faculty is notified to review the submission.
       4. Faculty approves or requests revisions, updating the "State Machine" status.
@@ -61,7 +61,7 @@ Description of at least 2-3 real workflows as explained by the domain expert
   - Trigger/start condition
 	    A scheduled time interval (e.g., end of month) or admin trigger.
   - Steps involved (in order)
-    	1. System joins data from Student, Grade, and Attendance tables.
+      1. System joins data from Student, Grade, and Attendance tables.
       2. A progress report is automatically generated.
       3. The report is dispatched via the integrated notification gateway.
   - Outcome / End condition
