@@ -5,7 +5,7 @@
     Date of interaction: 01-02-2026
     Mode of interaction: video call
     Duration (in-minutes): 60 Minutes
-    Publicly accessible Video link: [link text](https://drive.google.com/file/d/1YsFSNmpGSD2_qtTUb8JDGvkmbB2v28qW/view)
+    Publicly accessible Video link: (https://drive.google.com/file/d/1YsFSNmpGSD2_qtTUb8JDGvkmbB2v28qW/view)
 ## Domain Expert Details
     Role/ designation (Do not include personal or sensitive information): Assistant Professor
     Experience in the domain (Brief description of responsibilities and years of experience in domain): 25 years of experience
@@ -37,7 +37,7 @@
 Description of at least 2-3 real workflows as explained by the domain expert
 - Workflow 1
   - Trigger/start condition
-      A teacher enters a low grade or marks a student absent.
+  	-    A teacher enters a low grade or marks a student absent.
   - Steps involved (in order)
 	  1. Data is written to the primary database.
       2. An asynchronous background job checks if the student's status hits a "Risk Threshold" (e.g., <75% attendance).
