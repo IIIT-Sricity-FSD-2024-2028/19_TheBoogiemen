@@ -5,7 +5,7 @@
     Date of interaction: 01-02-2026
     Mode of interaction: video call
     Duration (in-minutes): 60 Minutes
-    Publicly accessible Video link: https://drive.google.com/file/d/1YsFSNmpGSD2_qtTUb8JDGvkmbB2v28qW/view
+    Publicly accessible Video link: [link text](https://drive.google.com/file/d/1YsFSNmpGSD2_qtTUb8JDGvkmbB2v28qW/view)
 ## Domain Expert Details
     Role/ designation (Do not include personal or sensitive information): Assistant Professor
     Experience in the domain (Brief description of responsibilities and years of experience in domain): 25 years of experience
@@ -14,7 +14,7 @@
 - How would you describe the overall purpose of this problem statement in your daily work?
 	-    The overall purpose is to act as a centralized Safety Net that transforms academic management from a reactive process into a proactive one. In daily operations, it serves as a digital hub that ensures no student "falls through the cracks" by providing real-time visibility into their progress, from attendance to final graduation projects.
 - What are the primary goals or outcomes of this problem statement?
-    The primary outcomes include the Early Detection of Risk through Rule-Driven alerts, the Simplification of Administrative Tasks (like grading, attendance, and reporting), and the Streamlining of Project Mentorship through a structured digital workflow for honors and final year milestones.
+	-    The primary outcomes include the Early Detection of Risk through Rule-Driven alerts, the Simplification of Administrative Tasks (like grading, attendance, and reporting), and the Streamlining of Project Mentorship through a structured digital workflow for honors and final year milestones.
 - List key terms used by the domain expert and their meanings (Copy these to definition.yml)
 
 | Term | Meaning as explained by the expert |
