@@ -44,11 +44,11 @@ Description of at least 2-3 real workflows as explained by the domain expert
       3. The system triggers a notification via the Pub/Sub service.
       4. The teacher receives an alert on their dashboard.
   - Outcome / End condition
-    	The teacher provides early support to the flagged student.
+  	-  	The teacher provides early support to the flagged student.
 
 - Workflow 2
   - Trigger/start condition
-	    Student completes a project phase.
+  	-    Student completes a project phase.
   - Steps involved (in order)
 	  1. Student uploads a file to the system.
       2. File is stored in a decoupled storage system (like AWS S3).
