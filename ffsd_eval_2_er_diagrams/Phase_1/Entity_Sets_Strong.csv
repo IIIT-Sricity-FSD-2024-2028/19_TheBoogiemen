@@ -1,0 +1,10 @@
+﻿Entity,Attributes,Key
+USER,"user_id, username, password_hash, email, phone, role, created_at",user_id (PK)
+STUDENT,"student_id, name, dob, gender, address, branch, current_year, parent_contact, join_date, batch","student_id (PK, FK→USER)"
+FACULTY,"faculty_id, name, designation, department, qualification, office_hours","faculty_id (PK, FK→USER)"
+ADMIN,"admin_id, name, privilege_level, department_head","admin_id (PK, FK→USER)"
+COURSE,"course_id, course_name, credits, syllabus_json, objective, faculty_id",course_id (PK)
+ACADEMIC_YEAR,"year_id, year_name, start_date, end_date, is_current",year_id (PK)
+RESEARCH_PROJECT,"project_id, title, domain, start_date, end_date, student_id, faculty_id",project_id (PK)
+FEE_STRUCTURE,"fee_id, amount, due_date, category",fee_id (PK)
+RESOURCE,"resource_id, name, capacity, type",resource_id (PK)

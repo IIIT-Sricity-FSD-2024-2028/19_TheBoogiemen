@@ -1,0 +1,265 @@
+erDiagram
+    USER {
+        string user_id PK
+        string username
+        string password_hash
+        string email
+        string phone
+        string role
+        date created_at
+    }
+    STUDENT {
+        string user_id PK
+        string first_name
+        string last_name
+        date dob
+        string gender
+        string street
+        string city
+        string state
+        string zip_code
+        string branch
+        string parent_contact
+        date join_date
+        string batch
+    }
+    FACULTY {
+        string user_id PK
+        string first_name
+        string last_name
+        string designation
+        string department_id FK
+        string qualification
+    }
+    ADMIN {
+        string user_id PK
+        string first_name
+        string last_name
+        string privilege_level
+        string department_id FK
+    }
+    DEPARTMENT {
+        string department_id PK
+        string department_name
+        string department_code
+        string head_of_dept
+    }
+    COURSE {
+        string course_id PK
+        string course_name
+        string course_code
+        int credits
+        string objective
+        string faculty_id FK
+    }
+    TOPIC {
+        string topic_id PK
+        string course_id FK
+        string topic_name
+        int sequence_order
+        string status
+    }
+    ACADEMIC_YEAR {
+        string year_id PK
+        string year_name
+        date start_date
+        date end_date
+        string is_current
+    }
+    ENROLLMENT {
+        string enrollment_id PK
+        string student_id FK
+        string course_id FK
+        string year_id FK
+        string status
+        string section
+    }
+    ASSESSMENT {
+        string assessment_id PK
+        string course_id FK
+        string title
+        string type
+        int max_marks
+        date date
+        int weightage
+    }
+    EXAM {
+        string assessment_id PK
+        int duration_minutes
+        string venue
+    }
+    QUIZ {
+        string assessment_id PK
+        int time_limit_minutes
+        string platform_link
+    }
+    ASSIGNMENT {
+        string assessment_id PK
+        date submission_deadline
+        string file_format_allowed
+    }
+    LEARNING_OUTCOME {
+        string outcome_id PK
+        string course_id FK
+        string description
+        string bloom_level
+    }
+    ASSESSMENT_OUTCOME {
+        string assessment_id PK
+        string outcome_id PK
+        int weightage
+    }
+    MARKS_ENTRY {
+        string entry_id PK
+        string enrollment_id FK
+        string assessment_id FK
+        int marks_obtained
+        string grade
+        string feedback_text
+    }
+    STUDENT_OUTCOME {
+        string enrollment_id PK
+        string outcome_id PK
+        float mastery_level
+        date last_assessed
+    }
+    ATTENDANCE_LOG {
+        string log_id PK
+        string enrollment_id FK
+        date date
+        string status
+        string lecture_topic
+    }
+    LEAVE_REQUEST {
+        string request_id PK
+        string student_id FK
+        date start_date
+        date end_date
+        string reason
+        string document_proof
+        string status
+        string approved_by FK
+    }
+    RESEARCH_PROJECT {
+        string project_id PK
+        string student_id FK
+        string faculty_id FK
+        string title
+        string domain
+        date start_date
+        date end_date
+    }
+    RESEARCH_MILESTONE {
+        string milestone_id PK
+        string project_id FK
+        string title
+        date submission_date
+        string file_path
+        string review_comments
+        string status
+    }
+    MEETING_SLOT {
+        string slot_id PK
+        string faculty_id FK
+        string student_id FK
+        date start_time
+        date end_time
+        string status
+    }
+    RESOURCE {
+        string resource_id PK
+        string name
+        int capacity
+        string type
+        string location
+    }
+    EVENT {
+        string event_id PK
+        string resource_id FK
+        string admin_id FK
+        string title
+        date start_time
+        date end_time
+        string event_type
+    }
+    FEE_STRUCTURE {
+        string fee_id PK
+        string branch FK
+        string year_id FK
+        int amount
+        date due_date
+        string category
+    }
+    FEE_PAYMENT {
+        string payment_id PK
+        string student_id FK
+        string fee_id FK
+        string transaction_id
+        int amount_paid
+        date payment_date
+        string status
+    }
+    FORUM_POST {
+        string post_id PK
+        string user_id FK
+        string course_id FK
+        string topic_id FK
+        string content
+        date timestamp
+    }
+    POST_TAG {
+        string post_id PK
+        string tag_name PK
+    }
+
+    USER ||--|| STUDENT : "ISA"
+    USER ||--|| FACULTY : "ISA"
+    USER ||--|| ADMIN : "ISA"
+    
+    DEPARTMENT ||--|{ FACULTY : "employs"
+    DEPARTMENT ||--|{ ADMIN : "employs"
+    
+    STUDENT ||--|{ ENROLLMENT : "enrolls"
+    COURSE ||--|{ ENROLLMENT : "offered_in"
+    ACADEMIC_YEAR ||--|{ ENROLLMENT : "tracked_per"
+    
+    COURSE ||--|{ TOPIC : "contains"
+    FACULTY ||--|{ COURSE : "teaches"
+    
+    COURSE ||--|{ ASSESSMENT : "contains"
+    ASSESSMENT ||--|| EXAM : "ISA"
+    ASSESSMENT ||--|| QUIZ : "ISA"
+    ASSESSMENT ||--|| ASSIGNMENT : "ISA"
+    
+    COURSE ||--|{ LEARNING_OUTCOME : "defines"
+    ASSESSMENT ||--|{ ASSESSMENT_OUTCOME : "maps_to"
+    LEARNING_OUTCOME ||--|{ ASSESSMENT_OUTCOME : "evaluated_in"
+    
+    ENROLLMENT ||--|{ MARKS_ENTRY : "achieves"
+    ASSESSMENT ||--|{ MARKS_ENTRY : "evaluated_by"
+    
+    ENROLLMENT ||--|{ STUDENT_OUTCOME : "masters"
+    LEARNING_OUTCOME ||--|{ STUDENT_OUTCOME : "measured_in"
+    
+    ENROLLMENT ||--|{ ATTENDANCE_LOG : "generates"
+    
+    STUDENT ||--|{ LEAVE_REQUEST : "applies"
+    FACULTY ||--|{ LEAVE_REQUEST : "approves"
+    
+    STUDENT ||--|{ RESEARCH_PROJECT : "undertakes"
+    FACULTY ||--|{ RESEARCH_PROJECT : "guides"
+    RESEARCH_PROJECT ||--|{ RESEARCH_MILESTONE : "has"
+    
+    FACULTY ||--|{ MEETING_SLOT : "offers"
+    STUDENT ||--o{ MEETING_SLOT : "books"
+    
+    RESOURCE ||--|{ EVENT : "hosts"
+    ADMIN ||--|{ EVENT : "schedules"
+    
+    STUDENT ||--|{ FEE_PAYMENT : "makes"
+    FEE_STRUCTURE ||--|{ FEE_PAYMENT : "defines"
+    
+    USER ||--|{ FORUM_POST : "posts"
+    COURSE ||--|{ FORUM_POST : "contextualizes"
+    TOPIC ||--|{ FORUM_POST : "tags"
+    FORUM_POST ||--|{ POST_TAG : "has_tags"
