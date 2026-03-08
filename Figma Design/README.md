@@ -8,7 +8,7 @@ Welcome to the Figma designs directory for the **Academic Progress & Outcome Tra
 ---
 
 ## 📐 Design Philosophy & System
-The BarelyPaSSING platform is designed as a modern, enterprise-grade EdTech SaaS application. Our primary focus is on **data clarity, actionable insights, and responsive accessibility**.
+The BarelyPassing platform is designed as a modern, enterprise-grade EdTech SaaS application. Our primary focus is on **data clarity, actionable insights, and responsive accessibility**.
 
 * **Typography:** **Inter** (Industry standard for SaaS data-dense dashboards, optimizing number and chart readability).
 * **Primary Brand Color:** `#4F46E5` (Indigo/Blue - conveys trust, focus, and academic professionalism).
