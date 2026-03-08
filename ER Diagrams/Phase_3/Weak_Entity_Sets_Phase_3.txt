@@ -1,0 +1,77 @@
+Entity_Name,Weak_To,Attribute_Name,Data_Type,Partial_Key,Constraints,Normal_Form_Note
+ENROLLMENT,STUDENT/COURSE/YEAR,enrollment_id,string,Yes,Not Null,2NF (composite FK)
+ENROLLMENT,STUDENT/COURSE/YEAR,student_id,string,No,FK to STUDENT,2NF
+ENROLLMENT,STUDENT/COURSE/YEAR,course_id,string,No,FK to COURSE,2NF
+ENROLLMENT,STUDENT/COURSE/YEAR,year_id,string,No,FK to ACADEMIC_YEAR,2NF
+ENROLLMENT,STUDENT/COURSE/YEAR,status,string,No,Default 'Active',2NF
+ENROLLMENT,STUDENT/COURSE/YEAR,section,string,No,Nullable,2NF
+MARKS_ENTRY,ENROLLMENT/ASSESSMENT,entry_id,string,Yes,Not Null,3NF
+MARKS_ENTRY,ENROLLMENT/ASSESSMENT,enrollment_id,string,No,FK to ENROLLMENT,3NF
+MARKS_ENTRY,ENROLLMENT/ASSESSMENT,assessment_id,string,No,FK to ASSESSMENT,3NF
+MARKS_ENTRY,ENROLLMENT/ASSESSMENT,marks_obtained,int,No,Not Null,3NF
+MARKS_ENTRY,ENROLLMENT/ASSESSMENT,grade,string,No,Nullable,3NF
+MARKS_ENTRY,ENROLLMENT/ASSESSMENT,feedback_text,string,No,Nullable,3NF
+ATTENDANCE_LOG,ENROLLMENT,log_id,string,Yes,Not Null,3NF
+ATTENDANCE_LOG,ENROLLMENT,enrollment_id,string,No,FK to ENROLLMENT,3NF
+ATTENDANCE_LOG,ENROLLMENT,date,date,No,Not Null,3NF
+ATTENDANCE_LOG,ENROLLMENT,status,string,No,Not Null,3NF
+ATTENDANCE_LOG,ENROLLMENT,lecture_topic,string,No,Nullable,3NF
+LEAVE_REQUEST,STUDENT,request_id,string,Yes,Not Null,3NF
+LEAVE_REQUEST,STUDENT,student_id,string,No,FK to STUDENT,3NF
+LEAVE_REQUEST,STUDENT,start_date,date,No,Not Null,3NF
+LEAVE_REQUEST,STUDENT,end_date,date,No,Not Null,3NF
+LEAVE_REQUEST,STUDENT,reason,string,No,Not Null,3NF
+LEAVE_REQUEST,STUDENT,document_proof,string,No,Nullable,3NF
+LEAVE_REQUEST,STUDENT,status,string,No,Default 'Pending',3NF
+LEAVE_REQUEST,STUDENT,approved_by,string,No,FK to FACULTY,3NF
+RESEARCH_MILESTONE,RESEARCH_PROJECT,milestone_id,string,Yes,Not Null,BCNF
+RESEARCH_MILESTONE,RESEARCH_PROJECT,project_id,string,No,FK to RESEARCH_PROJECT,BCNF
+RESEARCH_MILESTONE,RESEARCH_PROJECT,title,string,No,Not Null,BCNF
+RESEARCH_MILESTONE,RESEARCH_PROJECT,submission_date,date,No,Not Null,BCNF
+RESEARCH_MILESTONE,RESEARCH_PROJECT,file_path,string,No,Not Null,BCNF
+RESEARCH_MILESTONE,RESEARCH_PROJECT,review_comments,string,No,Nullable,BCNF
+RESEARCH_MILESTONE,RESEARCH_PROJECT,status,string,No,Default 'Submitted',BCNF
+FORUM_POST,COURSE/USER,post_id,string,Yes,Not Null,3NF
+FORUM_POST,COURSE/USER,user_id,string,No,FK to USER,3NF
+FORUM_POST,COURSE/USER,course_id,string,No,FK to COURSE,3NF
+FORUM_POST,COURSE/USER,topic_id,string,No,FK to TOPIC,3NF
+FORUM_POST,COURSE/USER,content,string,No,Not Null,3NF
+FORUM_POST,COURSE/USER,timestamp,date,No,Not Null,3NF
+POST_TAG,FORUM_POST,post_id,string,Yes,FK to FORUM_POST,1NF (multi-valued tags)
+POST_TAG,FORUM_POST,tag_name,string,Yes,Not Null,1NF
+FEE_PAYMENT,STUDENT/FEE_STRUCTURE,payment_id,string,Yes,Not Null,3NF
+FEE_PAYMENT,STUDENT/FEE_STRUCTURE,student_id,string,No,FK to STUDENT,3NF
+FEE_PAYMENT,STUDENT/FEE_STRUCTURE,fee_id,string,No,FK to FEE_STRUCTURE,3NF
+FEE_PAYMENT,STUDENT/FEE_STRUCTURE,transaction_id,string,No,Unique,3NF
+FEE_PAYMENT,STUDENT/FEE_STRUCTURE,amount_paid,int,No,Not Null,3NF
+FEE_PAYMENT,STUDENT/FEE_STRUCTURE,payment_date,date,No,Not Null,3NF
+FEE_PAYMENT,STUDENT/FEE_STRUCTURE,status,string,No,Default 'Pending',3NF
+EVENT,RESOURCE/ADMIN,event_id,string,Yes,Not Null,BCNF
+EVENT,RESOURCE/ADMIN,resource_id,string,No,FK to RESOURCE,BCNF
+EVENT,RESOURCE/ADMIN,admin_id,string,No,FK to ADMIN,BCNF
+EVENT,RESOURCE/ADMIN,title,string,No,Not Null,BCNF
+EVENT,RESOURCE/ADMIN,start_time,date,No,Not Null,BCNF
+EVENT,RESOURCE/ADMIN,end_time,date,No,Not Null,BCNF
+EVENT,RESOURCE/ADMIN,event_type,string,No,Nullable,BCNF
+MEETING_SLOT,FACULTY,slot_id,string,Yes,Not Null,3NF
+MEETING_SLOT,FACULTY,faculty_id,string,No,FK to FACULTY,3NF
+MEETING_SLOT,FACULTY,student_id,string,No,FK to STUDENT (Nullable),3NF
+MEETING_SLOT,FACULTY,start_time,date,No,Not Null,3NF
+MEETING_SLOT,FACULTY,end_time,date,No,Not Null,3NF
+MEETING_SLOT,FACULTY,status,string,No,Default 'Available',3NF
+ASSESSMENT_OUTCOME,ASSESSMENT/OUTCOME,assessment_id,string,Yes,FK to ASSESSMENT,3NF (mapping table)
+ASSESSMENT_OUTCOME,ASSESSMENT/OUTCOME,outcome_id,string,Yes,FK to LEARNING_OUTCOME,3NF
+ASSESSMENT_OUTCOME,ASSESSMENT/OUTCOME,weightage,int,No,Not Null,3NF
+STUDENT_OUTCOME,ENROLLMENT/OUTCOME,enrollment_id,string,Yes,FK to ENROLLMENT,3NF (tracking table)
+STUDENT_OUTCOME,ENROLLMENT/OUTCOME,outcome_id,string,Yes,FK to LEARNING_OUTCOME,3NF
+STUDENT_OUTCOME,ENROLLMENT/OUTCOME,mastery_level,float,No,Not Null,3NF
+STUDENT_OUTCOME,ENROLLMENT/OUTCOME,last_assessed,date,No,Not Null,3NF
+EXAM,ASSESSMENT,assessment_id,string,Yes,FK to ASSESSMENT,BCNF (specialization)
+EXAM,ASSESSMENT,duration_minutes,int,No,Not Null,BCNF
+EXAM,ASSESSMENT,venue,string,No,Nullable,BCNF
+QUIZ,ASSESSMENT,assessment_id,string,Yes,FK to ASSESSMENT,BCNF (specialization)
+QUIZ,ASSESSMENT,time_limit_minutes,int,No,Not Null,BCNF
+QUIZ,ASSESSMENT,platform_link,string,No,Nullable,BCNF
+ASSIGNMENT,ASSESSMENT,assessment_id,string,Yes,FK to ASSESSMENT,BCNF (specialization)
+ASSIGNMENT,ASSESSMENT,submission_deadline,date,No,Not Null,BCNF
+ASSIGNMENT,ASSESSMENT,file_format_allowed,string,No,Nullable,BCNF

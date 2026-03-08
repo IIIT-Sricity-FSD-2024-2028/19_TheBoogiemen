@@ -1,0 +1,61 @@
+Entity_Name,Attribute_Name,Data_Type,Key_Type,Constraints
+USER,user_id,string,PK,Not Null
+USER,username,string,Unique,Not Null
+USER,password_hash,string,,Not Null
+USER,email,string,Unique,Not Null
+USER,phone,string,,Nullable
+USER,role,string,,Not Null
+USER,created_at,date,,Not Null
+COURSE,course_id,string,PK,Not Null
+COURSE,course_name,string,,Not Null
+COURSE,credits,int,,Not Null
+COURSE,syllabus_json,string,,Nullable
+COURSE,objective,string,,Nullable
+COURSE,faculty_id,string,FK,References FACULTY(user_id)
+ACADEMIC_YEAR,year_id,string,PK,Not Null
+ACADEMIC_YEAR,year_name,string,,Not Null
+ACADEMIC_YEAR,start_date,date,,Not Null
+ACADEMIC_YEAR,end_date,date,,Not Null
+ACADEMIC_YEAR,is_current,string,,Default 'False'
+RESEARCH_PROJECT,project_id,string,PK,Not Null
+RESEARCH_PROJECT,title,string,,Not Null
+RESEARCH_PROJECT,domain,string,,Nullable
+RESEARCH_PROJECT,start_date,date,,Not Null
+RESEARCH_PROJECT,end_date,date,,Nullable
+RESEARCH_PROJECT,student_id,string,FK,References STUDENT(user_id)
+RESEARCH_PROJECT,faculty_id,string,FK,References FACULTY(user_id)
+FEE_STRUCTURE,fee_id,string,PK,Not Null
+FEE_STRUCTURE,amount,int,,Not Null
+FEE_STRUCTURE,due_date,date,,Not Null
+FEE_STRUCTURE,category,string,,Not Null
+RESOURCE,resource_id,string,PK,Not Null
+RESOURCE,name,string,,Not Null
+RESOURCE,capacity,int,,Not Null
+RESOURCE,type,string,,Not Null
+ASSESSMENT,assessment_id,string,PK,Not Null
+ASSESSMENT,title,string,,Not Null
+ASSESSMENT,type,string,,Not Null
+ASSESSMENT,max_marks,int,,Not Null
+ASSESSMENT,date,date,,Not Null
+ASSESSMENT,weightage,int,,Nullable
+ASSESSMENT,course_id,string,FK,References COURSE(course_id)
+STUDENT,user_id,string,PK/FK,References USER(user_id)
+STUDENT,name,string,,Not Null
+STUDENT,dob,date,,Nullable
+STUDENT,gender,string,,Nullable
+STUDENT,address,string,,Nullable
+STUDENT,branch,string,,Not Null
+STUDENT,current_year,string,,Not Null
+STUDENT,parent_contact,string,,Nullable
+STUDENT,join_date,date,,Not Null
+STUDENT,batch,string,,Not Null
+FACULTY,user_id,string,PK/FK,References USER(user_id)
+FACULTY,name,string,,Not Null
+FACULTY,designation,string,,Not Null
+FACULTY,department,string,,Not Null
+FACULTY,qualification,string,,Nullable
+FACULTY,office_hours,string,,Nullable
+ADMIN,user_id,string,PK/FK,References USER(user_id)
+ADMIN,name,string,,Not Null
+ADMIN,privilege_level,string,,Not Null
+ADMIN,department_head,string,,Nullable
