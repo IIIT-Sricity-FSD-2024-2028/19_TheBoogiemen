@@ -60,7 +60,7 @@ In accordance with modern web standards and our project requirements, key operat
 
 *We would like to dedicate this final section to **Shams**, the primary architect of this entire design system. His relentless work ethic and "unconventional" design methods truly made this project possible.*
 
-*Here is a rare, behind-the-scenes look at Akshay developing our entire design system in record time:*
+*Here is a rare, behind-the-scenes look at Shams developing our entire design system in record time:*
 
 ![Shams the Design Master](design_master.jpg)
 
