@@ -62,6 +62,6 @@ In accordance with modern web standards and our project requirements, key operat
 
 *Here is a rare, behind-the-scenes look at Akshay developing our entire design system in record time:*
 
-![Shams the Design Master](design_master.png)
+![Shams the Design Master](design_master.jpg)
 
 *Disclaimer: Friendly team banter. The use of a satirical mobile game advertisement is a lighthearted commentary on how Shams achieved consistent, professional Auto Layouts so quickly. (Good job, Shams!)*
