@@ -8,6 +8,45 @@ The database design was developed in three phases to progressively refine the st
 
 ---
 
+## 🦶 Understanding Our ER Diagram: Crow's Foot Notation
+
+To accurately represent the complex relationships within the BarelyPassing platform, our Entity-Relationship (ER) diagram utilizes **Crow's Foot Notation**. This is the industry standard for modeling relational databases because it clearly defines both **cardinality** (the maximum number of related records) and **modality/optionality** (the minimum number of related records).
+Developed in the late 1970s by Gordon Everest, this notation is favored for its compactness and clarity over older systems like Chen notation (use of diamonds and double diamonds) . It is the industry standard for physical database design because it clearly communicates business rules.
+
+### The Symbols Explained
+The symbols at the ends of the relationship lines dictate how tables interact. We use four primary connectors in our system:
+
+* **`||` (Exactly One / Mandatory One):** The record *must* have exactly one associated record in the other table. 
+* **`|o` (Zero or One / Optional One):** The record *may* have one associated record, or it may have none.
+* **`}|` (One or Many / Mandatory Many):** The record *must* have at least one associated record, but can have multiple.
+* **`}o` (Zero or Many / Optional Many):** The record can have multiple associated records, or it might not have any yet. (The "crow's foot" shape represents "many").
+
+---
+
+### How this applies to the BarelyPassing Schema
+
+Here are three core examples of how we applied these rules to our specific database logic:
+
+**1. Mandatory One-to-Many (1:M) — *The Standard Relationship***
+> `FACULTY ||--o{ COURSE`
+* **Read as:** "One Faculty member teaches zero or many Courses."
+* **Logic:** The `||` on the Faculty side means a Course *must* have exactly one Professor teaching it (it cannot exist in a void). The `}o` on the Course side means a Faculty member might be teaching multiple courses, or (if they are on sabbatical) zero courses.
+
+**2. One-to-One (1:1) / IS-A Inheritance — *Role-Based Access***
+> `USER ||--|| STUDENT`
+* **Read as:** "One User is exactly one Student."
+* **Logic:** We used `||` on both sides to represent subclass inheritance. A `STUDENT` entity cannot exist without a base `USER` authentication record, and that specific `USER` record maps to exactly one `STUDENT` profile.
+
+**3. Optional Booking (0..M) — *Scheduling Logic***
+> `STUDENT |o--o{ MEETING_SLOT`
+* **Read as:** "One Student books zero or many Meeting Slots."
+* **Logic:** The `|o` on the Student side is crucial here. A `MEETING_SLOT` is created by a Faculty member and initially has *no* student attached to it (it is available). Therefore, the relationship to a student is **optional** (Zero or One) until a student actually books it. 
+
+By strictly adhering to these notation rules, our ER diagram acts as an exact blueprint for the Foreign Key constraints built into our SQL schema.
+
+
+
+
 # Phase 1 – Initial Entity Identification
 
 In Phase 1, the primary goal was to identify all strong and weak entity sets present in the system along with their relationships and cardinalities.
