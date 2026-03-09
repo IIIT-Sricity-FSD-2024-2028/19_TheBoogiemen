@@ -1,5 +1,5 @@
 ﻿Relationship,Cardinality,Type
-USER → STUDENT/FACULTY/ADMIN,1:1,Strong (PK/FK inheritance)
+USER → STUDENT/FACULTY/ADMIN,01:01,Strong (PK/FK inheritance)
 STUDENT → ENROLLMENT,1:M,Weak
 COURSE → ENROLLMENT,1:M,Weak
 ACADEMIC_YEAR → ENROLLMENT,1:M,Weak
