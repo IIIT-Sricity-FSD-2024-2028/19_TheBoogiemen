@@ -5,7 +5,7 @@ Welcome to the Figma designs directory for the **Academic Progress & Outcome Tra
 ### 🔗 Live Prototype
 <<<<<<< HEAD
 <<<<<<< HEAD
-[[Our Prototype Link](https://www.figma.com/proto/ObelWTh7Wtr8S75dQx1dcF/BarelyPassing?node-id=1-125&p=f&t=7YThLbnViNFVtZqz-0&scaling=min-zoom&content-scaling=fixed&page-id=0%3A1&hide-ui=1
+[[Our Prototype Link](https://www.figma.com/proto/ObelWTh7Wtr8S75dQx1dcF/BarelyPassing?node-id=1-125&p=f&t=7YThLbnViNFVtZqz-0&scaling=min-zoom&content-scaling=fixed&page-id=0%3A1&hide-ui=1)]
 =======
 👉 [[The link to our prototype](https://www.figma.com/proto/ObelWTh7Wtr8S75dQx1dcF/BarelyPassing?node-id=1-125&p=f&t=7YThLbnViNFVtZqz-0&scaling=min-zoom&content-scaling=fixed&page-id=0%3A1&hide-ui=1
 >>>>>>> 88074812442d141dd66be88ca265c2ad47f7c819
