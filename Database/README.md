@@ -43,6 +43,10 @@ Here are three core examples of how we applied these rules to our specific datab
 
 By strictly adhering to these notation rules, our ER diagram acts as an exact blueprint for the Foreign Key constraints built into our SQL schema.
 
+Developed in the late 1970s by Gordon Everest, this notation is favored for its compactness and clarity over older systems like Chen notation. It is the industry standard for physical database design because it clearly communicates business rules.
+
+
+
 # Phase 1 – Initial Entity Identification
 
 In Phase 1, the primary goal was to identify all strong and weak entity sets present in the system along with their relationships and cardinalities.
