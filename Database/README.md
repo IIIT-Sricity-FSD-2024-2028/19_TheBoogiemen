@@ -8,42 +8,101 @@ The database design was developed in three phases to progressively refine the st
 
 ---
 
-## 🦶 Understanding Our ER Diagram: Crow's Foot Notation
+# Chen's Notation in ERD (DBMS)
 
-To accurately represent the complex relationships within the BarelyPassing platform, our Entity-Relationship (ER) diagram utilizes **Crow's Foot Notation**. This is the industry standard for modeling relational databases because it clearly defines both **cardinality** (the maximum number of related records) and **modality/optionality** (the minimum number of related records).
-Developed in the late 1970s by Gordon Everest, this notation is favored for its compactness and clarity over older systems like Chen notation (use of diamonds and double diamonds) . It is the industry standard for physical database design because it clearly communicates business rules.
-
-### The Symbols Explained
-The symbols at the ends of the relationship lines dictate how tables interact. We use four primary connectors in our system:
-
-* **`||` (Exactly One / Mandatory One):** The record *must* have exactly one associated record in the other table. 
-* **`|o` (Zero or One / Optional One):** The record *may* have one associated record, or it may have none.
-* **`}|` (One or Many / Mandatory Many):** The record *must* have at least one associated record, but can have multiple.
-* **`}o` (Zero or Many / Optional Many):** The record can have multiple associated records, or it might not have any yet. (The "crow's foot" shape represents "many").
+We have used the Chen's notation in our database ERD to clearly represent the structure of the database and the relationships between different entities. The following points explain the important aspects of Chen's notation used in our ER diagram.
 
 ---
 
-### How this applies to the BarelyPassing Schema
+## 1. Entities
+Entities represent real-world objects or concepts in the system.  
+In Chen’s notation, entities are represented using **rectangles**.
 
-Here are three core examples of how we applied these rules to our specific database logic:
+**Example:**  
+Student, Course, Employee
 
-**1. Mandatory One-to-Many (1:M) — *The Standard Relationship***
-> `FACULTY ||--o{ COURSE`
-* **Read as:** "One Faculty member teaches zero or many Courses."
-* **Logic:** The `||` on the Faculty side means a Course *must* have exactly one Professor teaching it (it cannot exist in a void). The `}o` on the Course side means a Faculty member might be teaching multiple courses, or (if they are on sabbatical) zero courses.
+---
 
-**2. One-to-One (1:1) / IS-A Inheritance — *Role-Based Access***
-> `USER ||--|| STUDENT`
-* **Read as:** "One User is exactly one Student."
-* **Logic:** We used `||` on both sides to represent subclass inheritance. A `STUDENT` entity cannot exist without a base `USER` authentication record, and that specific `USER` record maps to exactly one `STUDENT` profile.
+## 2. Attributes
+Attributes describe the properties or characteristics of an entity.  
+They are represented using **ovals** connected to their respective entities.
 
-**3. Optional Booking (0..M) — *Scheduling Logic***
-> `STUDENT |o--o{ MEETING_SLOT`
-* **Read as:** "One Student books zero or many Meeting Slots."
-* **Logic:** The `|o` on the Student side is crucial here. A `MEETING_SLOT` is created by a Faculty member and initially has *no* student attached to it (it is available). Therefore, the relationship to a student is **optional** (Zero or One) until a student actually books it. 
+**Example attributes of Student:**  
+- Name  
+- Age  
+- Roll Number  
 
-By strictly adhering to these notation rules, our ER diagram acts as an exact blueprint for the Foreign Key constraints built into our SQL schema.
+---
 
+## 3. Primary Key Attribute
+The attribute that uniquely identifies each entity instance is called the **primary key**.  
+In Chen’s notation, the primary key is represented by **underlining the attribute name**.
+
+**Example:**  
+`Student_ID`
+
+---
+
+## 4. Composite Attributes
+Some attributes can be divided into smaller sub-attributes.  
+These are called **composite attributes** and are shown using **multiple connected ovals**.
+
+**Example:**  
+Name  
+- First_Name  
+- Last_Name  
+
+---
+
+## 5. Multivalued Attributes
+Attributes that can have multiple values for a single entity are called **multivalued attributes**.  
+They are represented using **double ovals**.
+
+**Example:**  
+Phone Numbers of a Student
+
+---
+
+## 6. Derived Attributes
+Derived attributes are calculated from other attributes in the database.  
+They are represented using **dashed ovals**.
+
+**Example:**  
+Age derived from Date_of_Birth
+
+---
+
+## 7. Relationships
+Relationships describe how two or more entities are associated with each other.  
+In Chen’s notation, relationships are represented using **diamonds**.
+
+**Example:**  
+Student **enrolls in** Course
+
+---
+
+## 8. Cardinality
+Cardinality defines the number of instances of one entity that can be associated with instances of another entity.
+
+Common types include:
+
+| Type | Meaning |
+|-----|--------|
+| One-to-One (1:1) | One entity instance relates to one instance of another |
+| One-to-Many (1:N) | One entity relates to multiple entities |
+| Many-to-Many (M:N) | Multiple entities relate to multiple entities |
+
+---
+
+## 9. Participation Constraints
+Participation indicates whether the participation of an entity in a relationship is **mandatory or optional**.
+
+Types of participation:
+
+- **Total Participation** – Every entity must participate in the relationship.
+- **Partial Participation** – Some entities may or may not participate.
+
+---
 
 
 
