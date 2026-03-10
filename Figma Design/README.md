@@ -3,18 +3,7 @@
 Welcome to the Figma designs directory for the **Academic Progress & Outcome Tracking (BarelyPassing)** platform. This folder contains the complete visual architecture and user experience (UX) workflows for Evaluation 2.
 
 ### 🔗 Live Prototype
-<<<<<<< HEAD
-<<<<<<< HEAD
 [[Our Prototype Link](https://www.figma.com/proto/ObelWTh7Wtr8S75dQx1dcF/BarelyPassing?node-id=1-125&p=f&t=7YThLbnViNFVtZqz-0&scaling=min-zoom&content-scaling=fixed&page-id=0%3A1&hide-ui=1)]
-=======
-👉 [[The link to our prototype](https://www.figma.com/proto/ObelWTh7Wtr8S75dQx1dcF/BarelyPassing?node-id=1-125&p=f&t=7YThLbnViNFVtZqz-0&scaling=min-zoom&content-scaling=fixed&page-id=0%3A1&hide-ui=1
->>>>>>> 88074812442d141dd66be88ca265c2ad47f7c819
-)]
-
-=======
-👉 https://www.figma.com/design/ObelWTh7Wtr8S75dQx1dcF/BarelyPassing?node-id=0-1&p=f&t=yUbZAE7bm6qf84fN-0
->>>>>>> d2988d07a834384771e1d64ca047f53b865b19e9
----
 
 ## 📐 Design Philosophy & System
 The BarelyPassing platform is designed as a modern, enterprise-grade EdTech SaaS application. Our primary focus is on **data clarity, actionable insights, and responsive accessibility**.
