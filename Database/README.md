@@ -11,6 +11,7 @@ The database design was developed in three phases to progressively refine the st
 ## 🦶 Understanding Our ER Diagram: Crow's Foot Notation
 
 To accurately represent the complex relationships within the BarelyPassing platform, our Entity-Relationship (ER) diagram utilizes **Crow's Foot Notation**. This is the industry standard for modeling relational databases because it clearly defines both **cardinality** (the maximum number of related records) and **modality/optionality** (the minimum number of related records).
+Developed in the late 1970s by Gordon Everest, this notation is favored for its compactness and clarity over older systems like Chen notation (use of diamonds and double diamonds) . It is the industry standard for physical database design because it clearly communicates business rules.
 
 ### The Symbols Explained
 The symbols at the ends of the relationship lines dictate how tables interact. We use four primary connectors in our system:
@@ -43,7 +44,6 @@ Here are three core examples of how we applied these rules to our specific datab
 
 By strictly adhering to these notation rules, our ER diagram acts as an exact blueprint for the Foreign Key constraints built into our SQL schema.
 
-Developed in the late 1970s by Gordon Everest, this notation is favored for its compactness and clarity over older systems like Chen notation. It is the industry standard for physical database design because it clearly communicates business rules.
 
 
 
