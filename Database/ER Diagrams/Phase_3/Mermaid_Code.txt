@@ -9,7 +9,8 @@ erDiagram
         date created_at
     }
     STUDENT {
-        string user_id PK
+        string student_id PK
+        string user_id FK
         string first_name
         string last_name
         date dob
@@ -19,17 +20,27 @@ erDiagram
         string state
         string zip_code
         string branch
+        string academic_level
         string parent_contact
         date join_date
         string batch
     }
     FACULTY {
-        string user_id PK
+        string faculty_id PK
+        string user_id FK
         string first_name
         string last_name
         string designation
         string department_id FK
-        string qualification
+        string mentor_to
+    }
+    RESEARCH_DOMAINS{
+        string faculty_id FK,PK
+        string Domain_id FK,PK
+    }
+    DOAMIN_LIST{
+        string Domain_id PK
+        string Domain_name
     }
     ADMIN {
         string user_id PK
@@ -49,7 +60,8 @@ erDiagram
         string course_name
         string course_code
         int credits
-        string objective
+        string outcome_id FK
+        string course_coordinator_id
         string faculty_id FK
     }
     TOPIC {
@@ -84,14 +96,20 @@ erDiagram
         int weightage
     }
     EXAM {
-        string assessment_id PK
+        string assessment_id PK,FK
         int duration_minutes
-        string venue
+        string type
+        string venue_id FK
+    }
+    ASSESSMENT_VENUE{
+        string venue_id PK
+        string resource_id FK
+        string assessment_id FK
     }
     QUIZ {
         string assessment_id PK
+        string venue_id FK
         int time_limit_minutes
-        string platform_link
     }
     ASSIGNMENT {
         string assessment_id PK
@@ -111,24 +129,25 @@ erDiagram
     }
     MARKS_ENTRY {
         string entry_id PK
-        string enrollment_id FK
+        string student_id FK
         string assessment_id FK
         int marks_obtained
         string grade
         string feedback_text
+        date timestamp
     }
     STUDENT_OUTCOME {
-        string enrollment_id PK
-        string outcome_id PK
+        string student_id PK,FK
+        string outcome_id PK,FK
         float mastery_level
-        date last_assessed
+        date timestamp
     }
     ATTENDANCE_LOG {
         string log_id PK
         string enrollment_id FK
         date date
+        date timeslot
         string status
-        string lecture_topic
     }
     LEAVE_REQUEST {
         string request_id PK
@@ -138,7 +157,7 @@ erDiagram
         string reason
         string document_proof
         string status
-        string approved_by FK
+        string admin_id FK
     }
     RESEARCH_PROJECT {
         string project_id PK
@@ -146,6 +165,7 @@ erDiagram
         string faculty_id FK
         string title
         string domain
+        string type
         date start_date
         date end_date
     }
@@ -164,6 +184,7 @@ erDiagram
         string student_id FK
         date start_time
         date end_time
+        date date
         string status
     }
     RESOURCE {
@@ -176,7 +197,7 @@ erDiagram
     EVENT {
         string event_id PK
         string resource_id FK
-        string admin_id FK
+        string user_id FK
         string title
         date start_time
         date end_time
@@ -201,15 +222,24 @@ erDiagram
     }
     FORUM_POST {
         string post_id PK
-        string user_id FK
+        string student_id FK
         string course_id FK
         string topic_id FK
         string content
+        string attachments
         date timestamp
     }
     POST_TAG {
-        string post_id PK
+        string post_id FK,PK
         string tag_name PK
+    }
+    FORUM_REPLY{
+        string post_id FK
+        string reply_id PK
+        string reply_content
+        string faculty_id FK
+        string attachments
+        date timestamp
     }
 
     USER ||--|| STUDENT : "ISA"
@@ -244,7 +274,7 @@ erDiagram
     ENROLLMENT ||--|{ ATTENDANCE_LOG : "generates"
     
     STUDENT ||--|{ LEAVE_REQUEST : "applies"
-    FACULTY ||--|{ LEAVE_REQUEST : "approves"
+    ADMIN ||--|{ LEAVE_REQUEST : "approves"
     
     STUDENT ||--|{ RESEARCH_PROJECT : "undertakes"
     FACULTY ||--|{ RESEARCH_PROJECT : "guides"
@@ -259,7 +289,9 @@ erDiagram
     STUDENT ||--|{ FEE_PAYMENT : "makes"
     FEE_STRUCTURE ||--|{ FEE_PAYMENT : "defines"
     
-    USER ||--|{ FORUM_POST : "posts"
+    STUDENT ||--|{ FORUM_POST : "posts"
     COURSE ||--|{ FORUM_POST : "contextualizes"
     TOPIC ||--|{ FORUM_POST : "tags"
+    FACULTY ||--|{ FORUM_REPLY : "replies"
+    FORUM_REPLY ||--|{ FORUM_POST : "answers"
     FORUM_POST ||--|{ POST_TAG : "has_tags"
