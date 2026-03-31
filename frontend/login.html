@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Sign In &mdash; BarelyPassing</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"/>
+  <link rel="stylesheet" href="css/shared.css"/>
+  <link rel="stylesheet" href="css/login.css"/>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- Hidden radios at top level so ~ selector can reach .right -->
+  <input type="radio" name="role" id="r-student" checked style="display:none"/>
+  <input type="radio" name="role" id="r-faculty" style="display:none"/>
+  <input type="radio" name="role" id="r-head" style="display:none"/>
+  <input type="radio" name="role" id="r-admin" style="display:none"/>
+
+  <!-- LEFT -->
+  <div class="left">
+    <div class="left-z">
+      <a href="index.html" class="left-brand">
+        <div class="lb-ico"><svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></div>
+        <span class="lb-name">BarelyPassing</span>
+      </a>
+
+      <div class="left-headline">
+        <h2 class="left-h">Welcome<br/><em>back.</em></h2>
+        <p class="left-sub">Select your role and sign in to access your personalised academic portal.</p>
+        <div class="role-selector">
+          <label class="rs-label" for="r-student">
+            <div class="rs-card">
+              <div class="rs-ico rs-ico-s"><svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></div>
+              <div class="rs-text">
+                <span class="rs-name">Student</span>
+                <span class="rs-hint">Access progress, courses &amp; attendance</span>
+              </div>
+              <svg class="rs-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+          </label>
+          <label class="rs-label" for="r-faculty">
+            <div class="rs-card">
+              <div class="rs-ico rs-ico-f"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
+              <div class="rs-text">
+                <span class="rs-name">Faculty</span>
+                <span class="rs-hint">Manage courses, assessments &amp; students</span>
+              </div>
+              <svg class="rs-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+          </label>
+          <label class="rs-label" for="r-head">
+            <div class="rs-card">
+              <div class="rs-ico rs-ico-h"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></div>
+              <div class="rs-text">
+                <span class="rs-name">Academic Head</span>
+                <span class="rs-hint">Institutional reports &amp; resources</span>
+              </div>
+              <svg class="rs-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+          </label>
+          <label class="rs-label" for="r-admin">
+            <div class="rs-card">
+              <div class="rs-ico rs-ico-a"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+              <div class="rs-text">
+                <span class="rs-name">Super Admin</span>
+                <span class="rs-hint">System administration &amp; access control</span>
+              </div>
+              <svg class="rs-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="left-footer">For demo: use any credentials to sign in</div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right">
+    <div class="form-box">
+
+      <!-- Dynamic Form -->
+      <form class="form-panel active" id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-head">
+          <div class="fh-ico" id="formIcon"><svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></div>
+          <div>
+            <div class="fh-title" id="formTitle">Student Login</div>
+            <div class="fh-sub" id="formSub">Access your academic progress &amp; courses</div>
+          </div>
+        </div>
+        <div class="field">
+          <label for="email">Email Address</label>
+          <div class="inp-wrap">
+            <svg class="inp-ico" viewBox="0 0 24 24">
+              <rect x="2" y="4" width="20" height="16" rx="2"/>
+              <polyline points="2,4 12,13 22,4"/>
+            </svg>
+            <input type="email" id="email" name="email" placeholder="student@iiits.in" autocomplete="email" required/>
+          </div>
+        </div>
+        <div class="field">
+          <div class="field-row">
+            <label for="password">Password</label>
+            <a href="#" class="forgot">Forgot password?</a>
+          </div>
+          <div class="inp-wrap">
+            <svg class="inp-ico" viewBox="0 0 24 24">
+              <rect x="3" y="11" width="18" height="11" rx="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <input type="password" id="password" name="password" placeholder="Enter your password" required/>
+          </div>
+        </div>
+        <label class="check-row">
+          <input type="checkbox" name="remember"/>
+          <span class="check-label">Remember me for 30 days</span>
+        </label>
+        <button type="submit" class="btn-submit">Sign In</button>
+        <div class="form-tos">By signing in you agree to our <a href="#">Terms</a> and <a href="#">Privacy Policy</a></div>
+      </form>
+
+    </div>
+  </div>
+</div>
+<!-- Replace inline script with external -->
+<script src="js/mockdata.js"></script>
+<script src="js/state-manager.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/login.js"></script>
+</body>
+</html>

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Faculty Portal — BarelyPassing</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" />
+  <link rel="stylesheet" href="css/shared.css" />
+  <link rel="stylesheet" href="css/faculty.css" />
+  <script src="mockdata.js"></script>
+</head>
+<body>
+  <div class="app">
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <a href="index.html" class="sb-brand">
+        <div class="sb-ico"><svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z" /><path d="M6 12v5c3 3 9 3 12 0v-5" /></svg></div>
+        <span class="sb-name">BarelyPassing</span>
+      </a>
+      <div class="sb-user">
+        <div class="sb-avatar" id="sbAvatar">M</div>
+        <div class="flex-1">
+          <div class="sb-uname" id="sbUname">Faculty Member</div>
+          <div class="sb-urole" id="sbUrole">Department of CSE</div>
+        </div>
+      </div>
+      <nav class="sb-nav">
+        <a class="active" onclick="switchPanel('dashboard',this)">Dashboard</a>
+        <a onclick="switchPanel('timetable',this)">My Timetable</a>
+        <a onclick="switchPanel('assessment',this)">Assessment Mapping</a>
+        <a onclick="switchPanel('attendance',this)">Mark Attendance</a>
+        <a onclick="switchPanel('students',this)">Student Overview</a>
+        <a onclick="switchPanel('forum',this)">Discussion Forum</a>
+        <a onclick="switchPanel('research',this)">Research Projects</a>
+      </nav>
+      <div class="sb-footer">
+        <a onclick="switchPanel('settings',this)">Settings</a>
+        <a href="login.html">Logout</a>
+      </div>
+    </aside>
+
+    <div class="overlay-sb" id="overlaySb" onclick="closeSidebar()"></div>
+
+    <main class="main">
+      <!-- TOP BAR -->
+      <div class="topbar">
+        <button class="topbar-menu" onclick="toggleSidebar()">
+          <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" /></svg>
+        </button>
+        <div class="flex-1">
+          <div class="topbar-title" id="topbarTitle">Faculty Dashboard</div>
+        </div>
+        <div class="topbar-badges">
+           <span class="topbar-badge" id="activeSemester">Spring 2026</span>
+           <span class="topbar-badge bg-red-l text-red" id="topAtRisk">2 At-Risk</span>
+        </div>
+      </div>
+
+      <div class="content">
+
+        <!-- DASHBOARD -->
+        <div class="panel active" id="panel-dashboard">
+          <div class="stat-row" id="dashStats"></div>
+
+          <div class="card">
+            <div class="card-title">Early Intervention Required</div>
+            <div class="card-sub">Students needing immediate attention — low attendance or risk of failure</div>
+            <div id="atRiskList"></div>
+          </div>
+
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-title">Today's Lectures</div>
+              <div class="card-sub" id="todayDate">...</div>
+              <div class="class-schedule" id="todayClasses"></div>
+            </div>
+            <div class="card">
+              <div class="card-title">Subject Performance</div>
+              <div class="card-sub">Average student metrics per subject</div>
+              <div id="performanceList"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TIMETABLE -->
+        <div class="panel" id="panel-timetable">
+          <div class="card">
+            <div class="tt-header-info">
+              <div>
+                <div class="card-title">Instructional Calendar</div>
+                <div class="card-sub">Weekly teaching engagement — Semester IV</div>
+              </div>
+              <div class="tt-stats">
+                <div class="stat-card stats-compact"><div class="sc-val">22</div><div class="sc-sub">Hrs/Wk</div></div>
+                <button class="btn btn-outline" onclick="toast('PDF generation queued')">Download</button>
+              </div>
+            </div>
+            <div class="overflow-x-auto">
+               <div class="tt-grid" id="timetableGrid"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ASSESSMENT -->
+        <div class="panel" id="panel-assessment">
+          <div class="assessment-header">
+            <div>
+              <div class="panel-h1">Outcome Mapping</div>
+              <div class="panel-sub">Link assessment components to Course (CO) and Program (PO) Outcomes</div>
+            </div>
+            <button class="btn btn-primary" onclick="showModal('modalNewAssess')">Create Assessment</button>
+          </div>
+
+          <div class="card">
+            <div class="assessment-header">
+              <div id="assessMeta">
+                <div class="card-title">Mid-Term: Database Systems</div>
+                <div class="card-sub">Full Stack Software Development · Total: 60M</div>
+              </div>
+              <button class="btn btn-green" onclick="toast('Mapping persistent')">Save Mapping</button>
+            </div>
+            <div id="mappingQuestions"></div>
+          </div>
+        </div>
+
+        <!-- ATTENDANCE -->
+        <div class="panel" id="panel-attendance">
+          <div class="card">
+            <div class="card-title">Attendance Registrar</div>
+            <div class="card-sub">Record daily student attendance</div>
+            <div class="form-field mb-18">
+              <label>Select Course / Batch</label>
+              <select id="classSelect" onchange="loadRoster()">
+                <option value="">Choose class...</option>
+              </select>
+            </div>
+
+            <div class="att-header-info">
+              <div>
+                <div class="att-header-title" id="attHeader">Select a class to begin</div>
+                <div class="att-header-subtitle" id="attSub">Roll-call for today's session</div>
+              </div>
+              <div class="att-header-actions" id="attActions" style="display:none">
+                <button class="btn btn-green btn-sm" onclick="markAll(true)">Mark All Present</button>
+                <button class="btn btn-red btn-sm" onclick="markAll(false)">Mark All Absent</button>
+              </div>
+            </div>
+
+            <div class="att-count-info" id="attCountInfo" style="display:none">
+              Present: <strong id="presentCount">0</strong> / <strong id="totalInRoster">0</strong>
+            </div>
+
+            <div id="attendanceList" class="mt-16"></div>
+
+            <div id="attFooterActions" style="display:none">
+               <button class="btn btn-primary mt-16 w-200" onclick="handleSaveAttendance()">Commit Attendance</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- STUDENTS -->
+        <div class="panel" id="panel-students">
+          <div class="stat-row grid-cols-3" id="stuSummary"></div>
+
+          <div class="card">
+            <div class="flex justify-between items-center mb-16 flex-wrap gap-10">
+              <div>
+                <div class="card-title">Student Directory</div>
+                <div class="card-sub">Comprehensive performance tracking</div>
+              </div>
+              <div class="search-filter">
+                <input class="search-input" id="stuSearch" placeholder="Search ID or Name..." oninput="filterStudents()"/>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Student Name</th><th>UID</th><th>Att.</th><th>Avg.</th><th>Status</th><th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="studentTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- FORUM -->
+        <div class="panel" id="panel-forum">
+          <div class="stat-row grid-cols-3" id="forumStats"></div>
+          <div class="card">
+            <div class="card-title">Active Inquiries</div>
+            <div class="card-sub">Clarify doubts and monitor academic discussions</div>
+            <div id="forumThreads"></div>
+          </div>
+        </div>
+
+        <!-- RESEARCH -->
+        <div class="panel" id="panel-research">
+          <div class="stat-row grid-cols-4" id="resStats"></div>
+          <div id="resProjects"></div>
+        </div>
+
+        <!-- SETTINGS -->
+        <div class="panel" id="panel-settings">
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-title">Security Gateway</div>
+              <div class="card-sub">Update identification tokens</div>
+              <div class="form-field"><label>Current Token</label><input type="password" id="curPass" /></div>
+              <div class="form-field"><label>New Token</label><input type="password" id="newPass" /></div>
+              <button class="btn btn-primary w-full" onclick="toast('Password updated')">Change Password</button>
+            </div>
+            <div class="card">
+              <div class="card-title">Channels</div>
+              <div class="card-sub">Sync notification preferences</div>
+              <div class="flex flex-col gap-14 mt-16">
+                 <label class="check-row-justify check-row"><span class="check-label">Email Alerts</span><input type="checkbox" checked/></label>
+                 <label class="check-row-justify check-row"><span class="check-label">SMS Alerts</span><input type="checkbox" checked/></label>
+                 <label class="check-row-justify check-row"><span class="check-label">Forum Mentions</span><input type="checkbox" /></label>
+              </div>
+              <button class="btn btn-primary w-full mt-16" onclick="toast('Preferences synchronized')">Sync Settings</button>
+            </div>
+          </div>
+          <div class="card mt-16">
+             <div class="card-title">Report a Platform Issue</div>
+             <div class="card-sub">Submit UI/UX defects directly to IT operations</div>
+             <div class="form-field"><label>Severity</label><select id="bugSev"><option value="Low">Low</option><option value="Medium" selected>Medium</option><option value="High">High</option></select></div>
+             <div class="form-field"><label>Defect Summary</label><input type="text" id="bugTitle" placeholder="Page not loading properly..." /></div>
+             <div class="form-field"><label>Technical Detail</label><textarea id="bugDesc" placeholder="Describe the steps to reproduce..."></textarea></div>
+             <button class="btn btn-blue" onclick="handleBugSubmit()">File Report</button>
+          </div>
+        </div>
+
+      </div><!-- /content -->
+    </main>
+  </div><!-- /app -->
+
+  <!-- MODALS -->
+  <div class="overlay" id="modalMeeting" onclick="closeModalBg(event,'modalMeeting')">
+    <div class="modal">
+      <div class="modal-head"><div class="modal-title">Schedule Intervention</div><button class="modal-close" onclick="closeModal('modalMeeting')">✕</button></div>
+      <div class="modal-content">
+        <div class="form-field"><label>Target Student</label><input type="text" id="meet-stu" readonly class="input-disabled" /></div>
+        <div class="modal-grid-2">
+          <div class="form-field"><label>Proposed Date</label><input type="date" id="meet-date" /></div>
+          <div class="form-field"><label>Time Slot</label><input type="time" id="meet-time" /></div>
+        </div>
+        <div class="form-field"><label>Agenda</label><textarea id="meet-agenda" placeholder="Discuss performance baseline..."></textarea></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary flex-1" onclick="handleSchedule()">Confirm Slot</button>
+        <button class="btn btn-outline" onclick="closeModal('modalMeeting')">Dismiss</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="modalStudentDetail" onclick="closeModalBg(event,'modalStudentDetail')">
+    <div class="modal">
+      <div class="modal-head"><div class="modal-title">Student Profile</div><button class="modal-close" onclick="closeModal('modalStudentDetail')">✕</button></div>
+      <div id="stuDetailBody" class="modal-content"></div>
+      <div class="modal-actions">
+        <button class="btn btn-blue flex-1" onclick="toast('Comm-channel established')">Contact Student</button>
+        <button class="btn btn-outline" onclick="closeModal('modalStudentDetail')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="modalNewAssess" onclick="closeModalBg(event,'modalNewAssess')">
+    <div class="modal">
+      <div class="modal-head"><div class="modal-title">Deploy Assessment</div><button class="modal-close" onclick="closeModal('modalNewAssess')">✕</button></div>
+      <div class="modal-content">
+         <div class="form-field"><label>Assessment Name</label><input type="text" id="a-name" /></div>
+         <div class="modal-grid-2">
+            <div class="form-field"><label>Type</label><select id="a-type"><option>Continuous</option><option>Summative</option></select></div>
+            <div class="form-field"><label>Marks</label><input type="number" id="a-marks" value="100"/></div>
+         </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary flex-1" onclick="toast('Assessment instantiated')">Instantiate</button>
+        <button class="btn btn-outline" onclick="closeModal('modalNewAssess')">Discard</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toastEl"></div>
+
+  <!-- Replace inline script with external -->
+<script src="js/mockdata.js"></script>
+<script src="js/state-manager.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/faculty.js"></script>
+</body>
+</html>
