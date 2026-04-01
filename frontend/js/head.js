@@ -417,7 +417,20 @@ function handleSubmitBug() {
 function initPage() {
   const db = getDB().admin;
 
+  console.log('=== Academic Head Portal Init ===');
+  console.log('Current User:', getCurrentUser());
+  console.log('Admin DB:', db);
+  console.log('Settings:', db.settings);
+  console.log('Dashboard Stats:', db.dashboard.institutionalStats);
+  console.log('=====================================');
+
   // Account
+  if (!db.settings || !db.settings.account) {
+    console.error('Missing settings.account in admin database!');
+    console.log('Full admin DB:', db);
+    return;
+  }
+
   document.getElementById('sb-initial').textContent = db.settings.account.userId[0].toUpperCase();
   document.getElementById('sb-name').textContent = db.settings.account.userId;
   document.getElementById('account-email').textContent = db.settings.account.email;

@@ -107,22 +107,69 @@ function _refresh() {
 
 function handleSchedule() {
   if(!validateForm('modalMeeting', [
-    {id:'meet-date', required:true}, 
+    {id:'meet-date', required:true},
     {id:'meet-time', required:true}
   ])) return;
+  
+  // Save meeting to database
+  const db = getDB();
+  const meeting = {
+    id: Date.now(),
+    studentName: document.getElementById('meet-stu').value,
+    date: document.getElementById('meet-date').value,
+    time: document.getElementById('meet-time').value,
+    agenda: document.getElementById('meet-agenda').value,
+    status: 'scheduled',
+    createdAt: new Date().toLocaleDateString()
+  };
+  
+  if (!db.faculty.dashboard.interventionLog) {
+    db.faculty.dashboard.interventionLog = [];
+  }
+  db.faculty.dashboard.interventionLog.push(meeting);
+  saveDB(db);
+  
+  console.log('Meeting scheduled:', meeting);
   toast('Intervention meeting registered');
   closeModal('modalMeeting');
+  _refresh();
 }
 
 function handleSaveAttendance() {
   const classId = document.getElementById('classSelect').value;
+  if (!classId) {
+    toast('Please select a class first');
+    return;
+  }
+  
   const records = [];
   document.querySelectorAll('.att-student-row').forEach(row => {
     const id = row.dataset.id;
     const isPresent = row.querySelector('.present').classList.contains('active');
     records.push({ id, isPresent });
   });
-  toast('Session records synchronized');
+  
+  // Save attendance to database
+  const db = getDB();
+  const attendanceRecord = {
+    classId: classId,
+    date: new Date().toLocaleDateString(),
+    timestamp: new Date().toISOString(),
+    records: records,
+    presentCount: records.filter(r => r.isPresent).length,
+    totalStudents: records.length
+  };
+  
+  // Initialize attendance history if not exists
+  if (!db.faculty.attendanceMarking.history) {
+    db.faculty.attendanceMarking.history = [];
+  }
+  
+  db.faculty.attendanceMarking.history.unshift(attendanceRecord);
+  saveDB(db);
+  
+  console.log('Attendance saved:', attendanceRecord);
+  toast('Attendance committed successfully');
   _refresh();
 }
 
@@ -247,6 +294,13 @@ function showMeeting(name) {
 
 function initPage() {
   const db = getDB().faculty;
+
+  console.log('=== Faculty Portal Init ===');
+  console.log('Current User:', getCurrentUser());
+  console.log('Faculty DB:', db);
+  console.log('Attendance History:', db.attendanceMarking.history ? db.attendanceMarking.history.length : 0, 'records');
+  console.log('Intervention Log:', db.dashboard.interventionLog ? db.dashboard.interventionLog.length : 0, 'meetings');
+  console.log('===========================');
 
   // Sidebar
   document.getElementById('sbUname').textContent = db.profile.account.name;

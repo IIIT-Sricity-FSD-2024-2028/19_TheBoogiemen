@@ -296,7 +296,12 @@ const studentMockDatabase = {
 // ==========================================
 const facultyMockDatabase = {
   dashboard: {
-    stats: { totalStudents: 6, lowAttendanceCount: 3, atRiskCount: 3 },
+    stats: { 
+      totalStudents: 6, 
+      lowAttendanceCount: 3, 
+      atRiskCount: 3,
+      classesThisWeek: 22
+    },
     atRiskStudents: [
       { id: "CS002", name: "Harshini Reddy", attendance: 68, avgScore: 65, fullId: "S20240010085", riskLevel: "High" },
       { id: "CS004", name: "Omkar", attendance: 72, avgScore: 70, fullId: "S20240010112", riskLevel: "Medium" },
@@ -308,6 +313,15 @@ const facultyMockDatabase = {
       courses: ["CS301 - Database Systems", "CS302 - Machine Learning"]
     },
     interventionLog: []
+  },
+  profile: {
+    account: {
+      name: "Dr. Shams",
+      email: "shams@iiits.in",
+      role: "Faculty",
+      dept: "Computer Science",
+      employeeId: "FAC2024001"
+    }
   },
   timetable: {
     stats: { totalClasses: 22, lectures: 11, labs: 10, subjects: 4 },
@@ -542,8 +556,8 @@ const academicHeadMockDatabase = {
 // ==========================================
 const superuserMockDatabase = {
   metrics: {
-    totalUsers: 1204,
-    activeSessions: 342,
+    totalUsers: 8,
+    activeSessions: 5,
     openBugs: 4,
     serverUptime: "99.98%"
   },
@@ -793,7 +807,7 @@ function getRedirectForRole(role) {
         'student': 'student.html',
         'faculty': 'faculty.html',
         'head': 'head.html',
-        'admin': 'head.html',
+        'admin': 'superuser.html',  // Admin goes to superuser portal
         'superuser': 'superuser.html'
     };
     return redirects[role] || 'student.html';
