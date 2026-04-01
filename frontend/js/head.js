@@ -43,8 +43,8 @@ function switchReportTab(el, catId) {
   });
 }
 
-function showModal(id) { 
-  document.getElementById(id).classList.add('show'); 
+function showModal(id) {
+  document.getElementById(id).classList.add('show');
 }
 
 function closeModal(id) {
@@ -52,8 +52,8 @@ function closeModal(id) {
   clearErrors(id);
 }
 
-function closeModalBg(e, id) { 
-  if (e.target.id === id) closeModal(id); 
+function closeModalBg(e, id) {
+  if (e.target.id === id) closeModal(id);
 }
 
 function toggleSidebar() {
@@ -117,7 +117,7 @@ function validateForm(modalId, fields) {
 
 function clearErrors(modalId) {
   const modal = document.getElementById(modalId);
-  if(!modal) return;
+  if (!modal) return;
   modal.querySelectorAll('.form-field').forEach(f => f.classList.remove('has-error'));
   modal.querySelectorAll('.field-error').forEach(e => e.remove());
 }
@@ -146,15 +146,72 @@ function renderStats() {
   `;
 }
 
+// Reports — populate all four category tabs
+function renderReports() {
+  const cats = getDB().admin.reports.categories;
+  const tabMap = {
+    'Academic Performance': 'report-items-performance',
+    'Attendance': 'rcat-attendance',
+    'Outcomes Assessment': 'rcat-outcomes',
+    'Resource Allocation': 'rcat-resource'
+  };
+
+  // Wrap bare category divs (attendance/outcomes/resource) in a report-category container if not already done
+  ['rcat-attendance', 'rcat-outcomes', 'rcat-resource'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && !el.querySelector('.report-category')) {
+      const titleMap = {
+        'rcat-attendance': 'Attendance Reports',
+        'rcat-outcomes': 'Outcomes Assessment Reports',
+        'rcat-resource': 'Resource Allocation Reports'
+      };
+      el.innerHTML = `
+        <div class="report-category">
+          <div class="report-cat-title">${titleMap[id]}</div>
+          <div class="report-cat-sub">Download or generate reports for this category</div>
+          <div id="report-items-${id.replace('rcat-', '')}"></div>
+        </div>`;
+    }
+  });
+
+  Object.entries(cats).forEach(([catName, items]) => {
+    const elId = tabMap[catName];
+    // Inline performance target, use dynamic id for others
+    const targetEl = catName === 'Academic Performance'
+      ? document.getElementById('report-items-performance')
+      : document.getElementById('report-items-' + elId.replace('rcat-', ''));
+    if (!targetEl) return;
+
+    targetEl.innerHTML = items.map(r => `
+      <div class="report-card" style="display:flex;justify-content:space-between;align-items:center;padding:14px;border:1px solid var(--border);border-radius:10px;margin-bottom:10px">
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:14px">${r.title}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:3px">${r.description}</div>
+          <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap">
+            <span style="font-size:11px;background:var(--bg);border:1px solid var(--border);padding:2px 8px;border-radius:4px">${r.period}</span>
+            <span style="font-size:11px;background:var(--bg);border:1px solid var(--border);padding:2px 8px;border-radius:4px">${r.fileSize}</span>
+            <span style="font-size:11px;background:var(--bg);border:1px solid var(--border);padding:2px 8px;border-radius:4px">${r.id}</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-left:16px">
+          <button class="btn btn-outline btn-sm" onclick="toast('Previewing ${r.id}…')">Preview</button>
+          <button class="btn btn-primary btn-sm" onclick="toast('Downloading ${r.id}…')">Download</button>
+        </div>
+      </div>
+    `).join('');
+  });
+}
+
 // Events
 function handleAddEvent() {
-  const config = [
-    { id: 'ev-title', required: true, min: 5 },
-    { id: 'ev-date', required: true },
-    { id: 'ev-time', required: true },
-    { id: 'ev-venue', required: true }
-  ];
-  if (!validateForm('modalAddEvent', config)) return;
+  // Comprehensive validation with regex
+  if (!Validator.validateForm('modalAddEvent', [
+    { id: 'ev-title', type: 'title' },
+    { id: 'ev-date', type: 'date', label: 'Event date', future: true },
+    { id: 'ev-time', type: 'time' },
+    { id: 'ev-venue', type: 'venue' },
+    { id: 'ev-desc', type: 'description', min: 10, max: 500 }
+  ])) return;
 
   const db = getDB();
   const newEv = {
@@ -198,16 +255,16 @@ function handleDeleteEvent(id) {
 
 // Resources
 function handleAddResource() {
-  const config = [
-    { id: 'res-name', required: true },
-    { id: 'res-type', required: true },
-    { id: 'res-cap', required: true, numeric: true }
-  ];
-  if (!validateForm('modalAddResource', config)) return;
+  // Comprehensive validation with regex
+  if (!Validator.validateForm('modalAddResource', [
+    { id: 'res-name', type: 'required', label: 'Resource name', min: 3 },
+    { id: 'res-type', type: 'required', label: 'Resource type' },
+    { id: 'res-cap', type: 'capacity' }
+  ])) return;
 
   const db = getDB();
   const res = {
-    id: 'RES-' + Math.floor(Math.random()*1000),
+    id: 'RES-' + Math.floor(Math.random() * 1000),
     name: document.getElementById('res-name').value,
     type: document.getElementById('res-type').value,
     capacity: document.getElementById('res-cap').value,
@@ -284,15 +341,26 @@ function renderFees() {
 
 // Users
 function handleAddUser() {
-  const config = [
-    { id: 'u-name', required: true, min: 3 },
-    { id: 'u-email', required: true, type: 'email' }
-  ];
-  if (!validateForm('modalAddUser', config)) return;
+  // Comprehensive validation with regex
+  if (!Validator.validateForm('modalAddUser', [
+    { id: 'u-name', type: 'name' },
+    { id: 'u-email', type: 'email' }
+  ])) return;
 
+  // Check for duplicate email
   const db = getDB();
+  const existingEmails = db.admin.userManagement.users.map(u => u.email);
+  const emailCheck = Validator.rules.emailUnique(
+    document.getElementById('u-email').value,
+    existingEmails
+  );
+  if (!emailCheck.isValid) {
+    Validator.showError('u-email', emailCheck.message);
+    return;
+  }
+
   const user = {
-    id: 'U-' + Math.floor(Math.random()*1000),
+    id: 'U-' + Math.floor(Math.random() * 1000),
     name: document.getElementById('u-name').value,
     email: document.getElementById('u-email').value,
     role: document.getElementById('u-role').value,
@@ -329,17 +397,17 @@ function handleDeleteUser(id) {
 
 // Attendance Overrides
 function handleAddOverride() {
-  const config = [
-    { id: 'ao-name', required: true },
-    { id: 'ao-roll', required: true },
-    { id: 'ao-date', required: true },
-    { id: 'ao-reason', required: true, min: 10 }
-  ];
-  if (!validateForm('modalAddOverride', config)) return;
+  // Comprehensive validation with regex
+  if (!Validator.validateForm('modalAddOverride', [
+    { id: 'ao-name', type: 'name' },
+    { id: 'ao-roll', type: 'rollNumber' },
+    { id: 'ao-date', type: 'date', label: 'Override date' },
+    { id: 'ao-reason', type: 'reason' }
+  ])) return;
 
   const db = getDB();
   const rec = {
-    id: 'O' + Math.floor(Math.random()*100),
+    id: 'O' + Math.floor(Math.random() * 100),
     name: document.getElementById('ao-name').value,
     roll: document.getElementById('ao-roll').value,
     date: document.getElementById('ao-date').value,
@@ -378,12 +446,13 @@ function handleDeleteOverride(id) {
 
 // Settings
 function handleUpdatePassword() {
-  const config = [
-    { id: 'p-curr', required: true },
-    { id: 'p-new', required: true, min: 8 },
-    { id: 'p-conf', required: true, matchId: 'p-new' }
-  ];
-  if (!validateForm('panel-settings', config)) return;
+  // Comprehensive validation with regex
+  if (!Validator.validateForm('panel-settings', [
+    { id: 'p-curr', type: 'required', label: 'Current password' },
+    { id: 'p-new', type: 'password', strict: true },
+    { id: 'p-conf', type: 'passwordMatch', matchId: 'p-new' }
+  ])) return;
+
   toast('Password changed successfully');
   document.getElementById('p-curr').value = '';
   document.getElementById('p-new').value = '';
@@ -391,11 +460,11 @@ function handleUpdatePassword() {
 }
 
 function handleSubmitBug() {
-  const config = [
-    { id: 'bug-title', required: true, min: 5 },
-    { id: 'bug-desc', required: true, min: 15 }
-  ];
-  if (!validateForm('modalReportBug', config)) return;
+  // Comprehensive validation with regex
+  if (!Validator.validateForm('modalReportBug', [
+    { id: 'bug-title', type: 'title' },
+    { id: 'bug-desc', type: 'description', min: 15, max: 1000 }
+  ])) return;
 
   const db = getDB();
   const report = {
@@ -431,12 +500,15 @@ function initPage() {
     return;
   }
 
-  document.getElementById('sb-initial').textContent = db.settings.account.userId[0].toUpperCase();
-  document.getElementById('sb-name').textContent = db.settings.account.userId;
+  const currentUser = getCurrentUser();
+  const displayName = currentUser ? currentUser.name : db.settings.account.userId;
+  document.getElementById('sb-initial').textContent = displayName.charAt(0).toUpperCase();
+  document.getElementById('sb-name').textContent = displayName;
   document.getElementById('account-email').textContent = db.settings.account.email;
   document.getElementById('account-id').textContent = db.settings.account.userId;
 
   renderStats();
+  renderReports();
   renderEvents();
   renderResources();
   renderFees();

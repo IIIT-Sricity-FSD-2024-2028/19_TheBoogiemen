@@ -40,8 +40,8 @@ function closeSidebar() {
   document.getElementById('overlaySb').classList.remove('show');
 }
 
-function showModal(id) { 
-  document.getElementById(id).classList.add('show'); 
+function showModal(id) {
+  document.getElementById(id).classList.add('show');
 }
 
 function closeModal(id) {
@@ -49,8 +49,8 @@ function closeModal(id) {
   clearErrors(id);
 }
 
-function closeModalBg(e, id) { 
-  if (e.target.id === id) closeModal(id); 
+function closeModalBg(e, id) {
+  if (e.target.id === id) closeModal(id);
 }
 
 let toastTimer;
@@ -113,14 +113,25 @@ function _nextId(arr) {
 
 // Provisioning
 function handleAddUser() {
-  const cfg = [
-    { id: 'u-name', required: true, min: 3 },
-    { id: 'u-email', required: true, type: 'email' },
-    { id: 'u-role', required: true }
-  ];
-  if (!validateForm('modalAddUser', cfg)) return;
+  // Comprehensive validation with regex
+  if (!Validator.validateForm('modalAddUser', [
+    { id: 'u-name', type: 'name' },
+    { id: 'u-email', type: 'email' },
+    { id: 'u-role', type: 'required', label: 'Role' }
+  ])) return;
 
+  // Check for duplicate email
   const db = getDB();
+  const existingEmails = db.superuser.users.map(u => u.email);
+  const emailCheck = Validator.rules.emailUnique(
+    document.getElementById('u-email').value,
+    existingEmails
+  );
+  if (!emailCheck.isValid) {
+    Validator.showError('u-email', emailCheck.message);
+    return;
+  }
+
   const nextId = 'USR-' + String(db.superuser.users.length + 1000);
   const user = {
     id: nextId,
@@ -202,7 +213,7 @@ function performDelete() {
 
 function openEditModal(id) {
   const u = getDB().superuser.users.find(x => x.id === id);
-  if(!u) return;
+  if (!u) return;
   document.getElementById('edit-id').value = u.id;
   document.getElementById('edit-name').value = u.name;
   document.getElementById('edit-email').value = u.email;
@@ -213,9 +224,29 @@ function openEditModal(id) {
 
 function handleUpdateUser() {
   const id = document.getElementById('edit-id').value;
+  
+  // Comprehensive validation with regex
+  if (!Validator.validateForm('modalEditUser', [
+    { id: 'edit-name', type: 'name' },
+    { id: 'edit-email', type: 'email' }
+  ])) return;
+
+  // Check for duplicate email (excluding current user's email)
   const db = getDB();
+  const currentUser = db.superuser.users.find(u => u.id === id);
+  const existingEmails = db.superuser.users.map(u => u.email);
+  const emailCheck = Validator.rules.emailUnique(
+    document.getElementById('edit-email').value,
+    existingEmails,
+    currentUser ? currentUser.email : ''
+  );
+  if (!emailCheck.isValid) {
+    Validator.showError('edit-email', emailCheck.message);
+    return;
+  }
+
   const idx = db.superuser.users.findIndex(u => u.id === id);
-  if(idx === -1) return;
+  if (idx === -1) return;
 
   db.superuser.users[idx] = {
     ...db.superuser.users[idx],
@@ -260,10 +291,10 @@ function handleClearLogs() {
 function renderBugReports() {
   const status = document.getElementById('bugStatusFilter').value;
   let reports = getBugReports();
-  if(status) reports = reports.filter(r => r.status === status);
+  if (status) reports = reports.filter(r => r.status === status);
 
   const list = document.getElementById('bug-reports-list');
-  if(reports.length === 0) {
+  if (reports.length === 0) {
     list.innerHTML = `<div style="text-align:center;padding:24px;color:var(--muted)">Queue empty. No active defects.</div>`;
     return;
   }
@@ -286,7 +317,7 @@ function renderBugReports() {
 
 function viewBug(id) {
   const r = getBugReports().find(x => x.id === id);
-  if(!r) return;
+  if (!r) return;
   document.getElementById('bugDetailTitle').textContent = `Review: ${r.id}`;
   document.getElementById('bugDetailBody').innerHTML = `
     <div class="form-field"><label>Title</label><div class="dir-stat-label" style="text-transform:none;font-size:14px;color:var(--ink)">${r.title}</div></div>
@@ -333,12 +364,31 @@ function handleSaveConfig() {
 /* =====================================================
    INITIALIZATION
    ===================================================== */
+function approveUser(id) {
+  const db = getDB();
+  const idx = db.superuser.users.findIndex(u => u.id === id);
+  if (idx === -1) return;
+  db.superuser.users[idx].status = 'active';
+  db.superuser.metrics.totalUsers = db.superuser.users.length;
+  db.superuser.systemLogs.unshift({
+    level: 'info',
+    title: `Account approved: ${db.superuser.users[idx].name} (${id})`,
+    meta: `Operation by Superuser at ${new Date().toISOString()}`,
+    time: new Date().toLocaleTimeString('en-GB')
+  });
+  saveDB(db);
+  toast('Account approved successfully');
+  _suRefresh('overview');
+}
+
 function initPage() {
   const db = getDB().superuser;
+  const currentUser = getCurrentUser();
 
   // Branding
-  document.getElementById('sbAvatar').textContent = 'S';
-  document.getElementById('topAvatar').textContent = 'S';
+  document.getElementById('sbAvatar').textContent = currentUser ? currentUser.name.charAt(0).toUpperCase() : 'S';
+  document.getElementById('sbUname').textContent = currentUser ? currentUser.name : 'Superuser';
+  document.getElementById('topAvatar').textContent = currentUser ? currentUser.name.charAt(0).toUpperCase() : 'S';
 
   // Metrics
   const m = db.metrics;
@@ -365,7 +415,7 @@ function initPage() {
   const stats = document.querySelectorAll('.dir-stat-val');
   roles.forEach((r, i) => {
     const count = db.users.filter(u => u.role === r).length;
-    if(stats[i]) stats[i].textContent = count;
+    if (stats[i]) stats[i].textContent = count;
   });
 
   // Settings
@@ -377,18 +427,18 @@ function initPage() {
 
   // Pending Approvals
   const pending = db.users.filter(u => u.status === 'pending');
-  document.getElementById('pendingUsersBody').innerHTML = pending.map(u => `
+  document.getElementById('pendingUsersBody').innerHTML = pending.length ? pending.map(u => `
     <tr>
       <td>${u.id}</td>
       <td><strong>${u.name}</strong></td>
       <td>${u.role}</td>
       <td>12 Mar 2026</td>
       <td class="action-cell">
-         <button class="btn btn-green btn-sm" onclick="setBugStatus('${u.id}', 'active'); _suRefresh('overview');">Approve</button>
+         <button class="btn btn-green btn-sm" onclick="approveUser('${u.id}')">Approve</button>
          <button class="btn btn-red btn-sm" onclick="openDeleteModal('${u.id}')">Reject</button>
       </td>
     </tr>
-  `).join('');
+  `).join('') : '<tr><td colspan="5" style="text-align:center;padding:16px;color:var(--muted)">No pending accounts.</td></tr>';
 }
 
 document.addEventListener('superuser:changed', (e) => {
