@@ -5,6 +5,19 @@
  */
 
 // ==========================================
+// USER CREDENTIALS FOR ALL PORTALS
+// ==========================================
+const userCredentials = [
+  { email: 'student@iiits.in', password: 'password', role: 'student', name: 'Faham' },
+  { email: 'pranjal.student@iiits.in', password: 'password', role: 'student', name: 'Pranjal' },
+  { email: 'faculty@iiits.in', password: 'password', role: 'faculty', name: 'Dr. Shams' },
+  { email: 'professor@iiits.in', password: 'password', role: 'faculty', name: 'Dr. Bablani' },
+  { email: 'head@iiits.in', password: 'password', role: 'head', name: 'Dr. Kavitha' },
+  { email: 'admin@iiits.in', password: 'password', role: 'admin', name: 'System Admin' },
+  { email: 'superuser@iiits.in', password: 'password', role: 'superuser', name: 'Pranjal Sharma' }
+];
+
+// ==========================================
 // 1. STUDENT PORTAL DATA
 // ==========================================
 const studentMockDatabase = {
@@ -43,10 +56,19 @@ const studentMockDatabase = {
       school: "School of Engineering & Technology",
       section: "Section 2",
       batch: "2024-2028",
-      cgpa: "9.16 / 10.0",
-      cgpaLabel: "Cumulative Grade Point Average",
+      cgpa: "9.16",
+      attendance: 82,
+      year: "UG-2",
+      branch: "Computer Science",
       semester: "4th Semester",
-      term: "Spring 2026"
+      term: "Spring 2026",
+      currentCourses: [
+        { id: "CS301", course: "Database Management Systems", instructor: "Dr. Anushree Bablani", grade: "A-", attendance: 83, progress: 75, status: "On Track" },
+        { id: "CS302", course: "Machine Learning", instructor: "Dr. James Wilson", grade: "B+", attendance: 83, progress: 60, status: "On Track" },
+        { id: "CS303", course: "Software Engineering", instructor: "Prof. Emily Chen", grade: "A", attendance: 95, progress: 85, status: "On Track" },
+        { id: "CS304", course: "Operating Systems", instructor: "Dr. Harshini", grade: "A-", attendance: 88, progress: 70, status: "On Track" },
+        { id: "CS305", course: "Computer Networks", instructor: "Dr. Omkar", grade: "B+", attendance: 78, progress: 65, status: "On Track" }
+      ]
     },
     personal: {
       fullName: "Faham",
@@ -557,28 +579,33 @@ const superuserMockDatabase = {
 };
 
 // ==========================================
-// LOCAL STORAGE INITIALIZATION 
+// LOCAL STORAGE INITIALIZATION
 // ==========================================
 
 // Increment this when the data schema changes to force a re-seed.
-const DB_VERSION = 1;
+const DB_VERSION = 2;
+
+// In-memory database (source of truth from mockdata.js)
+let inMemoryDB = null;
 
 function initDatabase() {
     const existing = localStorage.getItem('ffsd');
     const versionKey = 'ffsd_v';
     const storedVersion = parseInt(localStorage.getItem(versionKey) || '0', 10);
 
-    // Only seed if no data exists OR if the schema version changed.
+    // Always initialize in-memory DB from mockdata
+    inMemoryDB = {
+        student:    studentMockDatabase,
+        faculty:    facultyMockDatabase,
+        admin:      academicHeadMockDatabase,
+        superuser:  superuserMockDatabase
+    };
+
+    // Only seed localStorage if no data exists OR if the schema version changed.
     if (!existing || storedVersion !== DB_VERSION) {
-        const masterDB = {
-            student:    studentMockDatabase,
-            faculty:    facultyMockDatabase,
-            admin:      academicHeadMockDatabase,
-            superuser:  superuserMockDatabase
-        };
-        localStorage.setItem('ffsd', JSON.stringify(masterDB));
+        localStorage.setItem('ffsd', JSON.stringify(inMemoryDB));
         localStorage.setItem(versionKey, String(DB_VERSION));
-        console.log("Database seeded (version " + DB_VERSION + ").");
+        console.log("Database seeded from mockdata.js (version " + DB_VERSION + ").");
     } else {
         console.log("Database already seeded (version " + DB_VERSION + "). Using existing data.");
     }
@@ -588,17 +615,63 @@ function initDatabase() {
 initDatabase();
 
 // ==========================================
+// DEBUG / RESET FUNCTIONS
+// ==========================================
+
+/**
+ * Reset database to default mock data from mockdata.js
+ * Call resetDatabase() in browser console to force reset
+ */
+function resetDatabase() {
+    localStorage.removeItem('ffsd');
+    localStorage.removeItem('ffsd_v');
+    
+    // Re-initialize from mockdata
+    inMemoryDB = {
+        student:    studentMockDatabase,
+        faculty:    facultyMockDatabase,
+        admin:      academicHeadMockDatabase,
+        superuser:  superuserMockDatabase
+    };
+    
+    localStorage.setItem('ffsd', JSON.stringify(inMemoryDB));
+    localStorage.setItem('ffsd_v', String(DB_VERSION));
+    
+    console.log('Database reset to mockdata.js defaults');
+    console.log('Current DB:', inMemoryDB);
+    return inMemoryDB;
+}
+
+// ==========================================
 // CRUD HELPER FUNCTIONS (For the whole team to use)
 // ==========================================
 
-// Get the entire current state of the database
+// Get the entire current state of the database (from localStorage)
 function getDB() {
-    return JSON.parse(localStorage.getItem('ffsd'));
+    const data = localStorage.getItem('ffsd');
+    if (!data) {
+        console.warn('Database empty! Re-initializing from mockdata.js...');
+        initDatabase();
+        return JSON.parse(localStorage.getItem('ffsd'));
+    }
+    return JSON.parse(data);
 }
 
-// Save the database after making a change
+// Save the database after making a change (to localStorage)
 function saveDB(data) {
     localStorage.setItem('ffsd', JSON.stringify(data));
+    // Also update in-memory copy
+    inMemoryDB = data;
+}
+
+// Get the original mockdata (read-only reference)
+function getMockData() {
+    return {
+        student:    studentMockDatabase,
+        faculty:    facultyMockDatabase,
+        admin:      academicHeadMockDatabase,
+        superuser:  superuserMockDatabase
+    };
 }
 
 // ==========================================
@@ -662,4 +735,74 @@ function updateBugReport(id, patch) {
         db.superuser.bugReports[idx] = { ...db.superuser.bugReports[idx], ...patch };
         saveDB(db);
     }
+}
+
+// ==========================================
+// AUTHENTICATION HELPERS
+// ==========================================
+
+/**
+ * Validate user credentials and return user info
+ * @param {string} email 
+ * @param {string} password 
+ * @returns {object|null} User info if valid, null otherwise
+ */
+function authenticateUser(email, password) {
+    const user = userCredentials.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
+    if (user) {
+        return {
+            email: user.email,
+            name: user.name,
+            role: user.role
+        };
+    }
+    return null;
+}
+
+/**
+ * Get the currently logged in user from session storage
+ * @returns {object|null}
+ */
+function getCurrentUser() {
+    const userStr = sessionStorage.getItem('currentUser');
+    return userStr ? JSON.parse(userStr) : null;
+}
+
+/**
+ * Set the current user in session storage
+ * @param {object} user 
+ */
+function setCurrentUser(user) {
+    sessionStorage.setItem('currentUser', JSON.stringify(user));
+}
+
+/**
+ * Clear the current user from session storage
+ */
+function clearCurrentUser() {
+    sessionStorage.removeItem('currentUser');
+}
+
+/**
+ * Get the redirect URL for a given role
+ * @param {string} role 
+ * @returns {string}
+ */
+function getRedirectForRole(role) {
+    const redirects = {
+        'student': 'student.html',
+        'faculty': 'faculty.html',
+        'head': 'head.html',
+        'admin': 'head.html',
+        'superuser': 'superuser.html'
+    };
+    return redirects[role] || 'student.html';
+}
+
+/**
+ * Handle logout - clear session and redirect to login
+ */
+function handleLogout() {
+    clearCurrentUser();
+    window.location.href = 'login.html';
 }

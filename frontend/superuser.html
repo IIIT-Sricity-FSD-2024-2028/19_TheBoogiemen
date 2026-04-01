@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/shared.css" />
   <link rel="stylesheet" href="css/superuser.css" />
-  <script src="mockdata.js"></script>
+  <script src="js/mockdata.js"></script>
 </head>
 <body>
   <div class="app">
@@ -52,7 +52,7 @@
       </nav>
 
       <div class="sb-footer">
-        <a class="logout-btn" href="login.html">
+        <a class="logout-btn" onclick="handleLogout()">
           <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
           Logout
         </a>
@@ -434,11 +434,6 @@
   </div>
 
   <div class="toast" id="toastEl"></div>
-
-  <!-- Replace inline script with external -->
-<script src="js/mockdata.js"></script>
-<script src="js/state-manager.js"></script>
-<script src="js/auth.js"></script>
-<script src="js/superuser.js"></script>
+  <script src="js/superuser.js"></script>
 </body>
 </html>
