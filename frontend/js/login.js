@@ -1,6 +1,8 @@
 /**
  * login.js - Login Page Scripts
  * BarelyPassing - Academic Progress & Outcome Tracking
+ * 
+ * Enhanced with regex-based validation using Validator from auth.js
  */
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -56,37 +58,32 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function validateForm(cfg) {
+    // Clear previous errors
     document.querySelectorAll('.field').forEach(f => f.classList.remove('has-error'));
     document.querySelectorAll('.field-error').forEach(e => e.remove());
+    
     let ok = true;
+    const errors = [];
+    
     cfg.forEach(f => {
       const inp = document.getElementById(f.id);
       const val = inp.value.trim();
       let err = '';
       
-      if (f.required && !val) {
-        err = 'This field is required';
-      }
-      else if (f.type === 'email' && val && !/^\S+@\S+\.\S+$/.test(val)) {
-        err = 'Invalid email format';
-      }
-      else if (f.type === 'password' && val) {
-        // Enhanced password validation with regex
-        if (val.length < 8) {
-          err = 'Password must be at least 8 characters';
-        } else if (!/(?=.*[a-z])/.test(val)) {
-          err = 'Password must contain a lowercase letter';
-        } else if (!/(?=.*[A-Z])/.test(val)) {
-          err = 'Password must contain an uppercase letter';
-        } else if (!/(?=.*\d)/.test(val)) {
-          err = 'Password must contain a number';
-        } else if (!/(?=.*[@$!%*?&])/.test(val)) {
-          err = 'Password must contain a special character (@$!%*?&)';
-        }
+      // Use Validator from auth.js for consistent validation
+      const rules = {
+        required: f.required,
+        type: f.type,
+        min: f.min
+      };
+      
+      const result = Validator.validateField(val, rules);
+      if (!result.isValid) {
+        ok = false;
+        err = result.message;
       }
       
-      if (err) {
-        ok = false;
+      if(err) {
         const parent = inp.closest('.field');
         parent.classList.add('has-error');
         const span = document.createElement('span');
@@ -100,9 +97,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function handleLogin(event) {
     event.preventDefault();
+    
+    // Enhanced validation with regex patterns
     const ok = validateForm([
       { id: 'email', required: true, type: 'email' },
-      { id: 'password', required: true, type: 'password' }
+      { id: 'password', required: true, min: 8 }
     ]);
     if (!ok) return;
 
@@ -112,7 +111,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Authenticate user
     const user = authenticateUser(email, password);
-    
+
     if (!user) {
       // Show error
       const passwordField = document.getElementById('password').closest('.field');
@@ -143,7 +142,7 @@ document.addEventListener('DOMContentLoaded', function() {
     window.location.href = redirect;
   }
 
-  // Add event listeners
+  // Add event listeners for role selection
   document.querySelector('.rs-label[for="r-student"]').addEventListener('click', () => switchForm('student'));
   document.querySelector('.rs-label[for="r-faculty"]').addEventListener('click', () => switchForm('faculty'));
   document.querySelector('.rs-label[for="r-head"]').addEventListener('click', () => switchForm('head'));
@@ -155,4 +154,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Make handleLogin available globally
   window.handleLogin = handleLogin;
+  
+  // Enable real-time validation on email field
+  Validator.enableRealTimeValidation('email', { required: true, type: 'email' });
+  Validator.enableRealTimeValidation('password', { required: true, min: 8 });
 });

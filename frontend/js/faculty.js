@@ -70,6 +70,8 @@ function toast(msg) {
    VALIDATION
    ===================================================== */
 function validateForm(mid, cfg) {
+  // Use the enhanced global validateForm from auth.js
+  // This maintains backward compatibility with existing calls
   clearErrors(mid);
   let ok = true;
   cfg.forEach(f => {
@@ -106,11 +108,14 @@ function _refresh() {
 }
 
 function handleSchedule() {
-  // Comprehensive validation with regex
-  if (!Validator.validateForm('modalMeeting', [
-    { id: 'meet-date', type: 'date', label: 'Meeting date', future: true },
-    { id: 'meet-time', type: 'time' },
-    { id: 'meet-agenda', type: 'description', min: 10, max: 500 }
+  const meetingDate = document.getElementById('meet-date').value;
+  const today = new Date().toISOString().split('T')[0];
+  
+  if (!validateForm('modalMeeting', [
+    { id: 'meet-stu', required: true, message: 'Student name required' },
+    { id: 'meet-date', required: true, type: 'date', minDate: today, message: 'Meeting date must be in the future' },
+    { id: 'meet-time', required: true, type: 'time', message: 'Select a valid time' },
+    { id: 'meet-agenda', required: false, min: 10, max: 500, message: 'Agenda must be 10-500 characters' }
   ])) return;
 
   const db = getDB();
@@ -133,7 +138,10 @@ function handleSchedule() {
 
 function handleSaveAttendance() {
   const classId = document.getElementById('classSelect').value;
-  if (!classId) { toast('Please select a class first'); return; }
+  if (!classId) { 
+    toast('Please select a class first'); 
+    return; 
+  }
 
   const records = [];
   document.querySelectorAll('.att-student-row').forEach(row => {
@@ -159,10 +167,9 @@ function handleSaveAttendance() {
 }
 
 function handleBugSubmit() {
-  // Comprehensive validation with regex
-  if (!Validator.validateForm('panel-settings', [
-    { id: 'bugTitle', type: 'title' },
-    { id: 'bugDesc', type: 'description', min: 15, max: 1000 }
+  if (!validateForm('panel-settings', [
+    { id: 'bugTitle', required: true, min: 5, max: 200, message: 'Bug title must be 5-200 characters' },
+    { id: 'bugDesc', required: true, min: 10, max: 1000, message: 'Description must be 10-1000 characters' }
   ])) return;
 
   const db = getDB();

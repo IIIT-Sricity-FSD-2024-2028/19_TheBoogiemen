@@ -204,14 +204,17 @@ function renderReports() {
 
 // Events
 function handleAddEvent() {
-  // Comprehensive validation with regex
-  if (!Validator.validateForm('modalAddEvent', [
-    { id: 'ev-title', type: 'title' },
-    { id: 'ev-date', type: 'date', label: 'Event date', future: true },
-    { id: 'ev-time', type: 'time' },
-    { id: 'ev-venue', type: 'venue' },
-    { id: 'ev-desc', type: 'description', min: 10, max: 500 }
-  ])) return;
+  const eventDate = document.getElementById('ev-date').value;
+  const today = new Date().toISOString().split('T')[0];
+  
+  const config = [
+    { id: 'ev-title', required: true, min: 5, max: 200, message: 'Event title must be 5-200 characters' },
+    { id: 'ev-date', required: true, type: 'date', minDate: today, message: 'Event date must be in the future' },
+    { id: 'ev-time', required: true, type: 'time', message: 'Select a valid time' },
+    { id: 'ev-venue', required: true, min: 3, max: 100, message: 'Venue must be 3-100 characters' },
+    { id: 'ev-desc', required: false, min: 10, max: 500, message: 'Description must be 10-500 characters' }
+  ];
+  if (!validateForm('modalAddEvent', config)) return;
 
   const db = getDB();
   const newEv = {
@@ -255,12 +258,12 @@ function handleDeleteEvent(id) {
 
 // Resources
 function handleAddResource() {
-  // Comprehensive validation with regex
-  if (!Validator.validateForm('modalAddResource', [
-    { id: 'res-name', type: 'required', label: 'Resource name', min: 3 },
-    { id: 'res-type', type: 'required', label: 'Resource type' },
-    { id: 'res-cap', type: 'capacity' }
-  ])) return;
+  const config = [
+    { id: 'res-name', required: true, min: 3, max: 100, message: 'Resource name must be 3-100 characters' },
+    { id: 'res-type', required: true, message: 'Please select resource type' },
+    { id: 'res-cap', required: true, type: 'amount', minValue: 1, maxValue: 10000, message: 'Capacity must be 1-10000' }
+  ];
+  if (!validateForm('modalAddResource', config)) return;
 
   const db = getDB();
   const res = {
@@ -341,24 +344,14 @@ function renderFees() {
 
 // Users
 function handleAddUser() {
-  // Comprehensive validation with regex
-  if (!Validator.validateForm('modalAddUser', [
-    { id: 'u-name', type: 'name' },
-    { id: 'u-email', type: 'email' }
-  ])) return;
+  const config = [
+    { id: 'u-name', required: true, min: 3, max: 100, type: 'name', message: 'Name must be 3-100 characters' },
+    { id: 'u-email', required: true, type: 'email', message: 'Please enter a valid institutional email' },
+    { id: 'u-role', required: true, message: 'Please select a role' }
+  ];
+  if (!validateForm('modalAddUser', config)) return;
 
-  // Check for duplicate email
   const db = getDB();
-  const existingEmails = db.admin.userManagement.users.map(u => u.email);
-  const emailCheck = Validator.rules.emailUnique(
-    document.getElementById('u-email').value,
-    existingEmails
-  );
-  if (!emailCheck.isValid) {
-    Validator.showError('u-email', emailCheck.message);
-    return;
-  }
-
   const user = {
     id: 'U-' + Math.floor(Math.random() * 1000),
     name: document.getElementById('u-name').value,
@@ -397,13 +390,13 @@ function handleDeleteUser(id) {
 
 // Attendance Overrides
 function handleAddOverride() {
-  // Comprehensive validation with regex
-  if (!Validator.validateForm('modalAddOverride', [
-    { id: 'ao-name', type: 'name' },
-    { id: 'ao-roll', type: 'rollNumber' },
-    { id: 'ao-date', type: 'date', label: 'Override date' },
-    { id: 'ao-reason', type: 'reason' }
-  ])) return;
+  const config = [
+    { id: 'ao-name', required: true },
+    { id: 'ao-roll', required: true },
+    { id: 'ao-date', required: true },
+    { id: 'ao-reason', required: true, min: 10 }
+  ];
+  if (!validateForm('modalAddOverride', config)) return;
 
   const db = getDB();
   const rec = {
@@ -446,13 +439,12 @@ function handleDeleteOverride(id) {
 
 // Settings
 function handleUpdatePassword() {
-  // Comprehensive validation with regex
-  if (!Validator.validateForm('panel-settings', [
-    { id: 'p-curr', type: 'required', label: 'Current password' },
-    { id: 'p-new', type: 'password', strict: true },
-    { id: 'p-conf', type: 'passwordMatch', matchId: 'p-new' }
-  ])) return;
-
+  const config = [
+    { id: 'p-curr', required: true },
+    { id: 'p-new', required: true, min: 8 },
+    { id: 'p-conf', required: true, matchId: 'p-new' }
+  ];
+  if (!validateForm('panel-settings', config)) return;
   toast('Password changed successfully');
   document.getElementById('p-curr').value = '';
   document.getElementById('p-new').value = '';
@@ -460,11 +452,11 @@ function handleUpdatePassword() {
 }
 
 function handleSubmitBug() {
-  // Comprehensive validation with regex
-  if (!Validator.validateForm('modalReportBug', [
-    { id: 'bug-title', type: 'title' },
-    { id: 'bug-desc', type: 'description', min: 15, max: 1000 }
-  ])) return;
+  const config = [
+    { id: 'bug-title', required: true, min: 5 },
+    { id: 'bug-desc', required: true, min: 15 }
+  ];
+  if (!validateForm('modalReportBug', config)) return;
 
   const db = getDB();
   const report = {

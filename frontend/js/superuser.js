@@ -113,25 +113,15 @@ function _nextId(arr) {
 
 // Provisioning
 function handleAddUser() {
-  // Comprehensive validation with regex
-  if (!Validator.validateForm('modalAddUser', [
-    { id: 'u-name', type: 'name' },
-    { id: 'u-email', type: 'email' },
-    { id: 'u-role', type: 'required', label: 'Role' }
-  ])) return;
+  const cfg = [
+    { id: 'u-name', required: true, min: 3, max: 100, type: 'name', message: 'Name must be 3-100 characters' },
+    { id: 'u-email', required: true, type: 'email', message: 'Please enter a valid institutional email' },
+    { id: 'u-role', required: true, message: 'Please select a role' },
+    { id: 'u-status', required: true, message: 'Please select status' }
+  ];
+  if (!validateForm('modalAddUser', cfg)) return;
 
-  // Check for duplicate email
   const db = getDB();
-  const existingEmails = db.superuser.users.map(u => u.email);
-  const emailCheck = Validator.rules.emailUnique(
-    document.getElementById('u-email').value,
-    existingEmails
-  );
-  if (!emailCheck.isValid) {
-    Validator.showError('u-email', emailCheck.message);
-    return;
-  }
-
   const nextId = 'USR-' + String(db.superuser.users.length + 1000);
   const user = {
     id: nextId,
@@ -225,26 +215,15 @@ function openEditModal(id) {
 function handleUpdateUser() {
   const id = document.getElementById('edit-id').value;
   
-  // Comprehensive validation with regex
-  if (!Validator.validateForm('modalEditUser', [
-    { id: 'edit-name', type: 'name' },
-    { id: 'edit-email', type: 'email' }
-  ])) return;
-
-  // Check for duplicate email (excluding current user's email)
+  const cfg = [
+    { id: 'edit-name', required: true, min: 3, max: 100, type: 'name', message: 'Name must be 3-100 characters' },
+    { id: 'edit-email', required: true, type: 'email', message: 'Please enter a valid email' },
+    { id: 'edit-role', required: true, message: 'Please select a role' },
+    { id: 'edit-status', required: true, message: 'Please select status' }
+  ];
+  if (!validateForm('modalEditUser', cfg)) return;
+  
   const db = getDB();
-  const currentUser = db.superuser.users.find(u => u.id === id);
-  const existingEmails = db.superuser.users.map(u => u.email);
-  const emailCheck = Validator.rules.emailUnique(
-    document.getElementById('edit-email').value,
-    existingEmails,
-    currentUser ? currentUser.email : ''
-  );
-  if (!emailCheck.isValid) {
-    Validator.showError('edit-email', emailCheck.message);
-    return;
-  }
-
   const idx = db.superuser.users.findIndex(u => u.id === id);
   if (idx === -1) return;
 

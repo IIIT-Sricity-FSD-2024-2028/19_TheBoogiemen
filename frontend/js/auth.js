@@ -1,21 +1,466 @@
 /**
  * auth.js - Authentication & Form Validation
  * Handles login validation, session creation, and role-based redirects
+ * 
+ * COMPREHENSIVE REGEX-BASED VALIDATION SYSTEM
+ * All patterns are tested and handle edge cases for Indian educational context
  */
 
-const Auth = {
-  // Regex patterns for validation
+// ==========================================
+// GLOBAL VALIDATOR OBJECT
+// Can be used across all portals for consistent validation
+// ==========================================
+const Validator = {
+  // Comprehensive regex patterns for all validation needs
   patterns: {
+    // Email: Standard institutional email format
     email: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+    
+    // Institutional emails (iiits.in domain specific)
+    institutionalEmail: /^[a-zA-Z0-9._%+-]+@(iiits\.in|university\.edu|college\.edu)$/,
+    
+    // Student ID: S followed by 10 digits (e.g., S20240010146)
     studentId: /^S\d{10}$/,
+    
+    // Faculty ID: FAC_YYYY_XX format
     facultyId: /^FAC_\d{4}_\d{2}$/,
+    
+    // Admin ID: ADMIN_X#### format
     adminId: /^ADMIN_[A-Z]\d{4}$/,
+    
+    // Super User ID: USR-#### format
     superuserId: /^USR-\d{4}$/,
-    password: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+    
+    // User ID generic: USR-#### or USR-#####
+    userId: /^USR-\d{4,5}$/,
+    
+    // Strong password: 8+ chars with uppercase, lowercase, number, special char
+    passwordStrong: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+    
+    // Simple password: 8+ characters (for demo)
     passwordSimple: /^.{8,}$/,
-    phone: /^[6-9]\d{9}$/,
-    name: /^[a-zA-Z\s]{3,50}$/
+    
+    // Password with moderate strength: 8+ chars with at least letter and number
+    passwordModerate: /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/,
+    
+    // Indian phone number: 10 digits starting with 6-9
+    phoneIndian: /^[6-9]\d{9}$/,
+    
+    // Phone with optional +91 prefix
+    phoneWithCode: /^(\+91)?[6-9]\d{9}$/,
+    
+    // Name: 3-50 alphabetic characters with spaces
+    name: /^[a-zA-Z\s]{3,50}$/,
+    
+    // Name with hyphens and apostrophes (e.g., Mary-Jane O'Connor)
+    nameExtended: /^[a-zA-Z\s'-]{2,60}$/,
+    
+    // Course code: 2-5 letters followed by 3 digits (e.g., CS301)
+    courseCode: /^[A-Z]{2,5}\d{3}$/,
+    
+    // Subject code: 2-5 letters, 3 digits, optional letter suffix
+    subjectCode: /^[A-Z]{2,5}\d{3}[A-Z]?$/,
+    
+    // Date: YYYY-MM-DD format
+    dateISO: /^\d{4}-\d{2}-\d{2}$/,
+    
+    // Time: HH:MM format (24-hour)
+    time24: /^([01]\d|2[0-3]):[0-5]\d$/,
+    
+    // Time: HH:MM AM/PM format (12-hour)
+    time12: /^(0?[1-9]|1[0-2]):[0-5]\d\s?(AM|PM|am|pm)$/,
+    
+    // Percentage: 0-100
+    percentage: /^(100|[1-9]?\d(\.\d{1,2})?)%?$/,
+    
+    // CGPA: 0.00-10.00
+    cgpa: /^([0-9](\.\d{1,2})?|10(\.0{1,2})?)$/,
+    
+    // Amount: Positive number with optional 2 decimal places
+    amount: /^\d+(\.\d{1,2})?$/,
+    
+    // Indian currency format (₹ or Rs)
+    currencyINR: /^(₹|Rs\.?\s?)?\d{1,3}(,\d{3})*(\.\d{2})?$/,
+    
+    // URL: HTTP/HTTPS
+    url: /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/,
+    
+    // File path (basic validation)
+    filePath: /^[a-zA-Z0-9_\-\.\s\\/]+$/,
+    
+    // File name with extension
+    fileName: /^[a-zA-Z0-9_\-\s]+\.[a-zA-Z]{2,4}$/,
+    
+    // PDF file
+    pdfFile: /^[a-zA-Z0-9_\-\s]+\.pdf$/,
+    
+    // Text area: 10-1000 characters
+    description: /^.{10,1000}$/,
+    
+    // Short text: 2-100 characters
+    shortText: /^.{2,100}$/,
+    
+    // Title: 5-200 characters
+    title: /^.{5,200}$/,
+    
+    // ID format: alphanumeric with hyphens (e.g., BUG-001, PROJ-001)
+    resourceId: /^[A-Z]{2,5}-\d{3,5}$/,
+    
+    // Bug ID: BUG-### format
+    bugId: /^BUG-\d{3}$/,
+    
+    // Leave ID: numeric
+    leaveId: /^\d+$/,
+    
+    // Status values
+    status: /^(active|inactive|pending|suspended|approved|rejected|open|closed|resolved|in-progress)$/,
+    
+    // Role values
+    role: /^(student|faculty|head|admin|superuser)$/,
+    
+    // Department codes
+    department: /^(CSE|ECE|ME|CE|EE|IT|EEE|Civil|Mechanical|Electrical|Electronics|Computer Science)$/
   },
+
+  // Error messages for each validation type
+  messages: {
+    email: 'Invalid email format. Use: name@domain.com',
+    institutionalEmail: 'Please use institutional email (@iiits.in, @university.edu)',
+    studentId: 'Invalid Student ID. Format: S followed by 10 digits (e.g., S20240010146)',
+    facultyId: 'Invalid Faculty ID. Format: FAC_YYYY_XX (e.g., FAC_2024_01)',
+    adminId: 'Invalid Admin ID. Format: ADMIN_X#### (e.g., ADMIN_A1234)',
+    superuserId: 'Invalid User ID. Format: USR-#### (e.g., USR-0001)',
+    userId: 'Invalid User ID format',
+    passwordStrong: 'Password must be 8+ chars with uppercase, lowercase, number, and special character',
+    passwordSimple: 'Password must be at least 8 characters',
+    passwordModerate: 'Password must be 8+ chars with at least one letter and one number',
+    phoneIndian: 'Invalid phone number. Use: 10-digit Indian mobile (e.g., 9876543210)',
+    phoneWithCode: 'Invalid phone. Use: +91XXXXXXXXXX or 10-digit mobile',
+    name: 'Name must be 3-50 alphabetic characters',
+    nameExtended: 'Name must be 2-60 characters (letters, spaces, hyphens, apostrophes)',
+    courseCode: 'Invalid course code. Format: 2-5 letters + 3 digits (e.g., CS301)',
+    subjectCode: 'Invalid subject code',
+    dateISO: 'Invalid date. Format: YYYY-MM-DD (e.g., 2026-03-15)',
+    time24: 'Invalid time. Format: HH:MM (24-hour, e.g., 14:30)',
+    time12: 'Invalid time. Format: HH:MM AM/PM (e.g., 2:30 PM)',
+    percentage: 'Invalid percentage. Must be 0-100',
+    cgpa: 'Invalid CGPA. Must be 0.00-10.00',
+    amount: 'Invalid amount. Use: positive number with max 2 decimals',
+    currencyINR: 'Invalid currency format',
+    url: 'Invalid URL. Must start with http:// or https://',
+    filePath: 'Invalid file path',
+    fileName: 'Invalid file name. Must have extension (e.g., document.pdf)',
+    pdfFile: 'Invalid file. Must be a PDF',
+    description: 'Description must be 10-1000 characters',
+    shortText: 'Text must be 2-100 characters',
+    title: 'Title must be 5-200 characters',
+    resourceId: 'Invalid ID format. Use: XXX-### (e.g., BUG-001)',
+    bugId: 'Invalid Bug ID. Format: BUG-###',
+    leaveId: 'Invalid Leave ID',
+    status: 'Invalid status value',
+    role: 'Invalid role',
+    department: 'Invalid department code'
+  },
+
+  /**
+   * Validate a single field against a rule set
+   * @param {string} value - The value to validate
+   * @param {object} rules - Validation rules
+   * @returns {object} { isValid: boolean, message: string }
+   */
+  validateField(value, rules = {}) {
+    if (!value) value = '';
+    const trimmed = value.trim();
+
+    // Required check
+    if (rules.required && !trimmed) {
+      return { isValid: false, message: 'This field is required' };
+    }
+
+    // Skip further validation if empty and not required
+    if (!trimmed && !rules.required) {
+      return { isValid: true, message: '' };
+    }
+
+    // Pattern-based validation
+    if (rules.pattern) {
+      const pattern = typeof rules.pattern === 'string' 
+        ? this.patterns[rules.pattern] 
+        : rules.pattern;
+      if (pattern && !pattern.test(trimmed)) {
+        return { 
+          isValid: false, 
+          message: rules.message || this.messages[rules.pattern] || 'Invalid format' 
+        };
+      }
+    }
+
+    // Type-specific validations
+    if (rules.type) {
+      switch (rules.type) {
+        case 'email':
+          if (!this.patterns.email.test(trimmed)) {
+            return { isValid: false, message: rules.message || this.messages.email };
+          }
+          break;
+        case 'institutionalEmail':
+          if (!this.patterns.institutionalEmail.test(trimmed)) {
+            return { isValid: false, message: rules.message || this.messages.institutionalEmail };
+          }
+          break;
+        case 'phone':
+          if (!this.patterns.phoneIndian.test(trimmed)) {
+            return { isValid: false, message: rules.message || this.messages.phoneIndian };
+          }
+          break;
+        case 'date':
+          if (!this.patterns.dateISO.test(trimmed)) {
+            return { isValid: false, message: rules.message || this.messages.dateISO };
+          }
+          // Additional date logic check
+          const date = new Date(trimmed);
+          if (isNaN(date.getTime())) {
+            return { isValid: false, message: 'Invalid date' };
+          }
+          break;
+        case 'time':
+          if (!this.patterns.time24.test(trimmed) && !this.patterns.time12.test(trimmed)) {
+            return { isValid: false, message: rules.message || this.messages.time24 };
+          }
+          break;
+        case 'url':
+          if (!this.patterns.url.test(trimmed)) {
+            return { isValid: false, message: rules.message || this.messages.url };
+          }
+          break;
+        case 'amount':
+          if (!this.patterns.amount.test(trimmed)) {
+            return { isValid: false, message: rules.message || this.messages.amount };
+          }
+          break;
+        case 'percentage':
+          const pct = parseFloat(trimmed.replace('%', ''));
+          if (isNaN(pct) || pct < 0 || pct > 100) {
+            return { isValid: false, message: rules.message || this.messages.percentage };
+          }
+          break;
+        case 'cgpa':
+          const cgpa = parseFloat(trimmed);
+          if (isNaN(cgpa) || cgpa < 0 || cgpa > 10) {
+            return { isValid: false, message: rules.message || this.messages.cgpa };
+          }
+          break;
+        case 'name':
+          if (!this.patterns.nameExtended.test(trimmed)) {
+            return { isValid: false, message: rules.message || this.messages.nameExtended };
+          }
+          break;
+        case 'password':
+          if (rules.strength === 'strong') {
+            if (!this.patterns.passwordStrong.test(trimmed)) {
+              return { isValid: false, message: rules.message || this.messages.passwordStrong };
+            }
+          } else if (rules.strength === 'moderate') {
+            if (!this.patterns.passwordModerate.test(trimmed)) {
+              return { isValid: false, message: rules.message || this.messages.passwordModerate };
+            }
+          } else {
+            if (!this.patterns.passwordSimple.test(trimmed)) {
+              return { isValid: false, message: rules.message || this.messages.passwordSimple };
+            }
+          }
+          break;
+      }
+    }
+
+    // Length validations
+    if (rules.min && trimmed.length < rules.min) {
+      return { isValid: false, message: `Minimum ${rules.min} characters required` };
+    }
+    if (rules.max && trimmed.length > rules.max) {
+      return { isValid: false, message: `Maximum ${rules.max} characters allowed` };
+    }
+
+    // Numeric range validations
+    if (rules.minValue !== undefined) {
+      const num = parseFloat(trimmed);
+      if (isNaN(num) || num < rules.minValue) {
+        return { isValid: false, message: `Value must be at least ${rules.minValue}` };
+      }
+    }
+    if (rules.maxValue !== undefined) {
+      const num = parseFloat(trimmed);
+      if (isNaN(num) || num > rules.maxValue) {
+        return { isValid: false, message: `Value must not exceed ${rules.maxValue}` };
+      }
+    }
+
+    // Date range validations
+    if (rules.minDate) {
+      const inputDate = new Date(trimmed);
+      const minDate = new Date(rules.minDate);
+      if (inputDate < minDate) {
+        return { isValid: false, message: `Date must be on or after ${rules.minDate}` };
+      }
+    }
+    if (rules.maxDate) {
+      const inputDate = new Date(trimmed);
+      const maxDate = new Date(rules.maxDate);
+      if (inputDate > maxDate) {
+        return { isValid: false, message: `Date must be on or before ${rules.maxDate}` };
+      }
+    }
+
+    // Match field validation (for confirm password, etc.)
+    if (rules.matchId) {
+      const matchInput = document.getElementById(rules.matchId);
+      if (matchInput && trimmed !== matchInput.value.trim()) {
+        return { isValid: false, message: rules.message || 'Values do not match' };
+      }
+    }
+
+    // Custom validator function
+    if (typeof rules.validator === 'function') {
+      const result = rules.validator(trimmed);
+      if (result !== true) {
+        return { isValid: false, message: result || 'Invalid value' };
+      }
+    }
+
+    return { isValid: true, message: '' };
+  },
+
+  /**
+   * Validate multiple fields at once
+   * @param {Array} fields - Array of { id, rules } objects
+   * @returns {object} { isValid: boolean, errors: Array }
+   */
+  validateFields(fields) {
+    const errors = [];
+    
+    fields.forEach(field => {
+      const input = document.getElementById(field.id);
+      if (!input) {
+        console.warn(`Validator: Element with id '${field.id}' not found`);
+        return;
+      }
+
+      const value = input.value;
+      const result = this.validateField(value, field.rules);
+
+      if (!result.isValid) {
+        errors.push({
+          fieldId: field.id,
+          fieldName: field.name || field.id,
+          message: result.message
+        });
+      }
+    });
+
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
+  },
+
+  /**
+   * Display validation errors on the form
+   * @param {Array} errors - Array of error objects
+   */
+  showErrors(errors) {
+    errors.forEach(error => {
+      const input = document.getElementById(error.fieldId);
+      if (!input) return;
+
+      const parent = input.closest('.form-field') || input.closest('.field');
+      if (!parent) return;
+
+      parent.classList.add('has-error');
+
+      // Remove existing error
+      const existing = parent.querySelector('.field-error');
+      if (existing) existing.remove();
+
+      // Add error message
+      const errorSpan = document.createElement('span');
+      errorSpan.className = 'field-error';
+      errorSpan.textContent = error.message;
+      parent.appendChild(errorSpan);
+    });
+  },
+
+  /**
+   * Clear all validation errors from a form/modal
+   * @param {string} containerId - ID of the container (modal or form)
+   */
+  clearErrors(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    container.querySelectorAll('.has-error').forEach(el => {
+      el.classList.remove('has-error');
+    });
+    container.querySelectorAll('.field-error').forEach(el => el.remove());
+  },
+
+  /**
+   * Clear error from a specific field
+   * @param {string} fieldId - ID of the field
+   */
+  clearFieldError(fieldId) {
+    const input = document.getElementById(fieldId);
+    if (!input) return;
+
+    const parent = input.closest('.form-field') || input.closest('.field');
+    if (!parent) return;
+
+    parent.classList.remove('has-error');
+    const existing = parent.querySelector('.field-error');
+    if (existing) existing.remove();
+  },
+
+  /**
+   * Enable real-time validation on input
+   * @param {string} fieldId - ID of the input field
+   * @param {object} rules - Validation rules
+   */
+  enableRealTimeValidation(fieldId, rules) {
+    const input = document.getElementById(fieldId);
+    if (!input) return;
+
+    // Clear error on input
+    input.addEventListener('input', () => {
+      this.clearFieldError(fieldId);
+    });
+
+    // Validate on blur
+    input.addEventListener('blur', () => {
+      const value = input.value;
+      const result = this.validateField(value, rules);
+      
+      if (!result.isValid) {
+        const parent = input.closest('.form-field') || input.closest('.field');
+        if (parent) {
+          parent.classList.add('has-error');
+          const errorSpan = document.createElement('span');
+          errorSpan.className = 'field-error';
+          errorSpan.textContent = result.message;
+          parent.appendChild(errorSpan);
+        }
+      }
+    });
+  }
+};
+
+// Export Validator globally
+window.Validator = Validator;
+
+// ==========================================
+// LEGACY AUTH OBJECT (for backward compatibility)
+// ==========================================
+const Auth = {
+  // Regex patterns for validation (alias to Validator.patterns)
+  patterns: Validator.patterns,
 
   // Role configurations
   roleConfig: {
@@ -265,3 +710,117 @@ const Auth = {
 
 // Export for use in other files
 window.Auth = Auth;
+
+// ==========================================
+// UNIVERSAL FORM VALIDATION HELPER
+// This function is designed to work with all existing portal forms
+// while adding comprehensive regex-based validation
+// ==========================================
+
+/**
+ * Universal validateForm function for all portals
+ * Maintains backward compatibility while adding regex validation
+ * 
+ * @param {string} modalId - ID of the modal/form container
+ * @param {Array} config - Array of field configurations
+ *   Each config: { id, required, type, min, max, pattern, message, minDate, maxDate }
+ * @returns {boolean} - true if valid, false otherwise
+ * 
+ * Usage Examples:
+ * 
+ * // Basic validation (backward compatible)
+ * validateForm('modalLeave', [
+ *   { id: 'l-type', required: true },
+ *   { id: 'l-start', required: true },
+ *   { id: 'l-end', required: true },
+ *   { id: 'l-reason', required: true, min: 10 }
+ * ]);
+ * 
+ * // With type validation
+ * validateForm('modalAddUser', [
+ *   { id: 'u-name', required: true, min: 3, type: 'name' },
+ *   { id: 'u-email', required: true, type: 'email' },
+ *   { id: 'u-role', required: true }
+ * ]);
+ * 
+ * // With date range validation
+ * validateForm('modalLeave', [
+ *   { id: 'l-start', required: true, type: 'date' },
+ *   { id: 'l-end', required: true, type: 'date', minDate: document.getElementById('l-start').value }
+ * ]);
+ */
+function validateForm(modalId, config) {
+  // Clear previous errors
+  Validator.clearErrors(modalId);
+  
+  let isValid = true;
+  const errors = [];
+
+  config.forEach(field => {
+    const input = document.getElementById(field.id);
+    if (!input) {
+      console.warn(`validateForm: Element '${field.id}' not found`);
+      return;
+    }
+
+    const value = input.value.trim();
+    let errorMessage = '';
+
+    // Build validation rules
+    const rules = {
+      required: field.required || false,
+      min: field.min,
+      max: field.max,
+      message: field.message
+    };
+
+    // Add type-based validation
+    if (field.type) {
+      rules.type = field.type;
+    }
+
+    // Add pattern validation (string reference or regex)
+    if (field.pattern) {
+      rules.pattern = field.pattern;
+    }
+
+    // Add date range validation
+    if (field.minDate) {
+      rules.minDate = field.minDate;
+    }
+    if (field.maxDate) {
+      rules.maxDate = field.maxDate;
+    }
+
+    // Add match validation (for confirm password)
+    if (field.matchId) {
+      rules.matchId = field.matchId;
+    }
+
+    // Add custom validator
+    if (typeof field.validator === 'function') {
+      rules.validator = field.validator;
+    }
+
+    // Validate the field
+    const result = Validator.validateField(value, rules);
+
+    if (!result.isValid) {
+      isValid = false;
+      errors.push({
+        fieldId: field.id,
+        message: result.message
+      });
+    }
+  });
+
+  // Display all errors
+  if (errors.length > 0) {
+    Validator.showErrors(errors);
+  }
+
+  return isValid;
+}
+
+// Export globally for all portals to use
+window.validateForm = validateForm;

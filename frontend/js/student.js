@@ -104,22 +104,16 @@ function _refresh() {
 }
 
 function handleLeave() {
-  // Comprehensive validation with regex
-  if (!Validator.validateForm('modalLeave', [
-    { id: 'l-type', type: 'required', label: 'Leave type' },
-    { id: 'l-start', type: 'date', label: 'Start date', future: false },
-    { id: 'l-end', type: 'date', label: 'End date', future: false },
-    { id: 'l-reason', type: 'reason' }
-  ])) return;
-
-  // Additional date range validation
+  // Enhanced validation with date range check
   const startDate = document.getElementById('l-start').value;
   const endDate = document.getElementById('l-end').value;
-  const dateRangeResult = Validator.rules.dateRange(startDate, endDate);
-  if (!dateRangeResult.isValid) {
-    Validator.showError('l-end', dateRangeResult.message);
-    return;
-  }
+  
+  if (!validateForm('modalLeave', [
+    { id: 'l-type', required: true, message: 'Please select leave type' },
+    { id: 'l-start', required: true, type: 'date', message: 'Select start date' },
+    { id: 'l-end', required: true, type: 'date', minDate: startDate, message: 'End date must be after start date' },
+    { id: 'l-reason', required: true, min: 10, max: 500, message: 'Reason must be 10-500 characters' }
+  ])) return;
 
   const db = getDB();
   const newLeave = {
@@ -140,11 +134,10 @@ function handleLeave() {
 }
 
 function handleThread() {
-  // Comprehensive validation with regex
-  if (!Validator.validateForm('modalThread', [
-    { id: 't-tag', type: 'required', label: 'Lecture tag', min: 3 },
-    { id: 't-title', type: 'title' },
-    { id: 't-desc', type: 'description', min: 10 }
+  if (!validateForm('modalThread', [
+    { id: 't-tag', required: true, min: 3, max: 100, message: 'Lecture tag must be 3-100 characters' },
+    { id: 't-title', required: true, min: 5, max: 200, message: 'Title must be 5-200 characters' },
+    { id: 't-desc', required: true, min: 10, max: 1000, message: 'Description must be 10-1000 characters' }
   ])) return;
 
   const db = getDB();
@@ -164,11 +157,13 @@ function handleThread() {
 }
 
 function handleMilestone() {
-  // Comprehensive validation with regex
-  if (!Validator.validateForm('modalMilestone', [
-    { id: 'm-title', type: 'title' },
-    { id: 'm-date', type: 'date', label: 'Target date' },
-    { id: 'm-desc', type: 'description', min: 10, max: 500 }
+  const targetDate = document.getElementById('m-date').value;
+  const today = new Date().toISOString().split('T')[0];
+  
+  if (!validateForm('modalMilestone', [
+    { id: 'm-title', required: true, min: 5, max: 200, message: 'Title must be 5-200 characters' },
+    { id: 'm-date', required: true, type: 'date', minDate: today, message: 'Target date must be in the future' },
+    { id: 'm-desc', required: false, min: 10, max: 500, message: 'Description must be 10-500 characters' }
   ])) return;
 
   const db = getDB();
@@ -187,10 +182,9 @@ function handleMilestone() {
 }
 
 function handleBug() {
-  // Comprehensive validation with regex
-  if (!Validator.validateForm('panel-settings', [
-    { id: 'bugTitle', type: 'title' },
-    { id: 'bugDesc', type: 'description', min: 15, max: 1000 }
+  if (!validateForm('panel-settings', [
+    { id: 'bugTitle', required: true, min: 5, max: 200, message: 'Bug title must be 5-200 characters' },
+    { id: 'bugDesc', required: true, min: 10, max: 1000, message: 'Description must be 10-1000 characters' }
   ])) return;
 
   const db = getDB();
