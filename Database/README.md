@@ -8,6 +8,104 @@ The database design was developed in three phases to progressively refine the st
 
 ---
 
+# Chen's Notation in ERD (DBMS)
+
+We have used the Chen's notation in our database ERD to clearly represent the structure of the database and the relationships between different entities. The following points explain the important aspects of Chen's notation used in our ER diagram.
+
+---
+
+## 1. Entities
+Entities represent real-world objects or concepts in the system.  
+In Chen’s notation, entities are represented using **rectangles**.
+
+**Example:**  
+Student, Course, Employee
+
+---
+
+## 2. Attributes
+Attributes describe the properties or characteristics of an entity.  
+They are represented using **ovals** connected to their respective entities.
+
+**Example attributes of Student:**  
+- Name  
+- Age  
+- Roll Number  
+
+---
+
+## 3. Primary Key Attribute
+The attribute that uniquely identifies each entity instance is called the **primary key**.  
+In Chen’s notation, the primary key is represented by **underlining the attribute name**.
+
+**Example:**  
+`Student_ID`
+
+---
+
+## 4. Composite Attributes
+Some attributes can be divided into smaller sub-attributes.  
+These are called **composite attributes** and are shown using **multiple connected ovals**.
+
+**Example:**  
+Name  
+- First_Name  
+- Last_Name  
+
+---
+
+## 5. Multivalued Attributes
+Attributes that can have multiple values for a single entity are called **multivalued attributes**.  
+They are represented using **double ovals**.
+
+**Example:**  
+Phone Numbers of a Student
+
+---
+
+## 6. Derived Attributes
+Derived attributes are calculated from other attributes in the database.  
+They are represented using **dashed ovals**.
+
+**Example:**  
+Age derived from Date_of_Birth
+
+---
+
+## 7. Relationships
+Relationships describe how two or more entities are associated with each other.  
+In Chen’s notation, relationships are represented using **diamonds**.
+
+**Example:**  
+Student **enrolls in** Course
+
+---
+
+## 8. Cardinality
+Cardinality defines the number of instances of one entity that can be associated with instances of another entity.
+
+Common types include:
+
+| Type | Meaning |
+|-----|--------|
+| One-to-One (1:1) | One entity instance relates to one instance of another |
+| One-to-Many (1:N) | One entity relates to multiple entities |
+| Many-to-Many (M:N) | Multiple entities relate to multiple entities |
+
+---
+
+## 9. Participation Constraints
+Participation indicates whether the participation of an entity in a relationship is **mandatory or optional**.
+
+Types of participation:
+
+- **Total Participation** – Every entity must participate in the relationship.
+- **Partial Participation** – Some entities may or may not participate.
+
+---
+
+
+
 # Phase 1 – Initial Entity Identification
 
 In Phase 1, the primary goal was to identify all strong and weak entity sets present in the system along with their relationships and cardinalities.

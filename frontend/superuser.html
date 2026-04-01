@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IT Operations Center — BarelyPassing</title>
+  <meta name="description" content="Super User portal for system administration, user management, and system health monitoring." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/shared.css" />
+  <link rel="stylesheet" href="css/superuser.css" />
+  <script src="js/mockdata.js"></script>
+</head>
+<body>
+  <div class="app">
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <a class="sb-brand">
+        <div class="sb-ico">
+          <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></svg>
+        </div>
+        <span class="sb-name">BarelyPassing</span>
+      </a>
+      <div class="sb-subtitle">IT Operations &amp; System Administration</div>
+
+      <div class="sb-user">
+        <div class="sb-avatar" id="sbAvatar">S</div>
+        <div class="flex-1">
+          <div class="sb-uname" id="sbUname">Superuser</div>
+          <div class="sb-urole">IT Operations Center</div>
+        </div>
+      </div>
+
+      <nav class="sb-nav">
+        <a class="active" onclick="switchPanel('overview',this)" id="nav-overview">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /></svg>
+          System Overview
+        </a>
+        <a onclick="switchPanel('directory',this)" id="nav-directory">
+          <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+          User Directory
+        </a>
+        <a onclick="switchPanel('logs',this)" id="nav-logs">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
+          System Logs &amp; Bugs
+        </a>
+        <a onclick="switchPanel('settings',this)" id="nav-settings">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
+          Global Settings
+        </a>
+      </nav>
+
+      <div class="sb-footer">
+        <a class="logout-btn" onclick="handleLogout()">
+          <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
+          Logout
+        </a>
+      </div>
+    </aside>
+
+    <div class="overlay-sb" id="overlaySb" onclick="closeSidebar()"></div>
+
+    <!-- MAIN -->
+    <main class="main">
+      <!-- TOP BAR -->
+      <div class="topbar">
+        <button class="topbar-menu" onclick="toggleSidebar()" aria-label="Open menu">
+          <svg viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" /></svg>
+        </button>
+        <div class="topbar-title" id="topbarTitle">IT Operations Center</div>
+        <div class="sys-status">
+          <div class="sys-status-dot"></div>
+          <span class="sys-status-text" id="sysStatusText">System Status: All Operational</span>
+        </div>
+        <div class="topbar-profile">
+          <div class="topbar-avatar" id="topAvatar">S</div>
+        </div>
+      </div>
+
+      <div class="content">
+
+        <!-- ======================= SYSTEM OVERVIEW ======================== -->
+        <div class="panel active" id="panel-overview">
+          <div class="panel-header">
+            <div>
+              <div class="panel-h1">System Overview</div>
+              <div class="panel-sub">Real-time system health, metrics, and user management</div>
+            </div>
+          </div>
+
+          <div class="stat-row" id="su-stat-row"></div>
+
+          <!-- Master User Table -->
+          <div class="card">
+            <div class="card-title">Provisioning & Control</div>
+            <div class="card-sub">Manage system-wide permissions and account lifecycle.</div>
+
+            <div class="table-toolbar">
+              <div class="search-box">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+                <input type="text" id="userSearchInput" placeholder="Search by name, email or ID…" oninput="filterTable()" />
+              </div>
+              <select class="filter-select" id="roleFilter" onchange="filterTable()">
+                <option value="">All Roles</option>
+                <option value="superuser">Super User</option>
+                <option value="head">Academic Head</option>
+                <option value="faculty">Faculty Member</option>
+                <option value="student">Student</option>
+                <option value="admin">Admin</option>
+              </select>
+              <select class="filter-select" id="statusFilter" onchange="filterTable()">
+                <option value="">All Status</option>
+                <option value="active">Active Accounts</option>
+                <option value="inactive">Inactive Accounts</option>
+                <option value="suspended">Suspended Accounts</option>
+                <option value="pending">Pending Review</option>
+              </select>
+              <button class="btn btn-primary" onclick="showModal('modalAddUser')">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                Provision User
+              </button>
+            </div>
+
+            <div class="table-wrap">
+              <table id="userTable">
+                <thead>
+                  <tr>
+                    <th>User ID</th>
+                    <th>Full Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="userTableBody"></tbody>
+              </table>
+            </div>
+            <div class="table-pagination">
+              <span class="table-pagination-info" id="tableCount">Showing ... users</span>
+              <div class="table-pagination-btns">
+                <button class="btn btn-outline btn-sm">Previous</button>
+                <button class="btn btn-outline btn-sm">Next</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ======================= USER DIRECTORY ======================== -->
+        <div class="panel" id="panel-directory">
+          <div class="panel-header">
+            <div>
+              <div class="panel-h1">User Directory</div>
+              <div class="panel-sub">Breakdown of system accounts by academic role</div>
+            </div>
+          </div>
+
+          <div class="dir-stats-grid">
+            <div class="dir-stat-card dir-stat-card-violet">
+              <span class="dir-stat-val">2</span>
+              <span class="dir-stat-label">Super Users</span>
+            </div>
+            <div class="dir-stat-card dir-stat-card-cyan">
+              <span class="dir-stat-val">8</span>
+              <span class="dir-stat-label">Academic Heads</span>
+            </div>
+            <div class="dir-stat-card dir-stat-card-blue">
+              <span class="dir-stat-val">64</span>
+              <span class="dir-stat-label">Faculty Members</span>
+            </div>
+            <div class="dir-stat-card dir-stat-card-green">
+              <span class="dir-stat-val">1,124</span>
+              <span class="dir-stat-label">Students</span>
+            </div>
+            <div class="dir-stat-card dir-stat-card-amber">
+              <span class="dir-stat-val">6</span>
+              <span class="dir-stat-label">System Admins</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Pending Approvals</div>
+            <div class="card-sub">Accounts awaiting manual verification from IT operations center.</div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>User ID</th>
+                    <th>Full Name</th>
+                    <th>Role</th>
+                    <th>Request Date</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="pendingUsersBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ======================= SYSTEM LOGS & BUGS ======================== -->
+        <div class="panel" id="panel-logs">
+          <div class="panel-header">
+            <div>
+              <div class="panel-h1">Maintenance Center</div>
+              <div class="panel-sub">Monitor system events and user-submitted defect reports</div>
+            </div>
+            <div class="modal-actions" style="margin-top:0">
+              <button class="btn btn-outline" onclick="toast('Logs exported to console')">Export Batch</button>
+              <button class="btn btn-red" onclick="handleClearLogs()">Purge Logs</button>
+            </div>
+          </div>
+
+          <div class="stat-row">
+            <div class="stat-card">
+              <div class="sc-icon red"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg></div>
+              <div class="sc-label">Critical Errors</div>
+              <div class="sc-val red" id="errCount">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="sc-icon amber"><svg viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg></div>
+              <div class="sc-label">Warnings</div>
+              <div class="sc-val" id="warnCount">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="sc-icon blue"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="8" /></svg></div>
+              <div class="sc-label">Bug Reports</div>
+              <div class="sc-val" id="bugCount">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="sc-icon green"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg></div>
+              <div class="sc-label">Resolved</div>
+              <div class="sc-val" id="resCount">0</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="log-filter-row">
+              <div class="card-title">Live System Events</div>
+              <select class="filter-select" id="logLevelFilter" onchange="renderLogs()">
+                <option value="">All Severities</option>
+                <option value="error">Errors Only</option>
+                <option value="warn">Warnings Only</option>
+                <option value="info">General Info</option>
+              </select>
+            </div>
+            <div id="log-entries"></div>
+          </div>
+
+          <div class="card">
+            <div class="bug-filter-row">
+              <div class="card-title">Defect Queue</div>
+              <div class="flex-1"></div>
+              <select class="filter-select" id="bugStatusFilter" onchange="renderBugReports()">
+                <option value="">All Statuses</option>
+                <option value="open">Open Issues</option>
+                <option value="in-progress">In-Development</option>
+                <option value="resolved">Resolved Issues</option>
+              </select>
+            </div>
+            <div id="bug-reports-list"></div>
+          </div>
+        </div>
+
+        <!-- ======================= GLOBAL SETTINGS ======================== -->
+        <div class="panel" id="panel-settings">
+          <div class="panel-header">
+            <div>
+              <div class="panel-h1">Platform Governance</div>
+              <div class="panel-sub">Configure system-wide behavior and security parameters</div>
+            </div>
+          </div>
+
+          <div class="card settings-card-wide">
+            <div class="card-title">System Identity</div>
+            <div class="card-sub">Core branding and environment information</div>
+            <div class="form-field"><label>Platform Title</label><input type="text" id="cfg-platform" /></div>
+            <div class="form-field"><label>Institution Name</label><input type="text" id="cfg-institution" /></div>
+            <div class="modal-grid-2">
+              <div class="form-field"><label>Active Semester</label><input type="text" id="cfg-semester" /></div>
+              <div class="form-field"><label>Academic Year</label><input type="text" id="cfg-year" /></div>
+            </div>
+            <button class="btn btn-primary" onclick="handleSaveConfig()">Persist Configuration</button>
+          </div>
+
+          <div class="card settings-card-wide">
+            <div class="card-title">Defense & Compliance</div>
+            <div class="card-sub">Authentication protocols and session management</div>
+            <div class="settings-section-title">Security Policies</div>
+            <div class="settings-box">
+              <div class="toggle-row">
+                <div class="toggle-info">
+                  <div class="toggle-title">Enforce MFA for Ops</div>
+                  <div class="toggle-desc">Mandate multi-factor for superuser access</div>
+                </div>
+                <label class="toggle-switch"><input type="checkbox" checked /><span class="toggle-slider"></span></label>
+              </div>
+              <div class="toggle-row">
+                <div class="toggle-info">
+                  <div class="toggle-title">Aggressive Idle Invalidation</div>
+                  <div class="toggle-desc">Auto-logout after 15 minutes of inactivity</div>
+                </div>
+                <label class="toggle-switch"><input type="checkbox" checked /><span class="toggle-slider"></span></label>
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="toast('Security policies synchronized')">Sync Policies</button>
+          </div>
+
+          <div class="card settings-card-wide">
+            <div class="card-title" style="color:var(--red)">Irreversible Actions</div>
+            <div class="danger-zone">
+              <div class="danger-title">Terminate All Active Sessions</div>
+              <div class="danger-desc">Force immediate global disconnection for all users. Invalidate all JWT/Session tokens.</div>
+              <button class="btn btn-red" onclick="toast('Global logout command broadcasted')">Flush All Sessions</button>
+            </div>
+            <div class="danger-zone" style="margin-top:12px">
+              <div class="danger-title">Atomic System Reset</div>
+              <div class="danger-desc">Wipe all operational configurations and revert to baseline defaults. User records persist.</div>
+              <button class="btn btn-red" onclick="toast('System re-initialization queued')">Perform Core Reset</button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /content -->
+    </main>
+  </div><!-- /app -->
+
+  <!-- ======================= MODALS ======================== -->
+
+  <!-- Provision User Modal -->
+  <div class="overlay" id="modalAddUser" onclick="closeModalBg(event,'modalAddUser')">
+    <div class="modal">
+      <div class="modal-head">
+        <div class="modal-title">Provision System Account</div>
+        <button class="modal-close" onclick="closeModal('modalAddUser')">✕</button>
+      </div>
+      <div class="modal-content">
+        <div class="form-field"><label>Legal Full Name</label><input type="text" id="u-name" placeholder="Pranjal Soni" /></div>
+        <div class="form-field"><label>Institutional Email</label><input type="email" id="u-email" placeholder="psoni@university.edu" /></div>
+        <div class="modal-grid-2">
+          <div class="form-field">
+            <label>System Role</label>
+            <select id="u-role">
+              <option value="">Select Role</option>
+              <option value="student">Student</option>
+              <option value="faculty">Faculty Member</option>
+              <option value="head">Academic Head</option>
+              <option value="admin">System Admin</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Initial Status</label>
+            <select id="u-status">
+              <option value="active">Active</option>
+              <option value="pending" selected>Pending Review</option>
+              <option value="suspended">Suspended</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary flex-1" onclick="handleAddUser()">Provision Account</button>
+        <button class="btn btn-outline" onclick="closeModal('modalAddUser')">Abort</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit User Modal -->
+  <div class="overlay" id="modalEditUser" onclick="closeModalBg(event,'modalEditUser')">
+    <div class="modal">
+      <div class="modal-head">
+        <div class="modal-title">Account Modification</div>
+        <button class="modal-close" onclick="closeModal('modalEditUser')">✕</button>
+      </div>
+      <div class="modal-content">
+        <div class="form-field"><label>Full Name</label><input type="text" id="edit-name" /></div>
+        <div class="form-field"><label>Email Address</label><input type="email" id="edit-email" /></div>
+        <div class="modal-grid-2">
+          <div class="form-field"><label>Record ID</label><input type="text" id="edit-id" class="input-disabled" disabled /></div>
+          <div class="form-field">
+            <label>Assigned Role</label>
+            <select id="edit-role">
+              <option value="student">Student</option>
+              <option value="faculty">Faculty Member</option>
+              <option value="head">Academic Head</option>
+              <option value="admin">System Admin</option>
+              <option value="superuser">Super User</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-field">
+          <label>Operational Status</label>
+          <select id="edit-status">
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+            <option value="suspended">Suspended</option>
+            <option value="pending">Pending</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary flex-1" onclick="handleUpdateUser()">Commit Changes</button>
+        <button class="btn btn-outline" onclick="closeModal('modalEditUser')">Discard</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirm Modal -->
+  <div class="overlay" id="modalConfirmDelete" onclick="closeModalBg(event,'modalConfirmDelete')">
+    <div class="modal" style="width:400px">
+      <div class="modal-head">
+        <div class="modal-title">De-provision Account?</div>
+        <button class="modal-close" onclick="closeModal('modalConfirmDelete')">✕</button>
+      </div>
+      <p class="modal-delete-text">Are you certain you want to purge user <strong id="deleteTargetId"></strong>? This operation is atomic and irreversible.</p>
+      <div class="modal-actions">
+        <button class="btn btn-red flex-1" onclick="performDelete()">Purge Account</button>
+        <button class="btn btn-outline" onclick="closeModal('modalConfirmDelete')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bug Detail Modal -->
+  <div class="overlay" id="modalBugDetail" onclick="closeModalBg(event,'modalBugDetail')">
+    <div class="modal">
+      <div class="modal-head">
+        <div class="modal-title" id="bugDetailTitle">Defect Detail</div>
+        <button class="modal-close" onclick="closeModal('modalBugDetail')">✕</button>
+      </div>
+      <div id="bugDetailBody" class="modal-content"></div>
+      <div class="modal-actions" id="bugActionRow"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toastEl"></div>
+  <script src="js/superuser.js"></script>
+</body>
+</html>
