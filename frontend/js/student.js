@@ -104,12 +104,22 @@ function _refresh() {
 }
 
 function handleLeave() {
-  if (!validateForm('modalLeave', [
-    { id: 'l-type', required: true },
-    { id: 'l-start', required: true },
-    { id: 'l-end', required: true },
-    { id: 'l-reason', required: true }
+  // Comprehensive validation with regex
+  if (!Validator.validateForm('modalLeave', [
+    { id: 'l-type', type: 'required', label: 'Leave type' },
+    { id: 'l-start', type: 'date', label: 'Start date', future: false },
+    { id: 'l-end', type: 'date', label: 'End date', future: false },
+    { id: 'l-reason', type: 'reason' }
   ])) return;
+
+  // Additional date range validation
+  const startDate = document.getElementById('l-start').value;
+  const endDate = document.getElementById('l-end').value;
+  const dateRangeResult = Validator.rules.dateRange(startDate, endDate);
+  if (!dateRangeResult.isValid) {
+    Validator.showError('l-end', dateRangeResult.message);
+    return;
+  }
 
   const db = getDB();
   const newLeave = {
@@ -130,10 +140,11 @@ function handleLeave() {
 }
 
 function handleThread() {
-  if (!validateForm('modalThread', [
-    { id: 't-tag', required: true },
-    { id: 't-title', required: true },
-    { id: 't-desc', required: true }
+  // Comprehensive validation with regex
+  if (!Validator.validateForm('modalThread', [
+    { id: 't-tag', type: 'required', label: 'Lecture tag', min: 3 },
+    { id: 't-title', type: 'title' },
+    { id: 't-desc', type: 'description', min: 10 }
   ])) return;
 
   const db = getDB();
@@ -153,9 +164,11 @@ function handleThread() {
 }
 
 function handleMilestone() {
-  if (!validateForm('modalMilestone', [
-    { id: 'm-title', required: true },
-    { id: 'm-date', required: true }
+  // Comprehensive validation with regex
+  if (!Validator.validateForm('modalMilestone', [
+    { id: 'm-title', type: 'title' },
+    { id: 'm-date', type: 'date', label: 'Target date' },
+    { id: 'm-desc', type: 'description', min: 10, max: 500 }
   ])) return;
 
   const db = getDB();
@@ -174,9 +187,10 @@ function handleMilestone() {
 }
 
 function handleBug() {
-  if (!validateForm('panel-settings', [
-    { id: 'bugTitle', required: true },
-    { id: 'bugDesc', required: true }
+  // Comprehensive validation with regex
+  if (!Validator.validateForm('panel-settings', [
+    { id: 'bugTitle', type: 'title' },
+    { id: 'bugDesc', type: 'description', min: 15, max: 1000 }
   ])) return;
 
   const db = getDB();

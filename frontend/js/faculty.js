@@ -106,9 +106,11 @@ function _refresh() {
 }
 
 function handleSchedule() {
-  if (!validateForm('modalMeeting', [
-    { id: 'meet-date', required: true },
-    { id: 'meet-time', required: true }
+  // Comprehensive validation with regex
+  if (!Validator.validateForm('modalMeeting', [
+    { id: 'meet-date', type: 'date', label: 'Meeting date', future: true },
+    { id: 'meet-time', type: 'time' },
+    { id: 'meet-agenda', type: 'description', min: 10, max: 500 }
   ])) return;
 
   const db = getDB();
@@ -157,9 +159,10 @@ function handleSaveAttendance() {
 }
 
 function handleBugSubmit() {
-  if (!validateForm('panel-settings', [
-    { id: 'bugTitle', required: true },
-    { id: 'bugDesc', required: true }
+  // Comprehensive validation with regex
+  if (!Validator.validateForm('panel-settings', [
+    { id: 'bugTitle', type: 'title' },
+    { id: 'bugDesc', type: 'description', min: 15, max: 1000 }
   ])) return;
 
   const db = getDB();

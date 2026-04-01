@@ -63,9 +63,29 @@ document.addEventListener('DOMContentLoaded', function() {
       const inp = document.getElementById(f.id);
       const val = inp.value.trim();
       let err = '';
-      if(f.required && !val) err = 'This field is required';
-      else if(f.type === 'email' && val && !/^\S+@\S+\.\S+$/.test(val)) err = 'Invalid email format';
-      if(err) {
+      
+      if (f.required && !val) {
+        err = 'This field is required';
+      }
+      else if (f.type === 'email' && val && !/^\S+@\S+\.\S+$/.test(val)) {
+        err = 'Invalid email format';
+      }
+      else if (f.type === 'password' && val) {
+        // Enhanced password validation with regex
+        if (val.length < 8) {
+          err = 'Password must be at least 8 characters';
+        } else if (!/(?=.*[a-z])/.test(val)) {
+          err = 'Password must contain a lowercase letter';
+        } else if (!/(?=.*[A-Z])/.test(val)) {
+          err = 'Password must contain an uppercase letter';
+        } else if (!/(?=.*\d)/.test(val)) {
+          err = 'Password must contain a number';
+        } else if (!/(?=.*[@$!%*?&])/.test(val)) {
+          err = 'Password must contain a special character (@$!%*?&)';
+        }
+      }
+      
+      if (err) {
         ok = false;
         const parent = inp.closest('.field');
         parent.classList.add('has-error');
@@ -82,7 +102,7 @@ document.addEventListener('DOMContentLoaded', function() {
     event.preventDefault();
     const ok = validateForm([
       { id: 'email', required: true, type: 'email' },
-      { id: 'password', required: true }
+      { id: 'password', required: true, type: 'password' }
     ]);
     if (!ok) return;
 
