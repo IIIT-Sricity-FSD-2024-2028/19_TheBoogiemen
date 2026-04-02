@@ -104,11 +104,15 @@ function _refresh() {
 }
 
 function handleLeave() {
+  // Enhanced validation with date range check
+  const startDate = document.getElementById('l-start').value;
+  const endDate = document.getElementById('l-end').value;
+  
   if (!validateForm('modalLeave', [
-    { id: 'l-type', required: true },
-    { id: 'l-start', required: true },
-    { id: 'l-end', required: true },
-    { id: 'l-reason', required: true }
+    { id: 'l-type', required: true, message: 'Please select leave type' },
+    { id: 'l-start', required: true, type: 'date', message: 'Select start date' },
+    { id: 'l-end', required: true, type: 'date', minDate: startDate, message: 'End date must be after start date' },
+    { id: 'l-reason', required: true, min: 10, max: 500, message: 'Reason must be 10-500 characters' }
   ])) return;
 
   const db = getDB();
@@ -131,9 +135,9 @@ function handleLeave() {
 
 function handleThread() {
   if (!validateForm('modalThread', [
-    { id: 't-tag', required: true },
-    { id: 't-title', required: true },
-    { id: 't-desc', required: true }
+    { id: 't-tag', required: true, min: 3, max: 100, message: 'Lecture tag must be 3-100 characters' },
+    { id: 't-title', required: true, min: 5, max: 200, message: 'Title must be 5-200 characters' },
+    { id: 't-desc', required: true, min: 10, max: 1000, message: 'Description must be 10-1000 characters' }
   ])) return;
 
   const db = getDB();
@@ -153,9 +157,13 @@ function handleThread() {
 }
 
 function handleMilestone() {
+  const targetDate = document.getElementById('m-date').value;
+  const today = new Date().toISOString().split('T')[0];
+  
   if (!validateForm('modalMilestone', [
-    { id: 'm-title', required: true },
-    { id: 'm-date', required: true }
+    { id: 'm-title', required: true, min: 5, max: 200, message: 'Title must be 5-200 characters' },
+    { id: 'm-date', required: true, type: 'date', minDate: today, message: 'Target date must be in the future' },
+    { id: 'm-desc', required: false, min: 10, max: 500, message: 'Description must be 10-500 characters' }
   ])) return;
 
   const db = getDB();
@@ -175,8 +183,8 @@ function handleMilestone() {
 
 function handleBug() {
   if (!validateForm('panel-settings', [
-    { id: 'bugTitle', required: true },
-    { id: 'bugDesc', required: true }
+    { id: 'bugTitle', required: true, min: 5, max: 200, message: 'Bug title must be 5-200 characters' },
+    { id: 'bugDesc', required: true, min: 10, max: 1000, message: 'Description must be 10-1000 characters' }
   ])) return;
 
   const db = getDB();

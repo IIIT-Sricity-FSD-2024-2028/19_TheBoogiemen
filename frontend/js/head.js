@@ -204,11 +204,15 @@ function renderReports() {
 
 // Events
 function handleAddEvent() {
+  const eventDate = document.getElementById('ev-date').value;
+  const today = new Date().toISOString().split('T')[0];
+  
   const config = [
-    { id: 'ev-title', required: true, min: 5 },
-    { id: 'ev-date', required: true },
-    { id: 'ev-time', required: true },
-    { id: 'ev-venue', required: true }
+    { id: 'ev-title', required: true, min: 5, max: 200, message: 'Event title must be 5-200 characters' },
+    { id: 'ev-date', required: true, type: 'date', minDate: today, message: 'Event date must be in the future' },
+    { id: 'ev-time', required: true, type: 'time', message: 'Select a valid time' },
+    { id: 'ev-venue', required: true, min: 3, max: 100, message: 'Venue must be 3-100 characters' },
+    { id: 'ev-desc', required: false, min: 10, max: 500, message: 'Description must be 10-500 characters' }
   ];
   if (!validateForm('modalAddEvent', config)) return;
 
@@ -255,9 +259,9 @@ function handleDeleteEvent(id) {
 // Resources
 function handleAddResource() {
   const config = [
-    { id: 'res-name', required: true },
-    { id: 'res-type', required: true },
-    { id: 'res-cap', required: true, numeric: true }
+    { id: 'res-name', required: true, min: 3, max: 100, message: 'Resource name must be 3-100 characters' },
+    { id: 'res-type', required: true, message: 'Please select resource type' },
+    { id: 'res-cap', required: true, type: 'amount', minValue: 1, maxValue: 10000, message: 'Capacity must be 1-10000' }
   ];
   if (!validateForm('modalAddResource', config)) return;
 
@@ -341,8 +345,9 @@ function renderFees() {
 // Users
 function handleAddUser() {
   const config = [
-    { id: 'u-name', required: true, min: 3 },
-    { id: 'u-email', required: true, type: 'email' }
+    { id: 'u-name', required: true, min: 3, max: 100, type: 'name', message: 'Name must be 3-100 characters' },
+    { id: 'u-email', required: true, type: 'email', message: 'Please enter a valid institutional email' },
+    { id: 'u-role', required: true, message: 'Please select a role' }
   ];
   if (!validateForm('modalAddUser', config)) return;
 
