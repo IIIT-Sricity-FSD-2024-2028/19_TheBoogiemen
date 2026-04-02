@@ -28,8 +28,7 @@ function switchPanel(name, el) {
     attendance: 'Attendance Hub',
     leave: 'Leave Center',
     forum: 'Peer Exchange',
-    research: 'Research Track',
-    settings: 'Portal Configuration'
+    research: 'Research Track'
   };
   document.getElementById('topbarTitle').textContent = titles[name] || name;
   if (window.innerWidth < 768) closeSidebar();
@@ -173,29 +172,6 @@ function handleMilestone() {
   _refresh();
 }
 
-function handleBug() {
-  if (!validateForm('panel-settings', [
-    { id: 'bugTitle', required: true },
-    { id: 'bugDesc', required: true }
-  ])) return;
-
-  const db = getDB();
-  db.superuser.bugReports.unshift({
-    id: 'BUG-S' + (db.superuser.bugReports.length + 1),
-    title: document.getElementById('bugTitle').value,
-    description: document.getElementById('bugDesc').value,
-    severity: document.getElementById('bugSev').value,
-    submittedBy: 'Student Portal',
-    submitter: db.student.profile.personal.fullName,
-    status: 'open',
-    submittedAt: new Date().toLocaleDateString(),
-    category: 'Infrastructure'
-  });
-  saveDB(db);
-  toast('Bug reported');
-  document.getElementById('bugTitle').value = '';
-  document.getElementById('bugDesc').value = '';
-}
 
 /* =====================================================
    RENDER HELPERS

@@ -36,7 +36,6 @@
         <a onclick="switchPanel('research',this)">Research Projects</a>
       </nav>
       <div class="sb-footer">
-        <a onclick="switchPanel('settings',this)">Settings</a>
         <a onclick="handleLogout()">Logout</a>
       </div>
     </aside>
@@ -187,24 +186,7 @@
           </div>
         </div>
 
-        <!-- SETTINGS -->
-        <div class="panel" id="panel-settings">
-          <div class="card" style="max-width:520px">
-            <div class="card-title">Portal Preferences</div>
-            <div class="card-sub">Manage alerts and bug reporting</div>
-            <div class="check-row-justify check-row"><span class="check-label">Email Assignment Alerts</span><input type="checkbox" checked/></div>
-            <div class="check-row-justify check-row"><span class="check-label">SMS Attendance Warnings</span><input type="checkbox" /></div>
-            
-            <div class="mt-16 pt-16 border-t">
-               <div class="card-title">Report a Bug</div>
-               <div class="form-field"><label>Severity</label><select id="bugSev"><option>Low</option><option selected>Medium</option><option>High</option></select></div>
-               <div class="form-field"><label>Summary</label><input type="text" id="bugTitle" /></div>
-               <div class="form-field"><label>Detail</label><textarea id="bugDesc"></textarea></div>
-               <button class="btn btn-blue" onclick="handleBug()">Submit to IT Ops</button>
-            </div>
-          </div>
-        </div>
-
+        
       </div><!-- /content -->
     </main>
   </div><!-- /app -->

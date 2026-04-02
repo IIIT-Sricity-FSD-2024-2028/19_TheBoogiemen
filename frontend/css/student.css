@@ -1,7 +1,19 @@
 /* =====================================================
-   BarelyPassing — Student Portal Styles (Optimized)
-   Combined redundant classes and removed inline styles
+   BarelyPassing — Student Portal Styles (Enhanced)
    ===================================================== */
+
+/* CSS Variables */
+:root {
+  --bg: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --bg-hover: #f1f3f4;
+  --ink: #1a1a1a;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  --accent: #4a90e2;
+  --sidebar-w: 260px;
+  --fb: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
 
 html,
 body {
@@ -11,6 +23,277 @@ body {
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
   font-size: 15px;
+}
+
+/* =====================================================
+   SETTINGS PAGE - ENHANCED STYLING
+   ===================================================== */
+
+#panel-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+#panel-settings .card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+#panel-settings .card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+#panel-settings .card-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#panel-settings .card-title::before {
+  content: '⚙️';
+  font-size: 20px;
+}
+
+#panel-settings .card-sub {
+  color: var(--muted);
+  font-size: 14px;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+/* Enhanced Checkbox Styles */
+.check-row-justify {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  margin-bottom: 12px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+}
+
+.check-row-justify:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent);
+  transform: translateX(4px);
+}
+
+.check-label {
+  font-weight: 500;
+  color: var(--ink);
+  font-size: 14px;
+  user-select: none;
+}
+
+/* Custom Checkbox Styles */
+.check-row-justify input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  border-radius: 4px;
+  border: 2px solid var(--border);
+  transition: all 0.2s ease;
+}
+
+.check-row-justify input[type="checkbox"]:checked {
+  background-color: var(--accent);
+  border-color: var(--accent);
+}
+
+.check-row-justify input[type="checkbox"]:hover {
+  border-color: var(--accent);
+  transform: scale(1.1);
+}
+
+/* Bug Report Section Styling */
+#panel-settings .border-t {
+  border-top: 2px solid var(--border);
+  padding-top: 24px;
+  margin-top: 24px;
+}
+
+#panel-settings .form-field {
+  margin-bottom: 20px;
+}
+
+#panel-settings .form-field label {
+  display: block;
+  font-weight: 500;
+  color: var(--ink);
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+#panel-settings .form-field input,
+#panel-settings .form-field select,
+#panel-settings .form-field textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+#panel-settings .form-field input:focus,
+#panel-settings .form-field select:focus,
+#panel-settings .form-field textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+  transform: translateY(-1px);
+}
+
+#panel-settings .form-field textarea {
+  resize: vertical;
+  min-height: 100px;
+  font-family: inherit;
+}
+
+#panel-settings .btn {
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#panel-settings .btn-blue {
+  background: var(--accent);
+  color: white;
+}
+
+#panel-settings .btn-blue:hover {
+  background: #3a7bc8;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+}
+
+#panel-settings .btn-blue:active {
+  transform: translateY(0);
+}
+
+/* Settings Section Headers */
+.settings-section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--border);
+}
+
+.settings-section-icon {
+  width: 40px;
+  height: 40px;
+  background: var(--accent);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.settings-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  #panel-settings .card {
+    margin: 0 16px;
+    padding: 20px;
+  }
+  
+  .check-row-justify {
+    padding: 12px;
+  }
+  
+  .check-label {
+    font-size: 13px;
+  }
+  
+  #panel-settings .form-field input,
+  #panel-settings .form-field select,
+  #panel-settings .form-field textarea {
+    padding: 10px 12px;
+  }
+}
+
+/* Animation for settings panel */
+#panel-settings {
+  animation: fadeInUp 0.5s ease;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Focus states for accessibility */
+.check-row-justify:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+#panel-settings .form-field input:focus-visible,
+#panel-settings .form-field select:focus-visible,
+#panel-settings .form-field textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Loading state for buttons */
+#panel-settings .btn.loading {
+  opacity: 0.7;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+#panel-settings .btn.loading::after {
+  content: '';
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-left: 8px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 /* LAYOUT */
