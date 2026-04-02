@@ -619,6 +619,40 @@ body {
   font-size: 12px;
 }
 
+/* STATUS PILLS */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 20px;
+}
+
+.status-pill::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status-pill.approved {
+  background: var(--green-l);
+  color: var(--green);
+}
+
+.status-pill.pending {
+  background: var(--amber-l);
+  color: var(--amber);
+}
+
+.status-pill.rejected {
+  background: var(--red-l);
+  color: var(--red);
+}
+
 /* =====================================================
    TIMETABLE
    ===================================================== */

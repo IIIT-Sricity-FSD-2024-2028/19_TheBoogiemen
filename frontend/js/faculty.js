@@ -136,6 +136,267 @@ function handleSchedule() {
   _refresh();
 }
 
+/* --- Assessment CRUD --- */
+function handleCreateAssessment() {
+  if (!validateForm('modalNewAssess', [
+    { id: 'a-name', required: true, min: 3 },
+    { id: 'a-marks', required: true }
+  ])) return;
+
+  const db = getDB();
+  const newAssess = {
+    id: Date.now(),
+    metadata: {
+      title: document.getElementById('a-name').value,
+      course: 'General',
+      totalMarks: parseInt(document.getElementById('a-marks').value) || 100
+    },
+    availableOutcomes: db.faculty.assessmentMapping.availableOutcomes,
+    questions: []
+  };
+  if (!db.faculty.assessmentList) db.faculty.assessmentList = [];
+  db.faculty.assessmentList.push(newAssess);
+  // Update current assessment mapping view to this new one
+  db.faculty.assessmentMapping.metadata = newAssess.metadata;
+  db.faculty.assessmentMapping.questions = [];
+  saveDB(db);
+  toast('Assessment created');
+  closeModal('modalNewAssess');
+  _refresh();
+}
+
+function handleDeleteQuestion(qId) {
+  const db = getDB();
+  db.faculty.assessmentMapping.questions = db.faculty.assessmentMapping.questions.filter(q => q.id !== qId);
+  saveDB(db);
+  toast('Question removed from mapping');
+  renderAssessmentMapping(db.faculty.assessmentMapping);
+}
+
+function handleSaveMapping() {
+  const db = getDB();
+  saveDB(db);
+  toast('Mapping saved successfully');
+}
+
+/* --- Forum CRUD --- */
+let _activeFacultyThreadId = null;
+
+function openFacultyThread(threadId) {
+  _activeFacultyThreadId = threadId;
+  const db = getDB();
+  const thread = db.faculty.forum.threads.find(t => t.id === threadId);
+  if (!thread) return;
+
+  const body = document.getElementById('fThreadViewBody');
+  const commentsEl = document.getElementById('fThreadViewComments');
+  if (!body || !commentsEl) return;
+
+  body.innerHTML = `
+    <div style="margin-bottom:14px">
+      <div style="font-size:11px;color:var(--accent);font-weight:600;margin-bottom:6px">${thread.lecture}</div>
+      <div style="font-size:15px;font-weight:600;color:var(--ink);margin-bottom:8px">${thread.title}</div>
+      <div style="background:var(--bg);border-radius:10px;padding:14px;font-size:13px;color:var(--soft);line-height:1.6">
+        ${thread.originalPost || thread.title}
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:var(--muted)">By <strong>${thread.author}</strong> · ${thread.timeAgo}</div>
+    </div>
+  `;
+
+  const comments = thread.comments || [];
+  commentsEl.innerHTML = comments.length ? comments.map(c => `
+    <div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="width:32px;height:32px;border-radius:50%;background:${c.role === 'faculty' ? 'var(--accent)' : 'var(--green,#22c55e)'};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex-shrink:0">${c.initial || c.author.charAt(0)}</div>
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:600;color:var(--ink)">${c.author} ${c.role === 'faculty' ? '<span style="font-size:10px;color:var(--accent);background:var(--accent-l,#eef2ff);padding:1px 6px;border-radius:4px;margin-left:4px">Faculty</span>' : ''}</div>
+        <div style="font-size:13px;color:var(--soft);margin-top:3px;line-height:1.5">${c.text}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">${c.time}</div>
+      </div>
+    </div>
+  `).join('') : '<p style="color:var(--muted);font-size:13px">No replies yet.</p>';
+
+  document.getElementById('fThreadViewTitle').textContent = thread.title;
+  document.getElementById('faculty-reply-text').value = '';
+  showModal('modalFacultyThreadView');
+}
+
+function handleFacultyReply() {
+  if (!validateForm('modalFacultyThreadView', [
+    { id: 'faculty-reply-text', required: true, min: 5 }
+  ])) return;
+
+  const db = getDB();
+  const ti = db.faculty.forum.threads.findIndex(t => t.id === _activeFacultyThreadId);
+  if (ti === -1) return;
+
+  const newReply = {
+    id: (db.faculty.forum.threads[ti].comments || []).length + 1,
+    author: db.faculty.profile.account.name,
+    role: 'faculty',
+    initial: db.faculty.profile.account.name.charAt(0),
+    text: document.getElementById('faculty-reply-text').value,
+    time: 'Just now'
+  };
+  if (!db.faculty.forum.threads[ti].comments) db.faculty.forum.threads[ti].comments = [];
+  db.faculty.forum.threads[ti].comments.push(newReply);
+  db.faculty.forum.threads[ti].replyCount = (db.faculty.forum.threads[ti].replyCount || 0) + 1;
+
+  // Sync to student forum threads
+  if (db.student && db.student.forum && db.student.forum.fullThreads) {
+    const si = db.student.forum.fullThreads.findIndex(t => t.id === _activeFacultyThreadId || t.title === db.faculty.forum.threads[ti].title);
+    if (si !== -1) {
+      if (!db.student.forum.fullThreads[si].comments) db.student.forum.fullThreads[si].comments = [];
+      db.student.forum.fullThreads[si].comments.push(newReply);
+      db.student.forum.fullThreads[si].replies = (db.student.forum.fullThreads[si].replies || 0) + 1;
+    }
+  }
+
+  saveDB(db);
+  toast('Reply posted');
+  document.getElementById('faculty-reply-text').value = '';
+  openFacultyThread(_activeFacultyThreadId);
+}
+
+function handleResolveThread(threadId) {
+  const db = getDB();
+  const ti = db.faculty.forum.threads.findIndex(t => t.id === threadId);
+  if (ti !== -1) {
+    db.faculty.forum.threads[ti].status = 'resolved';
+    if (db.faculty.forum.summary) {
+      db.faculty.forum.summary.resolvedCount = (db.faculty.forum.summary.resolvedCount || 0) + 1;
+      db.faculty.forum.summary.needsResponseCount = Math.max(0, (db.faculty.forum.summary.needsResponseCount || 1) - 1);
+    }
+  }
+  saveDB(db);
+  toast('Thread marked as resolved');
+  _refresh();
+}
+
+function handleDeleteThread(threadId) {
+  const db = getDB();
+  db.faculty.forum.threads = db.faculty.forum.threads.filter(t => t.id !== threadId);
+  if (db.faculty.forum.summary) db.faculty.forum.summary.totalDiscussions = db.faculty.forum.threads.length;
+  saveDB(db);
+  toast('Thread deleted');
+  _refresh();
+}
+
+function handleNewFacultyThread() {
+  if (!validateForm('modalFacultyNewThread', [
+    { id: 'ft-lecture', required: true, min: 3 },
+    { id: 'ft-title', required: true, min: 5 },
+    { id: 'ft-body', required: true, min: 10 }
+  ])) return;
+
+  const db = getDB();
+  const newThread = {
+    id: 'T' + String(db.faculty.forum.threads.length + 1).padStart(3, '0'),
+    lecture: document.getElementById('ft-lecture').value,
+    status: 'active',
+    title: document.getElementById('ft-title').value,
+    author: db.faculty.profile.account.name,
+    studentId: 'Faculty',
+    replyCount: 0,
+    timeAgo: 'Just now',
+    originalPost: document.getElementById('ft-body').value,
+    comments: []
+  };
+  db.faculty.forum.threads.unshift(newThread);
+  if (db.faculty.forum.summary) db.faculty.forum.summary.totalDiscussions = db.faculty.forum.threads.length;
+  saveDB(db);
+  toast('Thread posted');
+  closeModal('modalFacultyNewThread');
+  _refresh();
+}
+
+/* --- Research: Meeting Approval --- */
+function handleApproveMeeting(projectId, requestId) {
+  const db = getDB();
+  const proj = db.faculty.researchSupervision.projects.find(p => p.id === projectId);
+  if (!proj || !proj.meetingRequests) return;
+  const ri = proj.meetingRequests.findIndex(m => m.id === requestId);
+  if (ri !== -1) {
+    proj.meetingRequests[ri].status = 'approved';
+    proj.meetingRequests[ri].facultyNote = 'Approved. Check your calendar.';
+    proj.nextMeeting = proj.meetingRequests[ri].proposedDate + ' at ' + proj.meetingRequests[ri].proposedTime;
+  }
+  // Sync to student research meeting requests
+  if (db.student && db.student.research && db.student.research.meetingRequests) {
+    const si = db.student.research.meetingRequests.findIndex(m => m.id === requestId);
+    if (si !== -1) {
+      db.student.research.meetingRequests[si].status = 'approved';
+      db.student.research.meetingRequests[si].facultyNote = 'Approved. Check your calendar.';
+    }
+  }
+  saveDB(db);
+  toast('Meeting request approved');
+  _refresh();
+}
+
+function handleRejectMeeting(projectId, requestId) {
+  const db = getDB();
+  const proj = db.faculty.researchSupervision.projects.find(p => p.id === projectId);
+  if (!proj || !proj.meetingRequests) return;
+  const ri = proj.meetingRequests.findIndex(m => m.id === requestId);
+  if (ri !== -1) {
+    proj.meetingRequests[ri].status = 'rejected';
+    proj.meetingRequests[ri].facultyNote = 'Not available at proposed time. Please suggest a new slot.';
+  }
+  // Sync to student research meeting requests
+  if (db.student && db.student.research && db.student.research.meetingRequests) {
+    const si = db.student.research.meetingRequests.findIndex(m => m.id === requestId);
+    if (si !== -1) {
+      db.student.research.meetingRequests[si].status = 'rejected';
+      db.student.research.meetingRequests[si].facultyNote = 'Not available at proposed time. Please suggest a new slot.';
+    }
+  }
+  saveDB(db);
+  toast('Meeting request rejected');
+  _refresh();
+}
+
+/* --- Research: Project CRUD --- */
+function handleAddProject() {
+  if (!validateForm('modalNewProject', [
+    { id: 'np-title', required: true, min: 5 },
+    { id: 'np-student', required: true, min: 2 }
+  ])) return;
+
+  const db = getDB();
+  const newProj = {
+    id: 'PROJ-' + String(db.faculty.researchSupervision.projects.length + 1).padStart(3, '0'),
+    title: document.getElementById('np-title').value,
+    studentName: document.getElementById('np-student').value,
+    studentId: 'N/A',
+    status: 'in-progress',
+    grade: 'N/A',
+    progress: 0,
+    lastUpdate: new Date().toLocaleDateString(),
+    submissionCount: 0,
+    commentCount: 0,
+    nextMeeting: 'Not scheduled',
+    submissions: [],
+    meetingRequests: []
+  };
+  db.faculty.researchSupervision.projects.push(newProj);
+  db.faculty.researchSupervision.summary.totalProjects = db.faculty.researchSupervision.projects.length;
+  db.faculty.researchSupervision.summary.inProgress = db.faculty.researchSupervision.projects.filter(p => p.status === 'in-progress').length;
+  saveDB(db);
+  toast('Research project created');
+  closeModal('modalNewProject');
+  _refresh();
+}
+
+function handleDeleteProject(projectId) {
+  const db = getDB();
+  db.faculty.researchSupervision.projects = db.faculty.researchSupervision.projects.filter(p => p.id !== projectId);
+  db.faculty.researchSupervision.summary.totalProjects = db.faculty.researchSupervision.projects.length;
+  db.faculty.researchSupervision.summary.inProgress = db.faculty.researchSupervision.projects.filter(p => p.status === 'in-progress').length;
+  saveDB(db);
+  toast('Project removed');
+  _refresh();
+}
+
 function handleSaveAttendance() {
   const classId = document.getElementById('classSelect').value;
   if (!classId) { 
@@ -367,6 +628,7 @@ function renderAssessmentMapping(assessmentData) {
           <span style="font-weight:600;font-size:13px">${q.name}</span>
           <span style="font-size:12px;color:var(--muted);margin-left:8px">${q.marks} marks</span>
         </div>
+        <button class="btn btn-red btn-sm" onclick="handleDeleteQuestion(${q.id})">Remove</button>
       </div>
       <div style="font-size:13px;color:var(--soft);margin-bottom:10px">${q.text}</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
@@ -485,8 +747,9 @@ function initPage() {
         <span>${t.timeAgo}</span>
       </div>
       <div class="ft-actions">
-        <button class="btn btn-blue btn-sm" onclick="toast('Opening thread...')">View</button>
-        ${t.status !== 'resolved' ? `<button class="btn btn-green btn-sm" onclick="toast('Thread resolved')">Resolve</button>` : ''}
+        <button class="btn btn-blue btn-sm" onclick="openFacultyThread('${t.id}')">View &amp; Reply</button>
+        ${t.status !== 'resolved' ? `<button class="btn btn-green btn-sm" onclick="handleResolveThread('${t.id}')">Resolve</button>` : ''}
+        <button class="btn btn-red btn-sm" onclick="handleDeleteThread('${t.id}')">Delete</button>
       </div>
     </div>
   `).join('');
@@ -499,7 +762,9 @@ function initPage() {
     <div class="stat-card"><div class="sc-label">Under Review</div><div class="sc-val">${res.summary.underReview}</div></div>
     <div class="stat-card"><div class="sc-label">Avg Progress</div><div class="sc-val">${res.summary.avgProgress}%</div></div>
   `;
-  document.getElementById('resProjects').innerHTML = res.projects.map(p => `
+  document.getElementById('resProjects').innerHTML = res.projects.map(p => {
+    const pendingMeetings = (p.meetingRequests || []).filter(m => m.status === 'pending');
+    return `
     <div class="research-project">
       <div class="rp-head">
         <div>
@@ -510,9 +775,10 @@ function initPage() {
             · Next: ${p.nextMeeting}
           </div>
         </div>
-        <div style="text-align:right">
+        <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:6px">
           <div style="font-size:18px;font-weight:700;color:var(--accent)">${p.grade}</div>
           <div style="font-size:11px;color:var(--muted)">${p.progress}%</div>
+          <button class="btn btn-red btn-sm" onclick="handleDeleteProject('${p.id}')">Remove</button>
         </div>
       </div>
       <div class="rp-prog">
@@ -528,8 +794,31 @@ function initPage() {
               <span style="color:var(--muted)">${s.date} · <em>${s.status}</em></span>
             </div>`).join('')}
         </div>` : ''}
+      ${pendingMeetings.length ? `
+        <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px">
+          <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px">📅 Meeting Requests (${pendingMeetings.length} pending)</div>
+          ${(p.meetingRequests || []).map(mr => `
+            <div style="padding:8px 10px;background:var(--bg);border-radius:6px;margin-bottom:6px;border:1px solid var(--border)">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <div>
+                  <div style="font-size:12px;font-weight:600">${mr.studentName} · ${mr.proposedDate} at ${mr.proposedTime}</div>
+                  <div style="font-size:11px;color:var(--muted)">${mr.agenda}</div>
+                </div>
+                <div style="display:flex;gap:6px;align-items:center">
+                  <span class="status-pill ${mr.status === 'approved' ? 'approved' : mr.status === 'rejected' ? 'rejected' : 'pending'}" style="font-size:10px">${mr.status}</span>
+                  ${mr.status === 'pending' ? `
+                    <button class="btn btn-green btn-sm" style="font-size:11px;padding:3px 8px" onclick="handleApproveMeeting('${p.id}','${mr.id}')">Approve</button>
+                    <button class="btn btn-red btn-sm" style="font-size:11px;padding:3px 8px" onclick="handleRejectMeeting('${p.id}','${mr.id}')">Reject</button>
+                  ` : ''}
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      ` : ''}
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 
 // Initialize on page load and listen for changes

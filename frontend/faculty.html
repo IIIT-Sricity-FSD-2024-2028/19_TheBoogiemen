@@ -109,7 +109,10 @@
               <div class="panel-h1">Outcome Mapping</div>
               <div class="panel-sub">Link assessment components to Course (CO) and Program (PO) Outcomes</div>
             </div>
-            <button class="btn btn-primary" onclick="showModal('modalNewAssess')">Create Assessment</button>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-primary" onclick="showModal('modalNewAssess')">Create Assessment</button>
+              <button class="btn btn-green" onclick="handleSaveMapping()">Save Mapping</button>
+            </div>
           </div>
 
           <div class="card">
@@ -118,7 +121,6 @@
                 <div class="card-title">Mid-Term: Database Systems</div>
                 <div class="card-sub">Full Stack Software Development · Total: 60M</div>
               </div>
-              <button class="btn btn-green" onclick="toast('Mapping persistent')">Save Mapping</button>
             </div>
             <div id="mappingQuestions"></div>
           </div>
@@ -190,14 +192,23 @@
         <div class="panel" id="panel-forum">
           <div class="stat-row grid-cols-3" id="forumStats"></div>
           <div class="card">
-            <div class="card-title">Active Inquiries</div>
-            <div class="card-sub">Clarify doubts and monitor academic discussions</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <div>
+                <div class="card-title">Active Inquiries</div>
+                <div class="card-sub">Clarify doubts and monitor academic discussions</div>
+              </div>
+              <button class="btn btn-primary" onclick="showModal('modalFacultyNewThread')">+ New Thread</button>
+            </div>
             <div id="forumThreads"></div>
           </div>
         </div>
 
         <!-- RESEARCH -->
         <div class="panel" id="panel-research">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div class="panel-h1" style="margin:0">Research Supervision</div>
+            <button class="btn btn-primary" onclick="showModal('modalNewProject')">+ Add Project</button>
+          </div>
           <div class="stat-row grid-cols-4" id="resStats"></div>
           <div id="resProjects"></div>
         </div>
@@ -267,6 +278,7 @@
     </div>
   </div>
 
+  <!-- Assessment Instantiate Modal -->
   <div class="overlay" id="modalNewAssess" onclick="closeModalBg(event,'modalNewAssess')">
     <div class="modal">
       <div class="modal-head"><div class="modal-title">Deploy Assessment</div><button class="modal-close" onclick="closeModal('modalNewAssess')">✕</button></div>
@@ -278,11 +290,65 @@
          </div>
       </div>
       <div class="modal-actions">
-        <button class="btn btn-primary flex-1" onclick="toast('Assessment instantiated')">Instantiate</button>
+        <button class="btn btn-primary flex-1" onclick="handleCreateAssessment()">Instantiate</button>
         <button class="btn btn-outline" onclick="closeModal('modalNewAssess')">Discard</button>
       </div>
     </div>
   </div>
+
+  <!-- Faculty New Thread Modal -->
+  <div class="overlay" id="modalFacultyNewThread" onclick="closeModalBg(event,'modalFacultyNewThread')">
+    <div class="modal">
+      <div class="modal-head"><div class="modal-title">Create New Thread</div><button class="modal-close" onclick="closeModal('modalFacultyNewThread')">✕</button></div>
+      <div class="modal-content">
+        <div class="form-field"><label>Lecture / Topic Tag</label><input type="text" id="ft-lecture" placeholder="e.g., Lecture 15: ML Algorithms" /></div>
+        <div class="form-field"><label>Thread Title</label><input type="text" id="ft-title" /></div>
+        <div class="form-field"><label>Post Content</label><textarea id="ft-body" placeholder="Describe the topic or question..."></textarea></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary flex-1" onclick="handleNewFacultyThread()">Post Thread</button>
+        <button class="btn btn-outline" onclick="closeModal('modalFacultyNewThread')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Faculty Thread View & Reply Modal -->
+  <div class="overlay" id="modalFacultyThreadView" onclick="closeModalBg(event,'modalFacultyThreadView')">
+    <div class="modal" style="max-width:600px">
+      <div class="modal-head"><div class="modal-title" id="fThreadViewTitle">Thread</div><button class="modal-close" onclick="closeModal('modalFacultyThreadView')">✕</button></div>
+      <div class="modal-content" style="max-height:60vh;overflow-y:auto">
+        <div id="fThreadViewBody"></div>
+        <div style="margin-top:14px;border-top:2px solid var(--border);padding-top:12px">
+          <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--muted)">Replies</div>
+          <div id="fThreadViewComments"></div>
+        </div>
+        <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px">
+          <div style="font-size:13px;font-weight:600;margin-bottom:6px">Reply as Faculty</div>
+          <div class="form-field"><textarea id="faculty-reply-text" placeholder="Type your response..." style="min-height:80px"></textarea></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary flex-1" onclick="handleFacultyReply()">Post Reply</button>
+        <button class="btn btn-outline" onclick="closeModal('modalFacultyThreadView')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- New Research Project Modal -->
+  <div class="overlay" id="modalNewProject" onclick="closeModalBg(event,'modalNewProject')">
+    <div class="modal">
+      <div class="modal-head"><div class="modal-title">Add Research Project</div><button class="modal-close" onclick="closeModal('modalNewProject')">✕</button></div>
+      <div class="modal-content">
+        <div class="form-field"><label>Project Title</label><input type="text" id="np-title" /></div>
+        <div class="form-field"><label>Student Name</label><input type="text" id="np-student" /></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary flex-1" onclick="handleAddProject()">Create Project</button>
+        <button class="btn btn-outline" onclick="closeModal('modalNewProject')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
 
   <div class="toast" id="toastEl"></div>
 

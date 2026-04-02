@@ -180,10 +180,8 @@ function renderReports() {
     const targetEl = catName === 'Academic Performance'
       ? document.getElementById('report-items-performance')
       : document.getElementById('report-items-' + elId.replace('rcat-', ''));
-    if (!targetEl) return;
-
-    targetEl.innerHTML = items.map(r => `
-      <div class="report-card" style="display:flex;justify-content:space-between;align-items:center;padding:14px;border:1px solid var(--border);border-radius:10px;margin-bottom:10px">
+    if (!targetEl) return;    targetEl.innerHTML = items.map(r => `
+      <div class="report-card" style="display:flex;justify-content:space-between;align-items:flex-start;padding:14px;border:1px solid var(--border);border-radius:10px;margin-bottom:10px">
         <div style="flex:1">
           <div style="font-weight:600;font-size:14px">${r.title}</div>
           <div style="font-size:12px;color:var(--muted);margin-top:3px">${r.description}</div>
@@ -193,14 +191,21 @@ function renderReports() {
             <span style="font-size:11px;background:var(--bg);border:1px solid var(--border);padding:2px 8px;border-radius:4px">${r.id}</span>
           </div>
         </div>
-        <div style="display:flex;gap:8px;margin-left:16px">
-          <button class="btn btn-outline btn-sm" onclick="toast('Previewing ${r.id}…')">Preview</button>
-          <button class="btn btn-primary btn-sm" onclick="toast('Downloading ${r.id}…')">Download</button>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-left:16px">
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-outline btn-sm" onclick="toast('Previewing ${r.id}\u2026')">Preview</button>
+            <button class="btn btn-primary btn-sm" onclick="toast('Downloading ${r.id}\u2026')">Download</button>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-blue btn-sm" onclick="openEditReport('${r.id}','${catName}')">Edit</button>
+            <button class="btn btn-red btn-sm" onclick="handleDeleteReport('${r.id}','${catName}')">Delete</button>
+          </div>
         </div>
       </div>
     `).join('');
   });
 }
+
 
 // Events
 function handleAddEvent() {
@@ -364,6 +369,7 @@ function handleAddUser() {
   closeModal('modalAddUser');
   toast('User account created');
   _headRefresh('users');
+  renderUserStats();
 }
 
 function renderUsers() {
@@ -386,6 +392,19 @@ function handleDeleteUser(id) {
   saveDB(db);
   _headRefresh('users');
   toast('User deleted');
+}
+
+function renderUserStats() {
+  const users = getDB().admin.userManagement.users;
+  const total = users.length;
+  const active = users.filter(u => u.status === 'active').length;
+  const pending = users.filter(u => u.status === 'pending').length;
+  const totalEl = document.getElementById('statTotalUsers');
+  const activeEl = document.getElementById('statActiveUsers');
+  const pendingEl = document.getElementById('statPendingReviews');
+  if (totalEl) totalEl.textContent = total;
+  if (activeEl) activeEl.textContent = active;
+  if (pendingEl) pendingEl.textContent = pending;
 }
 
 // Attendance Overrides
@@ -435,6 +454,148 @@ function handleDeleteOverride(id) {
   saveDB(db);
   _headRefresh('attendance');
   toast('Override reverted');
+}
+
+/* --- Correction Requests (from Students) --- */
+let _activeCorrId = null;
+
+function renderCorrectionRequests() {
+  const db = getDB();
+  const requests = (db.admin.attendanceOverride.correctionRequests || []);
+  const pendingCount = requests.filter(r => r.status === 'pending').length;
+  const countEl = document.getElementById('pendingCorrCount');
+  if (countEl) countEl.textContent = `${pendingCount} Pending`;
+
+  const tbody = document.getElementById('correction-requests-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = requests.length ? requests.map(r => `
+    <tr>
+      <td><strong>${r.studentName}</strong><br><span style="font-size:11px;color:var(--muted)">${r.studentId}</span></td>
+      <td>${r.course}</td>
+      <td>${r.date}</td>
+      <td style="max-width:200px;font-size:12px">${r.reason}</td>
+      <td><span class="status-pill ${r.status === 'approved' ? 'approved' : r.status === 'rejected' ? 'rejected' : 'pending'}">${r.status}</span></td>
+      <td>
+        ${r.status === 'pending' ? `<button class="btn btn-blue btn-sm" onclick="openCorrectionDecision('${r.id}')">Review</button>` : '<span style="font-size:12px;color:var(--muted)">Decided</span>'}
+      </td>
+    </tr>
+  `).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:16px">No correction requests submitted yet.</td></tr>';
+}
+
+function openCorrectionDecision(id) {
+  _activeCorrId = id;
+  const db = getDB();
+  const req = (db.admin.attendanceOverride.correctionRequests || []).find(r => r.id === id);
+  if (!req) return;
+  document.getElementById('corrDecisionBody').innerHTML = `
+    <div style="background:var(--bg);border-radius:8px;padding:12px;margin-bottom:4px">
+      <div style="font-weight:600;margin-bottom:4px">${req.studentName} <span style="font-size:12px;color:var(--muted)">(${req.studentId})</span></div>
+      <div style="font-size:13px;color:var(--ink)"><strong>Course:</strong> ${req.course} (${req.courseCode || ''})</div>
+      <div style="font-size:13px;color:var(--ink)"><strong>Date:</strong> ${req.date}</div>
+      <div style="font-size:13px;color:var(--ink);margin-top:6px"><strong>Reason:</strong> ${req.reason}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">Submitted: ${req.submittedOn}</div>
+    </div>
+  `;
+  document.getElementById('corr-note').value = '';
+  showModal('modalDecideCorrection');
+}
+
+function handleDecideCorrection(decision) {
+  const db = getDB();
+  const reqs = db.admin.attendanceOverride.correctionRequests || [];
+  const ri = reqs.findIndex(r => r.id === _activeCorrId);
+  if (ri === -1) return;
+  reqs[ri].status = decision;
+  reqs[ri].decidedOn = new Date().toLocaleDateString();
+  reqs[ri].note = document.getElementById('corr-note').value;
+
+  // Also update student's own correctionRequests if it matches
+  const stuReqs = db.student.attendanceTracker.correctionRequests || [];
+  const si = stuReqs.findIndex(r => r.id === _activeCorrId);
+  if (si !== -1) { stuReqs[si].status = decision; }
+
+  saveDB(db);
+  closeModal('modalDecideCorrection');
+  _headRefresh('attendance');
+  toast(`Correction request ${decision}`);
+}
+
+/* --- Reports CRUD --- */
+function handleAddReport() {
+  const config = [
+    { id: 'rep-title', required: true, min: 5 },
+    { id: 'rep-desc', required: true, min: 10 },
+    { id: 'rep-period', required: true, min: 3 }
+  ];
+  if (!validateForm('modalAddReport', config)) return;
+
+  const db = getDB();
+  const cat = document.getElementById('rep-cat').value;
+  if (!db.admin.reports.categories[cat]) db.admin.reports.categories[cat] = [];
+  const newReport = {
+    id: 'RP-' + Date.now(),
+    title: document.getElementById('rep-title').value,
+    description: document.getElementById('rep-desc').value,
+    period: document.getElementById('rep-period').value,
+    fileSize: document.getElementById('rep-size').value || '— MB',
+    badgeClass: 'badge'
+  };
+  db.admin.reports.categories[cat].push(newReport);
+  saveDB(db);
+  closeModal('modalAddReport');
+  toast('Report added');
+  document.getElementById('rep-title').value = '';
+  document.getElementById('rep-desc').value = '';
+  document.getElementById('rep-period').value = '';
+  document.getElementById('rep-size').value = '';
+  renderReports();
+}
+
+let _editRepCat = null;
+function openEditReport(id, cat) {
+  _editRepCat = cat;
+  const db = getDB();
+  const cats = db.admin.reports.categories;
+  const report = (cats[cat] || []).find(r => r.id === id);
+  if (!report) return;
+  document.getElementById('edit-rep-id').value = id;
+  document.getElementById('edit-rep-cat').value = cat;
+  document.getElementById('edit-rep-title').value = report.title;
+  document.getElementById('edit-rep-desc').value = report.description;
+  document.getElementById('edit-rep-period').value = report.period;
+  showModal('modalEditReport');
+}
+
+function handleEditReport() {
+  const config = [
+    { id: 'edit-rep-title', required: true, min: 5 },
+    { id: 'edit-rep-desc', required: true, min: 10 },
+    { id: 'edit-rep-period', required: true, min: 3 }
+  ];
+  if (!validateForm('modalEditReport', config)) return;
+
+  const db = getDB();
+  const id = document.getElementById('edit-rep-id').value;
+  const cat = document.getElementById('edit-rep-cat').value;
+  const cats = db.admin.reports.categories;
+  const ri = (cats[cat] || []).findIndex(r => r.id === id);
+  if (ri === -1) return;
+  cats[cat][ri].title = document.getElementById('edit-rep-title').value;
+  cats[cat][ri].description = document.getElementById('edit-rep-desc').value;
+  cats[cat][ri].period = document.getElementById('edit-rep-period').value;
+  saveDB(db);
+  closeModal('modalEditReport');
+  toast('Report updated');
+  renderReports();
+}
+
+function handleDeleteReport(id, cat) {
+  const db = getDB();
+  if (!db.admin.reports.categories[cat]) return;
+  db.admin.reports.categories[cat] = db.admin.reports.categories[cat].filter(r => r.id !== id);
+  saveDB(db);
+  toast('Report deleted');
+  renderReports();
 }
 
 // Settings
@@ -506,6 +667,8 @@ function initPage() {
   renderFees();
   renderUsers();
   renderOverrides();
+  renderCorrectionRequests();
+  renderUserStats();
 
   // Bar Chart Injection
   const depts = db.dashboard.departments;
@@ -547,8 +710,8 @@ document.addEventListener('head:changed', (e) => {
   if (s === 'events') renderEvents();
   else if (s === 'resources') renderResources();
   else if (s === 'fees') renderFees();
-  else if (s === 'users') renderUsers();
-  else if (s === 'attendance') renderOverrides();
+  else if (s === 'users') { renderUsers(); renderUserStats(); }
+  else if (s === 'attendance') { renderOverrides(); renderCorrectionRequests(); }
   else initPage();
 });
 

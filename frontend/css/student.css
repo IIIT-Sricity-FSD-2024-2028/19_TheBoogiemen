@@ -611,6 +611,36 @@ tr:hover td {
   background: var(--blue-m);
 }
 
+.btn-green {
+  background: var(--green-l);
+  color: var(--green);
+}
+
+.btn-green:hover {
+  background: #bbf7d0;
+}
+
+.btn-red {
+  background: var(--red-l);
+  color: var(--red);
+}
+
+.btn-red:hover {
+  background: #fecaca;
+}
+
+.btn-sm {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+.flex-1 { flex: 1; }
+.flex-between { display: flex; justify-content: space-between; align-items: center; }
+.mt-16 { margin-top: 16px; }
+.pt-16 { padding-top: 16px; }
+.border-t { border-top: 1px solid var(--rule); }
+
 /* FORMS */
 .form-field {
   margin-bottom: 16px;

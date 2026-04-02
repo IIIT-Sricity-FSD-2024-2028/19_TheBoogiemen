@@ -247,7 +247,10 @@ const studentMockDatabase = {
       { id: "cs302", code: "CS302", name: "Machine Learning", instructor: "Dr. Piyush Joshi", percent: 83, ratio: "30/36", isSelected: false },
       { id: "cs303", code: "CS303", name: "Software Engineering", instructor: "Dr. Mallikarjun", percent: 95, ratio: "36/38", isSelected: false }
     ],
-    correctionRequests: []
+    correctionRequests: [
+      { id: "CR001", studentName: "Faham", studentId: "S20240010146", course: "Database Management Systems", courseCode: "CS301", date: "2026-03-10", reason: "Was attending a university event — have proof", status: "pending", submittedOn: "2026-03-11" },
+      { id: "CR002", studentName: "Faham", studentId: "S20240010146", course: "Machine Learning", courseCode: "CS302", date: "2026-03-05", reason: "Medical appointment — doctor's note attached", status: "approved", submittedOn: "2026-03-06" }
+    ]
   },
   leaveManagement: {
     stats: { total: 4, approved: 2, pending: 1, rejected: 1 },
@@ -265,7 +268,17 @@ const studentMockDatabase = {
       { id: 2, lectureTag: "Lecture 14: Neural Networks", title: "Backpropagation implementation doubt", author: "Pranjal", replies: 8, timestamp: "5 hours ago", tagClass: "badge2" },
       { id: 3, lectureTag: "Lecture 13: Data Preprocessing", title: "Best practices for handling missing values", author: "Faham", replies: 15, timestamp: "1 day ago", tagClass: "badge3" }
     ],
-    lectureOptions: ["Lecture 13: Data Preprocessing", "Lecture 14: Neural Networks", "Lecture 15: Machine Learning Algorithms", "Lecture 16: Model Evaluation"]
+    lectureOptions: ["Lecture 13: Data Preprocessing", "Lecture 14: Neural Networks", "Lecture 15: Machine Learning Algorithms", "Lecture 16: Model Evaluation"],
+    fullThreads: [
+      { id: 1, lectureTag: "Lecture 15: Machine Learning Algorithms", title: "Clarification on gradient descent optimization", author: "Faham", authorId: "S20240010146", replies: 12, timestamp: "2 hours ago", tagClass: "badge", body: "I'm struggling to understand the mathematical intuition behind the learning rate parameter in gradient descent. How does adjusting it affect convergence?", comments: [
+        { id: 1, author: "Dr. Shams", role: "faculty", initial: "D", text: "The learning rate controls step size during gradient descent. Too large → overshooting; Too small → slow convergence. Typical range: 0.001–0.1.", time: "1 hour ago" },
+        { id: 2, author: "Pranjal", role: "student", initial: "P", text: "I recommend reading Chapter 4 of Deep Learning by Goodfellow — it explains adaptive learning rates really well.", time: "45 mins ago" }
+      ]},
+      { id: 2, lectureTag: "Lecture 14: Neural Networks", title: "Backpropagation implementation doubt", author: "Pranjal", authorId: "S20240010147", replies: 8, timestamp: "5 hours ago", tagClass: "badge2", body: "When implementing backpropagation manually, I'm getting different gradients than the expected output. Should we use ReLU activation for all layers or only hidden layers?", comments: [] },
+      { id: 3, lectureTag: "Lecture 13: Data Preprocessing", title: "Best practices for handling missing values", author: "Faham", authorId: "S20240010146", replies: 15, timestamp: "1 day ago", tagClass: "badge3", body: "In the dataset given for Assignment 2, about 15% values are missing. Should I use mean/median imputation or try a model-based approach like KNN imputer?", comments: [
+        { id: 1, author: "Dr. Shams", role: "faculty", initial: "D", text: "For numerical features, median is safer than mean (robust to outliers). KNN imputation is excellent but computationally heavy for large datasets.", time: "23 hours ago" }
+      ]}
+    ]
   },
   research: {
     project: {
@@ -280,6 +293,10 @@ const studentMockDatabase = {
       { id: 3, title: "Mid-term Presentation", status: "in-progress", date: "March 10, 2026", description: "Prepare and deliver mid-term progress presentation", statusClass: "badge3" },
       { id: 4, title: "Implementation Phase", status: "upcoming", date: "March 20, 2026", description: "Begin core implementation of research methodology", statusClass: "badge4" },
       { id: 5, title: "Final Submission", status: "upcoming", date: "April 30, 2026", description: "Submit final thesis and documentation", statusClass: "badge5" }
+    ],
+    meetingRequests: [
+      { id: "MR001", proposedDate: "2026-04-10", proposedTime: "14:00", agenda: "Discuss mid-term presentation progress and get feedback on methodology section", status: "approved", requestedOn: "2026-04-01", facultyNote: "Confirmed. Meet at my office Room 305." },
+      { id: "MR002", proposedDate: "2026-04-20", proposedTime: "11:00", agenda: "Review implementation plan and dataset collection strategy", status: "pending", requestedOn: "2026-04-02", facultyNote: "" }
     ]
   },
   settings: {
@@ -452,10 +469,10 @@ const facultyMockDatabase = {
   researchSupervision: {
     summary: { totalProjects: 4, inProgress: 3, underReview: 1, avgProgress: 70 },
     projects: [
-      { id: "PROJ-001", title: "Machine Learning for Predictive Healthcare", studentName: "Shams", studentId: "CS001", status: "in-progress", grade: "A-", progress: 65, lastUpdate: "Mar 3", submissionCount: 8, commentCount: 24, nextMeeting: "March 10, 2026", submissions: [{ title: "Literature Review - Final Draft", date: "Mar 3, 2026", status: "reviewed" }, { title: "Methodology Section", date: "Feb 28, 2026", status: "reviewed" }, { title: "Data Collection Results", date: "Feb 25, 2026", status: "pending" }] },
-      { id: "PROJ-002", title: "Blockchain-based Supply Chain Management", studentName: "Omkar", studentId: "CS002", status: "in-progress", grade: "A", progress: 72, lastUpdate: "Mar 4", submissionCount: 10, commentCount: 18, nextMeeting: "March 8, 2026", submissions: [] },
-      { id: "PROJ-003", title: "IoT Security Framework for Smart Homes", studentName: "Harshini", studentId: "CS003", status: "review", grade: "A", progress: 85, lastUpdate: "Mar 5", submissionCount: 12, commentCount: 32, nextMeeting: "None Scheduled", submissions: [] },
-      { id: "PROJ-004", title: "Natural Language Processing for Sentiment Analysis", studentName: "Pranjal", studentId: "CS004", status: "in-progress", grade: "B+", progress: 58, lastUpdate: "Mar 2", submissionCount: 6, commentCount: 15, nextMeeting: "March 12, 2026", submissions: [] }
+      { id: "PROJ-001", title: "Machine Learning for Predictive Healthcare", studentName: "Shams", studentId: "CS001", status: "in-progress", grade: "A-", progress: 65, lastUpdate: "Mar 3", submissionCount: 8, commentCount: 24, nextMeeting: "March 10, 2026", submissions: [{ title: "Literature Review - Final Draft", date: "Mar 3, 2026", status: "reviewed" }, { title: "Methodology Section", date: "Feb 28, 2026", status: "reviewed" }, { title: "Data Collection Results", date: "Feb 25, 2026", status: "pending" }], meetingRequests: [{ id: "MR001", studentName: "Shams", proposedDate: "2026-04-10", proposedTime: "14:00", agenda: "Discuss mid-term results", status: "pending", requestedOn: "2026-04-01" }] },
+      { id: "PROJ-002", title: "Blockchain-based Supply Chain Management", studentName: "Omkar", studentId: "CS002", status: "in-progress", grade: "A", progress: 72, lastUpdate: "Mar 4", submissionCount: 10, commentCount: 18, nextMeeting: "March 8, 2026", submissions: [], meetingRequests: [] },
+      { id: "PROJ-003", title: "IoT Security Framework for Smart Homes", studentName: "Harshini", studentId: "CS003", status: "review", grade: "A", progress: 85, lastUpdate: "Mar 5", submissionCount: 12, commentCount: 32, nextMeeting: "None Scheduled", submissions: [], meetingRequests: [{ id: "MR002", studentName: "Harshini", proposedDate: "2026-04-15", proposedTime: "10:00", agenda: "Final thesis review session", status: "approved", requestedOn: "2026-04-02", facultyNote: "Confirmed. Room 305." }] },
+      { id: "PROJ-004", title: "Natural Language Processing for Sentiment Analysis", studentName: "Pranjal", studentId: "CS004", status: "in-progress", grade: "B+", progress: 58, lastUpdate: "Mar 2", submissionCount: 6, commentCount: 15, nextMeeting: "March 12, 2026", submissions: [], meetingRequests: [] }
     ]
   },
   settings: {
@@ -543,6 +560,11 @@ const academicHeadMockDatabase = {
       { id: "O1", name: "Shams",   roll: "12345", date: "March 15, 2026", status: "present", reason: "Medical" },
       { id: "O2", name: "Omkar",   roll: "12346", date: "March 15, 2026", status: "absent",  reason: "Unexcused" },
       { id: "O3", name: "Pranjal", roll: "12347", date: "March 15, 2026", status: "present", reason: "Event" }
+    ],
+    correctionRequests: [
+      { id: "CR001", studentName: "Faham", studentId: "S20240010146", course: "Database Management Systems", courseCode: "CS301", date: "2026-03-10", reason: "Was attending a university event — have proof", status: "pending", submittedOn: "2026-03-11" },
+      { id: "CR002", studentName: "Pranjal", studentId: "S20240010147", course: "Machine Learning", courseCode: "CS302", date: "2026-03-05", reason: "Medical appointment — doctor's note attached", status: "pending", submittedOn: "2026-03-06" },
+      { id: "CR003", studentName: "Harshini", studentId: "S20240010085", course: "Operating Systems", courseCode: "CS304", date: "2026-03-08", reason: "Internet connectivity issues during online class", status: "approved", submittedOn: "2026-03-09", decidedOn: "2026-03-10" }
     ]
   },
   settings: {
@@ -598,7 +620,7 @@ const superuserMockDatabase = {
 // ==========================================
 
 // Increment this when the data schema changes to force a re-seed.
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 // In-memory database (source of truth from mockdata.js)
 let inMemoryDB = null;

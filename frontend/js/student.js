@@ -141,17 +141,42 @@ function handleThread() {
   ])) return;
 
   const db = getDB();
-  db.student.forum.threads.unshift({
+  const newThread = {
     id: db.student.forum.threads.length + 1,
     lectureTag: document.getElementById('t-tag').value,
     title: document.getElementById('t-title').value,
     author: db.student.profile.personal.fullName,
+    authorId: db.student.profile.academic.studentId,
     replies: 0,
     timestamp: 'Just now',
-    tagClass: 'badge'
-  });
+    tagClass: 'badge',
+    body: document.getElementById('t-desc').value,
+    comments: []
+  };
+  db.student.forum.threads.unshift(newThread);
+  if (!db.student.forum.fullThreads) db.student.forum.fullThreads = [];
+  db.student.forum.fullThreads.unshift({ ...newThread });
+
+  // Also push to faculty forum for cross-visibility
+  if (db.faculty && db.faculty.forum && db.faculty.forum.threads) {
+    db.faculty.forum.threads.unshift({
+      id: 'T' + String(db.faculty.forum.threads.length + 1).padStart(3, '0'),
+      lecture: document.getElementById('t-tag').value,
+      status: 'active',
+      title: document.getElementById('t-title').value,
+      author: db.student.profile.personal.fullName,
+      studentId: db.student.profile.academic.studentId,
+      replyCount: 0,
+      timeAgo: 'Just now',
+      originalPost: document.getElementById('t-desc').value,
+      comments: []
+    });
+  }
   saveDB(db);
-  toast('Inquiry posted');
+  toast('Question posted to forum');
+  document.getElementById('t-tag').value = '';
+  document.getElementById('t-title').value = '';
+  document.getElementById('t-desc').value = '';
   closeModal('modalThread');
   _refresh();
 }
@@ -205,11 +230,191 @@ function handleBug() {
   document.getElementById('bugDesc').value = '';
 }
 
+/* --- Attendance Correction --- */
+function handleAttendanceCorrection() {
+  if (!validateForm('modalCorrection', [
+    { id: 'c-course', required: true },
+    { id: 'c-date', required: true },
+    { id: 'c-reason', required: true, min: 10 }
+  ])) return;
+
+  const db = getDB();
+  const student = db.student.profile;
+  const corrId = 'CR' + Date.now();
+  const correction = {
+    id: corrId,
+    studentName: student.personal.fullName,
+    studentId: student.academic.studentId,
+    course: document.getElementById('c-course').value,
+    courseCode: document.getElementById('c-course').value.split(' - ')[0] || 'N/A',
+    date: document.getElementById('c-date').value,
+    reason: document.getElementById('c-reason').value,
+    status: 'pending',
+    submittedOn: new Date().toLocaleDateString()
+  };
+
+  // Save to student tracker
+  if (!db.student.attendanceTracker.correctionRequests) db.student.attendanceTracker.correctionRequests = [];
+  db.student.attendanceTracker.correctionRequests.unshift(correction);
+
+  // Also push to admin pending corrections
+  if (!db.admin.attendanceOverride.correctionRequests) db.admin.attendanceOverride.correctionRequests = [];
+  db.admin.attendanceOverride.correctionRequests.unshift({ ...correction });
+
+  saveDB(db);
+  toast('Correction request submitted — pending head approval');
+  closeModal('modalCorrection');
+  _refresh();
+}
+
+/* --- Assignment Submission --- */
+let _activeAssignCourse = null;
+let _activeAssignTitle = null;
+
+function openSubmitAssignment(courseId, assignmentTitle) {
+  _activeAssignCourse = courseId;
+  _activeAssignTitle = assignmentTitle;
+  document.getElementById('assign-course-label').textContent = assignmentTitle;
+  document.getElementById('assign-notes').value = '';
+  showModal('modalSubmitAssignment');
+}
+
+function handleSubmitAssignment() {
+  if (!validateForm('modalSubmitAssignment', [
+    { id: 'assign-notes', required: true, min: 5 }
+  ])) return;
+
+  const db = getDB();
+  const courseList = db.student.courses.list;
+  const ci = courseList.findIndex(c => c.id === _activeAssignCourse);
+  if (ci !== -1 && courseList[ci].assessments) {
+    const ai = courseList[ci].assessments.findIndex(a => a.title === _activeAssignTitle);
+    if (ai !== -1) {
+      courseList[ci].assessments[ai].status = 'submitted';
+      courseList[ci].assessments[ai].submittedOn = new Date().toLocaleDateString();
+      courseList[ci].assessments[ai].notes = document.getElementById('assign-notes').value;
+    }
+  }
+  saveDB(db);
+  toast('Assignment submitted successfully!');
+  closeModal('modalSubmitAssignment');
+  _refresh();
+}
+
+/* --- Forum: View & Reply --- */
+let _activeThreadId = null;
+
+function openThread(threadId) {
+  _activeThreadId = threadId;
+  const db = getDB();
+  const threads = db.student.forum.fullThreads || db.student.forum.threads;
+  const thread = threads.find(t => t.id === threadId);
+  if (!thread) return;
+
+  const body = document.getElementById('threadViewBody');
+  const commentsEl = document.getElementById('threadViewComments');
+  body.innerHTML = `
+    <div style="margin-bottom:14px">
+      <div style="font-size:11px;color:var(--accent);font-weight:600;margin-bottom:6px">${thread.lectureTag}</div>
+      <div style="font-size:15px;font-weight:600;color:var(--ink);margin-bottom:8px">${thread.title}</div>
+      <div style="background:var(--bg);border-radius:10px;padding:14px;font-size:13px;color:var(--soft);line-height:1.6">
+        ${thread.body || thread.title}
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:var(--muted)">By <strong>${thread.author}</strong> · ${thread.timestamp}</div>
+    </div>
+  `;
+
+  const comments = thread.comments || [];
+  commentsEl.innerHTML = comments.length ? comments.map(c => `
+    <div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="width:32px;height:32px;border-radius:50%;background:${c.role === 'faculty' ? 'var(--accent)' : 'var(--green,#22c55e)'};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex-shrink:0">${c.initial || c.author.charAt(0)}</div>
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:600;color:var(--ink)">${c.author} ${c.role === 'faculty' ? '<span style="font-size:10px;color:var(--accent);background:var(--accent-l,#eef2ff);padding:1px 6px;border-radius:4px;margin-left:4px">Faculty</span>' : ''}</div>
+        <div style="font-size:13px;color:var(--soft);margin-top:3px;line-height:1.5">${c.text}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">${c.time}</div>
+      </div>
+    </div>
+  `).join('') : '<p style="color:var(--muted);font-size:13px">No replies yet. Be the first to reply!</p>';
+
+  document.getElementById('threadViewTitle').textContent = thread.title;
+  showModal('modalThreadView');
+}
+
+function handleReply() {
+  if (!validateForm('modalThreadView', [
+    { id: 'reply-text', required: true, min: 5 }
+  ])) return;
+
+  const db = getDB();
+  const threads = db.student.forum.fullThreads;
+  if (!threads) return;
+  const ti = threads.findIndex(t => t.id === _activeThreadId);
+  if (ti === -1) return;
+
+  const newReply = {
+    id: (threads[ti].comments || []).length + 1,
+    author: db.student.profile.personal.fullName,
+    role: 'student',
+    initial: db.student.profile.personal.fullName.charAt(0),
+    text: document.getElementById('reply-text').value,
+    time: 'Just now'
+  };
+  if (!threads[ti].comments) threads[ti].comments = [];
+  threads[ti].comments.push(newReply);
+  threads[ti].replies = (threads[ti].replies || 0) + 1;
+
+  // Also update the shortform threads list
+  const si = db.student.forum.threads.findIndex(t => t.id === _activeThreadId);
+  if (si !== -1) db.student.forum.threads[si].replies = threads[ti].replies;
+
+  saveDB(db);
+  toast('Reply posted!');
+  document.getElementById('reply-text').value = '';
+  openThread(_activeThreadId); // refresh modal display
+}
+
+/* --- Research: Request Meeting --- */
+function handleRequestMeeting() {
+  if (!validateForm('modalRequestMeeting', [
+    { id: 'rm-date', required: true },
+    { id: 'rm-time', required: true },
+    { id: 'rm-agenda', required: true, min: 10 }
+  ])) return;
+
+  const db = getDB();
+  const newReq = {
+    id: 'MR' + Date.now(),
+    proposedDate: document.getElementById('rm-date').value,
+    proposedTime: document.getElementById('rm-time').value,
+    agenda: document.getElementById('rm-agenda').value,
+    status: 'pending',
+    requestedOn: new Date().toLocaleDateString(),
+    facultyNote: ''
+  };
+
+  if (!db.student.research.meetingRequests) db.student.research.meetingRequests = [];
+  db.student.research.meetingRequests.unshift(newReq);
+
+  // Also push to the faculty's research supervision for the student's project
+  const proj = db.faculty.researchSupervision.projects.find(p => p.studentName === db.student.profile.personal.fullName);
+  if (proj) {
+    if (!proj.meetingRequests) proj.meetingRequests = [];
+    proj.meetingRequests.unshift({
+      ...newReq,
+      studentName: db.student.profile.personal.fullName
+    });
+  }
+
+  saveDB(db);
+  toast('Meeting request sent to faculty');
+  closeModal('modalRequestMeeting');
+  _refresh();
+}
+
 /* =====================================================
    RENDER HELPERS
    ===================================================== */
 
-/** Render the analytics section: syllabus modules + assignment queue */
 function renderDashboardAnalytics(db) {
   const analytics = db.analytics;
 
@@ -218,22 +423,18 @@ function renderDashboardAnalytics(db) {
   if (syllabusEl && analytics && analytics.modules) {
     syllabusEl.innerHTML = analytics.modules.map(m => `
       <div style="margin-bottom:10px">
-        <div class="pr-lbl" style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
           <span>${m.name} &middot; ${m.completedTopics}/${m.totalTopics} topics</span>
           <span>${m.percentage}%</span>
         </div>
-        <div class="prog-bar" style="height:6px;border-radius:4px;background:var(--border);overflow:hidden">
-          <div class="prog-fill ${m.percentage === 100 ? 'green' : 'blue'}"
-               style="width:${m.percentage}%;height:100%;border-radius:4px;background:${m.percentage === 100 ? 'var(--green,#22c55e)' : 'var(--accent,#6366f1)'}"></div>
+        <div style="height:6px;border-radius:4px;background:var(--border);overflow:hidden">
+          <div style="width:${m.percentage}%;height:100%;border-radius:4px;background:${m.percentage === 100 ? 'var(--green,#22c55e)' : 'var(--accent,#6366f1)'}"></div>
         </div>
       </div>
     `).join('');
-    // Append predicted grade chip
-    const chip = `<div style="margin-top:12px;font-size:12px;color:var(--muted)">
-      Overall Completion: <strong>${analytics.student.overallCompletion}%</strong>
-      &nbsp;&middot;&nbsp; Predicted Grade: <strong style="color:var(--accent)">${analytics.student.predictedGrade}</strong>
-    </div>`;
-    syllabusEl.insertAdjacentHTML('beforeend', chip);
+    syllabusEl.insertAdjacentHTML('beforeend', `<div style="margin-top:12px;font-size:12px;color:var(--muted)">
+      Overall: <strong>${analytics.student.overallCompletion}%</strong> &nbsp;&middot;&nbsp; Predicted Grade: <strong style="color:var(--accent)">${analytics.student.predictedGrade}</strong>
+    </div>`);
   }
 
   // Assignment Queue
@@ -255,7 +456,6 @@ function renderDashboardAnalytics(db) {
   }
 }
 
-/** Render a heatmap grid for a subject's weekly attendance */
 function renderHeatmap(elId, weeks) {
   const el = document.getElementById(elId);
   if (!el || !weeks) return;
@@ -279,13 +479,11 @@ function renderHeatmap(elId, weeks) {
   `;
 }
 
-/** Render the full timetable grid from a schedule array */
 function renderTimetable(elId, schedule, isFaculty = false) {
   const el = document.getElementById(elId);
   if (!el) return;
   const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
   const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
-  const colorMap = { Lab: 'ci-b', Lecture: 'ci-g', Tutorial: 'ci-a', Free: 'ci-p', Meeting: 'ci-r', OfficeHours: 'ci-r' };
 
   let html = `<table style="width:100%;border-collapse:collapse;font-size:12px">
     <thead><tr>
@@ -333,7 +531,6 @@ function renderTimetable(elId, schedule, isFaculty = false) {
    INITIALIZATION
    ===================================================== */
 function initPage() {
-  const currentUser = getCurrentUser();
   const db = getDB().student;
 
   // Sidebar & Topbar
@@ -409,38 +606,62 @@ function initPage() {
   // ── TIMETABLE ──────────────────────────────────────
   renderTimetable('ttGrid', db.timetable.schedule, false);
 
-  // ── COURSES ────────────────────────────────────────
-  // Use rich courses.list where available, fall back to profile courses
+  // ── COURSES ── (with Assignments sub-view) ─────────
   const richCourses = db.courses.list;
-  document.getElementById('coursesList').innerHTML = richCourses.map(c => `
-    <div class="course-card">
-      <div class="cc-head">
-        <div class="cc-info">
-          <div class="cc-code">${c.code}</div>
-          <div class="cc-name">${c.title}</div>
-          <div class="cc-inst">${c.instructor}</div>
+  document.getElementById('coursesList').innerHTML = richCourses.map(c => {
+    const assignments = c.assessments || [];
+    const pendingCount = assignments.filter(a => a.status === 'pending').length;
+    const statusColor = { pending: '#f59e0b', submitted: '#6366f1', graded: '#22c55e' };
+    const statusLabel = { pending: 'Pending', submitted: 'Submitted', graded: 'Graded' };
+
+    const assignHtml = assignments.length ? `
+      <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px">
+        <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px">📋 Assignments</div>
+        ${assignments.map(asn => `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">
+            <div>
+              <div style="font-size:13px;font-weight:500;color:var(--ink)">${asn.title}</div>
+              <div style="font-size:11px;color:var(--muted)">Due: ${asn.due} · Max: ${asn.max}M${asn.scored !== null && asn.scored !== undefined ? ' · Scored: <strong style="color:var(--accent)">' + asn.scored + 'M</strong>' : ''}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:11px;padding:2px 8px;border-radius:6px;font-weight:600;background:${statusColor[asn.status] || '#6366f1'}22;color:${statusColor[asn.status] || '#6366f1'}">${statusLabel[asn.status] || asn.status}</span>
+              ${asn.status === 'pending' ? `<button class="btn btn-primary" style="font-size:11px;padding:4px 10px" onclick="openSubmitAssignment('${c.id}','${asn.title.replace(/'/g, "\\'")}')">Submit</button>` : ''}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    ` : '';
+
+    return `
+      <div class="course-card">
+        <div class="cc-head">
+          <div class="cc-info">
+            <div class="cc-code">${c.code}</div>
+            <div class="cc-name">${c.title}</div>
+            <div class="cc-inst">${c.instructor}</div>
+          </div>
+          <div class="grade-pill">${c.grade}</div>
         </div>
-        <div class="grade-pill">${c.grade}</div>
-      </div>
-      <div class="cc-meta">
-        <div>Credits: ${c.credits}</div>
-        <div>Att: ${c.attendance.percent}% (${c.attendance.attended}/${c.attendance.total})</div>
-        <div>Progress: ${c.progress}%</div>
-        <div>Next: ${c.nextClass}</div>
-      </div>
-      ${c.currentModule ? `<div style="margin-top:8px;font-size:12px;color:var(--muted)">📖 ${c.currentModule}</div>` : ''}
-      ${c.assignmentsPending ? `<div style="margin-top:4px;font-size:12px;color:var(--accent)">${c.assignmentsPending} assignment(s) pending</div>` : ''}
-      <div style="margin-top:10px">
-        <div class="prog-bar" style="height:5px;border-radius:4px;background:var(--border)">
-          <div style="width:${c.progress}%;height:100%;background:var(--accent);border-radius:4px"></div>
+        <div class="cc-meta">
+          <div>Credits: ${c.credits}</div>
+          <div>Att: ${c.attendance.percent}% (${c.attendance.attended}/${c.attendance.total})</div>
+          <div>Progress: ${c.progress}%</div>
+          <div>Next: ${c.nextClass}</div>
         </div>
+        ${c.currentModule ? `<div style="margin-top:8px;font-size:12px;color:var(--muted)">📖 ${c.currentModule}</div>` : ''}
+        ${pendingCount > 0 ? `<div style="margin-top:4px;font-size:12px;color:var(--accent)">${pendingCount} assignment(s) pending</div>` : ''}
+        <div style="margin-top:10px">
+          <div style="height:5px;border-radius:4px;background:var(--border)">
+            <div style="width:${c.progress}%;height:100%;background:var(--accent);border-radius:4px"></div>
+          </div>
+        </div>
+        ${assignHtml}
       </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 
   // ── ATTENDANCE ─────────────────────────────────────
   const att = db.attendanceTracker;
-  // Stats row from allSubjects
   document.getElementById('attStats').innerHTML = att.allSubjects.map(s => `
     <div class="stat-card">
       <div class="sc-label">${s.code}</div>
@@ -449,10 +670,23 @@ function initPage() {
     </div>
   `).join('');
 
-  // Heatmap for active subject (heat1) and first other subject (heat2)
   renderHeatmap('heat1', att.activeSubject.weeks);
-  // Use the same weeks data for heat2 (second subject if data existed, reuse for demo)
   renderHeatmap('heat2', att.activeSubject.weeks);
+
+  // Show correction requests history
+  const corrEl = document.getElementById('correctionHistory');
+  if (corrEl) {
+    const corrections = att.correctionRequests || [];
+    corrEl.innerHTML = corrections.length ? corrections.map(cr => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;margin-top:8px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
+        <div>
+          <div style="font-size:13px;font-weight:600">${cr.course}</div>
+          <div style="font-size:11px;color:var(--muted)">${cr.date} · ${cr.reason}</div>
+        </div>
+        <span class="status-pill ${cr.status === 'approved' ? 'approved' : cr.status === 'rejected' ? 'rejected' : 'pending'}">${cr.status}</span>
+      </div>
+    `).join('') : '<p style="color:var(--muted);font-size:13px;margin-top:8px">No correction requests submitted yet.</p>';
+  }
 
   // ── LEAVE ──────────────────────────────────────────
   document.getElementById('leaveHistory').innerHTML = db.leaveManagement.applications.map(l => `
@@ -467,17 +701,27 @@ function initPage() {
   `).join('');
 
   // ── FORUM ──────────────────────────────────────────
-  document.getElementById('forumThreads').innerHTML = db.forum.threads.map(t => `
-    <div class="forum-thread">
+  const fullThreads = db.forum.fullThreads || db.forum.threads;
+  document.getElementById('forumThreads').innerHTML = fullThreads.map(t => `
+    <div class="forum-thread" style="cursor:pointer" onclick="openThread(${t.id})">
       <div class="ft-lecture">${t.lectureTag}</div>
       <div class="ft-title">${t.title}</div>
-      <div class="ft-meta"><span>by ${t.author}</span><span>${t.replies} replies</span><span>${t.timestamp}</span></div>
+      <div class="ft-meta">
+        <span>by ${t.author}</span>
+        <span>${t.replies || 0} replies</span>
+        <span>${t.timestamp}</span>
+        <button class="btn btn-blue btn-sm" style="margin-left:auto" onclick="event.stopPropagation();openThread(${t.id})">View &amp; Reply</button>
+      </div>
     </div>
   `).join('');
 
   // ── RESEARCH ───────────────────────────────────────
   const proj = db.research.project;
-  const projMeta = `
+  const meetingRequests = db.research.meetingRequests || [];
+
+  const meetingStatusColor = { pending: '#f59e0b', approved: '#22c55e', rejected: '#ef4444' };
+
+  document.getElementById('milestones').innerHTML = `
     <div style="margin-bottom:16px;padding:12px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
       <div style="font-weight:600">${proj.title}</div>
       <div style="font-size:12px;color:var(--muted);margin-top:4px">${proj.type} · Guide: ${proj.guide}</div>
@@ -487,14 +731,30 @@ function initPage() {
         <div style="font-size:12px"><strong>${proj.stats.documentsCount}</strong> documents</div>
       </div>
     </div>
-  `;
-  document.getElementById('milestones').innerHTML = projMeta + db.research.milestones.map(m => `
+  ` + db.research.milestones.map(m => `
     <div class="milestone-item ${m.status === 'completed' ? 'done' : m.status === 'in-progress' ? 'progress' : ''}">
       <div class="mi-label">${m.status.toUpperCase()}</div>
       <div class="mi-title">${m.title}</div>
       <div class="mi-desc">${m.description} · ${m.date}</div>
     </div>
-  `).join('');
+  `).join('') + (meetingRequests.length ? `
+    <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:12px">
+      <div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:8px">📅 Meeting Requests</div>
+      ${meetingRequests.map(mr => `
+        <div style="padding:10px 12px;background:var(--bg);border-radius:8px;border:1px solid var(--border);margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div>
+              <div style="font-size:13px;font-weight:600">${mr.proposedDate} at ${mr.proposedTime}</div>
+              <div style="font-size:12px;color:var(--muted);margin-top:3px">${mr.agenda}</div>
+              ${mr.facultyNote ? `<div style="margin-top:5px;font-size:12px;color:var(--accent)">Faculty note: ${mr.facultyNote}</div>` : ''}
+              <div style="font-size:11px;color:var(--muted);margin-top:3px">Requested: ${mr.requestedOn}</div>
+            </div>
+            <span style="font-size:11px;padding:3px 8px;border-radius:6px;font-weight:600;background:${(meetingStatusColor[mr.status] || '#6366f1')}22;color:${meetingStatusColor[mr.status] || '#6366f1'};white-space:nowrap">${mr.status}</span>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  ` : '');
 }
 
 // Initialize on page load and listen for changes

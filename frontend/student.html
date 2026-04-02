@@ -8,7 +8,6 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" />
   <link rel="stylesheet" href="css/shared.css" />
   <link rel="stylesheet" href="css/student.css" />
-  <script src="js/mockdata.js"></script>
 </head>
 <body>
   <div class="app">
@@ -154,6 +153,12 @@
                <div class="heat-grid" id="heat2"></div>
             </div>
           </div>
+          <!-- Correction History -->
+          <div class="card" style="margin-top:16px">
+            <div class="card-title">My Correction Requests</div>
+            <div class="card-sub">Status of attendance correction applications</div>
+            <div id="correctionHistory"></div>
+          </div>
         </div>
 
         <!-- LEAVE -->
@@ -183,7 +188,10 @@
             <div class="card-title">Undergraduate Research</div>
             <div class="card-sub">Milestone tracking for Honors/BTP projects</div>
             <div class="milestone-list" id="milestones"></div>
-             <button class="btn btn-outline mt-16" onclick="showModal('modalMilestone')">Add Milestone</button>
+            <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+              <button class="btn btn-outline" onclick="showModal('modalMilestone')">Add Milestone</button>
+              <button class="btn btn-primary" onclick="showModal('modalRequestMeeting')">Request Meeting</button>
+            </div>
           </div>
         </div>
 
@@ -210,6 +218,8 @@
   </div><!-- /app -->
 
   <!-- MODALS -->
+
+  <!-- Leave Modal -->
   <div class="overlay" id="modalLeave" onclick="closeModalBg(event,'modalLeave')">
     <div class="modal">
       <div class="modal-head"><div class="modal-title">Leave Requisition</div><button class="modal-close" onclick="closeModal('modalLeave')">✕</button></div>
@@ -228,13 +238,14 @@
     </div>
   </div>
 
+  <!-- New Thread Modal -->
   <div class="overlay" id="modalThread" onclick="closeModalBg(event,'modalThread')">
      <div class="modal">
         <div class="modal-head"><div class="modal-title">New Discussion</div><button class="modal-close" onclick="closeModal('modalThread')">✕</button></div>
         <div class="modal-content">
            <div class="form-field"><label>Lecture Tag</label><input type="text" id="t-tag" placeholder="e.g., Lecture 12: Memory" /></div>
            <div class="form-field"><label>Inquiry Title</label><input type="text" id="t-title" /></div>
-           <div class="form-field"><label>Context</label><textarea id="t-desc"></textarea></div>
+           <div class="form-field"><label>Context</label><textarea id="t-desc" placeholder="Describe your question in detail..."></textarea></div>
         </div>
         <div class="modal-actions">
           <button class="btn btn-primary flex-1" onclick="handleThread()">Post Inquiry</button>
@@ -243,21 +254,53 @@
      </div>
   </div>
 
+  <!-- Thread View & Reply Modal -->
+  <div class="overlay" id="modalThreadView" onclick="closeModalBg(event,'modalThreadView')">
+    <div class="modal" style="max-width:600px">
+      <div class="modal-head"><div class="modal-title" id="threadViewTitle">Thread</div><button class="modal-close" onclick="closeModal('modalThreadView')">✕</button></div>
+      <div class="modal-content" style="max-height:60vh;overflow-y:auto">
+        <div id="threadViewBody"></div>
+        <div style="margin-top:14px;border-top:2px solid var(--border);padding-top:12px">
+          <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--muted)">Replies</div>
+          <div id="threadViewComments"></div>
+        </div>
+        <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px">
+          <div style="font-size:13px;font-weight:600;margin-bottom:6px">Add a Reply</div>
+          <div class="form-field"><textarea id="reply-text" placeholder="Type your reply..." style="min-height:80px"></textarea></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary flex-1" onclick="handleReply()">Post Reply</button>
+        <button class="btn btn-outline" onclick="closeModal('modalThreadView')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Attendance Correction Modal -->
   <div class="overlay" id="modalCorrection" onclick="closeModalBg(event,'modalCorrection')">
     <div class="modal">
        <div class="modal-head"><div class="modal-title">Correction Warrant</div><button class="modal-close" onclick="closeModal('modalCorrection')">✕</button></div>
        <div class="modal-content">
-          <div class="form-field"><label>Subject</label><select id="c-course"><option>Operating Systems</option><option>Database Systems</option></select></div>
+          <div class="form-field"><label>Subject</label>
+            <select id="c-course">
+              <option>Database Management Systems - CS301</option>
+              <option>Machine Learning - CS302</option>
+              <option>Software Engineering - CS303</option>
+              <option>Operating Systems - CS304</option>
+              <option>Computer Networks - CS305</option>
+            </select>
+          </div>
           <div class="form-field"><label>Incorrect Date</label><input type="date" id="c-date" /></div>
           <div class="form-field"><label>Evidence/Reason</label><textarea id="c-reason" placeholder="Provide link to OD or medical proof..."></textarea></div>
        </div>
        <div class="modal-actions">
-         <button class="btn btn-blue flex-1" onclick="toast('Correction logged'); closeModal('modalCorrection')">Submit Warrant</button>
+         <button class="btn btn-blue flex-1" onclick="handleAttendanceCorrection()">Submit Warrant</button>
          <button class="btn btn-outline" onclick="closeModal('modalCorrection')">Discard</button>
        </div>
     </div>
   </div>
 
+  <!-- Milestone Modal -->
   <div class="overlay" id="modalMilestone" onclick="closeModalBg(event,'modalMilestone')">
      <div class="modal">
         <div class="modal-head"><div class="modal-title">Milestone Declaration</div><button class="modal-close" onclick="closeModal('modalMilestone')">✕</button></div>
@@ -271,6 +314,39 @@
            <button class="btn btn-outline" onclick="closeModal('modalMilestone')">Abort</button>
         </div>
      </div>
+  </div>
+
+  <!-- Request Meeting Modal -->
+  <div class="overlay" id="modalRequestMeeting" onclick="closeModalBg(event,'modalRequestMeeting')">
+    <div class="modal">
+      <div class="modal-head"><div class="modal-title">Request Faculty Meeting</div><button class="modal-close" onclick="closeModal('modalRequestMeeting')">✕</button></div>
+      <div class="modal-content">
+        <div class="modal-grid-2">
+          <div class="form-field"><label>Proposed Date</label><input type="date" id="rm-date" /></div>
+          <div class="form-field"><label>Proposed Time</label><input type="time" id="rm-time" /></div>
+        </div>
+        <div class="form-field"><label>Meeting Agenda</label><textarea id="rm-agenda" placeholder="Describe what you'd like to discuss..."></textarea></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary flex-1" onclick="handleRequestMeeting()">Send Request</button>
+        <button class="btn btn-outline" onclick="closeModal('modalRequestMeeting')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Submit Assignment Modal -->
+  <div class="overlay" id="modalSubmitAssignment" onclick="closeModalBg(event,'modalSubmitAssignment')">
+    <div class="modal">
+      <div class="modal-head"><div class="modal-title">Submit Assignment</div><button class="modal-close" onclick="closeModal('modalSubmitAssignment')">✕</button></div>
+      <div class="modal-content">
+        <div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:12px" id="assign-course-label"></div>
+        <div class="form-field"><label>Submission Notes / Link</label><textarea id="assign-notes" placeholder="Paste your GitHub link, description, or submission notes..."></textarea></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary flex-1" onclick="handleSubmitAssignment()">Confirm Submission</button>
+        <button class="btn btn-outline" onclick="closeModal('modalSubmitAssignment')">Cancel</button>
+      </div>
+    </div>
   </div>
 
   <div class="toast" id="toastEl"></div>

@@ -713,6 +713,21 @@ body {
   background: currentColor;
 }
 
+.status-pill.approved {
+  background: var(--green-l);
+  color: var(--green);
+}
+
+.status-pill.pending {
+  background: var(--amber-l);
+  color: var(--amber);
+}
+
+.status-pill.rejected {
+  background: var(--red-l);
+  color: var(--red);
+}
+
 /* =====================================================
    FORMS
    ===================================================== */

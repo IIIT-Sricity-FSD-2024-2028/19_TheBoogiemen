@@ -1,4 +1,5 @@
 # 🔐 BarelyPassing - Login Credentials
+# 🔐 BarelyPassing - Login Credentials
 
 ## **🔒 Strong Password Policy**
 
@@ -41,6 +42,10 @@ All passwords now meet strong security requirements:
 **Features Accessible:**
 - At-risk student alerts
 - Mark attendance for classes
+- CO/PO outcome mapping for assessments
+- Student directory with performance metrics
+- Discussion forum moderation
+- Research project supervision
 - CO/PO outcome mapping for assessments
 - Student directory with performance metrics
 - Discussion forum moderation

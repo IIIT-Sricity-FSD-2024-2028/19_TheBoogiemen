@@ -295,15 +295,16 @@
               <div class="panel-h1">Institutional Reports</div>
               <div class="panel-sub">Generate and download comprehensive institutional reports</div>
             </div>
-            <button class="btn btn-primary" onclick="toast('Generating custom report…')">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                stroke-linecap="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-              </svg>
-              Generate Custom Report
-            </button>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-primary" onclick="showModal('modalAddReport')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                Add Report
+              </button>
+              <button class="btn btn-outline" onclick="toast('Generating custom report…')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                Generate Custom
+              </button>
+            </div>
           </div>
 
           <div class="report-tabs">
@@ -462,15 +463,15 @@
           <div class="users-stat-row">
             <div class="stat-card">
               <div class="sc-label">Total Users</div>
-              <div class="sc-val">973</div>
+              <div class="sc-val" id="statTotalUsers">—</div>
             </div>
             <div class="stat-card">
               <div class="sc-label">Active Users</div>
-              <div class="sc-val">961</div>
+              <div class="sc-val" id="statActiveUsers">—</div>
             </div>
             <div class="stat-card">
               <div class="sc-label">Pending Reviews</div>
-              <div class="sc-val">12</div>
+              <div class="sc-val" id="statPendingReviews">—</div>
             </div>
           </div>
           <div class="card">
@@ -502,14 +503,37 @@
               <div class="panel-sub">Rectify attendance errors for students</div>
             </div>
             <button class="btn btn-primary" onclick="showModal('modalAddOverride')">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                stroke-linecap="round">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
               Add Override
             </button>
           </div>
+
+          <!-- Correction Requests from Students -->
+          <div class="card" style="margin-bottom:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <div>
+                <div class="card-title">Student Correction Requests</div>
+                <div class="card-sub">Attendance corrections submitted by students — review and decide</div>
+              </div>
+              <span class="sc-badge" style="background:var(--accent-l,#eef2ff);color:var(--accent);font-size:12px" id="pendingCorrCount">Loading…</span>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Student</th>
+                    <th>Course</th>
+                    <th>Date</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="correction-requests-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+
           <div class="card">
             <div class="card-title">Override Records</div>
             <div class="card-sub">History of manual attendance adjustments</div>
@@ -693,6 +717,73 @@
       <div class="modal-actions">
         <button class="btn btn-primary flex-1" onclick="handleAddOverride()">Apply Override</button>
         <button class="btn btn-outline" onclick="closeModal('modalAddOverride')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Correction Decision Modal -->
+  <div class="overlay" id="modalDecideCorrection" onclick="closeModalBg(event,'modalDecideCorrection')">
+    <div class="modal">
+      <div class="modal-head">
+        <div class="modal-title">Review Correction Request</div>
+        <button class="modal-close" onclick="closeModal('modalDecideCorrection')">✕</button>
+      </div>
+      <div id="corrDecisionBody" style="padding:16px"></div>
+      <div class="form-field" style="padding:0 16px 16px">
+        <label>Decision Note (optional)</label>
+        <textarea id="corr-note" placeholder="Add a note for the student..."></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-green flex-1" id="btnApproveCorr" onclick="handleDecideCorrection('approved')">✓ Approve</button>
+        <button class="btn btn-red flex-1" id="btnRejectCorr" onclick="handleDecideCorrection('rejected')">✕ Reject</button>
+        <button class="btn btn-outline" onclick="closeModal('modalDecideCorrection')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Report Modal -->
+  <div class="overlay" id="modalAddReport" onclick="closeModalBg(event,'modalAddReport')">
+    <div class="modal">
+      <div class="modal-head">
+        <div class="modal-title">Add New Report</div>
+        <button class="modal-close" onclick="closeModal('modalAddReport')">✕</button>
+      </div>
+      <div class="form-field" style="padding:0 16px"><label>Report Title</label><input type="text" id="rep-title" /></div>
+      <div class="form-field" style="padding:0 16px"><label>Description</label><textarea id="rep-desc"></textarea></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 16px">
+        <div class="form-field"><label>Category</label>
+          <select id="rep-cat">
+            <option value="Academic Performance">Academic Performance</option>
+            <option value="Attendance">Attendance</option>
+            <option value="Outcomes Assessment">Outcomes Assessment</option>
+            <option value="Resource Allocation">Resource Allocation</option>
+          </select>
+        </div>
+        <div class="form-field"><label>Period</label><input type="text" id="rep-period" placeholder="e.g., Spring 2026" /></div>
+      </div>
+      <div class="form-field" style="padding:0 16px"><label>File Size (display)</label><input type="text" id="rep-size" placeholder="e.g., 2.5 MB" /></div>
+      <div class="modal-actions">
+        <button class="btn btn-primary flex-1" onclick="handleAddReport()">Add Report</button>
+        <button class="btn btn-outline" onclick="closeModal('modalAddReport')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Report Modal -->
+  <div class="overlay" id="modalEditReport" onclick="closeModalBg(event,'modalEditReport')">
+    <div class="modal">
+      <div class="modal-head">
+        <div class="modal-title">Edit Report</div>
+        <button class="modal-close" onclick="closeModal('modalEditReport')">✕</button>
+      </div>
+      <input type="hidden" id="edit-rep-id" />
+      <input type="hidden" id="edit-rep-cat" />
+      <div class="form-field" style="padding:0 16px"><label>Report Title</label><input type="text" id="edit-rep-title" /></div>
+      <div class="form-field" style="padding:0 16px"><label>Description</label><textarea id="edit-rep-desc"></textarea></div>
+      <div class="form-field" style="padding:0 16px"><label>Period</label><input type="text" id="edit-rep-period" /></div>
+      <div class="modal-actions">
+        <button class="btn btn-primary flex-1" onclick="handleEditReport()">Save Changes</button>
+        <button class="btn btn-outline" onclick="closeModal('modalEditReport')">Cancel</button>
       </div>
     </div>
   </div>
