@@ -156,6 +156,164 @@ function handleSaveAttendance() {
   _refresh();
 }
 
+function editForumThread(threadId) {
+  const db = getDB();
+  const thread = db.faculty.forum.threads.find(t => t.id === threadId);
+  
+  if (!thread) {
+    toast('Thread not found');
+    return;
+  }
+
+  document.getElementById('edit-lecture').value = thread.lecture;
+  document.getElementById('edit-title').value = thread.title;
+  document.getElementById('edit-status').value = thread.status;
+  
+  // Store thread ID for update
+  document.getElementById('modalEditForum').dataset.threadId = threadId;
+  
+  clearErrors('modalEditForum');
+  showModal('modalEditForum');
+}
+
+function updateForumThread() {
+  if (!validateForm('modalEditForum', [
+    { id: 'edit-lecture', required: true },
+    { id: 'edit-title', required: true }
+  ])) return;
+
+  const modal = document.getElementById('modalEditForum');
+  const threadId = modal.dataset.threadId;
+  
+  if (!threadId) {
+    toast('Thread ID missing');
+    return;
+  }
+
+  const db = getDB();
+  const threadIndex = db.faculty.forum.threads.findIndex(t => t.id === threadId);
+  
+  if (threadIndex === -1) {
+    toast('Thread not found');
+    return;
+  }
+
+  // Update thread data
+  db.faculty.forum.threads[threadIndex] = {
+    ...db.faculty.forum.threads[threadIndex],
+    lecture: document.getElementById('edit-lecture').value,
+    title: document.getElementById('edit-title').value,
+    status: document.getElementById('edit-status').value,
+    statusClass: document.getElementById('edit-status').value === 'resolved' ? 'badge6' : 'badge2'
+  };
+
+  saveDB(db);
+  toast('Forum thread updated successfully');
+  closeModal('modalEditForum');
+  _refresh();
+}
+
+function deleteForumThread(threadId) {
+  if (!confirm('Delete this forum thread permanently? This action cannot be undone.')) {
+    return;
+  }
+
+  const db = getDB();
+  const threadIndex = db.faculty.forum.threads.findIndex(t => t.id === threadId);
+  
+  if (threadIndex === -1) {
+    toast('Thread not found');
+    return;
+  }
+
+  db.faculty.forum.threads.splice(threadIndex, 1);
+  saveDB(db);
+  toast('Forum thread deleted successfully');
+  _refresh();
+}
+
+function editResearchProject(projectId) {
+  const db = getDB();
+  const project = db.faculty.researchSupervision.projects.find(p => p.id === projectId);
+  
+  if (!project) {
+    toast('Project not found');
+    return;
+  }
+
+  document.getElementById('edit-project-title').value = project.title;
+  document.getElementById('edit-grade').value = project.grade;
+  document.getElementById('edit-progress').value = project.progress;
+  document.getElementById('edit-project-status').value = project.status;
+  document.getElementById('edit-next-meeting').value = project.nextMeeting;
+  
+  // Store project ID for update
+  document.getElementById('modalEditResearch').dataset.projectId = projectId;
+  
+  clearErrors('modalEditResearch');
+  showModal('modalEditResearch');
+}
+
+function updateResearchProject() {
+  if (!validateForm('modalEditResearch', [
+    { id: 'edit-project-title', required: true },
+    { id: 'edit-grade', required: true }
+  ])) return;
+
+  const modal = document.getElementById('modalEditResearch');
+  const projectId = modal.dataset.projectId;
+  
+  if (!projectId) {
+    toast('Project ID missing');
+    return;
+  }
+
+  const db = getDB();
+  const projectIndex = db.faculty.researchSupervision.projects.findIndex(p => p.id === projectId);
+  
+  if (projectIndex === -1) {
+    toast('Project not found');
+    return;
+  }
+
+  // Update project data
+  const progress = parseInt(document.getElementById('edit-progress').value);
+  db.faculty.researchSupervision.projects[projectIndex] = {
+    ...db.faculty.researchSupervision.projects[projectIndex],
+    title: document.getElementById('edit-project-title').value,
+    grade: document.getElementById('edit-grade').value,
+    progress: progress,
+    status: document.getElementById('edit-project-status').value,
+    nextMeeting: document.getElementById('edit-next-meeting').value,
+    statusClass: document.getElementById('edit-project-status').value === 'completed' ? 'badge' : 
+                  document.getElementById('edit-project-status').value === 'review' ? 'pending' : 'badge2'
+  };
+
+  saveDB(db);
+  toast('Research project updated successfully');
+  closeModal('modalEditResearch');
+  _refresh();
+}
+
+function deleteResearchProject(projectId) {
+  if (!confirm('Delete this research project permanently? This action cannot be undone.')) {
+    return;
+  }
+
+  const db = getDB();
+  const projectIndex = db.faculty.researchSupervision.projects.findIndex(p => p.id === projectId);
+  
+  if (projectIndex === -1) {
+    toast('Project not found');
+    return;
+  }
+
+  db.faculty.researchSupervision.projects.splice(projectIndex, 1);
+  saveDB(db);
+  toast('Research project deleted successfully');
+  _refresh();
+}
+
 function handleBugSubmit() {
   if (!validateForm('panel-settings', [
     { id: 'bugTitle', required: true },
@@ -179,6 +337,58 @@ function handleBugSubmit() {
   toast('Bug report filed with IT Ops');
   document.getElementById('bugTitle').value = '';
   document.getElementById('bugDesc').value = '';
+}
+
+function handleCreateAssessment() {
+  if (!validateForm('modalNewAssess', [
+    { id: 'a-name', required: true },
+    { id: 'a-marks', required: true }
+  ])) return;
+
+  const db = getDB();
+  const newAssessment = {
+    title: document.getElementById('a-name').value,
+    type: document.getElementById('a-type').value,
+    max: parseInt(document.getElementById('a-marks').value),
+    due: document.getElementById('a-due')?.value || 'To be announced',
+    status: 'pending',
+    scored: null,
+    createdDate: new Date().toLocaleDateString(),
+    createdBy: db.faculty.profile.account.name
+  };
+
+  // For now, add to a general assessments array
+  // In a real implementation, you'd select which course to assign this to
+  if (!db.faculty.assessments) {
+    db.faculty.assessments = [];
+  }
+  
+  db.faculty.assessments.unshift(newAssessment);
+  
+  // Also add to student courses for visibility (simplified - would need course selection)
+  if (db.student && db.student.courses && db.student.courses.list) {
+    db.student.courses.list.forEach(course => {
+      if (!course.assessments) {
+        course.assessments = [];
+      }
+      course.assessments.push({
+        ...newAssessment,
+        due: newAssessment.due,
+        status: 'pending'
+      });
+    });
+    
+    // Update pending assignments count
+    db.student.courses.summary.pendingAssignments = 
+      db.student.courses.list.reduce((total, course) => 
+        total + (course.assessments?.filter(a => a.status === 'pending').length || 0), 0
+      );
+  }
+
+  saveDB(db);
+  toast('Assessment created successfully');
+  closeModal('modalNewAssess');
+  _refresh();
 }
 
 function toggleAtt(btn) {
@@ -477,6 +687,8 @@ function initPage() {
       <div class="ft-actions">
         <button class="btn btn-blue btn-sm" onclick="toast('Opening thread...')">View</button>
         ${t.status !== 'resolved' ? `<button class="btn btn-green btn-sm" onclick="toast('Thread resolved')">Resolve</button>` : ''}
+        <button class="btn btn-outline btn-sm" onclick="editForumThread('${t.id}')">Edit</button>
+        <button class="btn btn-red btn-sm" onclick="deleteForumThread('${t.id}')">Delete</button>
       </div>
     </div>
   `).join('');
@@ -500,9 +712,15 @@ function initPage() {
             · Next: ${p.nextMeeting}
           </div>
         </div>
-        <div style="text-align:right">
-          <div style="font-size:18px;font-weight:700;color:var(--accent)">${p.grade}</div>
-          <div style="font-size:11px;color:var(--muted)">${p.progress}%</div>
+        <div style="text-align:right;display:flex;align-items:center;gap:8px">
+          <div>
+            <div style="font-size:18px;font-weight:700;color:var(--accent)">${p.grade}</div>
+            <div style="font-size:11px;color:var(--muted)">${p.progress}%</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <button class="btn btn-outline btn-sm" onclick="editResearchProject('${p.id}')">Edit</button>
+            <button class="btn btn-red btn-sm" onclick="deleteResearchProject('${p.id}')">Delete</button>
+          </div>
         </div>
       </div>
       <div class="rp-prog">

@@ -278,8 +278,42 @@
          </div>
       </div>
       <div class="modal-actions">
-        <button class="btn btn-primary flex-1" onclick="toast('Assessment instantiated')">Instantiate</button>
+        <button class="btn btn-primary flex-1" onclick="handleCreateAssessment()">Instantiate</button>
         <button class="btn btn-outline" onclick="closeModal('modalNewAssess')">Discard</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="modalEditForum" onclick="closeModalBg(event,'modalEditForum')">
+    <div class="modal">
+      <div class="modal-head"><div class="modal-title">Edit Forum Thread</div><button class="modal-close" onclick="closeModal('modalEditForum')">✕</button></div>
+      <div class="modal-content">
+        <div class="form-field"><label>Lecture Tag</label><input type="text" id="edit-lecture" /></div>
+        <div class="form-field"><label>Thread Title</label><input type="text" id="edit-title" /></div>
+        <div class="form-field"><label>Status</label><select id="edit-status"><option value="active">Active</option><option value="resolved">Resolved</option></select></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary flex-1" onclick="updateForumThread()">Update Thread</button>
+        <button class="btn btn-outline" onclick="closeModal('modalEditForum')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="modalEditResearch" onclick="closeModalBg(event,'modalEditResearch')">
+    <div class="modal">
+      <div class="modal-head"><div class="modal-title">Edit Research Project</div><button class="modal-close" onclick="closeModal('modalEditResearch')">✕</button></div>
+      <div class="modal-content">
+        <div class="form-field"><label>Project Title</label><input type="text" id="edit-project-title" /></div>
+        <div class="modal-grid-2">
+          <div class="form-field"><label>Grade</label><input type="text" id="edit-grade" placeholder="A+, A, B+, etc." /></div>
+          <div class="form-field"><label>Progress (%)</label><input type="number" id="edit-progress" min="0" max="100" /></div>
+        </div>
+        <div class="form-field"><label>Status</label><select id="edit-project-status"><option value="in-progress">In Progress</option><option value="review">Under Review</option><option value="completed">Completed</option></select></div>
+        <div class="form-field"><label>Next Meeting</label><input type="text" id="edit-next-meeting" placeholder="e.g., March 10, 2026" /></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary flex-1" onclick="updateResearchProject()">Update Project</button>
+        <button class="btn btn-outline" onclick="closeModal('modalEditResearch')">Cancel</button>
       </div>
     </div>
   </div>

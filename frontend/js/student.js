@@ -172,6 +172,65 @@ function handleMilestone() {
   _refresh();
 }
 
+function deleteLeaveRequest(leaveId) {
+  if (!confirm('Are you sure you want to delete this leave request? This action cannot be undone.')) {
+    return;
+  }
+
+  const db = getDB();
+  const leaveIndex = db.student.leaveManagement.applications.findIndex(l => l.id === leaveId);
+  
+  if (leaveIndex !== -1) {
+    db.student.leaveManagement.applications.splice(leaveIndex, 1);
+    saveDB(db);
+    toast('Leave request deleted');
+    _refresh();
+  } else {
+    toast('Leave request not found');
+  }
+}
+
+function showPhoneEditModal() {
+  const db = getDB();
+  const currentPhone = db.student.profile.personal.phone;
+  
+  document.getElementById('phone-current').value = currentPhone;
+  document.getElementById('phone-new').value = '';
+  document.getElementById('phone-confirm').value = '';
+  
+  clearErrors('modalPhoneEdit');
+  showModal('modalPhoneEdit');
+}
+
+function updatePhoneNumber() {
+  if (!validateForm('modalPhoneEdit', [
+    { id: 'phone-new', required: true, min: 10 },
+    { id: 'phone-confirm', required: true, min: 10 }
+  ])) return;
+
+  const newPhone = document.getElementById('phone-new').value.trim();
+  const confirmPhone = document.getElementById('phone-confirm').value.trim();
+  const currentPhone = document.getElementById('phone-current').value;
+
+  if (newPhone !== confirmPhone) {
+    toast('Phone numbers do not match');
+    return;
+  }
+
+  if (newPhone === currentPhone) {
+    toast('Phone number is the same as current');
+    return;
+  }
+
+  const db = getDB();
+  db.student.profile.personal.phone = newPhone;
+  saveDB(db);
+  
+  toast('Phone number updated successfully');
+  closeModal('modalPhoneEdit');
+  _refresh();
+}
+
 
 /* =====================================================
    RENDER HELPERS
@@ -361,7 +420,7 @@ function initPage() {
   document.getElementById('profilePersonal').innerHTML = `
     <div class="pf-item"><div class="pf-key">Full Name</div><div class="pf-val">${p.fullName}</div></div>
     <div class="pf-item"><div class="pf-key">Email</div><div class="pf-val">${p.email}</div></div>
-    <div class="pf-item"><div class="pf-key">Phone</div><div class="pf-val">${p.phone}</div></div>
+    <div class="pf-item"><div class="pf-key">Phone</div><div class="pf-val">${p.phone}</div><button class="btn btn-outline btn-sm" onclick="showPhoneEditModal()" style="margin-left:8px">Edit</button></div>
     <div class="pf-item"><div class="pf-key">DOB</div><div class="pf-val">${p.dob}</div></div>
     <div class="pf-item"><div class="pf-key">Gender</div><div class="pf-val">${p.gender}</div></div>
     <div class="pf-item"><div class="pf-key">Blood Group</div><div class="pf-val">${p.bloodGroup}</div></div>
@@ -430,7 +489,10 @@ function initPage() {
         <div class="lc-reason">${l.reason}</div>
         <div class="lc-meta">${l.startDate} – ${l.endDate} · Applied: ${l.appliedOn}</div>
       </div>
-      <span class="status-pill ${l.status.toLowerCase()}">${l.status}</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="status-pill ${l.status.toLowerCase()}">${l.status}</span>
+        ${l.status === 'Pending' ? `<button class="btn btn-outline btn-sm" onclick="deleteLeaveRequest(${l.id})">Delete</button>` : ''}
+      </div>
     </div>
   `).join('');
 

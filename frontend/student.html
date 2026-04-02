@@ -255,6 +255,21 @@
      </div>
   </div>
 
+  <div class="overlay" id="modalPhoneEdit" onclick="closeModalBg(event,'modalPhoneEdit')">
+    <div class="modal">
+      <div class="modal-head"><div class="modal-title">Update Phone Number</div><button class="modal-close" onclick="closeModal('modalPhoneEdit')">✕</button></div>
+      <div class="modal-content">
+        <div class="form-field"><label>Current Phone Number</label><input type="text" id="phone-current" readonly /></div>
+        <div class="form-field"><label>New Phone Number</label><input type="tel" id="phone-new" placeholder="Enter new phone number" /></div>
+        <div class="form-field"><label>Confirm Phone Number</label><input type="tel" id="phone-confirm" placeholder="Confirm new phone number" /></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary flex-1" onclick="updatePhoneNumber()">Update Phone</button>
+        <button class="btn btn-outline" onclick="closeModal('modalPhoneEdit')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toastEl"></div>
 
   <script src="js/student.js"></script>
