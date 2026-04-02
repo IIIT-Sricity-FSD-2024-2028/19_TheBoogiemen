@@ -113,6 +113,25 @@
             </svg>
             <input type="password" id="password" name="password" placeholder="Enter your password" required/>
           </div>
+          <!-- Password Requirements Indicator -->
+          <div class="password-requirements" id="passwordRequirements">
+            <div class="req-item" id="req-length">
+              <span class="req-icon">○</span>
+              <span class="req-text">At least 8 characters</span>
+            </div>
+            <div class="req-item" id="req-uppercase">
+              <span class="req-icon">○</span>
+              <span class="req-text">One uppercase letter (A-Z)</span>
+            </div>
+            <div class="req-item" id="req-number">
+              <span class="req-icon">○</span>
+              <span class="req-text">One number (0-9)</span>
+            </div>
+            <div class="req-item" id="req-special">
+              <span class="req-icon">○</span>
+              <span class="req-text">One special character (@$!%*?&)</span>
+            </div>
+          </div>
         </div>
         <label class="check-row">
           <input type="checkbox" name="remember"/>

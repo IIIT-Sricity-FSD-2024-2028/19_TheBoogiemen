@@ -1,8 +1,12 @@
 # 🔐 BarelyPassing - Login Credentials
 
-## **Quick Start**
+## **🔒 Strong Password Policy**
 
-**Password for ALL accounts:** `password`
+All passwords now meet strong security requirements:
+- ✅ Minimum 8 characters
+- ✅ At least 1 uppercase letter (A-Z)
+- ✅ At least 1 number (0-9)
+- ✅ At least 1 special character (@$!%*?&)
 
 ---
 
@@ -12,8 +16,8 @@
 
 | Email | Password | Name | Branch |
 |-------|----------|------|--------|
-| `student@iiits.in` | `password` | Faham | Computer Science |
-| `pranjal.student@iiits.in` | `password` | Pranjal | Computer Science |
+| `student@iiits.in` | `Student@123` | Faham | Computer Science |
+| `pranjal.student@iiits.in` | `Student@123` | Pranjal | Computer Science |
 
 **Features Accessible:**
 - Dashboard with CGPA & attendance
@@ -31,8 +35,8 @@
 
 | Email | Password | Name | Department |
 |-------|----------|------|------------|
-| `faculty@iiits.in` | `password` | Dr. Shams | Computer Science |
-| `professor@iiits.in` | `password` | Dr. Bablani | Computer Science |
+| `faculty@iiits.in` | `Faculty@123` | Dr. Shams | Computer Science |
+| `professor@iiits.in` | `Faculty@123` | Dr. Bablani | Computer Science |
 
 **Features Accessible:**
 - At-risk student alerts
@@ -49,7 +53,7 @@
 
 | Email | Password | Name | Role |
 |-------|----------|------|------|
-| `head@iiits.in` | `password` | Dr. Kavitha | Academic Head |
+| `head@iiits.in` | `Head@1234` | Dr. Kavitha | Academic Head |
 
 **Features Accessible:**
 - Institutional performance dashboard
@@ -67,8 +71,8 @@
 
 | Email | Password | Name | Role |
 |-------|----------|------|------|
-| `superuser@iiits.in` | `password` | Pranjal Sharma | IT Operations |
-| `admin@iiits.in` | `password` | System Admin | Administrator |
+| `superuser@iiits.in` | `Super@12345` | Pranjal Sharma | IT Operations |
+| `admin@iiits.in` | `Admin@12345` | System Admin | Administrator |
 
 **Features Accessible:**
 - System overview with metrics
@@ -170,10 +174,19 @@ Click "Sign In" to access the portal
 - To reset data: Clear browser localStorage
 
 ### **Password Security**
-⚠️ **For Demo Only:** All passwords are plain text "password"
-- In production, implement bcrypt hashing
-- Add password strength requirements
-- Implement password reset functionality
+✅ **Strong Passwords Enforced:** All accounts now use strong passwords meeting security requirements:
+- Minimum 8 characters
+- At least 1 uppercase letter (A-Z)
+- At least 1 number (0-9)
+- At least 1 special character (@$!%*?&)
+
+**Pattern:** `[RoleName]@[Numbers]` (e.g., `Student@123`, `Faculty@123`)
+
+⚠️ **For Demo Only:** Passwords stored in plain text. In production, implement:
+- bcrypt/argon2 password hashing
+- Password strength meter during creation
+- Password reset functionality
+- Account lockout after failed attempts
 
 ### **Role Restrictions**
 - Each portal checks authentication on load
@@ -215,11 +228,13 @@ For technical support or questions about credentials:
 
 | Role | Email | Password |
 |------|-------|----------|
-| Student | `student@iiits.in` | `password` |
-| Faculty | `faculty@iiits.in` | `password` |
-| Head | `head@iiits.in` | `password` |
-| Super User | `superuser@iiits.in` | `password` |
-| Admin | `admin@iiits.in` | `password` |
+| 🎓 Student | `student@iiits.in` | `Student@123` |
+| 👨‍🏫 Faculty | `faculty@iiits.in` | `Faculty@123` |
+| 🏛️ Head | `head@iiits.in` | `Head@1234` |
+| ⚙️ Super User | `superuser@iiits.in` | `Super@12345` |
+| 🔧 Admin | `admin@iiits.in` | `Admin@12345` |
+
+**Password Pattern:** `[Role]@[numbers]` (e.g., Student@123, Faculty@123)
 
 ---
 

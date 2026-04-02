@@ -7,14 +7,15 @@
 // ==========================================
 // USER CREDENTIALS FOR ALL PORTALS
 // ==========================================
+// Strong passwords: 8+ chars, 1 uppercase, 1 number, 1 special char
 const userCredentials = [
-  { email: 'student@iiits.in', password: 'password', role: 'student', name: 'Faham' },
-  { email: 'pranjal.student@iiits.in', password: 'password', role: 'student', name: 'Pranjal' },
-  { email: 'faculty@iiits.in', password: 'password', role: 'faculty', name: 'Dr. Shams' },
-  { email: 'professor@iiits.in', password: 'password', role: 'faculty', name: 'Dr. Bablani' },
-  { email: 'head@iiits.in', password: 'password', role: 'head', name: 'Dr. Kavitha' },
-  { email: 'admin@iiits.in', password: 'password', role: 'admin', name: 'System Admin' },
-  { email: 'superuser@iiits.in', password: 'password', role: 'superuser', name: 'Pranjal Sharma' }
+  { email: 'student@iiits.in', password: 'Student@123', role: 'student', name: 'Faham' },
+  { email: 'pranjal.student@iiits.in', password: 'Student@123', role: 'student', name: 'Pranjal' },
+  { email: 'faculty@iiits.in', password: 'Faculty@123', role: 'faculty', name: 'Dr. Shams' },
+  { email: 'professor@iiits.in', password: 'Faculty@123', role: 'faculty', name: 'Dr. Bablani' },
+  { email: 'head@iiits.in', password: 'Head@1234', role: 'head', name: 'Dr. Kavitha' },
+  { email: 'admin@iiits.in', password: 'Admin@12345', role: 'admin', name: 'System Admin' },
+  { email: 'superuser@iiits.in', password: 'Super@12345', role: 'superuser', name: 'Pranjal Sharma' }
 ];
 
 // ==========================================

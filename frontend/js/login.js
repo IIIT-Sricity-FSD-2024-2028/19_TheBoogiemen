@@ -83,6 +83,26 @@ document.addEventListener('DOMContentLoaded', function() {
         err = result.message;
       }
       
+      // Additional strong password validation
+      if (f.id === 'password' && val) {
+        const passwordRules = {
+          hasMinLength: val.length >= 8,
+          hasUppercase: /[A-Z]/.test(val),
+          hasNumber: /[0-9]/.test(val),
+          hasSpecial: /[@$!%*?&]/.test(val)
+        };
+        
+        // Update requirements UI
+        updatePasswordRequirements(passwordRules);
+        
+        // Check if all requirements are met
+        const allValid = Object.values(passwordRules).every(rule => rule);
+        if (!allValid) {
+          ok = false;
+          err = 'Password does not meet all requirements';
+        }
+      }
+      
       if(err) {
         const parent = inp.closest('.field');
         parent.classList.add('has-error');
@@ -93,6 +113,33 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
     return ok;
+  }
+
+  // Update password requirements UI
+  function updatePasswordRequirements(rules) {
+    const requirements = [
+      { id: 'req-length', valid: rules.hasMinLength },
+      { id: 'req-uppercase', valid: rules.hasUppercase },
+      { id: 'req-number', valid: rules.hasNumber },
+      { id: 'req-special', valid: rules.hasSpecial }
+    ];
+
+    requirements.forEach(req => {
+      const el = document.getElementById(req.id);
+      if (!el) return;
+      
+      const icon = el.querySelector('.req-icon');
+      
+      if (req.valid) {
+        el.classList.add('valid');
+        el.classList.remove('invalid');
+        icon.textContent = '✓';
+      } else {
+        el.classList.remove('valid');
+        el.classList.add('invalid');
+        icon.textContent = '○';
+      }
+    });
   }
 
   function handleLogin(event) {
@@ -157,5 +204,49 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Enable real-time validation on email field
   Validator.enableRealTimeValidation('email', { required: true, type: 'email' });
-  Validator.enableRealTimeValidation('password', { required: true, min: 8 });
+  
+  // Real-time password validation with requirements
+  const passwordInput = document.getElementById('password');
+  passwordInput.addEventListener('input', function() {
+    const val = this.value;
+    
+    // Clear errors while typing
+    Validator.clearFieldError('password');
+    
+    // Update requirements UI
+    if (val.length > 0) {
+      const passwordRules = {
+        hasMinLength: val.length >= 8,
+        hasUppercase: /[A-Z]/.test(val),
+        hasNumber: /[0-9]/.test(val),
+        hasSpecial: /[@$!%*?&]/.test(val)
+      };
+      updatePasswordRequirements(passwordRules);
+    } else {
+      // Reset requirements when empty
+      ['req-length', 'req-uppercase', 'req-number', 'req-special'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.classList.remove('valid', 'invalid');
+          el.querySelector('.req-icon').textContent = '○';
+        }
+      });
+    }
+  });
+  
+  // Validate password on blur
+  passwordInput.addEventListener('blur', function() {
+    const val = this.value;
+    if (val) {
+      const result = Validator.validateField(val, { required: true, min: 8 });
+      if (!result.isValid) {
+        const parent = this.closest('.field');
+        parent.classList.add('has-error');
+        const span = document.createElement('span');
+        span.className = 'field-error';
+        span.textContent = result.message;
+        parent.appendChild(span);
+      }
+    }
+  });
 });

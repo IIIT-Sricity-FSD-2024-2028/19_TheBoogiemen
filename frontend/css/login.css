@@ -315,6 +315,60 @@ body {
   border-color: var(--blue);
 }
 
+/* Password Requirements */
+.password-requirements {
+  margin-top: 10px;
+  padding: 12px 14px;
+  background: var(--bg);
+  border-radius: 8px;
+  border: 1px solid var(--rule);
+  font-size: 12px;
+}
+
+.req-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  color: var(--muted);
+  transition: all 0.2s ease;
+}
+
+.req-item:last-child {
+  margin-bottom: 0;
+}
+
+.req-icon {
+  font-size: 14px;
+  width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.req-text {
+  line-height: 1.4;
+}
+
+/* Valid state (green checkmark) */
+.req-item.valid {
+  color: var(--green);
+}
+
+.req-item.valid .req-icon {
+  content: "✓";
+}
+
+/* Invalid state (red circle) */
+.req-item.invalid {
+  color: var(--muted);
+}
+
+/* Focus state */
+.req-item.focused {
+  color: var(--soft);
+}
+
 /* checkbox */
 .check-row {
   display: flex;
