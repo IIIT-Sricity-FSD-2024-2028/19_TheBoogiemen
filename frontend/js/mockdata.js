@@ -565,6 +565,10 @@ const academicHeadMockDatabase = {
       { id: "CR001", studentName: "Faham", studentId: "S20240010146", course: "Database Management Systems", courseCode: "CS301", date: "2026-03-10", reason: "Was attending a university event — have proof", status: "pending", submittedOn: "2026-03-11" },
       { id: "CR002", studentName: "Pranjal", studentId: "S20240010147", course: "Machine Learning", courseCode: "CS302", date: "2026-03-05", reason: "Medical appointment — doctor's note attached", status: "pending", submittedOn: "2026-03-06" },
       { id: "CR003", studentName: "Harshini", studentId: "S20240010085", course: "Operating Systems", courseCode: "CS304", date: "2026-03-08", reason: "Internet connectivity issues during online class", status: "approved", submittedOn: "2026-03-09", decidedOn: "2026-03-10" }
+    ],
+    leaveApplications: [
+      { id: "LV001", studentName: "Faham", studentId: "S20240010146", type: "Event Participation", startDate: "2026-03-15", endDate: "2026-03-17", reason: "Participating in Inter-College Hackathon at IIT Delhi", status: "pending", appliedOn: "2026-03-04", rejectionReason: null },
+      { id: "LV002", studentName: "Pranjal", studentId: "S20240010147", type: "Medical Leave", startDate: "2026-03-20", endDate: "2026-03-22", reason: "Surgery scheduled at city hospital", status: "pending", appliedOn: "2026-03-01", rejectionReason: null }
     ]
   },
   settings: {

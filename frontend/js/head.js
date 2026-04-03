@@ -28,6 +28,7 @@ function switchPanel(name, el) {
     fees: 'Fee Compliance',
     users: 'User Directory',
     attendance: 'Attendance Overrides',
+    leaves: 'Leave Management',
     settings: 'Portal Settings'
   };
   document.getElementById('topbarTitle').textContent = titles[name] || 'Academic Head';
@@ -520,6 +521,109 @@ function handleDecideCorrection(decision) {
   toast(`Correction request ${decision}`);
 }
 
+/* --- Leave Management CRUD --- */
+let _activeLeaveId = null;
+
+function renderLeaves() {
+  const db = getDB();
+  const leaves = (db.admin.attendanceOverride && db.admin.attendanceOverride.leaveApplications) || [];
+  const pendingCount = leaves.filter(l => l.status === 'pending').length;
+  const countEl = document.getElementById('pendingLeaveCount');
+  if (countEl) countEl.textContent = `${pendingCount} Pending`;
+
+  // Stats row
+  const statsEl = document.getElementById('leave-stats');
+  if (statsEl) {
+    const approved = leaves.filter(l => l.status === 'Approved').length;
+    const rejected = leaves.filter(l => l.status === 'Rejected').length;
+    statsEl.innerHTML = `
+      <div class="stat-card"><div class="sc-label">Total Applications</div><div class="sc-val">${leaves.length}</div></div>
+      <div class="stat-card"><div class="sc-label">Pending</div><div class="sc-val" style="color:var(--amber)">${pendingCount}</div></div>
+      <div class="stat-card"><div class="sc-label">Approved</div><div class="sc-val" style="color:var(--green)">${approved}</div></div>
+      <div class="stat-card"><div class="sc-label">Rejected</div><div class="sc-val" style="color:var(--red)">${rejected}</div></div>
+    `;
+  }
+
+  const tbody = document.getElementById('leave-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = leaves.length ? leaves.map(l => `
+    <tr>
+      <td style="font-family:var(--fm);font-size:12px">${l.id}</td>
+      <td><strong>${l.studentName}</strong><br><span style="font-size:11px;color:var(--muted)">${l.studentId}</span></td>
+      <td>${l.type}</td>
+      <td>${l.startDate}</td>
+      <td>${l.endDate}</td>
+      <td style="max-width:200px;font-size:12px">${l.reason}</td>
+      <td><span class="status-pill ${l.status === 'Approved' ? 'approved' : l.status === 'Rejected' ? 'rejected' : 'pending'}">${l.status}</span></td>
+      <td>
+        ${l.status === 'pending' ? `<button class="btn btn-blue btn-sm" onclick="openLeaveDecision('${l.id}')">Review</button>` : '<span style="font-size:12px;color:var(--muted)">Decided</span>'}
+      </td>
+    </tr>
+  `).join('') : '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:16px">No leave applications submitted yet.</td></tr>';
+}
+
+function openLeaveDecision(id) {
+  _activeLeaveId = id;
+  const db = getDB();
+  const leaves = (db.admin.attendanceOverride && db.admin.attendanceOverride.leaveApplications) || [];
+  const req = leaves.find(r => r.id === id);
+  if (!req) return;
+  document.getElementById('leaveDecisionBody').innerHTML = `
+    <div style="background:var(--bg);border-radius:8px;padding:12px;margin-bottom:4px">
+      <div style="font-weight:600;margin-bottom:4px">${req.studentName} <span style="font-size:12px;color:var(--muted)">(${req.studentId})</span></div>
+      <div style="font-size:13px;color:var(--ink)"><strong>Type:</strong> ${req.type}</div>
+      <div style="font-size:13px;color:var(--ink)"><strong>Duration:</strong> ${req.startDate} to ${req.endDate}</div>
+      <div style="font-size:13px;color:var(--ink);margin-top:6px"><strong>Reason:</strong> ${req.reason}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">Applied: ${req.appliedOn}</div>
+    </div>
+  `;
+  document.getElementById('leave-note').value = '';
+  showModal('modalDecideLeave');
+}
+
+function handleDecideLeave(decision) {
+  const db = getDB();
+  const leaves = db.admin.attendanceOverride.leaveApplications || [];
+  const li = leaves.findIndex(r => r.id === _activeLeaveId);
+  if (li === -1) return;
+
+  const note = document.getElementById('leave-note').value.trim();
+
+  // Validate rejection reason
+  if (decision === 'Rejected' && !note) {
+    const noteEl = document.getElementById('leave-note');
+    const parent = noteEl.closest('.form-field');
+    parent.classList.add('has-error');
+    const existing = parent.querySelector('.field-error');
+    if (existing) existing.remove();
+    const errEl = document.createElement('span');
+    errEl.className = 'field-error';
+    errEl.textContent = 'Rejection reason is required';
+    parent.appendChild(errEl);
+    return;
+  }
+
+  leaves[li].status = decision;
+  leaves[li].decidedOn = new Date().toLocaleDateString();
+  leaves[li].rejectionReason = decision === 'Rejected' ? note : null;
+
+  // Sync status back to student's leave applications
+  if (db.student && db.student.leaveManagement && db.student.leaveManagement.applications) {
+    const stuLeave = db.student.leaveManagement.applications.find(
+      s => s.id === leaves[li].studentLeaveId
+    );
+    if (stuLeave) {
+      stuLeave.status = decision;
+      stuLeave.rejectionReason = decision === 'Rejected' ? note : null;
+    }
+  }
+
+  saveDB(db);
+  closeModal('modalDecideLeave');
+  _headRefresh('leaves');
+  toast(`Leave application ${decision.toLowerCase()}`);
+}
+
 /* --- Reports CRUD --- */
 function handleAddReport() {
   const config = [
@@ -668,6 +772,7 @@ function initPage() {
   renderUsers();
   renderOverrides();
   renderCorrectionRequests();
+  renderLeaves();
   renderUserStats();
 
   // Bar Chart Injection
@@ -712,6 +817,7 @@ document.addEventListener('head:changed', (e) => {
   else if (s === 'fees') renderFees();
   else if (s === 'users') { renderUsers(); renderUserStats(); }
   else if (s === 'attendance') { renderOverrides(); renderCorrectionRequests(); }
+  else if (s === 'leaves') renderLeaves();
   else initPage();
 });
 

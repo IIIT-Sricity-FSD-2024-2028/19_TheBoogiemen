@@ -127,6 +127,25 @@ function handleLeave() {
     appliedOn: new Date().toLocaleDateString()
   };
   db.student.leaveManagement.applications.unshift(newLeave);
+
+  // Sync leave application to admin portal for review
+  if (db.admin && db.admin.attendanceOverride) {
+    if (!db.admin.attendanceOverride.leaveApplications) db.admin.attendanceOverride.leaveApplications = [];
+    db.admin.attendanceOverride.leaveApplications.unshift({
+      id: 'LV' + Date.now(),
+      studentLeaveId: newLeave.id,
+      studentName: db.student.profile.personal.fullName,
+      studentId: db.student.profile.academic.studentId,
+      type: newLeave.type,
+      startDate: newLeave.startDate,
+      endDate: newLeave.endDate,
+      reason: newLeave.reason,
+      status: 'pending',
+      appliedOn: newLeave.appliedOn,
+      rejectionReason: null
+    });
+  }
+
   saveDB(db);
   toast('Leave request submitted');
   closeModal('modalLeave');
@@ -366,6 +385,16 @@ function handleReply() {
   // Also update the shortform threads list
   const si = db.student.forum.threads.findIndex(t => t.id === _activeThreadId);
   if (si !== -1) db.student.forum.threads[si].replies = threads[ti].replies;
+
+  // Sync reply to faculty forum for cross-visibility
+  if (db.faculty && db.faculty.forum && db.faculty.forum.threads) {
+    const fi = db.faculty.forum.threads.findIndex(t => t.id === _activeThreadId || t.title === threads[ti].title);
+    if (fi !== -1) {
+      if (!db.faculty.forum.threads[fi].comments) db.faculty.forum.threads[fi].comments = [];
+      db.faculty.forum.threads[fi].comments.push(newReply);
+      db.faculty.forum.threads[fi].replyCount = (db.faculty.forum.threads[fi].replyCount || 0) + 1;
+    }
+  }
 
   saveDB(db);
   toast('Reply posted!');
@@ -695,6 +724,7 @@ function initPage() {
         <div class="lc-type">${l.type}</div>
         <div class="lc-reason">${l.reason}</div>
         <div class="lc-meta">${l.startDate} – ${l.endDate} · Applied: ${l.appliedOn}</div>
+        ${l.status === 'Rejected' && l.rejectionReason ? `<div class="lc-rejection-note" style="margin-top:6px;font-size:12px;color:var(--red);font-style:italic">Reason: ${l.rejectionReason}</div>` : ''}
       </div>
       <span class="status-pill ${l.status.toLowerCase()}">${l.status}</span>
     </div>
