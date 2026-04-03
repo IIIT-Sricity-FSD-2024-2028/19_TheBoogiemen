@@ -367,6 +367,16 @@ function handleReply() {
   const si = db.student.forum.threads.findIndex(t => t.id === _activeThreadId);
   if (si !== -1) db.student.forum.threads[si].replies = threads[ti].replies;
 
+  // Sync reply to faculty forum for cross-visibility
+  if (db.faculty && db.faculty.forum && db.faculty.forum.threads) {
+    const fi = db.faculty.forum.threads.findIndex(t => t.id === _activeThreadId || t.title === threads[ti].title);
+    if (fi !== -1) {
+      if (!db.faculty.forum.threads[fi].comments) db.faculty.forum.threads[fi].comments = [];
+      db.faculty.forum.threads[fi].comments.push(newReply);
+      db.faculty.forum.threads[fi].replyCount = (db.faculty.forum.threads[fi].replyCount || 0) + 1;
+    }
+  }
+
   saveDB(db);
   toast('Reply posted!');
   document.getElementById('reply-text').value = '';
