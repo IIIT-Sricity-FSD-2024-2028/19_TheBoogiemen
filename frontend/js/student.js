@@ -127,6 +127,25 @@ function handleLeave() {
     appliedOn: new Date().toLocaleDateString()
   };
   db.student.leaveManagement.applications.unshift(newLeave);
+
+  // Sync leave application to admin portal for review
+  if (db.admin && db.admin.attendanceOverride) {
+    if (!db.admin.attendanceOverride.leaveApplications) db.admin.attendanceOverride.leaveApplications = [];
+    db.admin.attendanceOverride.leaveApplications.unshift({
+      id: 'LV' + Date.now(),
+      studentLeaveId: newLeave.id,
+      studentName: db.student.profile.personal.fullName,
+      studentId: db.student.profile.academic.studentId,
+      type: newLeave.type,
+      startDate: newLeave.startDate,
+      endDate: newLeave.endDate,
+      reason: newLeave.reason,
+      status: 'pending',
+      appliedOn: newLeave.appliedOn,
+      rejectionReason: null
+    });
+  }
+
   saveDB(db);
   toast('Leave request submitted');
   closeModal('modalLeave');
@@ -705,6 +724,7 @@ function initPage() {
         <div class="lc-type">${l.type}</div>
         <div class="lc-reason">${l.reason}</div>
         <div class="lc-meta">${l.startDate} – ${l.endDate} · Applied: ${l.appliedOn}</div>
+        ${l.status === 'Rejected' && l.rejectionReason ? `<div class="lc-rejection-note" style="margin-top:6px;font-size:12px;color:var(--red);font-style:italic">Reason: ${l.rejectionReason}</div>` : ''}
       </div>
       <span class="status-pill ${l.status.toLowerCase()}">${l.status}</span>
     </div>

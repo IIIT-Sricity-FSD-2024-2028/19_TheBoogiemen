@@ -85,6 +85,15 @@
           </svg>
           Attendance Override
         </a>
+        <a href="#" data-panel="leaves" onclick="switchPanel('leaves',this);return false">
+          <svg viewBox="0 0 24 24">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+          </svg>
+          Leave Management
+        </a>
       </nav>
       <div class="sb-footer">
         <a href="#" data-panel="settings" onclick="switchPanel('settings',this);return false">
@@ -556,6 +565,45 @@
           </div>
         </div>
 
+        <!-- LEAVE MANAGEMENT -->
+        <div class="panel" id="panel-leaves">
+          <div class="panel-header">
+            <div>
+              <div class="panel-h1">Leave Management</div>
+              <div class="panel-sub">Review and approve/reject student leave applications</div>
+            </div>
+          </div>
+
+          <div class="stat-row" id="leave-stats"></div>
+
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <div>
+                <div class="card-title">Leave Applications</div>
+                <div class="card-sub">Student leave requests awaiting review</div>
+              </div>
+              <span class="sc-badge" style="background:var(--amber-l,#fffbeb);color:var(--amber,#b45309);font-size:12px" id="pendingLeaveCount">Loading…</span>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Student</th>
+                    <th>Type</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="leave-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
         <!-- SETTINGS -->
         <div class="panel" id="panel-settings">
           <div class="panel-header">
@@ -737,6 +785,26 @@
         <button class="btn btn-green flex-1" id="btnApproveCorr" onclick="handleDecideCorrection('approved')">✓ Approve</button>
         <button class="btn btn-red flex-1" id="btnRejectCorr" onclick="handleDecideCorrection('rejected')">✕ Reject</button>
         <button class="btn btn-outline" onclick="closeModal('modalDecideCorrection')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leave Decision Modal -->
+  <div class="overlay" id="modalDecideLeave" onclick="closeModalBg(event,'modalDecideLeave')">
+    <div class="modal">
+      <div class="modal-head">
+        <div class="modal-title">Review Leave Application</div>
+        <button class="modal-close" onclick="closeModal('modalDecideLeave')">✕</button>
+      </div>
+      <div id="leaveDecisionBody" style="padding:16px"></div>
+      <div class="form-field" style="padding:0 16px 16px">
+        <label>Rejection Reason (required if rejecting)</label>
+        <textarea id="leave-note" placeholder="State reason for rejection..."></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-green flex-1" onclick="handleDecideLeave('Approved')">✓ Approve</button>
+        <button class="btn btn-red flex-1" onclick="handleDecideLeave('Rejected')">✕ Reject</button>
+        <button class="btn btn-outline" onclick="closeModal('modalDecideLeave')">Cancel</button>
       </div>
     </div>
   </div>
