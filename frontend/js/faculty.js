@@ -381,6 +381,34 @@ function handleAddProject() {
   db.faculty.researchSupervision.projects.push(newProj);
   db.faculty.researchSupervision.summary.totalProjects = db.faculty.researchSupervision.projects.length;
   db.faculty.researchSupervision.summary.inProgress = db.faculty.researchSupervision.projects.filter(p => p.status === 'in-progress').length;
+
+  // Sync project to student research dashboard for cross-visibility
+  if (db.student && db.student.research) {
+    const targetStudent = db.student.profile && db.student.profile.personal
+      ? db.student.profile.personal.fullName
+      : '';
+    // If the project was created for the current logged-in student, sync it
+    if (newProj.studentName === targetStudent) {
+      db.student.research.project = {
+        title: newProj.title,
+        type: "Bachelor's Thesis Project",
+        guide: db.faculty.profile.account.name,
+        stats: { documentsCount: 0, tasksCompleted: 0, totalTasks: 0, daysRemaining: 56 }
+      };
+      // Seed initial milestones if not already present
+      if (!db.student.research.milestones || db.student.research.milestones.length === 0) {
+        db.student.research.milestones = [
+          { id: 1, title: 'Literature Review', status: 'upcoming', date: 'TBD', description: 'Complete literature review for the project', statusClass: 'badge4' },
+          { id: 2, title: 'Proposal Submission', status: 'upcoming', date: 'TBD', description: 'Submit project proposal for approval', statusClass: 'badge5' },
+          { id: 3, title: 'Mid-term Presentation', status: 'upcoming', date: 'TBD', description: 'Present mid-term progress', statusClass: 'badge4' },
+          { id: 4, title: 'Final Submission', status: 'upcoming', date: 'TBD', description: 'Submit final thesis and documentation', statusClass: 'badge5' }
+        ];
+      }
+      // Initialize meetingRequests if missing
+      if (!db.student.research.meetingRequests) db.student.research.meetingRequests = [];
+    }
+  }
+
   saveDB(db);
   toast('Research project created');
   closeModal('modalNewProject');
@@ -389,9 +417,26 @@ function handleAddProject() {
 
 function handleDeleteProject(projectId) {
   const db = getDB();
+  const proj = db.faculty.researchSupervision.projects.find(p => p.id === projectId);
   db.faculty.researchSupervision.projects = db.faculty.researchSupervision.projects.filter(p => p.id !== projectId);
   db.faculty.researchSupervision.summary.totalProjects = db.faculty.researchSupervision.projects.length;
   db.faculty.researchSupervision.summary.inProgress = db.faculty.researchSupervision.projects.filter(p => p.status === 'in-progress').length;
+
+  // Sync deletion to student research dashboard
+  if (proj && db.student && db.student.research) {
+    const targetStudent = db.student.profile && db.student.profile.personal
+      ? db.student.profile.personal.fullName
+      : '';
+    if (proj.studentName === targetStudent) {
+      db.student.research.project = {
+        title: 'No Project Assigned',
+        type: "Bachelor's Thesis Project",
+        guide: 'N/A',
+        stats: { documentsCount: 0, tasksCompleted: 0, totalTasks: 0, daysRemaining: 0 }
+      };
+    }
+  }
+
   saveDB(db);
   toast('Project removed');
   _refresh();
