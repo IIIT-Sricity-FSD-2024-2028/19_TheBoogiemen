@@ -398,10 +398,11 @@ const facultyMockDatabase = {
       }
     ],
     courseSummaries: [
-      { code: "CS301", title: "Database Systems", years: "Year 3, Sections A & B", totalStudents: 58, breakdown: "Sec A: 30, Sec B: 28", hours: "10 hours/week (6 Lectures, 3 Labs, 1 Tutorial)" },
-      { code: "CS201", title: "Data Structures", years: "Year 2, Sections A & B", totalStudents: 85, breakdown: "Sec A: 40, Sec B: 45", hours: "8 hours/week (4 Lectures, 4 Labs)" },
-      { code: "CS401", title: "Machine Learning", years: "Year 4, Sections A & B", totalStudents: 67, breakdown: "Sec A: 35, Sec B: 32", hours: "6 hours/week (3 Lectures, 3 Labs)" },
-      { code: "CS101", title: "Programming Fundamentals", years: "Year 1, Section C", totalStudents: 50, breakdown: "Total Students: 50", hours: "5 hours/week (2 Lectures, 3 Labs)" }
+      { code: "CS301", title: "Database Management Systems", years: "Year 3, Sections A & B", totalStudents: 58, breakdown: "Sec A: 30, Sec B: 28", hours: "10 hours/week (6 Lectures, 3 Labs, 1 Tutorial)" },
+      { code: "CS302", title: "Machine Learning", years: "Year 3, Section A", totalStudents: 40, breakdown: "Sec A: 40", hours: "8 hours/week (4 Lectures, 3 Labs, 1 Tutorial)" },
+      { code: "CS303", title: "Software Engineering", years: "Year 3, Section A", totalStudents: 38, breakdown: "Sec A: 38", hours: "6 hours/week (3 Lectures, 2 Labs, 1 Tutorial)" },
+      { code: "CS304", title: "Operating Systems", years: "Year 3, Section A", totalStudents: 35, breakdown: "Sec A: 35", hours: "6 hours/week (3 Lectures, 2 Labs)" },
+      { code: "CS305", title: "Computer Networks", years: "Year 3, Section A", totalStudents: 32, breakdown: "Sec A: 32", hours: "5 hours/week (2 Lectures, 2 Labs, 1 Tutorial)" }
     ]
   },
   assessmentMapping: {
@@ -466,6 +467,10 @@ const facultyMockDatabase = {
     ],
     lectures: ["All Topics", "Lecture-15", "Lecture-16", "Lecture-17"]
   },
+  submissions: [
+    { id: "SUB-001", studentName: "Faham", studentId: "S20240010146", studentCourseId: "cs301", courseCode: "CS301", course: "Database Management Systems", assignmentTitle: "Assignment 1: SQL Implementation", max: 20, scored: null, notes: "https://github.com/faham/sql-assignment", status: "submitted", submittedOn: "3/14/2026", feedback: null },
+    { id: "SUB-002", studentName: "Pranjal", studentId: "S20240010147", studentCourseId: "cs301", courseCode: "CS301", course: "Database Management Systems", assignmentTitle: "Assignment 1: SQL Implementation", max: 20, scored: null, notes: "https://github.com/pranjal/sql-impl", status: "submitted", submittedOn: "3/13/2026", feedback: null }
+  ],
   researchSupervision: {
     summary: { totalProjects: 4, inProgress: 3, underReview: 1, avgProgress: 70 },
     projects: [

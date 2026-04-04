@@ -312,6 +312,30 @@ function handleSubmitAssignment() {
       courseList[ci].assessments[ai].status = 'submitted';
       courseList[ci].assessments[ai].submittedOn = new Date().toLocaleDateString();
       courseList[ci].assessments[ai].notes = document.getElementById('assign-notes').value;
+
+      // Sync submission to faculty submissions tracker
+      const assessEntry = courseList[ci].assessments[ai];
+      if (!db.faculty.submissions) db.faculty.submissions = [];
+      const existingSub = db.faculty.submissions.find(
+        s => s.studentId === db.student.profile.academic.studentId && s.assignmentTitle === _activeAssignTitle
+      );
+      if (!existingSub) {
+        db.faculty.submissions.push({
+          id: 'SUB-' + Date.now(),
+          studentName: db.student.profile.personal.fullName,
+          studentId: db.student.profile.academic.studentId,
+          studentCourseId: _activeAssignCourse,
+          courseCode: courseList[ci].code || courseList[ci].id,
+          course: courseList[ci].title || courseList[ci].code,
+          assignmentTitle: _activeAssignTitle,
+          max: assessEntry.max,
+          scored: null,
+          notes: document.getElementById('assign-notes').value,
+          status: 'submitted',
+          submittedOn: new Date().toLocaleDateString(),
+          feedback: null
+        });
+      }
     }
   }
   saveDB(db);
@@ -637,6 +661,8 @@ function initPage() {
 
   // ── COURSES ── (with Assignments sub-view) ─────────
   const richCourses = db.courses.list;
+  console.log('[Student Courses] Rendering', richCourses.length, 'courses');
+  console.log('[Student Courses] Assessments:', richCourses.map(c => c.id + ': ' + (c.assessments || []).map(a => a.title + '(' + a.status + ')').join(', ') || '(none)').join(' | '));
   document.getElementById('coursesList').innerHTML = richCourses.map(c => {
     const assignments = c.assessments || [];
     const pendingCount = assignments.filter(a => a.status === 'pending').length;
