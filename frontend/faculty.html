@@ -33,6 +33,7 @@
         <a onclick="switchPanel('students',this)">Student Overview</a>
         <a onclick="switchPanel('forum',this)">Discussion Forum</a>
         <a onclick="switchPanel('research',this)">Research Projects</a>
+        <a onclick="switchPanel('submissions',this)">Submissions</a>
       </nav>
       <div class="sb-footer">
         <a onclick="switchPanel('settings',this)">Settings</a>
@@ -111,6 +112,7 @@
             </div>
             <div style="display:flex;gap:8px">
               <button class="btn btn-primary" onclick="showModal('modalNewAssess')">Create Assessment</button>
+              <button class="btn btn-blue" onclick="showAddQuestion()">Add Question</button>
               <button class="btn btn-green" onclick="handleSaveMapping()">Save Mapping</button>
             </div>
           </div>
@@ -244,6 +246,22 @@
           </div>
         </div>
 
+        <!-- SUBMISSIONS -->
+        <div class="panel" id="panel-submissions">
+          <div class="panel-header">
+            <div>
+              <div class="panel-h1">Assignment Submissions</div>
+              <div class="panel-sub">Review and grade student assignment submissions</div>
+            </div>
+          </div>
+          <div class="stat-row grid-cols-4" id="subStats"></div>
+          <div class="card">
+            <div class="card-title">All Submissions</div>
+            <div class="card-sub">Assignments submitted by students — pending review and graded</div>
+            <div id="submissionsList"></div>
+          </div>
+        </div>
+
       </div><!-- /content -->
     </main>
   </div><!-- /app -->
@@ -283,15 +301,64 @@
     <div class="modal">
       <div class="modal-head"><div class="modal-title">Deploy Assessment</div><button class="modal-close" onclick="closeModal('modalNewAssess')">✕</button></div>
       <div class="modal-content">
-         <div class="form-field"><label>Assessment Name</label><input type="text" id="a-name" /></div>
-         <div class="modal-grid-2">
-            <div class="form-field"><label>Type</label><select id="a-type"><option>Continuous</option><option>Summative</option></select></div>
-            <div class="form-field"><label>Marks</label><input type="number" id="a-marks" value="100"/></div>
+         <div class="form-field"><label>Assessment Name</label><input type="text" id="a-name" placeholder="e.g., Assignment 1: SQL" /></div>
+         <div class="form-field"><label>Course</label>
+           <select id="a-course"><option value="">Select course...</option></select>
          </div>
+         <div class="modal-grid-2">
+            <div class="form-field"><label>Type</label><select id="a-type"><option>Assignment</option><option>Quiz</option><option>Mid-term</option><option>Lab Task</option><option>Project</option></select></div>
+            <div class="form-field"><label>Total Marks</label><input type="number" id="a-marks" value="20" min="1"/></div>
+         </div>
+         <div class="form-field"><label>Due Date</label><input type="date" id="a-due" /></div>
       </div>
       <div class="modal-actions">
         <button class="btn btn-primary flex-1" onclick="handleCreateAssessment()">Instantiate</button>
         <button class="btn btn-outline" onclick="closeModal('modalNewAssess')">Discard</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Question to Assessment Modal -->
+  <div class="overlay" id="modalAddQuestion" onclick="closeModalBg(event,'modalAddQuestion')">
+    <div class="modal">
+      <div class="modal-head"><div class="modal-title">Add Question with CO/PO Mapping</div><button class="modal-close" onclick="closeModal('modalAddQuestion')">✕</button></div>
+      <div class="modal-content">
+        <div class="modal-grid-2">
+          <div class="form-field"><label>Question Label</label><input type="text" id="q-name" placeholder="e.g., Question 1" /></div>
+          <div class="form-field"><label>Marks</label><input type="number" id="q-marks" value="10" min="1"/></div>
+        </div>
+        <div class="form-field"><label>Question Text / Description</label><textarea id="q-text" placeholder="Describe the question..."></textarea></div>
+        <div class="form-field">
+          <label>Map Course Outcomes (CO)</label>
+          <div id="q-co-checkboxes" style="display:flex;flex-wrap:wrap;gap:8px;padding:6px 0"></div>
+        </div>
+        <div class="form-field">
+          <label>Map Program Outcomes (PO)</label>
+          <div id="q-po-checkboxes" style="display:flex;flex-wrap:wrap;gap:8px;padding:6px 0"></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary flex-1" onclick="handleAddQuestion()">Add Question</button>
+        <button class="btn btn-outline" onclick="closeModal('modalAddQuestion')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Grade Submission Modal -->
+  <div class="overlay" id="modalGradeSub" onclick="closeModalBg(event,'modalGradeSub')">
+    <div class="modal">
+      <div class="modal-head"><div class="modal-title">Grade Submission</div><button class="modal-close" onclick="closeModal('modalGradeSub')">✕</button></div>
+      <div class="modal-content">
+        <div id="gradeSubBody" style="padding:4px 0"></div>
+        <div class="modal-grid-2">
+          <div class="form-field"><label>Marks Awarded</label><input type="number" id="grade-marks" min="0" placeholder="e.g., 18"/></div>
+          <div class="form-field"><label>Max Marks</label><input type="text" id="grade-max" class="input-disabled" disabled /></div>
+        </div>
+        <div class="form-field"><label>Feedback (optional)</label><textarea id="grade-feedback" placeholder="Provide feedback on the submission..."></textarea></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-green flex-1" onclick="handleGradeSubmission()">Submit Grade</button>
+        <button class="btn btn-outline" onclick="closeModal('modalGradeSub')">Cancel</button>
       </div>
     </div>
   </div>
