@@ -1,18 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { RESOURCE } from '../../common/types/interfaces';
-import { SEED } from '../../common/types/seed-constants';
+import { MOCK_RESOURCES } from '../../common/types/mock-data';
 
 @Injectable()
 export class ResourceRepository {
-  public items: RESOURCE[] = [];
+  public items: RESOURCE[] = MOCK_RESOURCES;
 
-  constructor() {
-    this.items.push(
-      { resource_id: SEED.RESOURCES[0], name: 'Room 101', type: 'Classroom', capacity: 60 },
-      { resource_id: SEED.RESOURCES[1], name: 'Lab 1', type: 'Laboratory', capacity: 30 },
-      { resource_id: SEED.RESOURCES[2], name: 'Auditorium', type: 'Hall', capacity: 300 }
-    );
-  }
+  constructor() {}
 
   async findOneById(id: string): Promise<RESOURCE | undefined> {
     return this.items.find(r => r.resource_id === id);

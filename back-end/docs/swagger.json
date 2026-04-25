@@ -1072,8 +1072,8 @@
         "properties": {
           "year_id": {
             "type": "string",
-            "description": "UUID of the academic year",
-            "example": "uuid-string"
+            "description": "String representing the academic year",
+            "example": "2026"
           }
         },
         "required": [

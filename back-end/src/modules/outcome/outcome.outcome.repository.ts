@@ -1,21 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { LEARNING_OUTCOME, ASSESSMENT_OUTCOME, STUDENT_OUTCOME } from '../../common/types/interfaces';
-import { SEED } from '../../common/types/seed-constants';
-import { v4 as uuidv4 } from 'uuid';
+import { MOCK_OUTCOMES, MOCK_STUDENT_OUTCOMES } from '../../common/types/mock-data';
 
 @Injectable()
 export class OutcomeRepository {
-  public outcomes: LEARNING_OUTCOME[] = [];
+  public outcomes: LEARNING_OUTCOME[] = MOCK_OUTCOMES;
   public assessmentOutcomes: ASSESSMENT_OUTCOME[] = [];
-  public studentOutcomes: STUDENT_OUTCOME[] = [];
+  public studentOutcomes: STUDENT_OUTCOME[] = MOCK_STUDENT_OUTCOMES;
 
-  constructor() {
-    this.outcomes.push(
-      { outcome_id: SEED.OUTCOMES[0], course_id: SEED.COURSES[0], title: 'Understand logic' },
-      { outcome_id: SEED.OUTCOMES[1], course_id: SEED.COURSES[0], title: 'Design algorithms' },
-      { outcome_id: SEED.OUTCOMES[2], course_id: SEED.COURSES[1], title: 'Normalize schemas' }
-    );
-  }
+  constructor() {}
 
   async findOutcomeById(id: string): Promise<LEARNING_OUTCOME | undefined> { return this.outcomes.find(o => o.outcome_id === id); }
   

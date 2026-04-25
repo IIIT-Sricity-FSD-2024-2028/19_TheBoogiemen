@@ -1,19 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { FEE_STRUCTURE } from '../../common/types/interfaces';
-import { SEED } from '../../common/types/seed-constants';
+import { MOCK_FEE_STRUCTURES } from '../../common/types/mock-data';
 
 @Injectable()
 export class FeeStructureRepository {
-  private items: FEE_STRUCTURE[] = [];
+  private items: FEE_STRUCTURE[] = MOCK_FEE_STRUCTURES;
 
-  constructor() {
-    this.items.push({
-      fee_id: SEED.FEE_STRUCTURES[0],
-      year_id: 'year-2023',
-      amount: 5000,
-      category: 'Tuition',
-    });
-  }
+  constructor() {}
 
   async findAll(): Promise<FEE_STRUCTURE[]> { return this.items; }
   async findOneById(id: string): Promise<FEE_STRUCTURE | undefined> { return this.items.find(i => i.fee_id === id); }

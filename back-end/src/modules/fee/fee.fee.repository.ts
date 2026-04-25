@@ -1,35 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { FEE_PAYMENT } from '../../common/types/interfaces';
-import { SEED } from '../../common/types/seed-constants';
-import { v4 as uuidv4 } from 'uuid';
+import { MOCK_FEE_PAYMENTS } from '../../common/types/mock-data';
 
 @Injectable()
 export class FeeRepository {
-  private items: FEE_PAYMENT[] = [];
+  private items: FEE_PAYMENT[] = MOCK_FEE_PAYMENTS;
 
-  constructor() {
-    this.items.push({
-      payment_id: uuidv4(),
-      student_id: SEED.STUDENTS[0],
-      fee_id: SEED.FEE_STRUCTURES[0],
-      amount_paid: 5000,
-      payment_date: new Date().toISOString(),
-      status: 'PAID',
-    });
-    this.items.push({
-      payment_id: uuidv4(),
-      student_id: SEED.STUDENTS[1],
-      fee_id: SEED.FEE_STRUCTURES[0],
-      amount_paid: 2000,
-      status: 'PENDING',
-    });
-    this.items.push({
-      payment_id: uuidv4(),
-      student_id: SEED.STUDENTS[2],
-      fee_id: SEED.FEE_STRUCTURES[0],
-      status: 'PENDING',
-    });
-  }
+  constructor() {}
 
   async findAll(): Promise<FEE_PAYMENT[]> { return this.items; }
   async findOneById(id: string): Promise<FEE_PAYMENT | undefined> { return this.items.find(i => i.payment_id === id); }

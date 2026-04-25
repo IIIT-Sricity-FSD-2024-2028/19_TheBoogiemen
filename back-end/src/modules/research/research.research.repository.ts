@@ -1,23 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { RESEARCH_PROJECT, RESEARCH_MILESTONE } from '../../common/types/interfaces';
-import { SEED } from '../../common/types/seed-constants';
-import { v4 as uuidv4 } from 'uuid';
+import { MOCK_RESEARCH_PROJECTS } from '../../common/types/mock-data';
 
 @Injectable()
 export class ResearchRepository {
-  public projects: RESEARCH_PROJECT[] = [];
+  public projects: RESEARCH_PROJECT[] = MOCK_RESEARCH_PROJECTS;
   public milestones: RESEARCH_MILESTONE[] = [];
 
-  constructor() {
-    this.projects.push(
-      { project_id: SEED.PROJECTS[0], student_id: SEED.STUDENTS[0], faculty_id: SEED.FACULTY[0], title: 'Quantum ML', type: 'Thesis' },
-      { project_id: SEED.PROJECTS[1], student_id: SEED.STUDENTS[1], faculty_id: SEED.FACULTY[1], title: 'Bioinformatics', type: 'Project' }
-    );
-    this.milestones.push(
-      { milestone_id: uuidv4(), project_id: SEED.PROJECTS[0], title: 'Draft 1', status: 'PENDING_REVIEW' },
-      { milestone_id: uuidv4(), project_id: SEED.PROJECTS[1], title: 'Final Eval', status: 'APPROVED' }
-    );
-  }
+  constructor() {}
 
   async findProjectById(id: string): Promise<RESEARCH_PROJECT | undefined> {
     return this.projects.find(p => p.project_id === id);
