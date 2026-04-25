@@ -1,0 +1,1711 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/fee/audit": {
+      "post": {
+        "operationId": "FeeController_auditCompliance",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFeeAuditInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeeAuditOutputDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Fee"
+        ]
+      }
+    },
+    "/reports/progress": {
+      "post": {
+        "operationId": "ReportController_generateReport",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateProgressInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProgressReportOutputDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Report"
+        ]
+      }
+    },
+    "/users/{id}/role": {
+      "patch": {
+        "operationId": "UserController_updateUserRole",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "User ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRoleInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserOutputDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "User"
+        ]
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "operationId": "UserController_getUserById",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "User ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserOutputDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "User"
+        ]
+      }
+    },
+    "/attendance/student/{student_id}/subject-wise": {
+      "get": {
+        "operationId": "AttendanceController_getSubjectWiseAttendance",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "student_id",
+            "required": true,
+            "in": "path",
+            "description": "Student ID",
+            "schema": {
+              "example": "uuid-string",
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AttendanceOutputDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Attendance"
+        ]
+      }
+    },
+    "/resources/events": {
+      "post": {
+        "operationId": "ResourceController_scheduleEvent",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleEventInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventOutputDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Resource"
+        ]
+      }
+    },
+    "/research/milestones": {
+      "post": {
+        "operationId": "ResearchController_uploadMilestone",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadMilestoneInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MilestoneOutputDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Research"
+        ]
+      }
+    },
+    "/research/milestones/{id}/review": {
+      "patch": {
+        "operationId": "ResearchController_reviewMilestone",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Milestone ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewMilestoneInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MilestoneOutputDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Research"
+        ]
+      }
+    },
+    "/forum": {
+      "post": {
+        "operationId": "ForumController_createPost",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePostInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostOutputDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Forum"
+        ]
+      }
+    },
+    "/forum/{postId}/reply": {
+      "post": {
+        "operationId": "ForumController_replyToPost",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "postId",
+            "required": true,
+            "in": "path",
+            "description": "Post ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplyInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Forum"
+        ]
+      }
+    },
+    "/forum/domain/{facultyId}": {
+      "get": {
+        "operationId": "ForumController_getDomainFilteredPosts",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "facultyId",
+            "required": true,
+            "in": "path",
+            "description": "Faculty ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PostOutputDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Forum"
+        ]
+      }
+    },
+    "/leaves": {
+      "post": {
+        "operationId": "LeaveController_applyLeave",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplyLeaveInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaveOutputDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Leave"
+        ]
+      }
+    },
+    "/leaves/{id}/approve": {
+      "patch": {
+        "operationId": "LeaveController_approveLeave",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Leave ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveLeaveInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaveOutputDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Leave"
+        ]
+      }
+    },
+    "/assessments": {
+      "post": {
+        "operationId": "AssessmentController_createAssessment",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAssessmentInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentOutputDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Assessment"
+        ]
+      }
+    },
+    "/assessments/grade": {
+      "patch": {
+        "operationId": "AssessmentController_gradeAssessment",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GradeInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarksEntryOutputDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Assessment"
+        ]
+      }
+    },
+    "/courses/syllabus": {
+      "patch": {
+        "operationId": "AssessmentController_updateSyllabus",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyllabusUpdateInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Assessment"
+        ]
+      }
+    },
+    "/outcomes/map": {
+      "post": {
+        "operationId": "OutcomeController_mapAssessmentToOutcomes",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MapOutcomeInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Outcome"
+        ]
+      }
+    },
+    "/outcomes/student/{studentId}": {
+      "get": {
+        "operationId": "OutcomeController_getStudentOutcomes",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "studentId",
+            "required": true,
+            "in": "path",
+            "description": "Student ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StudentOutcomeOutputDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Outcome"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Academic Management System API",
+    "description": "In-memory NestJS backend",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [
+    {
+      "name": "Fee",
+      "description": "Workflow 1"
+    },
+    {
+      "name": "Report",
+      "description": "Workflow 2"
+    },
+    {
+      "name": "User",
+      "description": "Workflow 3"
+    },
+    {
+      "name": "Attendance",
+      "description": "Workflow 3"
+    },
+    {
+      "name": "Resource",
+      "description": "Workflow 4"
+    },
+    {
+      "name": "Research",
+      "description": "Workflows 5 & 10"
+    },
+    {
+      "name": "Forum",
+      "description": "Workflow 6"
+    },
+    {
+      "name": "Leave",
+      "description": "Workflow 7"
+    },
+    {
+      "name": "Assessment",
+      "description": "Workflows 8 & 9"
+    },
+    {
+      "name": "Outcome",
+      "description": "Workflows 8 & 9"
+    }
+  ],
+  "servers": [],
+  "components": {
+    "schemas": {
+      "CreateFeeAuditInputDto": {
+        "type": "object",
+        "properties": {
+          "year_id": {
+            "type": "string",
+            "description": "UUID of the academic year",
+            "example": "uuid-string"
+          }
+        },
+        "required": [
+          "year_id"
+        ]
+      },
+      "PendingStudentDto": {
+        "type": "object",
+        "properties": {
+          "student_id": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "student_id",
+          "amount"
+        ]
+      },
+      "FeeAuditOutputDto": {
+        "type": "object",
+        "properties": {
+          "year_id": {
+            "type": "string"
+          },
+          "compliant_count": {
+            "type": "number"
+          },
+          "non_compliant_count": {
+            "type": "number"
+          },
+          "pending_students": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PendingStudentDto"
+            }
+          }
+        },
+        "required": [
+          "year_id",
+          "compliant_count",
+          "non_compliant_count",
+          "pending_students"
+        ]
+      },
+      "GenerateProgressInputDto": {
+        "type": "object",
+        "properties": {
+          "faculty_id": {
+            "type": "string",
+            "description": "Faculty UUID",
+            "example": "uuid-string"
+          },
+          "course_id": {
+            "type": "string",
+            "description": "Course UUID",
+            "example": "uuid-string"
+          }
+        },
+        "required": [
+          "faculty_id"
+        ]
+      },
+      "MarksDetailDto": {
+        "type": "object",
+        "properties": {
+          "assessment": {
+            "type": "string"
+          },
+          "score": {
+            "type": "number"
+          },
+          "max": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "assessment",
+          "score",
+          "max"
+        ]
+      },
+      "ProgressReportOutputDto": {
+        "type": "object",
+        "properties": {
+          "student_id": {
+            "type": "string"
+          },
+          "student_name": {
+            "type": "string"
+          },
+          "marks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MarksDetailDto"
+            }
+          },
+          "internal_marks_placeholder": {
+            "type": "number"
+          },
+          "graded_placeholder": {
+            "type": "string"
+          },
+          "generated_at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "student_id",
+          "student_name",
+          "marks",
+          "internal_marks_placeholder",
+          "graded_placeholder",
+          "generated_at"
+        ]
+      },
+      "UpdateRoleInputDto": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "student",
+              "faculty",
+              "admin",
+              "academic_head"
+            ]
+          }
+        },
+        "required": [
+          "role"
+        ]
+      },
+      "UserOutputDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "role"
+        ]
+      },
+      "AttendanceOutputDto": {
+        "type": "object",
+        "properties": {
+          "course_id": {
+            "type": "string"
+          },
+          "course_name": {
+            "type": "string"
+          },
+          "total_classes": {
+            "type": "number"
+          },
+          "attended": {
+            "type": "number"
+          },
+          "percentage": {
+            "type": "number"
+          },
+          "flagged": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "course_id",
+          "course_name",
+          "total_classes",
+          "attended",
+          "percentage",
+          "flagged"
+        ]
+      },
+      "ScheduleEventInputDto": {
+        "type": "object",
+        "properties": {
+          "resource_id": {
+            "type": "string"
+          },
+          "start_time": {
+            "type": "string"
+          },
+          "end_time": {
+            "type": "string"
+          },
+          "event_type": {
+            "type": "string",
+            "enum": [
+              "lecture",
+              "assessment",
+              "seminar"
+            ]
+          }
+        },
+        "required": [
+          "resource_id",
+          "start_time",
+          "end_time",
+          "event_type"
+        ]
+      },
+      "EventOutputDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "resource_id": {
+            "type": "string"
+          },
+          "start_time": {
+            "type": "string"
+          },
+          "end_time": {
+            "type": "string"
+          },
+          "event_type": {
+            "type": "string"
+          },
+          "venue_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "resource_id",
+          "start_time",
+          "end_time",
+          "event_type"
+        ]
+      },
+      "UploadMilestoneInputDto": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string"
+          },
+          "file_type": {
+            "type": "string",
+            "enum": [
+              "PDF",
+              "DOCX"
+            ]
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "project_id",
+          "file_type",
+          "description"
+        ]
+      },
+      "MilestoneOutputDto": {
+        "type": "object",
+        "properties": {
+          "milestone_id": {
+            "type": "string"
+          },
+          "project_id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "submission_date": {
+            "type": "string"
+          },
+          "file_type": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "comments": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "milestone_id",
+          "project_id",
+          "status"
+        ]
+      },
+      "ReviewMilestoneInputDto": {
+        "type": "object",
+        "properties": {
+          "milestone_id": {
+            "type": "string"
+          },
+          "comments": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "APPROVED",
+              "REJECTED",
+              "REVISION_NEEDED"
+            ]
+          }
+        },
+        "required": [
+          "milestone_id",
+          "comments",
+          "status"
+        ]
+      },
+      "CreatePostInputDto": {
+        "type": "object",
+        "properties": {
+          "topic_id": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "topic_id",
+          "content"
+        ]
+      },
+      "PostOutputDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "topic_id": {
+            "type": "string"
+          },
+          "author_id": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "replies_count": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "topic_id",
+          "author_id",
+          "content",
+          "created_at",
+          "replies_count"
+        ]
+      },
+      "ReplyInputDto": {
+        "type": "object",
+        "properties": {
+          "post_id": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "post_id",
+          "content"
+        ]
+      },
+      "ApplyLeaveInputDto": {
+        "type": "object",
+        "properties": {
+          "student_id": {
+            "type": "string"
+          },
+          "start_date": {
+            "type": "string"
+          },
+          "end_date": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "doc_ref": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "student_id",
+          "start_date",
+          "end_date",
+          "reason"
+        ]
+      },
+      "LeaveOutputDto": {
+        "type": "object",
+        "properties": {
+          "leave_id": {
+            "type": "string"
+          },
+          "student_id": {
+            "type": "string"
+          },
+          "start_date": {
+            "type": "string"
+          },
+          "end_date": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "doc_ref": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "leave_id",
+          "student_id",
+          "start_date",
+          "end_date",
+          "reason",
+          "status"
+        ]
+      },
+      "ApproveLeaveInputDto": {
+        "type": "object",
+        "properties": {
+          "leave_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "leave_id"
+        ]
+      },
+      "CreateAssessmentInputDto": {
+        "type": "object",
+        "properties": {
+          "course_id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "QUIZ",
+              "ASSIGNMENT",
+              "EXAM"
+            ]
+          },
+          "max_marks": {
+            "type": "number"
+          },
+          "due_date": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "course_id",
+          "title",
+          "type",
+          "max_marks",
+          "due_date"
+        ]
+      },
+      "AssessmentOutputDto": {
+        "type": "object",
+        "properties": {
+          "assessment_id": {
+            "type": "string"
+          },
+          "course_id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "max_marks": {
+            "type": "number"
+          },
+          "due_date": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "assessment_id",
+          "course_id",
+          "title",
+          "type",
+          "max_marks",
+          "due_date"
+        ]
+      },
+      "GradeInputDto": {
+        "type": "object",
+        "properties": {
+          "entry_id": {
+            "type": "string"
+          },
+          "marks": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "entry_id",
+          "marks"
+        ]
+      },
+      "MarksEntryOutputDto": {
+        "type": "object",
+        "properties": {
+          "entry_id": {
+            "type": "string"
+          },
+          "assessment_id": {
+            "type": "string"
+          },
+          "student_id": {
+            "type": "string"
+          },
+          "marks": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "entry_id",
+          "assessment_id",
+          "student_id",
+          "marks",
+          "status"
+        ]
+      },
+      "SyllabusUpdateInputDto": {
+        "type": "object",
+        "properties": {
+          "course_id": {
+            "type": "string"
+          },
+          "topic": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "course_id",
+          "topic"
+        ]
+      },
+      "MapOutcomeInputDto": {
+        "type": "object",
+        "properties": {
+          "assessment_id": {
+            "type": "string"
+          },
+          "outcome_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "weightages": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        },
+        "required": [
+          "assessment_id",
+          "outcome_ids",
+          "weightages"
+        ]
+      },
+      "StudentOutcomeOutputDto": {
+        "type": "object",
+        "properties": {
+          "student_id": {
+            "type": "string"
+          },
+          "outcome_id": {
+            "type": "string"
+          },
+          "outcome_title": {
+            "type": "string"
+          },
+          "achievement_level": {
+            "type": "string"
+          },
+          "raw_percentage": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "student_id",
+          "outcome_id",
+          "outcome_title",
+          "achievement_level",
+          "raw_percentage"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,48 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { AttendanceRepository } from './attendance.attendance.repository';
+import { NotificationService } from '../../common/services/notification.service';
+import { AttendanceOutputDto } from './dto/attendance.output.dto';
+
+@Injectable()
+export class AttendanceService {
+  constructor(
+    private readonly attendanceRepo: AttendanceRepository,
+    private readonly notificationService: NotificationService
+  ) {}
+
+  async getSubjectWiseAttendance(studentId: string): Promise<AttendanceOutputDto[]> {
+    const enrollments = this.attendanceRepo.enrollments.filter(e => e.student_id === studentId);
+    if (!enrollments.length) throw new NotFoundException('No enrollments found for student');
+
+    const result: AttendanceOutputDto[] = [];
+
+    for (const enrol of enrollments) {
+      const section = this.attendanceRepo.sections.find(s => s.section_id === enrol.section_id);
+      if (!section) continue;
+
+      const logs = this.attendanceRepo.logs.filter(l => l.enrollment_id === enrol.enrollment_id);
+      const total_classes = logs.length;
+      if (total_classes === 0) continue;
+
+      const attended = logs.filter(l => l.status === 'PRESENT' || l.status === 'EXCUSED').length;
+      const percentage = (attended / total_classes) * 100;
+      const flagged = percentage < 75;
+
+      if (flagged) {
+        this.notificationService.notify(studentId, `Low attendance alert for course ${section.course_id}`);
+        this.notificationService.notify(section.faculty_id, `Student ${studentId} has low attendance in ${section.course_id}`);
+      }
+
+      result.push({
+        course_id: section.course_id,
+        course_name: `Course ${section.course_id}`, // Mocked since joined course table isn't required here strictly
+        total_classes,
+        attended,
+        percentage,
+        flagged
+      });
+    }
+
+    return result;
+  }
+}
