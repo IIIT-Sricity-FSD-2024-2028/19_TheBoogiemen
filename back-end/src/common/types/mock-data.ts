@@ -5,6 +5,24 @@ import {
   LEAVE_REQUEST, COURSE, ASSESSMENT, LEARNING_OUTCOME, ASSESSMENT_OUTCOME, STUDENT_OUTCOME
 } from './interfaces';
 import { SEED } from './seed-constants';
+import { v4 as uuidv4 } from 'uuid';
+
+const year_1 = uuidv4();
+const enr_1 = uuidv4();
+const enr_2 = uuidv4();
+const pay_1 = uuidv4();
+const pay_2 = uuidv4();
+const att_1 = uuidv4();
+const att_2 = uuidv4();
+const att_3 = uuidv4();
+const evt_1 = uuidv4();
+const mark_1 = uuidv4();
+const mark_2 = uuidv4();
+const so_1 = uuidv4();
+const leave_1 = uuidv4();
+const post_1 = uuidv4();
+const reply_1 = uuidv4();
+const domain_auth_1 = uuidv4();
 
 export const MOCK_USERS: USER[] = [
   { user_id: SEED.STUDENTS[0], username: 'alice_smith', email: 'alice@university.edu', role: 'student' },
@@ -37,23 +55,23 @@ export const MOCK_SECTIONS: SECTION_INFO[] = [
 ];
 
 export const MOCK_ENROLLMENTS: ENROLLMENT[] = [
-  { enrollment_id: 'enr_1', student_id: SEED.STUDENTS[0], section_id: SEED.SECTIONS[0], status: 'ACTIVE' },
-  { enrollment_id: 'enr_2', student_id: SEED.STUDENTS[2], section_id: SEED.SECTIONS[0], status: 'ACTIVE' },
+  { enrollment_id: enr_1, student_id: SEED.STUDENTS[0], section_id: SEED.SECTIONS[0], status: 'ACTIVE' },
+  { enrollment_id: enr_2, student_id: SEED.STUDENTS[2], section_id: SEED.SECTIONS[0], status: 'ACTIVE' },
 ];
 
 export const MOCK_FEE_STRUCTURES: FEE_STRUCTURE[] = [
-  { fee_id: SEED.FEE_STRUCTURES[0], year_id: '2026', branch: 'Computer Science', amount: 5000, category: 'Tuition' },
+  { fee_id: SEED.FEE_STRUCTURES[0], year_id: year_1, branch: 'Computer Science', amount: 5000, category: 'Tuition' },
 ];
 
 export const MOCK_FEE_PAYMENTS: FEE_PAYMENT[] = [
-  { payment_id: 'pay_1', student_id: SEED.STUDENTS[0], fee_id: SEED.FEE_STRUCTURES[0], amount_paid: 5000, status: 'PAID' },
-  { payment_id: 'pay_2', student_id: SEED.STUDENTS[2], fee_id: SEED.FEE_STRUCTURES[0], amount_paid: 2000, status: 'PENDING' },
+  { payment_id: pay_1, student_id: SEED.STUDENTS[0], fee_id: SEED.FEE_STRUCTURES[0], amount_paid: 5000, status: 'PAID' },
+  { payment_id: pay_2, student_id: SEED.STUDENTS[2], fee_id: SEED.FEE_STRUCTURES[0], amount_paid: 2000, status: 'PENDING' },
 ];
 
 export const MOCK_ATTENDANCE: ATTENDANCE_LOG[] = [
-  { log_id: 'att_1', enrollment_id: 'enr_1', date: '2026-04-20T10:00:00Z', status: 'PRESENT' },
-  { log_id: 'att_2', enrollment_id: 'enr_1', date: '2026-04-22T10:00:00Z', status: 'ABSENT' },
-  { log_id: 'att_3', enrollment_id: 'enr_2', date: '2026-04-20T10:00:00Z', status: 'PRESENT' },
+  { log_id: att_1, enrollment_id: enr_1, date: '2026-04-20T10:00:00Z', status: 'PRESENT' },
+  { log_id: att_2, enrollment_id: enr_1, date: '2026-04-22T10:00:00Z', status: 'ABSENT' },
+  { log_id: att_3, enrollment_id: enr_2, date: '2026-04-20T10:00:00Z', status: 'PRESENT' },
 ];
 
 export const MOCK_RESOURCES: RESOURCE[] = [
@@ -62,7 +80,7 @@ export const MOCK_RESOURCES: RESOURCE[] = [
 ];
 
 export const MOCK_EVENTS: EVENT[] = [
-  { id: 'evt_1', resource_id: SEED.RESOURCES[0], start_time: '2026-04-26T10:00:00Z', end_time: '2026-04-26T12:00:00Z', event_type: 'lecture' },
+  { id: evt_1, resource_id: SEED.RESOURCES[0], start_time: '2026-04-26T10:00:00Z', end_time: '2026-04-26T12:00:00Z', event_type: 'lecture' },
 ];
 
 export const MOCK_ASSESSMENTS: ASSESSMENT[] = [
@@ -71,8 +89,8 @@ export const MOCK_ASSESSMENTS: ASSESSMENT[] = [
 ];
 
 export const MOCK_MARKS: MARKS_ENTRY[] = [
-  { entry_id: 'mark_1', assessment_id: SEED.ASSESSMENTS[0], student_id: SEED.STUDENTS[0], marks: 85, status: 'GRADED' },
-  { entry_id: 'mark_2', assessment_id: SEED.ASSESSMENTS[0], student_id: SEED.STUDENTS[2], marks: 92, status: 'GRADED' },
+  { entry_id: mark_1, assessment_id: SEED.ASSESSMENTS[0], student_id: SEED.STUDENTS[0], marks: 85, status: 'GRADED' },
+  { entry_id: mark_2, assessment_id: SEED.ASSESSMENTS[0], student_id: SEED.STUDENTS[2], marks: 92, status: 'GRADED' },
 ];
 
 export const MOCK_OUTCOMES: LEARNING_OUTCOME[] = [
@@ -80,7 +98,7 @@ export const MOCK_OUTCOMES: LEARNING_OUTCOME[] = [
 ];
 
 export const MOCK_STUDENT_OUTCOMES: STUDENT_OUTCOME[] = [
-  { id: 'so_1', student_id: SEED.STUDENTS[0], outcome_id: SEED.OUTCOMES[0], outcome_title: 'Understand basic data structures', achievement_level: 'EXCELLENT', raw_percentage: 90 },
+  { id: so_1, student_id: SEED.STUDENTS[0], outcome_id: SEED.OUTCOMES[0], outcome_title: 'Understand basic data structures', achievement_level: 'EXCELLENT', raw_percentage: 90 },
 ];
 
 export const MOCK_RESEARCH_PROJECTS: RESEARCH_PROJECT[] = [
@@ -88,7 +106,7 @@ export const MOCK_RESEARCH_PROJECTS: RESEARCH_PROJECT[] = [
 ];
 
 export const MOCK_LEAVE_REQUESTS: LEAVE_REQUEST[] = [
-  { leave_id: 'leave_1', student_id: SEED.STUDENTS[0], start_date: '2026-04-28T00:00:00Z', end_date: '2026-04-30T00:00:00Z', reason: 'Medical', status: 'PENDING' },
+  { leave_id: leave_1, student_id: SEED.STUDENTS[0], start_date: '2026-04-28T00:00:00Z', end_date: '2026-04-30T00:00:00Z', reason: 'Medical', status: 'PENDING' },
 ];
 
 export const MOCK_TOPICS: TOPIC[] = [
@@ -96,13 +114,13 @@ export const MOCK_TOPICS: TOPIC[] = [
 ];
 
 export const MOCK_FORUM_POSTS: FORUM_POST[] = [
-  { id: 'post_1', topic_id: SEED.TOPICS[0], author_id: SEED.STUDENTS[0], content: 'Can anyone help with the Linked List assignment?', created_at: '2026-04-24T12:00:00Z', replies_count: 1 },
+  { id: post_1, topic_id: SEED.TOPICS[0], author_id: SEED.STUDENTS[0], content: 'Can anyone help with the Linked List assignment?', created_at: '2026-04-24T12:00:00Z', replies_count: 1 },
 ];
 
 export const MOCK_FORUM_REPLIES: FORUM_REPLY[] = [
-  { id: 'reply_1', post_id: 'post_1', author_id: SEED.STUDENTS[2], content: 'Sure, I can help! Just traverse the nodes.', created_at: '2026-04-24T13:00:00Z' },
+  { id: reply_1, post_id: post_1, author_id: SEED.STUDENTS[2], content: 'Sure, I can help! Just traverse the nodes.', created_at: '2026-04-24T13:00:00Z' },
 ];
 
 export const MOCK_RESEARCH_DOMAINS: RESEARCH_DOMAINS[] = [
-  { faculty_id: SEED.FACULTY[0], domain_id: 'domain-auth-1' }
+  { faculty_id: SEED.FACULTY[0], domain_id: domain_auth_1 }
 ];

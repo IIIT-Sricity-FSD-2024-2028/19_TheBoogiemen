@@ -7,6 +7,7 @@ import { ReplyInputDto } from './dto/reply.input.dto';
 import { PostOutputDto } from './dto/post.output.dto';
 import { BaseResponseDto } from '../../common/dto/base-response.dto';
 import { SEED } from '../../common/types/seed-constants';
+import { MOCK_FORUM_POSTS, MOCK_FORUM_REPLIES, MOCK_TOPICS } from '../../common/types/mock-data';
 
 @ApiTags('Forum')
 @ApiHeader({ name: 'x-user-role', required: true })
@@ -46,5 +47,16 @@ export class ForumController {
   async getDomainFilteredPosts(@Param('facultyId') facultyId: string) {
     const data = await this.forumService.getDomainFilteredPosts(facultyId);
     return new BaseResponseDto(true, data, 'posts fetched');
+  }
+
+  @Get('mock-data')
+  @SetMetadata('roles', ['faculty', 'student', 'admin', 'academic_head'])
+  @ApiResponse({ status: 200, description: 'Fetch mock data for testing UUIDs' })
+  getMockData() {
+    return new BaseResponseDto(true, {
+      posts: MOCK_FORUM_POSTS,
+      replies: MOCK_FORUM_REPLIES,
+      topics: MOCK_TOPICS
+    }, 'mock data fetched');
   }
 }

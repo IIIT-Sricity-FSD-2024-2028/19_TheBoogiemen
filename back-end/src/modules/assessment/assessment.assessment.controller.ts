@@ -1,4 +1,4 @@
-import { Controller, Post, Patch, Body, UseGuards, SetMetadata } from '@nestjs/common';
+import { Controller, Post, Patch, Body, UseGuards, SetMetadata, Get } from '@nestjs/common';
 import { ApiTags, ApiHeader, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { AssessmentService } from './assessment.assessment.service';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -8,6 +8,7 @@ import { SyllabusUpdateInputDto } from './dto/syllabus-update.input.dto';
 import { AssessmentOutputDto, MarksEntryOutputDto } from './dto/assessment.output.dto';
 import { BaseResponseDto } from '../../common/dto/base-response.dto';
 import { SEED } from '../../common/types/seed-constants';
+import { MOCK_ASSESSMENTS, MOCK_COURSES, MOCK_MARKS } from '../../common/types/mock-data';
 
 @ApiTags('Assessment')
 @ApiHeader({ name: 'x-user-role', required: true })
@@ -44,5 +45,16 @@ export class AssessmentController {
     const facultyId = SEED.FACULTY[0];
     const data = await this.assessmentService.updateSyllabus(facultyId, dto);
     return new BaseResponseDto(true, data, 'syllabus updated');
+  }
+
+  @Get('mock-data')
+  @SetMetadata('roles', ['faculty', 'student', 'admin', 'academic_head'])
+  @ApiResponse({ status: 200, description: 'Fetch mock data for testing UUIDs' })
+  getMockData() {
+    return new BaseResponseDto(true, {
+      assessments: MOCK_ASSESSMENTS,
+      courses: MOCK_COURSES,
+      marks: MOCK_MARKS
+    }, 'mock data fetched');
   }
 }

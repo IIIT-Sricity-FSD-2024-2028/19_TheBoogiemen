@@ -1,4 +1,4 @@
-import { Controller, Post, Patch, Body, Param, UseGuards, SetMetadata } from '@nestjs/common';
+import { Controller, Post, Patch, Body, Param, UseGuards, SetMetadata, Get } from '@nestjs/common';
 import { ApiTags, ApiHeader, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
 import { LeaveService } from './leave.leave.service';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -7,6 +7,7 @@ import { ApproveLeaveInputDto } from './dto/approve-leave.input.dto';
 import { LeaveOutputDto } from './dto/leave.output.dto';
 import { BaseResponseDto } from '../../common/dto/base-response.dto';
 import { SEED } from '../../common/types/seed-constants';
+import { MOCK_LEAVE_REQUESTS } from '../../common/types/mock-data';
 
 @ApiTags('Leave')
 @ApiHeader({ name: 'x-user-role', required: true })
@@ -34,5 +35,14 @@ export class LeaveController {
     const adminId = SEED.ADMINS[0];
     const data = await this.leaveService.approveLeave(id, adminId);
     return new BaseResponseDto(true, data, 'leave approved successfully');
+  }
+
+  @Get('mock-data')
+  @SetMetadata('roles', ['faculty', 'student', 'admin', 'academic_head'])
+  @ApiResponse({ status: 200, description: 'Fetch mock data for testing UUIDs' })
+  getMockData() {
+    return new BaseResponseDto(true, {
+      leaves: MOCK_LEAVE_REQUESTS
+    }, 'mock data fetched');
   }
 }

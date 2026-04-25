@@ -56,6 +56,44 @@
         ]
       }
     },
+    "/fee/structure": {
+      "get": {
+        "operationId": "FeeController_getFeeStructures",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns all fee structures (useful for fetching generated UUIDs for testing)"
+          }
+        },
+        "tags": [
+          "Fee"
+        ]
+      }
+    },
     "/reports/progress": {
       "post": {
         "operationId": "ReportController_generateReport",
@@ -1072,8 +1110,8 @@
         "properties": {
           "year_id": {
             "type": "string",
-            "description": "String representing the academic year",
-            "example": "2026"
+            "description": "UUID of the academic year",
+            "example": "uuid-string"
           }
         },
         "required": [

@@ -36,4 +36,8 @@ export class FeeService {
       }))
     };
   }
+
+  async findAllFeeStructures() {
+    return this.feeStructureRepo.findAll();
+  }
 }

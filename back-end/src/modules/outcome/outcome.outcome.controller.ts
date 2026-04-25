@@ -5,6 +5,7 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { MapOutcomeInputDto } from './dto/map-outcome.input.dto';
 import { StudentOutcomeOutputDto } from './dto/student-outcome.output.dto';
 import { BaseResponseDto } from '../../common/dto/base-response.dto';
+import { MOCK_OUTCOMES, MOCK_STUDENT_OUTCOMES } from '../../common/types/mock-data';
 
 @ApiTags('Outcome')
 @ApiHeader({ name: 'x-user-role', required: true })
@@ -29,5 +30,15 @@ export class OutcomeController {
   async getStudentOutcomes(@Param('studentId') studentId: string) {
     const data = await this.outcomeService.getStudentOutcomes(studentId);
     return new BaseResponseDto(true, data, 'outcomes fetched');
+  }
+
+  @Get('mock-data')
+  @SetMetadata('roles', ['faculty', 'student', 'admin', 'academic_head'])
+  @ApiResponse({ status: 200, description: 'Fetch mock data for testing UUIDs' })
+  getMockData() {
+    return new BaseResponseDto(true, {
+      outcomes: MOCK_OUTCOMES,
+      student_outcomes: MOCK_STUDENT_OUTCOMES
+    }, 'mock data fetched');
   }
 }
