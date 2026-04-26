@@ -56,9 +56,9 @@
         ]
       }
     },
-    "/fee/structure": {
+    "/fee/mock-data": {
       "get": {
-        "operationId": "FeeController_getFeeStructures",
+        "operationId": "FeeController_getMockData",
         "parameters": [
           {
             "name": "x-user-role",
@@ -86,7 +86,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Returns all fee structures (useful for fetching generated UUIDs for testing)"
+            "description": "Fetch mock data for testing UUIDs"
           }
         },
         "tags": [
@@ -145,6 +145,44 @@
                 }
               }
             }
+          }
+        },
+        "tags": [
+          "Report"
+        ]
+      }
+    },
+    "/reports/mock-data": {
+      "get": {
+        "operationId": "ReportController_getMockData",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetch mock data for testing UUIDs"
           }
         },
         "tags": [
@@ -270,6 +308,44 @@
         ]
       }
     },
+    "/users/mock-data": {
+      "get": {
+        "operationId": "UserController_getMockData",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetch mock data for testing UUIDs"
+          }
+        },
+        "tags": [
+          "User"
+        ]
+      }
+    },
     "/attendance/student/{student_id}/subject-wise": {
       "get": {
         "operationId": "AttendanceController_getSubjectWiseAttendance",
@@ -328,6 +404,44 @@
         ]
       }
     },
+    "/attendance/mock-data": {
+      "get": {
+        "operationId": "AttendanceController_getMockData",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetch mock data for testing UUIDs"
+          }
+        },
+        "tags": [
+          "Attendance"
+        ]
+      }
+    },
     "/resources/events": {
       "post": {
         "operationId": "ResourceController_scheduleEvent",
@@ -376,6 +490,44 @@
                 }
               }
             }
+          }
+        },
+        "tags": [
+          "Resource"
+        ]
+      }
+    },
+    "/resources/mock-data": {
+      "get": {
+        "operationId": "ResourceController_getMockData",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetch mock data for testing UUIDs"
           }
         },
         "tags": [
@@ -495,6 +647,44 @@
                 }
               }
             }
+          }
+        },
+        "tags": [
+          "Research"
+        ]
+      }
+    },
+    "/research/mock-data": {
+      "get": {
+        "operationId": "ResearchController_getMockData",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetch mock data for testing UUIDs"
           }
         },
         "tags": [
@@ -671,6 +861,44 @@
         ]
       }
     },
+    "/forum/mock-data": {
+      "get": {
+        "operationId": "ForumController_getMockData",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetch mock data for testing UUIDs"
+          }
+        },
+        "tags": [
+          "Forum"
+        ]
+      }
+    },
     "/leaves": {
       "post": {
         "operationId": "LeaveController_applyLeave",
@@ -783,6 +1011,44 @@
                 }
               }
             }
+          }
+        },
+        "tags": [
+          "Leave"
+        ]
+      }
+    },
+    "/leaves/mock-data": {
+      "get": {
+        "operationId": "LeaveController_getMockData",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetch mock data for testing UUIDs"
           }
         },
         "tags": [
@@ -948,6 +1214,44 @@
         ]
       }
     },
+    "/mock-data": {
+      "get": {
+        "operationId": "AssessmentController_getMockData",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetch mock data for testing UUIDs"
+          }
+        },
+        "tags": [
+          "Assessment"
+        ]
+      }
+    },
     "/outcomes/map": {
       "post": {
         "operationId": "OutcomeController_mapAssessmentToOutcomes",
@@ -1046,6 +1350,44 @@
                 }
               }
             }
+          }
+        },
+        "tags": [
+          "Outcome"
+        ]
+      }
+    },
+    "/outcomes/mock-data": {
+      "get": {
+        "operationId": "OutcomeController_getMockData",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetch mock data for testing UUIDs"
           }
         },
         "tags": [
