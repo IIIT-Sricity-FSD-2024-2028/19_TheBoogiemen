@@ -52,4 +52,42 @@ export class LeaveService {
     const updated = await this.leaveRepo.updateLeaveStatus(leaveId, 'APPROVED');
     return updated!;
   }
+
+  async getAllLeaves() {
+    return this.leaveRepo.findAll();
+  }
+
+  async getLeaveById(id: string) {
+    const leave = await this.leaveRepo.getLeave(id);
+    if (!leave) throw new NotFoundException('Leave request not found');
+    return leave;
+  }
+
+  async updateLeave(id: string, dto: any) {
+    const leave = await this.leaveRepo.getLeave(id);
+    if (!leave) throw new NotFoundException('Leave request not found');
+    
+    return this.leaveRepo.update(id, {
+      student_id: dto.student_id || leave.student_id,
+      start_date: dto.start_date || leave.start_date,
+      end_date: dto.end_date || leave.end_date,
+      reason: dto.reason || leave.reason,
+      doc_ref: dto.doc_ref || leave.doc_ref,
+      status: dto.status || leave.status
+    });
+  }
+
+  async patchLeave(id: string, dto: any) {
+    const leave = await this.leaveRepo.getLeave(id);
+    if (!leave) throw new NotFoundException('Leave request not found');
+    
+    return this.leaveRepo.update(id, dto);
+  }
+
+  async deleteLeave(id: string) {
+    const leave = await this.leaveRepo.getLeave(id);
+    if (!leave) throw new NotFoundException('Leave request not found');
+    
+    await this.leaveRepo.delete(id);
+  }
 }

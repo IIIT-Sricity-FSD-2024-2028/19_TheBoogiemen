@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { ReportRepository } from './report.report.repository';
 import { GenerateProgressInputDto } from './dto/generate-progress.input.dto';
 import { ProgressReportOutputDto } from './dto/progress-report.output.dto';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class ReportService {
@@ -40,5 +41,43 @@ export class ReportService {
     });
 
     return reports;
+  }
+
+  async getAllReports() {
+    return this.reportRepo.findAll();
+  }
+
+  async getReportById(id: string) {
+    const report = await this.reportRepo.findOneById(id);
+    if (!report) throw new NotFoundException('Report not found');
+    return report;
+  }
+
+  async createReport(dto: any) {
+    return this.reportRepo.create({
+      id: uuidv4(),
+      ...dto
+    });
+  }
+
+  async updateReport(id: string, dto: any) {
+    const report = await this.reportRepo.findOneById(id);
+    if (!report) throw new NotFoundException('Report not found');
+    
+    return this.reportRepo.update(id, dto);
+  }
+
+  async patchReport(id: string, dto: any) {
+    const report = await this.reportRepo.findOneById(id);
+    if (!report) throw new NotFoundException('Report not found');
+    
+    return this.reportRepo.update(id, dto);
+  }
+
+  async deleteReport(id: string) {
+    const report = await this.reportRepo.findOneById(id);
+    if (!report) throw new NotFoundException('Report not found');
+    
+    await this.reportRepo.delete(id);
   }
 }

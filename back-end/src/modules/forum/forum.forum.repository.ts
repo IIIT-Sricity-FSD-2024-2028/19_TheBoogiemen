@@ -19,4 +19,24 @@ export class ForumRepository {
   async findDomainForFaculty(facultyId: string) { return this.domains.find(d => d.faculty_id === facultyId); }
   async findTopicsByDomain(domainId: string) { return this.topics.filter(t => t.domain_id === domainId); }
   async findPostsByTopics(topicIds: string[]) { return this.posts.filter(p => topicIds.includes(p.topic_id)); }
+
+  async findAllPosts(): Promise<FORUM_POST[]> {
+    return this.posts;
+  }
+
+  async updatePost(id: string, data: Partial<FORUM_POST>): Promise<FORUM_POST | null> {
+    const idx = this.posts.findIndex(p => p.id === id);
+    if(idx > -1) { Object.assign(this.posts[idx], data); return this.posts[idx]; }
+    return null;
+  }
+
+  async deletePost(id: string): Promise<void> {
+    const idx = this.posts.findIndex(p => p.id === id);
+    if(idx > -1) this.posts.splice(idx, 1);
+  }
+
+  async deleteReply(id: string): Promise<void> {
+    const idx = this.replies.findIndex(r => r.id === id);
+    if(idx > -1) this.replies.splice(idx, 1);
+  }
 }

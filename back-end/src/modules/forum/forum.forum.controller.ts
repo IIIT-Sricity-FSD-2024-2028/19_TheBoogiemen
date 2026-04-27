@@ -1,9 +1,11 @@
-import { Controller, Post, Get, Body, Param, UseGuards, SetMetadata } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, UseGuards, SetMetadata, Put, Patch, Delete } from '@nestjs/common';
 import { ApiTags, ApiHeader, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
 import { ForumService } from './forum.forum.service';
 import { RolesGuard } from '../../common/guards/roles.guard';
+import { EnvGuard } from '../../common/guards/env.guard';
 import { CreatePostInputDto } from './dto/create-post.input.dto';
 import { ReplyInputDto } from './dto/reply.input.dto';
+import { UpdatePostInputDto } from './dto/update-post.input.dto';
 import { PostOutputDto } from './dto/post.output.dto';
 import { BaseResponseDto } from '../../common/dto/base-response.dto';
 import { SEED } from '../../common/types/seed-constants';
@@ -51,6 +53,7 @@ export class ForumController {
 
   @Get('mock-data')
   @SetMetadata('roles', ['faculty', 'student', 'admin', 'academic_head'])
+  @UseGuards(EnvGuard)
   @ApiResponse({ status: 200, description: 'Fetch mock data for testing UUIDs' })
   getMockData() {
     return new BaseResponseDto(true, {
@@ -58,5 +61,55 @@ export class ForumController {
       replies: MOCK_FORUM_REPLIES,
       topics: MOCK_TOPICS
     }, 'mock data fetched');
+  }
+
+  @Get()
+  @SetMetadata('roles', ['admin', 'faculty', 'student'])
+  @ApiResponse({ status: 200, description: 'Fetch all posts' })
+  async getAllPosts() {
+    const data = await this.forumService.getAllPosts();
+    return new BaseResponseDto(true, data, 'posts fetched successfully');
+  }
+
+  @Get(':id')
+  @SetMetadata('roles', ['admin', 'faculty', 'student'])
+  @ApiResponse({ status: 200, description: 'Fetch post by ID' })
+  async getPostById(@Param('id') id: string) {
+    const data = await this.forumService.getPostById(id);
+    return new BaseResponseDto(true, data, 'post fetched successfully');
+  }
+
+  @Put(':id')
+  @SetMetadata('roles', ['admin', 'faculty', 'student'])
+  @ApiBody({ type: UpdatePostInputDto })
+  @ApiResponse({ status: 200, description: 'Full update of post' })
+  async updatePost(@Param('id') id: string, @Body() dto: UpdatePostInputDto) {
+    const data = await this.forumService.updatePost(id, dto);
+    return new BaseResponseDto(true, data, 'post updated successfully');
+  }
+
+  @Patch(':id')
+  @SetMetadata('roles', ['admin', 'faculty', 'student'])
+  @ApiBody({ type: UpdatePostInputDto })
+  @ApiResponse({ status: 200, description: 'Partial update of post' })
+  async patchPost(@Param('id') id: string, @Body() dto: UpdatePostInputDto) {
+    const data = await this.forumService.patchPost(id, dto);
+    return new BaseResponseDto(true, data, 'post patched successfully');
+  }
+
+  @Delete(':id')
+  @SetMetadata('roles', ['admin', 'faculty'])
+  @ApiResponse({ status: 200, description: 'Delete post' })
+  async deletePost(@Param('id') id: string) {
+    await this.forumService.deletePost(id);
+    return new BaseResponseDto(true, null, 'post deleted successfully');
+  }
+
+  @Delete(':postId/reply/:replyId')
+  @SetMetadata('roles', ['admin', 'faculty'])
+  @ApiResponse({ status: 200, description: 'Delete reply' })
+  async deleteReply(@Param('replyId') replyId: string) {
+    await this.forumService.deleteReply(replyId);
+    return new BaseResponseDto(true, null, 'reply deleted successfully');
   }
 }

@@ -55,4 +55,74 @@ export class ResourceService {
       venue_id
     };
   }
+
+  async getAllResources() {
+    return this.resourceRepo.findAll();
+  }
+
+  async getResourceById(id: string) {
+    const res = await this.resourceRepo.findOneById(id);
+    if (!res) throw new NotFoundException('Resource not found');
+    return res;
+  }
+
+  async createResource(dto: any) {
+    return this.resourceRepo.create({
+      resource_id: uuidv4(),
+      name: dto.name,
+      capacity: dto.capacity || 10,
+      type: dto.type || 'ROOM',
+      location: dto.location || 'Main Building'
+    });
+  }
+
+  async updateResource(id: string, dto: any) {
+    const res = await this.resourceRepo.findOneById(id);
+    if (!res) throw new NotFoundException('Resource not found');
+    
+    return this.resourceRepo.update(id, {
+      name: dto.name || res.name,
+      capacity: dto.capacity || res.capacity,
+      type: dto.type || res.type,
+      location: dto.location || res.location
+    });
+  }
+
+  async patchResource(id: string, dto: any) {
+    const res = await this.resourceRepo.findOneById(id);
+    if (!res) throw new NotFoundException('Resource not found');
+    
+    return this.resourceRepo.update(id, dto);
+  }
+
+  async deleteResource(id: string) {
+    const res = await this.resourceRepo.findOneById(id);
+    if (!res) throw new NotFoundException('Resource not found');
+    
+    await this.resourceRepo.delete(id);
+  }
+
+  async getAllEvents() {
+    return this.eventRepo.findAll();
+  }
+
+  async getEventById(id: string) {
+    const event = await this.eventRepo.findOneById(id);
+    if (!event) throw new NotFoundException('Event not found');
+    return event;
+  }
+
+  async updateEvent(id: string, dto: any) {
+    const event = await this.eventRepo.findOneById(id);
+    if (!event) throw new NotFoundException('Event not found');
+    
+    return this.eventRepo.update(id, dto);
+  }
+
+  async deleteEvent(id: string) {
+    const event = await this.eventRepo.findOneById(id);
+    if (!event) throw new NotFoundException('Event not found');
+    
+    await this.eventRepo.delete(id);
+  }
 }

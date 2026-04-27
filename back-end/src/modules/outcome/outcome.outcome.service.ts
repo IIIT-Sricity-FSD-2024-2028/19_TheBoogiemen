@@ -79,4 +79,48 @@ export class OutcomeService {
       raw_percentage: o.raw_percentage
     }));
   }
+
+  async getAllOutcomes() {
+    return this.outcomeRepo.findAll();
+  }
+
+  async getOutcomeById(id: string) {
+    const outcome = await this.outcomeRepo.findOutcomeById(id);
+    if (!outcome) throw new BadRequestException('Outcome not found');
+    return outcome;
+  }
+
+  async createOutcome(dto: any) {
+    return this.outcomeRepo.create({
+      outcome_id: uuidv4(),
+      course_id: dto.course_id,
+      title: dto.title,
+      description: dto.description || ''
+    });
+  }
+
+  async updateOutcome(id: string, dto: any) {
+    const outcome = await this.outcomeRepo.findOutcomeById(id);
+    if (!outcome) throw new BadRequestException('Outcome not found');
+    
+    return this.outcomeRepo.update(id, {
+      course_id: dto.course_id || outcome.course_id,
+      title: dto.title || outcome.title,
+      description: dto.description || outcome.description
+    });
+  }
+
+  async patchOutcome(id: string, dto: any) {
+    const outcome = await this.outcomeRepo.findOutcomeById(id);
+    if (!outcome) throw new BadRequestException('Outcome not found');
+    
+    return this.outcomeRepo.update(id, dto);
+  }
+
+  async deleteOutcome(id: string) {
+    const outcome = await this.outcomeRepo.findOutcomeById(id);
+    if (!outcome) throw new BadRequestException('Outcome not found');
+    
+    await this.outcomeRepo.delete(id);
+  }
 }

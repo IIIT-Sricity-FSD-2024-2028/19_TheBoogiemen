@@ -1,8 +1,10 @@
-import { Controller, Post, Patch, Body, UseGuards, SetMetadata, Get } from '@nestjs/common';
+import { Controller, Post, Patch, Body, UseGuards, SetMetadata, Get, Param, Put, Delete } from '@nestjs/common';
 import { ApiTags, ApiHeader, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { AssessmentService } from './assessment.assessment.service';
 import { RolesGuard } from '../../common/guards/roles.guard';
+import { EnvGuard } from '../../common/guards/env.guard';
 import { CreateAssessmentInputDto } from './dto/create-assessment.input.dto';
+import { UpdateAssessmentInputDto } from './dto/update-assessment.input.dto';
 import { GradeInputDto } from './dto/grade.input.dto';
 import { SyllabusUpdateInputDto } from './dto/syllabus-update.input.dto';
 import { AssessmentOutputDto, MarksEntryOutputDto } from './dto/assessment.output.dto';
@@ -49,6 +51,7 @@ export class AssessmentController {
 
   @Get('mock-data')
   @SetMetadata('roles', ['faculty', 'student', 'admin', 'academic_head'])
+  @UseGuards(EnvGuard)
   @ApiResponse({ status: 200, description: 'Fetch mock data for testing UUIDs' })
   getMockData() {
     return new BaseResponseDto(true, {
@@ -56,5 +59,47 @@ export class AssessmentController {
       courses: MOCK_COURSES,
       marks: MOCK_MARKS
     }, 'mock data fetched');
+  }
+
+  @Get('assessments')
+  @SetMetadata('roles', ['admin', 'faculty', 'student'])
+  @ApiResponse({ status: 200, description: 'Fetch all assessments' })
+  async getAllAssessments() {
+    const data = await this.assessmentService.getAllAssessments();
+    return new BaseResponseDto(true, data, 'assessments fetched successfully');
+  }
+
+  @Get('assessments/:id')
+  @SetMetadata('roles', ['admin', 'faculty', 'student'])
+  @ApiResponse({ status: 200, description: 'Fetch assessment by ID' })
+  async getAssessmentById(@Param('id') id: string) {
+    const data = await this.assessmentService.getAssessmentById(id);
+    return new BaseResponseDto(true, data, 'assessment fetched successfully');
+  }
+
+  @Put('assessments/:id')
+  @SetMetadata('roles', ['admin', 'faculty'])
+  @ApiBody({ type: UpdateAssessmentInputDto })
+  @ApiResponse({ status: 200, description: 'Full update of assessment' })
+  async updateAssessment(@Param('id') id: string, @Body() dto: UpdateAssessmentInputDto) {
+    const data = await this.assessmentService.updateAssessment(id, dto);
+    return new BaseResponseDto(true, data, 'assessment updated successfully');
+  }
+
+  @Patch('assessments/:id')
+  @SetMetadata('roles', ['admin', 'faculty'])
+  @ApiBody({ type: UpdateAssessmentInputDto })
+  @ApiResponse({ status: 200, description: 'Partial update of assessment' })
+  async patchAssessment(@Param('id') id: string, @Body() dto: UpdateAssessmentInputDto) {
+    const data = await this.assessmentService.patchAssessment(id, dto);
+    return new BaseResponseDto(true, data, 'assessment patched successfully');
+  }
+
+  @Delete('assessments/:id')
+  @SetMetadata('roles', ['admin', 'faculty'])
+  @ApiResponse({ status: 200, description: 'Delete assessment' })
+  async deleteAssessment(@Param('id') id: string) {
+    await this.assessmentService.deleteAssessment(id);
+    return new BaseResponseDto(true, null, 'assessment deleted successfully');
   }
 }

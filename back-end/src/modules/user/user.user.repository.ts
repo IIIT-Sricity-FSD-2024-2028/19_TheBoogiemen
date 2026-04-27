@@ -15,4 +15,12 @@ export class UserRepository {
     if(idx > -1) { Object.assign(this.items[idx], data); return this.items[idx]; }
     return null;
   }
+  async create(data: USER): Promise<USER> {
+    this.items.push(data);
+    return data;
+  }
+  async delete(id: string): Promise<void> {
+    const idx = this.items.findIndex(i => i.user_id === id);
+    if(idx > -1) this.items.splice(idx, 1);
+  }
 }

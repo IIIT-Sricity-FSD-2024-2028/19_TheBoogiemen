@@ -18,4 +18,22 @@ export class LeaveRepository {
     if(l) { l.status = status; return l; }
     return null;
   }
+
+  async findAll(): Promise<LEAVE_REQUEST[]> {
+    return this.requests;
+  }
+
+  async update(id: string, data: Partial<LEAVE_REQUEST>): Promise<LEAVE_REQUEST | null> {
+    const idx = this.requests.findIndex(r => r.leave_id === id);
+    if (idx > -1) {
+      Object.assign(this.requests[idx], data);
+      return this.requests[idx];
+    }
+    return null;
+  }
+
+  async delete(id: string): Promise<void> {
+    const idx = this.requests.findIndex(r => r.leave_id === id);
+    if (idx > -1) this.requests.splice(idx, 1);
+  }
 }

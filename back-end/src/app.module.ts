@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { FeeModule } from './modules/fee/fee.fee.module';
 import { ReportModule } from './modules/report/report.report.module';
 import { UserModule } from './modules/user/user.user.module';
@@ -12,6 +13,7 @@ import { OutcomeModule } from './modules/outcome/outcome.outcome.module';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
     FeeModule,
     ReportModule,
     UserModule,

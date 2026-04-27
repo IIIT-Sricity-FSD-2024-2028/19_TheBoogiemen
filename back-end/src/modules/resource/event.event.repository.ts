@@ -22,4 +22,26 @@ export class EventRepository {
     this.venues.push(data);
     return data;
   }
+
+  async findOneById(id: string): Promise<EVENT | undefined> {
+    return this.items.find(e => e.id === id);
+  }
+
+  async findAll(): Promise<EVENT[]> {
+    return this.items;
+  }
+
+  async update(id: string, data: Partial<EVENT>): Promise<EVENT | null> {
+    const idx = this.items.findIndex(e => e.id === id);
+    if (idx > -1) {
+      Object.assign(this.items[idx], data);
+      return this.items[idx];
+    }
+    return null;
+  }
+
+  async delete(id: string): Promise<void> {
+    const idx = this.items.findIndex(e => e.id === id);
+    if (idx > -1) this.items.splice(idx, 1);
+  }
 }

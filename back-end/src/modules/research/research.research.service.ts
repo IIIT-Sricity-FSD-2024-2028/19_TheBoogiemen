@@ -59,4 +59,48 @@ export class ResearchService {
       comments: updated.comments
     };
   }
+
+  async getAllProjects() {
+    return this.researchRepo.findAllProjects();
+  }
+
+  async getProjectById(id: string) {
+    const project = await this.researchRepo.findProjectById(id);
+    if (!project) throw new NotFoundException('Project not found');
+    return project;
+  }
+
+  async updateProject(id: string, dto: any) {
+    const project = await this.researchRepo.findProjectById(id);
+    if (!project) throw new NotFoundException('Project not found');
+    
+    return this.researchRepo.updateProject(id, {
+      title: dto.title || project.title,
+      domain: dto.domain || project.domain,
+      type: dto.type || project.type,
+      student_id: dto.student_id || project.student_id,
+      faculty_id: dto.faculty_id || project.faculty_id
+    });
+  }
+
+  async patchProject(id: string, dto: any) {
+    const project = await this.researchRepo.findProjectById(id);
+    if (!project) throw new NotFoundException('Project not found');
+    
+    return this.researchRepo.updateProject(id, dto);
+  }
+
+  async deleteProject(id: string) {
+    const project = await this.researchRepo.findProjectById(id);
+    if (!project) throw new NotFoundException('Project not found');
+    
+    await this.researchRepo.deleteProject(id);
+  }
+
+  async deleteMilestone(id: string) {
+    const milestone = await this.researchRepo.findMilestoneById(id);
+    if (!milestone) throw new NotFoundException('Milestone not found');
+    
+    await this.researchRepo.deleteMilestone(id);
+  }
 }

@@ -4,6 +4,7 @@ import { FeeStructureRepository } from './fee-structure.fee-structure.repository
 import { NotificationService } from '../../common/services/notification.service';
 import { CreateFeeAuditInputDto } from './dto/create-fee-audit.input.dto';
 import { FeeAuditOutputDto } from './dto/fee-audit.output.dto';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class FeeService {
@@ -39,5 +40,56 @@ export class FeeService {
 
   async findAllFeeStructures() {
     return this.feeStructureRepo.findAll();
+  }
+
+  async getAllPayments() {
+    return this.feeRepo.findAll();
+  }
+
+  async getPaymentById(id: string) {
+    const payment = await this.feeRepo.findOneById(id);
+    if (!payment) throw new NotFoundException('Payment not found');
+    return payment;
+  }
+
+  async createPayment(dto: any) {
+    return this.feeRepo.create({
+      payment_id: uuidv4(),
+      student_id: dto.student_id,
+      fee_id: dto.fee_id,
+      amount_paid: dto.amount_paid || 0,
+      status: dto.status || 'PENDING',
+      payment_date: new Date().toISOString()
+    });
+  }
+
+  async updatePayment(id: string, dto: any) {
+    const payment = await this.feeRepo.findOneById(id);
+    if (!payment) throw new NotFoundException('Payment not found');
+    
+    // full replace requires all fields or defaults
+    const updated = await this.feeRepo.update(id, {
+      student_id: dto.student_id || payment.student_id,
+      fee_id: dto.fee_id || payment.fee_id,
+      transaction_id: dto.transaction_id,
+      amount_paid: dto.amount_paid || 0,
+      status: dto.status || 'PENDING',
+      payment_date: payment.payment_date
+    });
+    return updated;
+  }
+
+  async patchPayment(id: string, dto: any) {
+    const payment = await this.feeRepo.findOneById(id);
+    if (!payment) throw new NotFoundException('Payment not found');
+    
+    const updated = await this.feeRepo.update(id, dto);
+    return updated;
+  }
+
+  async deletePayment(id: string) {
+    const payment = await this.feeRepo.findOneById(id);
+    if (!payment) throw new NotFoundException('Payment not found');
+    await this.feeRepo.delete(id);
   }
 }

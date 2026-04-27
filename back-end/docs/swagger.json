@@ -94,6 +94,288 @@
         ]
       }
     },
+    "/fee/payments": {
+      "get": {
+        "operationId": "FeeController_getAllPayments",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetch all fee payments"
+          }
+        },
+        "tags": [
+          "Fee"
+        ]
+      },
+      "post": {
+        "operationId": "FeeController_createPayment",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFeePaymentInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Create fee payment"
+          }
+        },
+        "tags": [
+          "Fee"
+        ]
+      }
+    },
+    "/fee/payments/{id}": {
+      "get": {
+        "operationId": "FeeController_getPaymentById",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetch fee payment by ID"
+          }
+        },
+        "tags": [
+          "Fee"
+        ]
+      },
+      "put": {
+        "operationId": "FeeController_updatePayment",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFeePaymentInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Full update of fee payment"
+          }
+        },
+        "tags": [
+          "Fee"
+        ]
+      },
+      "patch": {
+        "operationId": "FeeController_patchPayment",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFeePaymentInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Partial update of fee payment"
+          }
+        },
+        "tags": [
+          "Fee"
+        ]
+      },
+      "delete": {
+        "operationId": "FeeController_deletePayment",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Delete fee payment"
+          }
+        },
+        "tags": [
+          "Fee"
+        ]
+      }
+    },
     "/reports/progress": {
       "post": {
         "operationId": "ReportController_generateReport",
@@ -183,6 +465,258 @@
         "responses": {
           "200": {
             "description": "Fetch mock data for testing UUIDs"
+          }
+        },
+        "tags": [
+          "Report"
+        ]
+      }
+    },
+    "/reports": {
+      "get": {
+        "operationId": "ReportController_getAllReports",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetch all saved reports"
+          }
+        },
+        "tags": [
+          "Report"
+        ]
+      },
+      "post": {
+        "operationId": "ReportController_createReport",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Create saved report"
+          }
+        },
+        "tags": [
+          "Report"
+        ]
+      }
+    },
+    "/reports/{id}": {
+      "get": {
+        "operationId": "ReportController_getReportById",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetch saved report by ID"
+          }
+        },
+        "tags": [
+          "Report"
+        ]
+      },
+      "put": {
+        "operationId": "ReportController_updateReport",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Full update of report"
+          }
+        },
+        "tags": [
+          "Report"
+        ]
+      },
+      "patch": {
+        "operationId": "ReportController_patchReport",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Partial update of report"
+          }
+        },
+        "tags": [
+          "Report"
+        ]
+      },
+      "delete": {
+        "operationId": "ReportController_deleteReport",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Delete report"
           }
         },
         "tags": [
@@ -306,6 +840,113 @@
         "tags": [
           "User"
         ]
+      },
+      "put": {
+        "operationId": "UserController_updateUser",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "User ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserOutputDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "User"
+        ]
+      },
+      "delete": {
+        "operationId": "UserController_deleteUser",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "User ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User deleted successfully"
+          }
+        },
+        "tags": [
+          "User"
+        ]
       }
     },
     "/users/mock-data": {
@@ -339,6 +980,107 @@
         "responses": {
           "200": {
             "description": "Fetch mock data for testing UUIDs"
+          }
+        },
+        "tags": [
+          "User"
+        ]
+      }
+    },
+    "/users": {
+      "get": {
+        "operationId": "UserController_getAllUsers",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserOutputDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "User"
+        ]
+      },
+      "post": {
+        "operationId": "UserController_createUser",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserOutputDto"
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -442,6 +1184,288 @@
         ]
       }
     },
+    "/attendance": {
+      "get": {
+        "operationId": "AttendanceController_getAllLogs",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetch all attendance logs"
+          }
+        },
+        "tags": [
+          "Attendance"
+        ]
+      },
+      "post": {
+        "operationId": "AttendanceController_createLog",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAttendanceInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Create attendance log"
+          }
+        },
+        "tags": [
+          "Attendance"
+        ]
+      }
+    },
+    "/attendance/{id}": {
+      "get": {
+        "operationId": "AttendanceController_getLogById",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetch attendance log by ID"
+          }
+        },
+        "tags": [
+          "Attendance"
+        ]
+      },
+      "put": {
+        "operationId": "AttendanceController_updateLog",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAttendanceInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Full update of attendance log"
+          }
+        },
+        "tags": [
+          "Attendance"
+        ]
+      },
+      "patch": {
+        "operationId": "AttendanceController_patchLog",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAttendanceInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Partial update of attendance log"
+          }
+        },
+        "tags": [
+          "Attendance"
+        ]
+      },
+      "delete": {
+        "operationId": "AttendanceController_deleteLog",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Delete attendance log"
+          }
+        },
+        "tags": [
+          "Attendance"
+        ]
+      }
+    },
     "/resources/events": {
       "post": {
         "operationId": "ResourceController_scheduleEvent",
@@ -528,6 +1552,470 @@
         "responses": {
           "200": {
             "description": "Fetch mock data for testing UUIDs"
+          }
+        },
+        "tags": [
+          "Resource"
+        ]
+      }
+    },
+    "/resources": {
+      "get": {
+        "operationId": "ResourceController_getAllResources",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetch all resources"
+          }
+        },
+        "tags": [
+          "Resource"
+        ]
+      },
+      "post": {
+        "operationId": "ResourceController_createResource",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateResourceInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Create resource"
+          }
+        },
+        "tags": [
+          "Resource"
+        ]
+      }
+    },
+    "/resources/{id}": {
+      "get": {
+        "operationId": "ResourceController_getResourceById",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetch resource by ID"
+          }
+        },
+        "tags": [
+          "Resource"
+        ]
+      },
+      "put": {
+        "operationId": "ResourceController_updateResource",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateResourceInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Full update of resource"
+          }
+        },
+        "tags": [
+          "Resource"
+        ]
+      },
+      "patch": {
+        "operationId": "ResourceController_patchResource",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateResourceInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Partial update of resource"
+          }
+        },
+        "tags": [
+          "Resource"
+        ]
+      },
+      "delete": {
+        "operationId": "ResourceController_deleteResource",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Delete resource"
+          }
+        },
+        "tags": [
+          "Resource"
+        ]
+      }
+    },
+    "/resources/events/all": {
+      "get": {
+        "operationId": "ResourceController_getAllEvents",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetch all events"
+          }
+        },
+        "tags": [
+          "Resource"
+        ]
+      }
+    },
+    "/resources/events/{id}": {
+      "get": {
+        "operationId": "ResourceController_getEventById",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetch event by ID"
+          }
+        },
+        "tags": [
+          "Resource"
+        ]
+      },
+      "put": {
+        "operationId": "ResourceController_updateEvent",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleEventInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Update event"
+          }
+        },
+        "tags": [
+          "Resource"
+        ]
+      },
+      "delete": {
+        "operationId": "ResourceController_deleteEvent",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Delete event"
           }
         },
         "tags": [
@@ -692,6 +2180,288 @@
         ]
       }
     },
+    "/research": {
+      "get": {
+        "operationId": "ResearchController_getAllProjects",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetch all projects"
+          }
+        },
+        "tags": [
+          "Research"
+        ]
+      }
+    },
+    "/research/{id}": {
+      "get": {
+        "operationId": "ResearchController_getProjectById",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetch project by ID"
+          }
+        },
+        "tags": [
+          "Research"
+        ]
+      },
+      "put": {
+        "operationId": "ResearchController_updateProject",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProjectInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Full update of project"
+          }
+        },
+        "tags": [
+          "Research"
+        ]
+      },
+      "patch": {
+        "operationId": "ResearchController_patchProject",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProjectInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Partial update of project"
+          }
+        },
+        "tags": [
+          "Research"
+        ]
+      },
+      "delete": {
+        "operationId": "ResearchController_deleteProject",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Delete project"
+          }
+        },
+        "tags": [
+          "Research"
+        ]
+      }
+    },
+    "/research/milestones/{id}": {
+      "delete": {
+        "operationId": "ResearchController_deleteMilestone",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Delete milestone"
+          }
+        },
+        "tags": [
+          "Research"
+        ]
+      }
+    },
     "/forum": {
       "post": {
         "operationId": "ForumController_createPost",
@@ -740,6 +2510,42 @@
                 }
               }
             }
+          }
+        },
+        "tags": [
+          "Forum"
+        ]
+      },
+      "get": {
+        "operationId": "ForumController_getAllPosts",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetch all posts"
           }
         },
         "tags": [
@@ -899,6 +2705,250 @@
         ]
       }
     },
+    "/forum/{id}": {
+      "get": {
+        "operationId": "ForumController_getPostById",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetch post by ID"
+          }
+        },
+        "tags": [
+          "Forum"
+        ]
+      },
+      "put": {
+        "operationId": "ForumController_updatePost",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePostInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Full update of post"
+          }
+        },
+        "tags": [
+          "Forum"
+        ]
+      },
+      "patch": {
+        "operationId": "ForumController_patchPost",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePostInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Partial update of post"
+          }
+        },
+        "tags": [
+          "Forum"
+        ]
+      },
+      "delete": {
+        "operationId": "ForumController_deletePost",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Delete post"
+          }
+        },
+        "tags": [
+          "Forum"
+        ]
+      }
+    },
+    "/forum/{postId}/reply/{replyId}": {
+      "delete": {
+        "operationId": "ForumController_deleteReply",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "replyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Delete reply"
+          }
+        },
+        "tags": [
+          "Forum"
+        ]
+      }
+    },
     "/leaves": {
       "post": {
         "operationId": "LeaveController_applyLeave",
@@ -947,6 +2997,42 @@
                 }
               }
             }
+          }
+        },
+        "tags": [
+          "Leave"
+        ]
+      },
+      "get": {
+        "operationId": "LeaveController_getAllLeaves",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetch all leave requests"
           }
         },
         "tags": [
@@ -1056,6 +3142,204 @@
         ]
       }
     },
+    "/leaves/{id}": {
+      "get": {
+        "operationId": "LeaveController_getLeaveById",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetch leave request by ID"
+          }
+        },
+        "tags": [
+          "Leave"
+        ]
+      },
+      "put": {
+        "operationId": "LeaveController_updateLeave",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLeaveInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Full update of leave request"
+          }
+        },
+        "tags": [
+          "Leave"
+        ]
+      },
+      "patch": {
+        "operationId": "LeaveController_patchLeave",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLeaveInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Partial update of leave request"
+          }
+        },
+        "tags": [
+          "Leave"
+        ]
+      },
+      "delete": {
+        "operationId": "LeaveController_deleteLeave",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Delete leave request"
+          }
+        },
+        "tags": [
+          "Leave"
+        ]
+      }
+    },
     "/assessments": {
       "post": {
         "operationId": "AssessmentController_createAssessment",
@@ -1104,6 +3388,42 @@
                 }
               }
             }
+          }
+        },
+        "tags": [
+          "Assessment"
+        ]
+      },
+      "get": {
+        "operationId": "AssessmentController_getAllAssessments",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetch all assessments"
           }
         },
         "tags": [
@@ -1245,6 +3565,204 @@
         "responses": {
           "200": {
             "description": "Fetch mock data for testing UUIDs"
+          }
+        },
+        "tags": [
+          "Assessment"
+        ]
+      }
+    },
+    "/assessments/{id}": {
+      "get": {
+        "operationId": "AssessmentController_getAssessmentById",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetch assessment by ID"
+          }
+        },
+        "tags": [
+          "Assessment"
+        ]
+      },
+      "put": {
+        "operationId": "AssessmentController_updateAssessment",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAssessmentInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Full update of assessment"
+          }
+        },
+        "tags": [
+          "Assessment"
+        ]
+      },
+      "patch": {
+        "operationId": "AssessmentController_patchAssessment",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAssessmentInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Partial update of assessment"
+          }
+        },
+        "tags": [
+          "Assessment"
+        ]
+      },
+      "delete": {
+        "operationId": "AssessmentController_deleteAssessment",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Delete assessment"
           }
         },
         "tags": [
@@ -1394,6 +3912,278 @@
           "Outcome"
         ]
       }
+    },
+    "/outcomes": {
+      "get": {
+        "operationId": "OutcomeController_getAllOutcomes",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetch all outcomes"
+          }
+        },
+        "tags": [
+          "Outcome"
+        ]
+      },
+      "post": {
+        "operationId": "OutcomeController_createOutcome",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Create outcome"
+          }
+        },
+        "tags": [
+          "Outcome"
+        ]
+      }
+    },
+    "/outcomes/{id}": {
+      "get": {
+        "operationId": "OutcomeController_getOutcomeById",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetch outcome by ID"
+          }
+        },
+        "tags": [
+          "Outcome"
+        ]
+      },
+      "put": {
+        "operationId": "OutcomeController_updateOutcome",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOutcomeInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Full update of outcome"
+          }
+        },
+        "tags": [
+          "Outcome"
+        ]
+      },
+      "patch": {
+        "operationId": "OutcomeController_patchOutcome",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOutcomeInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Partial update of outcome"
+          }
+        },
+        "tags": [
+          "Outcome"
+        ]
+      },
+      "delete": {
+        "operationId": "OutcomeController_deleteOutcome",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Delete outcome"
+          }
+        },
+        "tags": [
+          "Outcome"
+        ]
+      }
     }
   },
   "info": {
@@ -1500,6 +4290,55 @@
           "non_compliant_count",
           "pending_students"
         ]
+      },
+      "CreateFeePaymentInputDto": {
+        "type": "object",
+        "properties": {
+          "student_id": {
+            "type": "string"
+          },
+          "fee_id": {
+            "type": "string"
+          },
+          "amount_paid": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "PAID"
+            ]
+          }
+        },
+        "required": [
+          "student_id",
+          "fee_id"
+        ]
+      },
+      "UpdateFeePaymentInputDto": {
+        "type": "object",
+        "properties": {
+          "student_id": {
+            "type": "string"
+          },
+          "fee_id": {
+            "type": "string"
+          },
+          "transaction_id": {
+            "type": "string"
+          },
+          "amount_paid": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "PAID"
+            ]
+          }
+        }
       },
       "GenerateProgressInputDto": {
         "type": "object",
@@ -1612,6 +4451,29 @@
           "role"
         ]
       },
+      "UpdateUserInputDto": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "student",
+              "faculty",
+              "admin",
+              "academic_head"
+            ]
+          }
+        }
+      },
       "AttendanceOutputDto": {
         "type": "object",
         "properties": {
@@ -1642,6 +4504,55 @@
           "percentage",
           "flagged"
         ]
+      },
+      "CreateAttendanceInputDto": {
+        "type": "object",
+        "properties": {
+          "enrollment_id": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string"
+          },
+          "timeslot": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PRESENT",
+              "ABSENT",
+              "EXCUSED"
+            ]
+          }
+        },
+        "required": [
+          "enrollment_id",
+          "date",
+          "status"
+        ]
+      },
+      "UpdateAttendanceInputDto": {
+        "type": "object",
+        "properties": {
+          "enrollment_id": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string"
+          },
+          "timeslot": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PRESENT",
+              "ABSENT",
+              "EXCUSED"
+            ]
+          }
+        }
       },
       "ScheduleEventInputDto": {
         "type": "object",
@@ -1700,6 +4611,43 @@
           "end_time",
           "event_type"
         ]
+      },
+      "CreateResourceInputDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "capacity": {
+            "type": "number"
+          },
+          "type": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "UpdateResourceInputDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "capacity": {
+            "type": "number"
+          },
+          "type": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          }
+        }
       },
       "UploadMilestoneInputDto": {
         "type": "object",
@@ -1782,6 +4730,26 @@
           "status"
         ]
       },
+      "UpdateProjectInputDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "domain": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "student_id": {
+            "type": "string"
+          },
+          "faculty_id": {
+            "type": "string"
+          }
+        }
+      },
       "CreatePostInputDto": {
         "type": "object",
         "properties": {
@@ -1842,6 +4810,14 @@
           "post_id",
           "content"
         ]
+      },
+      "UpdatePostInputDto": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string"
+          }
+        }
       },
       "ApplyLeaveInputDto": {
         "type": "object",
@@ -1913,6 +4889,34 @@
         "required": [
           "leave_id"
         ]
+      },
+      "UpdateLeaveInputDto": {
+        "type": "object",
+        "properties": {
+          "student_id": {
+            "type": "string"
+          },
+          "start_date": {
+            "type": "string"
+          },
+          "end_date": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "doc_ref": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "APPROVED",
+              "REJECTED"
+            ]
+          }
+        }
       },
       "CreateAssessmentInputDto": {
         "type": "object",
@@ -2034,6 +5038,31 @@
           "topic"
         ]
       },
+      "UpdateAssessmentInputDto": {
+        "type": "object",
+        "properties": {
+          "course_id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "QUIZ",
+              "ASSIGNMENT",
+              "EXAM"
+            ]
+          },
+          "max_marks": {
+            "type": "number"
+          },
+          "due_date": {
+            "type": "string"
+          }
+        }
+      },
       "MapOutcomeInputDto": {
         "type": "object",
         "properties": {
@@ -2085,6 +5114,20 @@
           "achievement_level",
           "raw_percentage"
         ]
+      },
+      "UpdateOutcomeInputDto": {
+        "type": "object",
+        "properties": {
+          "course_id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
       }
     }
   }

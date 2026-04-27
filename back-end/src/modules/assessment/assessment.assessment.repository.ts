@@ -13,4 +13,19 @@ export class AssessmentRepository {
   async create(data: ASSESSMENT): Promise<ASSESSMENT> { this.items.push(data); return data; }
   async findOneById(id: string): Promise<ASSESSMENT | undefined> { return this.items.find(a => a.assessment_id === id); }
   async updateCourse(course: COURSE): Promise<COURSE> { return course; } // Mock since it mutates in place
+
+  async findAll(): Promise<ASSESSMENT[]> {
+    return this.items;
+  }
+
+  async update(id: string, data: Partial<ASSESSMENT>): Promise<ASSESSMENT | null> {
+    const idx = this.items.findIndex(a => a.assessment_id === id);
+    if(idx > -1) { Object.assign(this.items[idx], data); return this.items[idx]; }
+    return null;
+  }
+
+  async delete(id: string): Promise<void> {
+    const idx = this.items.findIndex(a => a.assessment_id === id);
+    if(idx > -1) this.items.splice(idx, 1);
+  }
 }

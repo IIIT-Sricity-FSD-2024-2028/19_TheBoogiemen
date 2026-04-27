@@ -52,4 +52,41 @@ export class ForumService {
 
     return posts;
   }
+
+  async getAllPosts() {
+    return this.forumRepo.findAllPosts();
+  }
+
+  async getPostById(id: string) {
+    const post = await this.forumRepo.findPost(id);
+    if (!post) throw new NotFoundException('Post not found');
+    return post;
+  }
+
+  async updatePost(id: string, dto: any) {
+    const post = await this.forumRepo.findPost(id);
+    if (!post) throw new NotFoundException('Post not found');
+    
+    return this.forumRepo.updatePost(id, {
+      content: dto.content || post.content
+    });
+  }
+
+  async patchPost(id: string, dto: any) {
+    const post = await this.forumRepo.findPost(id);
+    if (!post) throw new NotFoundException('Post not found');
+    
+    return this.forumRepo.updatePost(id, dto);
+  }
+
+  async deletePost(id: string) {
+    const post = await this.forumRepo.findPost(id);
+    if (!post) throw new NotFoundException('Post not found');
+    
+    await this.forumRepo.deletePost(id);
+  }
+
+  async deleteReply(id: string) {
+    await this.forumRepo.deleteReply(id);
+  }
 }

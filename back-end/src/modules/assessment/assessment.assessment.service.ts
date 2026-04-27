@@ -72,4 +72,41 @@ export class AssessmentService {
       raw_percentage
     };
   }
+
+  async getAllAssessments() {
+    return this.assessmentRepo.findAll();
+  }
+
+  async getAssessmentById(id: string) {
+    const assessment = await this.assessmentRepo.findOneById(id);
+    if (!assessment) throw new NotFoundException('Assessment not found');
+    return assessment;
+  }
+
+  async updateAssessment(id: string, dto: any) {
+    const assessment = await this.assessmentRepo.findOneById(id);
+    if (!assessment) throw new NotFoundException('Assessment not found');
+    
+    return this.assessmentRepo.update(id, {
+      course_id: dto.course_id || assessment.course_id,
+      title: dto.title || assessment.title,
+      type: dto.type || assessment.type,
+      max_marks: dto.max_marks || assessment.max_marks,
+      due_date: dto.due_date || assessment.due_date
+    });
+  }
+
+  async patchAssessment(id: string, dto: any) {
+    const assessment = await this.assessmentRepo.findOneById(id);
+    if (!assessment) throw new NotFoundException('Assessment not found');
+    
+    return this.assessmentRepo.update(id, dto);
+  }
+
+  async deleteAssessment(id: string) {
+    const assessment = await this.assessmentRepo.findOneById(id);
+    if (!assessment) throw new NotFoundException('Assessment not found');
+    
+    await this.assessmentRepo.delete(id);
+  }
 }
