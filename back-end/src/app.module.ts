@@ -11,6 +11,9 @@ import { LeaveModule } from './modules/leave/leave.leave.module';
 import { AssessmentModule } from './modules/assessment/assessment.assessment.module';
 import { OutcomeModule } from './modules/outcome/outcome.outcome.module';
 
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -25,5 +28,7 @@ import { OutcomeModule } from './modules/outcome/outcome.outcome.module';
     AssessmentModule,
     OutcomeModule
   ],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}

@@ -1,6 +1,66 @@
 {
   "openapi": "3.0.0",
   "paths": {
+    "/": {
+      "get": {
+        "operationId": "AppController_getHello",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "App"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "AppController_getHealth",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "App"
+        ]
+      }
+    },
     "/fee/audit": {
       "post": {
         "operationId": "FeeController_auditCompliance",
@@ -788,6 +848,44 @@
         ]
       }
     },
+    "/users/mock-data": {
+      "get": {
+        "operationId": "UserController_getMockData",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetch mock data for testing UUIDs"
+          }
+        },
+        "tags": [
+          "User"
+        ]
+      }
+    },
     "/users/{id}": {
       "get": {
         "operationId": "UserController_getUserById",
@@ -942,44 +1040,6 @@
         "responses": {
           "200": {
             "description": "User deleted successfully"
-          }
-        },
-        "tags": [
-          "User"
-        ]
-      }
-    },
-    "/users/mock-data": {
-      "get": {
-        "operationId": "UserController_getMockData",
-        "parameters": [
-          {
-            "name": "x-user-role",
-            "in": "header",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "x-user-role",
-            "in": "header",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "student",
-                "faculty",
-                "admin",
-                "academic_head"
-              ]
-            },
-            "description": "Role for Role-Based Access Control"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Fetch mock data for testing UUIDs"
           }
         },
         "tags": [

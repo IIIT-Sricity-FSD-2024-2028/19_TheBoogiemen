@@ -26,15 +26,6 @@ export class UserController {
     return new BaseResponseDto(true, data, 'role update successful');
   }
 
-  @Get(':id')
-  @SetMetadata('roles', ['admin', 'academic_head'])
-  @ApiParam({ name: 'id', description: 'User ID' })
-  @ApiResponse({ status: 200, type: UserOutputDto })
-  async getUserById(@Param('id') id: string) {
-    const data = await this.userService.getUserById(id);
-    return new BaseResponseDto(true, data, 'user fetch successful');
-  }
-
   @Get('mock-data')
   @SetMetadata('roles', ['faculty', 'student', 'admin', 'academic_head'])
   @UseGuards(EnvGuard)
@@ -45,6 +36,15 @@ export class UserController {
       students: MOCK_STUDENTS,
       faculty: MOCK_FACULTY
     }, 'mock data fetched');
+  }
+
+  @Get(':id')
+  @SetMetadata('roles', ['admin', 'academic_head'])
+  @ApiParam({ name: 'id', description: 'User ID' })
+  @ApiResponse({ status: 200, type: UserOutputDto })
+  async getUserById(@Param('id') id: string) {
+    const data = await this.userService.getUserById(id);
+    return new BaseResponseDto(true, data, 'user fetch successful');
   }
 
   @Get()

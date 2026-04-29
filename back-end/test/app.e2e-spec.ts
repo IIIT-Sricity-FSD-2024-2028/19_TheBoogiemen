@@ -23,6 +23,16 @@ describe('AppController (e2e)', () => {
       .expect('Hello World!');
   });
 
+  it('/health (GET)', () => {
+    return request(app.getHttpServer())
+      .get('/health')
+      .expect(200)
+      .expect((res) => {
+        if (res.body.status !== 'ok') throw new Error('Status not ok');
+        if (!res.body.uptime) throw new Error('Missing uptime');
+      });
+  });
+
   afterEach(async () => {
     await app.close();
   });
