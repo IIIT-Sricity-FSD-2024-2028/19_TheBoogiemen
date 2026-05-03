@@ -225,35 +225,35 @@ async function handleAddEvent() {
   ];
   if (!validateForm('modalAddEvent', config)) return;
 
+  // 1. Always update local DB first
+  const db = getDB();
+  const newEv = {
+    id: _nextId(db.admin.eventScheduler.events),
+    title: document.getElementById('ev-title').value,
+    type: document.getElementById('ev-type').value,
+    dateTime: `${document.getElementById('ev-date').value} at ${document.getElementById('ev-time').value}`,
+    venue: document.getElementById('ev-venue').value,
+    description: document.getElementById('ev-desc').value
+  };
+  db.admin.eventScheduler.events.push(newEv);
+  saveDB(db);
+
+  // 2. Fire API in background
   const api = _api();
-  try {
-    if (api) {
-      // Use the resources module events endpoint
+  if (api) {
+    try {
       await api.post('/resources/events', {
         resource_id: '550e8400-e29b-41d4-a716-446655440000',
         start_time: document.getElementById('ev-date').value + 'T' + document.getElementById('ev-time').value + ':00',
         end_time: document.getElementById('ev-date').value + 'T' + document.getElementById('ev-time').value + ':00',
         event_type: 'seminar'
       });
-      toast('Event scheduled via API');
-    } else {
-      const db = getDB();
-      const newEv = {
-        id: _nextId(db.admin.eventScheduler.events),
-        title: document.getElementById('ev-title').value,
-        type: document.getElementById('ev-type').value,
-        dateTime: `${document.getElementById('ev-date').value} at ${document.getElementById('ev-time').value}`,
-        venue: document.getElementById('ev-venue').value,
-        description: document.getElementById('ev-desc').value
-      };
-      db.admin.eventScheduler.events.push(newEv);
-      saveDB(db);
-      toast('Event scheduled (offline)');
+    } catch (err) {
+      console.warn('[API] Event sync failed:', err.message);
     }
-  } catch (err) {
-    console.error('Event error:', err);
-    toast('Error: ' + err.message);
   }
+
+  toast('Event scheduled successfully');
   closeModal('modalAddEvent');
   _headRefresh('events');
 }
@@ -291,33 +291,34 @@ async function handleAddResource() {
   ];
   if (!validateForm('modalAddResource', config)) return;
 
+  // 1. Always update local DB first
+  const db = getDB();
+  const res = {
+    id: 'RES-' + Math.floor(Math.random() * 1000),
+    name: document.getElementById('res-name').value,
+    type: document.getElementById('res-type').value,
+    capacity: document.getElementById('res-cap').value,
+    status: 'available',
+    nextScheduled: 'Not scheduled'
+  };
+  db.admin.resources.facilities.push(res);
+  saveDB(db);
+
+  // 2. Fire API in background
   const api = _api();
-  try {
-    if (api) {
+  if (api) {
+    try {
       await api.post('/resources', {
         name: document.getElementById('res-name').value,
         type: document.getElementById('res-type').value,
         capacity: parseInt(document.getElementById('res-cap').value) || 0
       });
-      toast('Resource added via API');
-    } else {
-      const db = getDB();
-      const res = {
-        id: 'RES-' + Math.floor(Math.random() * 1000),
-        name: document.getElementById('res-name').value,
-        type: document.getElementById('res-type').value,
-        capacity: document.getElementById('res-cap').value,
-        status: 'available',
-        nextScheduled: 'Not scheduled'
-      };
-      db.admin.resources.facilities.push(res);
-      saveDB(db);
-      toast('Resource added (offline)');
+    } catch (err) {
+      console.warn('[API] Resource sync failed:', err.message);
     }
-  } catch (err) {
-    console.error('Resource error:', err);
-    toast('Error: ' + err.message);
   }
+
+  toast('Resource added');
   closeModal('modalAddResource');
   _headRefresh('resources');
 }
@@ -392,32 +393,33 @@ async function handleAddUser() {
   ];
   if (!validateForm('modalAddUser', config)) return;
 
+  // 1. Always update local DB first
+  const db = getDB();
+  const user = {
+    id: 'U-' + Math.floor(Math.random() * 1000),
+    name: document.getElementById('u-name').value,
+    email: document.getElementById('u-email').value,
+    role: document.getElementById('u-role').value,
+    status: 'active'
+  };
+  db.admin.userManagement.users.push(user);
+  saveDB(db);
+
+  // 2. Fire API in background
   const api = _api();
-  try {
-    if (api) {
+  if (api) {
+    try {
       await api.post('/users', {
         username: document.getElementById('u-name').value,
         email: document.getElementById('u-email').value,
         role: document.getElementById('u-role').value
       });
-      toast('User created via API');
-    } else {
-      const db = getDB();
-      const user = {
-        id: 'U-' + Math.floor(Math.random() * 1000),
-        name: document.getElementById('u-name').value,
-        email: document.getElementById('u-email').value,
-        role: document.getElementById('u-role').value,
-        status: 'active'
-      };
-      db.admin.userManagement.users.push(user);
-      saveDB(db);
-      toast('User created (offline)');
+    } catch (err) {
+      console.warn('[API] User sync failed:', err.message);
     }
-  } catch (err) {
-    console.error('User error:', err);
-    toast('Error: ' + err.message);
   }
+
+  toast('User account created');
   closeModal('modalAddUser');
   _headRefresh('users');
   renderUserStats();

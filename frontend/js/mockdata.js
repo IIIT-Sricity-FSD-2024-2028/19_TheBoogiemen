@@ -625,11 +625,13 @@ const superuserMockDatabase = {
 };
 
 // ==========================================
-// IN-MEMORY DATABASE (No localStorage)
+// DATABASE WITH LOCALSTORAGE CACHE
 // ==========================================
 
-// In-memory database — the ONLY source of truth for display-only fallback data.
-// CRUD operations for workflow-specific features go through the API instead.
+// Schema version — bump to force re-seed from mock data
+const DB_VERSION = 4;
+
+// Seed the in-memory DB from mock data
 let inMemoryDB = {
     student:    studentMockDatabase,
     faculty:    facultyMockDatabase,
@@ -637,22 +639,36 @@ let inMemoryDB = {
     superuser:  superuserMockDatabase
 };
 
+// On first load, seed localStorage if empty or outdated
+(function initDBCache() {
+    const storedVersion = parseInt(localStorage.getItem('ffsd_v') || '0', 10);
+    const existing = localStorage.getItem('ffsd');
+    if (!existing || storedVersion !== DB_VERSION) {
+        localStorage.setItem('ffsd', JSON.stringify(inMemoryDB));
+        localStorage.setItem('ffsd_v', String(DB_VERSION));
+        console.log('[DB] Seeded from mockdata.js (v' + DB_VERSION + ')');
+    } else {
+        // Restore from cache so mutations persist across refresh
+        try { inMemoryDB = JSON.parse(existing); } catch (_) {}
+        console.log('[DB] Restored from cache (v' + DB_VERSION + ')');
+    }
+})();
+
 /**
- * Get the entire in-memory database.
- * Used as a fallback data source for UI sections without backend endpoints
- * (timetables, profiles, department stats, system logs, etc.).
+ * Get the current database state.
+ * Reads from in-memory (which was hydrated from localStorage on load).
  */
 function getDB() {
     return inMemoryDB;
 }
 
 /**
- * Save changes to the in-memory database.
- * Used only for local-only data mutations (bug reports, etc.) that have
- * no backend endpoint. API-backed features should use api-client.js instead.
+ * Save the database after a mutation.
+ * Writes to both in-memory and localStorage for persistence.
  */
 function saveDB(data) {
     inMemoryDB = data;
+    try { localStorage.setItem('ffsd', JSON.stringify(data)); } catch (_) {}
 }
 
 /**

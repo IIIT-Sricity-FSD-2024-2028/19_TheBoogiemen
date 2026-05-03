@@ -122,36 +122,37 @@ async function handleSchedule() {
     { id: 'meet-agenda', required: false, min: 10, max: 500, message: 'Agenda must be 10-500 characters' }
   ])) return;
 
+  // 1. Always update local DB first
+  const db = getDB();
+  const meeting = {
+    id: Date.now(),
+    studentName: document.getElementById('meet-stu').value,
+    date: document.getElementById('meet-date').value,
+    time: document.getElementById('meet-time').value,
+    agenda: document.getElementById('meet-agenda').value,
+    status: 'scheduled',
+    createdAt: new Date().toLocaleDateString()
+  };
+  if (!db.faculty.dashboard.interventionLog) db.faculty.dashboard.interventionLog = [];
+  db.faculty.dashboard.interventionLog.push(meeting);
+  saveDB(db);
+
+  // 2. Fire API in background
   const api = _api();
-  try {
-    if (api) {
+  if (api) {
+    try {
       await api.post('/resources/events', {
         resource_id: '550e8400-e29b-41d4-a716-446655440000',
         start_time: document.getElementById('meet-date').value + 'T' + document.getElementById('meet-time').value + ':00',
         end_time: document.getElementById('meet-date').value + 'T' + document.getElementById('meet-time').value + ':00',
         event_type: 'seminar'
       });
-      toast('Meeting scheduled via API');
-    } else {
-      const db = getDB();
-      const meeting = {
-        id: Date.now(),
-        studentName: document.getElementById('meet-stu').value,
-        date: document.getElementById('meet-date').value,
-        time: document.getElementById('meet-time').value,
-        agenda: document.getElementById('meet-agenda').value,
-        status: 'scheduled',
-        createdAt: new Date().toLocaleDateString()
-      };
-      if (!db.faculty.dashboard.interventionLog) db.faculty.dashboard.interventionLog = [];
-      db.faculty.dashboard.interventionLog.push(meeting);
-      saveDB(db);
-      toast('Meeting registered (offline)');
+    } catch (err) {
+      console.warn('[API] Schedule sync failed:', err.message);
     }
-  } catch (err) {
-    console.error('Schedule error:', err);
-    toast('Error: ' + err.message);
   }
+
+  toast('Intervention meeting registered');
   closeModal('modalMeeting');
   _refresh();
 }

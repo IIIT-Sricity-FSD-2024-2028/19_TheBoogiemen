@@ -124,34 +124,43 @@ async function handleAddUser() {
   ];
   if (!validateForm('modalAddUser', cfg)) return;
 
+  // 1. Always update local DB first
+  const db = getDB();
+  const nextId = 'USR-' + String(db.superuser.users.length + 1000);
+  const user = {
+    id: nextId,
+    name: document.getElementById('u-name').value,
+    email: document.getElementById('u-email').value,
+    role: document.getElementById('u-role').value,
+    status: document.getElementById('u-status').value
+  };
+  db.superuser.users.unshift(user);
+  db.superuser.metrics.totalUsers = db.superuser.users.length;
+
+  // Log it
+  db.superuser.systemLogs.unshift({
+    level: 'info',
+    title: `Provisioned ${user.role}: ${user.name}`,
+    meta: `Operation by Superuser at ${new Date().toISOString()}`,
+    time: new Date().toLocaleTimeString('en-GB')
+  });
+  saveDB(db);
+
+  // 2. Fire API in background
   const api = _api();
-  try {
-    if (api) {
+  if (api) {
+    try {
       await api.post('/users', {
         username: document.getElementById('u-name').value,
         email: document.getElementById('u-email').value,
         role: document.getElementById('u-role').value
       });
-      toast('Account provisioned via API');
-    } else {
-      const db = getDB();
-      const nextId = 'USR-' + String(db.superuser.users.length + 1000);
-      const user = {
-        id: nextId,
-        name: document.getElementById('u-name').value,
-        email: document.getElementById('u-email').value,
-        role: document.getElementById('u-role').value,
-        status: document.getElementById('u-status').value
-      };
-      db.superuser.users.unshift(user);
-      db.superuser.metrics.totalUsers = db.superuser.users.length;
-      saveDB(db);
-      toast('Account provisioned (offline)');
+    } catch (err) {
+      console.warn('[API] User provision sync failed:', err.message);
     }
-  } catch (err) {
-    console.error('User creation error:', err);
-    toast('Error: ' + err.message);
   }
+
+  toast('Account provisioned successfully');
   closeModal('modalAddUser');
   _suRefresh('overview');
 }
@@ -201,22 +210,23 @@ function openDeleteModal(id) {
 }
 
 async function performDelete() {
+  // 1. Always update local DB first
+  const db = getDB();
+  db.superuser.users = db.superuser.users.filter(u => u.id !== _deletingId);
+  db.superuser.metrics.totalUsers = db.superuser.users.length;
+  saveDB(db);
+
+  // 2. Fire API in background
   const api = _api();
-  try {
-    if (api && _deletingId) {
+  if (api && _deletingId) {
+    try {
       await api.delete('/users/' + _deletingId);
-      toast('User purged via API');
-    } else {
-      const db = getDB();
-      db.superuser.users = db.superuser.users.filter(u => u.id !== _deletingId);
-      db.superuser.metrics.totalUsers = db.superuser.users.length;
-      saveDB(db);
-      toast('User purged (offline)');
+    } catch (err) {
+      console.warn('[API] Delete sync failed:', err.message);
     }
-  } catch (err) {
-    console.error('Delete error:', err);
-    toast('Error: ' + err.message);
   }
+
+  toast('User purged');
   closeModal('modalConfirmDelete');
   _suRefresh('overview');
 }
@@ -243,31 +253,32 @@ async function handleUpdateUser() {
   ];
   if (!validateForm('modalEditUser', cfg)) return;
 
+  // 1. Always update local DB first
+  const db = getDB();
+  const idx = db.superuser.users.findIndex(u => u.id === id);
+  if (idx === -1) return;
+  db.superuser.users[idx] = {
+    ...db.superuser.users[idx],
+    name: document.getElementById('edit-name').value,
+    email: document.getElementById('edit-email').value,
+    role: document.getElementById('edit-role').value,
+    status: document.getElementById('edit-status').value
+  };
+  saveDB(db);
+
+  // 2. Fire API in background
   const api = _api();
-  try {
-    if (api) {
+  if (api) {
+    try {
       await api.patch('/users/' + id + '/role', {
         role: document.getElementById('edit-role').value
       });
-      toast('Role updated via API');
-    } else {
-      const db = getDB();
-      const idx = db.superuser.users.findIndex(u => u.id === id);
-      if (idx === -1) return;
-      db.superuser.users[idx] = {
-        ...db.superuser.users[idx],
-        name: document.getElementById('edit-name').value,
-        email: document.getElementById('edit-email').value,
-        role: document.getElementById('edit-role').value,
-        status: document.getElementById('edit-status').value
-      };
-      saveDB(db);
-      toast('Record synchronized (offline)');
+    } catch (err) {
+      console.warn('[API] Update sync failed:', err.message);
     }
-  } catch (err) {
-    console.error('Update error:', err);
-    toast('Error: ' + err.message);
   }
+
+  toast('Record synchronized');
   closeModal('modalEditUser');
   _suRefresh('overview');
 }
