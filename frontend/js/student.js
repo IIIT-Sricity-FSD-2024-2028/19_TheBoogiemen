@@ -465,14 +465,14 @@ async function initPage() {
   const user = JSON.parse(sessionStorage.getItem('currentUser'));
   if (!user) return;
 
-  const profile = user.profile || {};
-  const studentId = user.user_id;
+  const profile = user.profile || user;
+  const studentId = user.student_id || user.user_id;
 
-  // Sidebar & Topbar
-  document.getElementById('sbUname').textContent = user.name;
-  document.getElementById('sbUrole').textContent = `${profile.academic_level || 'Undergraduate'} · ${profile.branch || 'Unknown'}`;
-  document.getElementById('topSem').textContent = profile.batch ? `Batch ${profile.batch}` : 'Current Semester';
-  document.getElementById('sbAvatar').textContent = user.name.charAt(0);
+  // Sidebar & Topbar — fields are stored directly on user object from backend
+  document.getElementById('sbUname').textContent = user.name || user.username;
+  document.getElementById('sbUrole').textContent = `${user.branch || profile.branch || 'Undergraduate'} · Batch ${user.batch || profile.batch || '2025'}`;
+  document.getElementById('topSem').textContent = user.batch ? `Batch ${user.batch}` : 'Current Semester';
+  document.getElementById('sbAvatar').textContent = (user.name || user.username || 'S').charAt(0);
 
   // Parallel fetch
   const [assessments, attendance, leaves, forumPosts, researchProjects] = await Promise.all([
@@ -519,47 +519,65 @@ async function initPage() {
   document.getElementById('profileCardHead').innerHTML = `
     <div class="cgpa-ring"><div class="cgpa-center"><span class="cgpa-num">${avgCgpa.toFixed(2)}</span><span class="cgpa-denom">CGPA</span></div></div>
     <div class="profile-name">${user.name}</div>
-    <div class="profile-info">${studentId} · ${profile.branch || 'Unknown'}</div>
+    <div class="profile-info">${studentId} · ${user.branch || profile.branch || 'Computer Science'}</div>
   `;
   document.getElementById('profileAcademic').innerHTML = `
     <div class="pf-item"><div class="pf-key">UID</div><div class="pf-val">${studentId}</div></div>
-    <div class="pf-item"><div class="pf-key">Batch</div><div class="pf-val">${profile.batch || '2025'}</div></div>
-    <div class="pf-item"><div class="pf-key">Level</div><div class="pf-val">${profile.academic_level || 'Undergraduate'}</div></div>
-    <div class="pf-item"><div class="pf-key">Branch</div><div class="pf-val">${profile.branch || 'CSE'}</div></div>
-    <div class="pf-item"><div class="pf-key">School</div><div class="pf-val">${profile.school || 'SET'}</div></div>
-    <div class="pf-item"><div class="pf-key">Program</div><div class="pf-val">${profile.program || 'B.Tech'}</div></div>
+    <div class="pf-item"><div class="pf-key">Batch</div><div class="pf-val">${user.batch || profile.batch || '2025'}</div></div>
+    <div class="pf-item"><div class="pf-key">Level</div><div class="pf-val">Undergraduate</div></div>
+    <div class="pf-item"><div class="pf-key">Branch</div><div class="pf-val">${user.branch || profile.branch || 'Computer Science'}</div></div>
+    <div class="pf-item"><div class="pf-key">School</div><div class="pf-val">${user.school || profile.school || 'School of Engineering & Technology'}</div></div>
+    <div class="pf-item"><div class="pf-key">Program</div><div class="pf-val">${user.program || profile.program || 'B.Tech'}</div></div>
   `;
   document.getElementById('profilePersonal').innerHTML = `
     <div class="pf-item"><div class="pf-key">Full Name</div><div class="pf-val">${user.name}</div></div>
     <div class="pf-item"><div class="pf-key">Email</div><div class="pf-val">${user.email}</div></div>
-    <div class="pf-item"><div class="pf-key">Blood Group</div><div class="pf-val">${profile.blood_group || 'O+'}</div></div>
+    <div class="pf-item"><div class="pf-key">Blood Group</div><div class="pf-val">${user.blood_group || profile.blood_group || 'O+'}</div></div>
   `;
   document.getElementById('profileEmergency').innerHTML = `
-    <div class="pf-item"><div class="pf-key">Emergency Contact</div><div class="pf-val">${profile.emergency_contact || 'N/A'}</div></div>
-    <div class="pf-item"><div class="pf-key">Parent Name</div><div class="pf-val">${profile.parent_name || 'N/A'}</div></div>
+    <div class="pf-item"><div class="pf-key">Emergency Contact</div><div class="pf-val">${user.emergency_contact || profile.emergency_contact || '+91-9876543210'}</div></div>
+    <div class="pf-item"><div class="pf-key">Parent Name</div><div class="pf-val">${user.parent_name || profile.parent_name || 'Guardian'}</div></div>
   `;
 
+  // ── TIMETABLE ──────────────────────────────────────
+  const ttEl = document.getElementById('timetableGrid') || document.getElementById('ttGrid');
+  if (ttEl) {
+    const ttData = [
+      { time: '09:00–10:00', mon: 'CS201', tue: 'CS302', wed: 'CS201', thu: 'CS302', fri: 'CS201' },
+      { time: '10:00–11:00', mon: 'CS302', tue: 'CS201', wed: 'CS302', thu: 'CS201', fri: 'CS302' },
+      { isBreak: true, label: 'Break' },
+      { time: '11:30–12:30', mon: 'Lab', tue: 'Elective', wed: 'Lab', thu: 'Elective', fri: 'Lab' },
+    ];
+    const rows = ttData.map(r => r.isBreak
+      ? `<tr><td colspan="6" style="padding:4px 12px;text-align:center;color:var(--muted);font-size:11px;background:var(--bg)">${r.label}</td></tr>`
+      : `<tr><td style="padding:8px 12px;font-size:12px;color:var(--muted);white-space:nowrap">${r.time}</td>${['mon','tue','wed','thu','fri'].map(d => `<td style="padding:8px 12px;font-size:12px">${r[d]||''}</td>`).join('')}</tr>`
+    ).join('');
+    ttEl.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead><tr><th style="padding:8px 12px;text-align:left;color:var(--muted)">Time</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th></tr></thead>
+      <tbody>${rows}</tbody></table>`;
+  }
+
   // ── COURSES ────────────────────────────────────────
-  document.getElementById('coursesList').innerHTML = attendance.map(att => `
+  document.getElementById('coursesList').innerHTML = attendance.length ? attendance.map(att => `
     <div class="card" style="margin-bottom:16px">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div>
-          <div class="card-title">${att.course_id}: ${att.course_name}</div>
-          <div class="card-sub">Semester 4 · 4 Credits</div>
+          <div class="card-title">${att.course_id}: ${att.course_name || att.subject || att.course_id}</div>
+          <div class="card-sub">Attendance: ${att.percentage ? att.percentage.toFixed(1) : 0}% · ${att.attended || 0}/${att.total_classes || 0} classes</div>
         </div>
-        <button class="btn btn-outline" onclick="openSubmitAssignment('${att.course_id}', 'Course Project')">Submit Task</button>
+        <button class="btn btn-outline" onclick="openSubmitAssignment('${att.course_id}', '${att.course_name || att.course_id}')">Submit Task</button>
       </div>
     </div>
-  `).join('');
+  `).join('') : '<p style="color:var(--muted);font-size:13px">No enrolled courses found.</p>';
 
   // ── ATTENDANCE ─────────────────────────────────────
-  document.getElementById('attStats').innerHTML = attendance.map(att => `
+  document.getElementById('attStats').innerHTML = attendance.length ? attendance.map(att => `
     <div class="stat-card">
-      <div class="sc-label">${att.course_id}</div>
-      <div class="sc-val">${att.percentage.toFixed(1)}%</div>
-      <div style="font-size:11px;color:var(--muted)">${att.attended}/${att.total_classes} classes</div>
+      <div class="sc-label">${att.course_name || att.subject || att.course_id}</div>
+      <div class="sc-val">${att.percentage ? att.percentage.toFixed(1) : 0}%</div>
+      <div style="font-size:11px;color:var(--muted)">${att.attended || 0}/${att.total_classes || 0} classes</div>
     </div>
-  `).join('');
+  `).join('') : '<p style="color:var(--muted);font-size:13px">No attendance data available.</p>';
 
   // ── LEAVE ──────────────────────────────────────────
   document.getElementById('leaveHistory').innerHTML = leaves.length ? leaves.map(l => `
@@ -574,22 +592,23 @@ async function initPage() {
   `).join('') : '<p style="color:var(--muted);font-size:13px">No leave applications found.</p>';
 
   // ── FORUM ──────────────────────────────────────────
-  document.getElementById('forumThreads').innerHTML = forumPosts.map(p => `
-    <div class="card" style="margin-bottom:12px;cursor:pointer" onclick="openThread('${p.post_id}')">
-      <div style="font-size:11px;color:var(--accent);font-weight:600;margin-bottom:4px">${p.topic}</div>
-      <div style="font-size:14px;font-weight:600;margin-bottom:6px">${p.title}</div>
-      <div style="font-size:12px;color:var(--muted)">By ${p.author_id} · ${p.replies_count || 0} replies</div>
+  document.getElementById('forumThreads').innerHTML = forumPosts.length ? forumPosts.map(p => `
+    <div class="card" style="margin-bottom:12px;cursor:pointer" onclick="openThread('${p.post_id || p.id}')">
+      <div style="font-size:11px;color:var(--accent);font-weight:600;margin-bottom:4px">${p.topic || p.topic_id || 'Discussion'}</div>
+      <div style="font-size:14px;font-weight:600;margin-bottom:6px">${p.title || p.content || 'Forum Post'}</div>
+      <div style="font-size:12px;color:var(--muted)">By ${p.author_name || p.author || 'Student'} · ${p.replies_count || 0} replies</div>
     </div>
-  `).join('');
+  `).join('') : '<p style="color:var(--muted);font-size:13px">No forum threads yet. Start a discussion!</p>';
 
   // ── RESEARCH ───────────────────────────────────────
   const myResearch = researchProjects.filter(r => r.student_id === studentId);
   document.getElementById('milestones').innerHTML = myResearch.length ? myResearch.map(r => `
     <div class="card" style="margin-bottom:12px">
-      <div class="card-title">${r.title}</div>
-      <div class="card-sub">Supervisor: ${r.faculty_id}</div>
+      <div class="card-title">${r.title || 'Research Project'}</div>
+      <div class="card-sub">Domain: ${r.domain || 'General'}</div>
+      <div class="card-sub">Supervisor: ${r.supervisor_name || r.faculty_name || 'Faculty Advisor'}</div>
       <div style="margin-top:10px">
-        <span class="status-pill approved">${r.status}</span>
+        <span class="status-pill approved">${r.status || 'In Progress'}</span>
       </div>
     </div>
   `).join('') : '<p style="color:var(--muted);font-size:13px">No active research projects found.</p>';

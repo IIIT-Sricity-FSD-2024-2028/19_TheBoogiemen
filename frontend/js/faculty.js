@@ -1012,32 +1012,134 @@ async function initPage() {
   const user = JSON.parse(sessionStorage.getItem('currentUser'));
   if (!user) return;
 
-  const profile = user.profile || {};
+  // Sidebar
+  document.getElementById('sbUname').textContent = user.name || user.username || 'Faculty';
+  document.getElementById('sbUrole').textContent = user.designation || 'Faculty';
+  document.getElementById('sbAvatar').textContent = (user.name || user.username || 'F').charAt(0);
 
-  document.getElementById('sbUname').textContent = user.name;
-  document.getElementById('sbUrole').textContent = profile.designation || 'Faculty';
-  document.getElementById('sbAvatar').textContent = user.name.charAt(0);
+  // Parallel API fetch
+  const [assessments, allUsers, researchProjects, forumPosts, leaves] = await Promise.all([
+    window.ApiAdapter.fetchAssessments(),
+    window.ApiAdapter.fetchAllUsers(),
+    window.ApiAdapter.fetchResearchProjects(),
+    window.ApiAdapter.fetchForumPosts(),
+    window.ApiAdapter.fetchLeaves()
+  ]);
 
-  document.getElementById('todayClasses').innerHTML = `<p style="color:var(--muted);text-align:center;padding:20px">Timetable fetched from backend.</p>`;
-  document.getElementById('performanceList').innerHTML = `<p style="color:var(--muted);text-align:center;padding:20px">Performance data fetched from backend.</p>`;
+  const facultyId = user.faculty_id || user.user_id;
 
+  // Helper to get name from user list
+  const getName = (uid) => {
+    const u = allUsers.find(u => u.user_id === uid || u.student_id === uid || u.faculty_id === uid);
+    return u ? (u.name || u.first_name ? `${u.first_name || ''} ${u.last_name || ''}`.trim() : u.username) : uid;
+  };
+
+  // ── DASHBOARD ─────────────────────────────────────
+  const myAssessments = assessments; // Faculty sees all
+  const myResearch = researchProjects.filter(r => r.faculty_id === facultyId);
+  const pendingLeaves = leaves.filter(l => l.status === 'PENDING');
+
+  document.getElementById('todayClasses').innerHTML = `
+    <div class="stat-card"><div class="sc-label">Assessments</div><div class="sc-val">${myAssessments.length}</div></div>
+    <div class="stat-card"><div class="sc-label">Research Projects</div><div class="sc-val">${myResearch.length}</div></div>
+    <div class="stat-card"><div class="sc-label">Pending Leave Requests</div><div class="sc-val">${pendingLeaves.length}</div></div>
+    <div class="stat-card"><div class="sc-label">Forum Threads</div><div class="sc-val">${forumPosts.length}</div></div>
+  `;
+
+  document.getElementById('performanceList').innerHTML = myAssessments.length ? myAssessments.map(a => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div>
+        <div style="font-size:13px;font-weight:500">${a.title}</div>
+        <div style="font-size:11px;color:var(--muted)">${a.type} &middot; Due: ${a.due_date ? new Date(a.due_date).toLocaleDateString() : 'N/A'}</div>
+      </div>
+      <span class="status-pill approved">${a.max_marks} marks</span>
+    </div>
+  `).join('') : '<p style="color:var(--muted);font-size:13px">No assessments yet.</p>';
+
+  // ── TIMETABLE ─────────────────────────────────────
   const ttGrid = document.getElementById('ttGrid');
-  if (ttGrid) ttGrid.innerHTML = `<p style="color:var(--muted);text-align:center;padding:20px">Timetable fetched from backend.</p>`;
-  
+  if (ttGrid) {
+    const ttData = [
+      { time: '09:00–10:00', mon: 'CS201', tue: '', wed: 'CS201', thu: '', fri: 'CS201' },
+      { time: '10:00–11:00', mon: '', tue: 'CS302', wed: '', thu: 'CS302', fri: '' },
+      { isBreak: true, label: 'Break' },
+      { time: '11:30–12:30', mon: 'Lab Session', tue: '', wed: 'Lab Session', thu: '', fri: '' },
+      { time: '14:00–15:00', mon: '', tue: 'Office Hours', wed: '', thu: 'Office Hours', fri: '' },
+    ];
+    const rows = ttData.map(r => r.isBreak
+      ? `<tr><td colspan="6" style="padding:4px 12px;text-align:center;color:var(--muted);font-size:11px;background:var(--bg)">${r.label}</td></tr>`
+      : `<tr><td style="padding:8px 12px;font-size:12px;color:var(--muted);white-space:nowrap">${r.time}</td>${['mon','tue','wed','thu','fri'].map(d => `<td style="padding:8px 12px;font-size:12px">${r[d]||'<span style="color:var(--muted)">—</span>'}</td>`).join('')}</tr>`
+    ).join('');
+    ttGrid.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead><tr><th style="padding:8px 12px;text-align:left;color:var(--muted)">Time</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th></tr></thead>
+      <tbody>${rows}</tbody></table>`;
+  }
+
+  // ── ASSESSMENTS LIST ──────────────────────────────
   const assessmentsList = document.getElementById('assessmentsList');
-  if (assessmentsList) assessmentsList.innerHTML = `<p style="color:var(--muted);text-align:center;padding:20px">Assessments fetched from backend.</p>`;
+  if (assessmentsList) {
+    assessmentsList.innerHTML = myAssessments.length ? myAssessments.map(a => `
+      <div class="card" style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div class="card-title">${a.title}</div>
+            <div class="card-sub">${a.type} &middot; ${a.max_marks} marks &middot; Due: ${a.due_date ? new Date(a.due_date).toLocaleDateString() : 'N/A'}</div>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="showAddQuestion('${a.assessment_id}')">+ Question</button>
+        </div>
+      </div>
+    `).join('') : '<p style="color:var(--muted);font-size:13px">No assessments. Create one above.</p>';
+  }
 
-  document.getElementById('stuSummary').innerHTML = `<p style="color:var(--muted);text-align:center;padding:20px">Student summary fetched from backend.</p>`;
+  // ── STUDENT OVERVIEW ──────────────────────────────
+  const allStudents = allUsers.filter(u => u.role === 'student');
+  document.getElementById('stuSummary').innerHTML = `
+    <div class="stat-card"><div class="sc-label">Total Students</div><div class="sc-val">${allStudents.length}</div></div>
+    <div class="stat-card"><div class="sc-label">Research Students</div><div class="sc-val">${myResearch.length}</div></div>
+    <div class="stat-card"><div class="sc-label">Pending Leaves</div><div class="sc-val">${pendingLeaves.length}</div></div>
+  `;
   const stuTableBody = document.getElementById('stuTableBody');
-  if (stuTableBody) stuTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--muted)">Student data fetched from backend module</td></tr>`;
+  if (stuTableBody) {
+    stuTableBody.innerHTML = allStudents.length ? allStudents.map(s => `
+      <tr>
+        <td><strong>${s.name || s.username}</strong></td>
+        <td>${s.branch || 'CSE'}</td>
+        <td>${s.batch || '2025'}</td>
+        <td>${s.student_id || s.user_id}</td>
+        <td><span class="status-pill approved">Active</span></td>
+        <td><button class="btn btn-outline btn-sm">View</button></td>
+      </tr>
+    `).join('') : '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--muted)">No students found</td></tr>';
+  }
 
-  document.getElementById('forumStats').innerHTML = `<p style="color:var(--muted);text-align:center;padding:20px">Forum stats fetched from backend.</p>`;
-  document.getElementById('forumThreads').innerHTML = `<p style="color:var(--muted);text-align:center;padding:20px">Forum threads fetched from backend.</p>`;
+  // ── FORUM ─────────────────────────────────────────
+  document.getElementById('forumStats').innerHTML = `
+    <div class="stat-card"><div class="sc-label">Total Posts</div><div class="sc-val">${forumPosts.length}</div></div>
+    <div class="stat-card"><div class="sc-label">Needs Response</div><div class="sc-val">${forumPosts.filter(p => (p.replies_count || 0) === 0).length}</div></div>
+  `;
+  document.getElementById('forumThreads').innerHTML = forumPosts.length ? forumPosts.map(p => `
+    <div class="card" style="margin-bottom:12px;cursor:pointer">
+      <div style="font-size:11px;color:var(--accent);font-weight:600;margin-bottom:4px">${p.topic || 'Discussion'}</div>
+      <div style="font-size:14px;font-weight:600;margin-bottom:6px">${p.title || p.content || 'Post'}</div>
+      <div style="font-size:12px;color:var(--muted)">${p.replies_count || 0} replies &middot; ${p.author_name || 'Student'}</div>
+    </div>
+  `).join('') : '<p style="color:var(--muted);font-size:13px">No forum posts yet.</p>';
 
-  document.getElementById('resStats').innerHTML = `<p style="color:var(--muted);text-align:center;padding:20px">Research stats fetched from backend.</p>`;
-  document.getElementById('resProjects').innerHTML = `<p style="color:var(--muted);text-align:center;padding:20px">Research projects fetched from backend.</p>`;
+  // ── RESEARCH ──────────────────────────────────────
+  document.getElementById('resStats').innerHTML = `
+    <div class="stat-card"><div class="sc-label">Projects Supervised</div><div class="sc-val">${myResearch.length}</div></div>
+    <div class="stat-card"><div class="sc-label">Active</div><div class="sc-val">${myResearch.filter(r => r.status === 'active' || !r.status).length}</div></div>
+  `;
+  document.getElementById('resProjects').innerHTML = myResearch.length ? myResearch.map(r => `
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">${r.title || 'Research Project'}</div>
+      <div class="card-sub">Domain: ${r.domain || 'General'} &middot; Student: ${getName(r.student_id)}</div>
+      <div style="margin-top:8px"><span class="status-pill approved">${r.status || 'In Progress'}</span></div>
+    </div>
+  `).join('') : '<p style="color:var(--muted);font-size:13px">No research projects supervised yet.</p>';
 }
 
 // Initialize on page load and listen for changes
 document.addEventListener('faculty:changed', initPage);
 initPage();
+
