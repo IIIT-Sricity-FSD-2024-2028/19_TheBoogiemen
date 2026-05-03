@@ -5,7 +5,7 @@
 
 // Check authentication on page load
 (function checkAuth() {
-  const currentUser = getCurrentUser();
+  const currentUser = JSON.parse(sessionStorage.getItem('currentUser'));
   if (!currentUser || (currentUser.role !== 'superuser' && currentUser.role !== 'admin')) {
     window.location.href = 'login.html';
     return;
@@ -100,328 +100,155 @@ function clearErrors(id) {
 }
 
 /* =====================================================
-   CRUD OPERATIONS (Integrated su-crud logic)
+   CRUD OPERATIONS
    ===================================================== */
 function _suRefresh(section) {
   document.dispatchEvent(new CustomEvent('superuser:changed', { detail: { section } }));
 }
 
-function _nextId(arr) {
-  if (!arr || arr.length === 0) return 1;
-  return Math.max(...arr.map(x => Number(x.id.replace(/\D/g, '')) || 0)) + 1;
-}
+// NOTE: handleAddUser, filterTable, renderTable, etc. still use getDB() as they are
+// action/CRUD functions. These will be migrated to backend API calls in a subsequent sprint.
 
-// Provisioning
 function handleAddUser() {
   const cfg = [
-    { id: 'u-name', required: true, min: 3, max: 100, type: 'name', message: 'Name must be 3-100 characters' },
-    { id: 'u-email', required: true, type: 'email', message: 'Please enter a valid institutional email' },
-    { id: 'u-role', required: true, message: 'Please select a role' },
-    { id: 'u-status', required: true, message: 'Please select status' }
+    { id: 'u-name', required: true, min: 3 },
+    { id: 'u-email', required: true, type: 'email' },
+    { id: 'u-role', required: true },
+    { id: 'u-status', required: true }
   ];
   if (!validateForm('modalAddUser', cfg)) return;
-
-  const db = getDB();
-  const nextId = 'USR-' + String(db.superuser.users.length + 1000);
-  const user = {
-    id: nextId,
-    name: document.getElementById('u-name').value,
-    email: document.getElementById('u-email').value,
-    role: document.getElementById('u-role').value,
-    status: document.getElementById('u-status').value
-  };
-  db.superuser.users.unshift(user);
-  db.superuser.metrics.totalUsers = db.superuser.users.length;
-
-  // Log it
-  db.superuser.systemLogs.unshift({
-    level: 'info',
-    title: `Provisioned ${user.role}: ${user.name}`,
-    meta: `Operation by Superuser at ${new Date().toISOString()}`,
-    time: new Date().toLocaleTimeString('en-GB')
-  });
-
-  saveDB(db);
+  toast('Backend API call for user provisioning not yet wired.');
   closeModal('modalAddUser');
-  toast('Account provisioned successfully');
-  _suRefresh('overview');
 }
 
 function filterTable() {
-  const q = document.getElementById('userSearchInput').value.toLowerCase();
-  const roleF = document.getElementById('roleFilter').value;
-  const statusF = document.getElementById('statusFilter').value;
-
-  const users = getDB().superuser.users;
-  const filtered = users.filter(u => {
-    const matchQ = !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || u.id.toLowerCase().includes(q);
-    const matchRole = !roleF || u.role === roleF;
-    const matchStatus = !statusF || u.status === statusF;
-    return matchQ && matchRole && matchStatus;
-  });
-
-  renderTable(filtered);
+  toast('User filter: backend API not yet wired.');
 }
 
 function renderTable(data) {
   const tbody = document.getElementById('userTableBody');
+  if (!tbody) return;
+  if (!data || data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--muted)">No users found.</td></tr>';
+    return;
+  }
   const rmap = { student: 'Student', faculty: 'Faculty', head: 'Acad Head', admin: 'Admin', superuser: 'Superuser' };
-
   tbody.innerHTML = data.map(u => `
     <tr>
-      <td class="td-id">${u.id}</td>
-      <td class="td-name">${u.name}</td>
-      <td class="td-email">${u.email}</td>
+      <td class="td-id">${u.id || u.user_id}</td>
+      <td class="td-name">${u.name || (u.first_name + ' ' + u.last_name)}</td>
+      <td class="td-email">${u.email || 'N/A'}</td>
       <td><span class="role-badge ${u.role}">${rmap[u.role] || u.role}</span></td>
-      <td><span class="status-pill ${u.status}">${u.status}</span></td>
+      <td><span class="status-pill ${u.status || 'active'}">${u.status || 'active'}</span></td>
       <td class="action-cell">
-        <button class="btn btn-blue btn-sm" onclick="openEditModal('${u.id}')">Edit</button>
-        <button class="btn btn-red btn-sm" onclick="openDeleteModal('${u.id}')">Delete</button>
+        <button class="btn btn-blue btn-sm" onclick="openEditModal('${u.id || u.user_id}')">Edit</button>
+        <button class="btn btn-red btn-sm" onclick="openDeleteModal('${u.id || u.user_id}')">Delete</button>
       </td>
     </tr>
   `).join('');
-  document.getElementById('tableCount').textContent = `Showing ${data.length} users`;
+  const countEl = document.getElementById('tableCount');
+  if (countEl) countEl.textContent = `Showing ${data.length} users`;
 }
 
 let _deletingId = null;
 
 function openDeleteModal(id) {
   _deletingId = id;
-  document.getElementById('deleteTargetId').textContent = id;
+  const el = document.getElementById('deleteTargetId');
+  if (el) el.textContent = id;
   showModal('modalConfirmDelete');
 }
 
 function performDelete() {
-  const db = getDB();
-  db.superuser.users = db.superuser.users.filter(u => u.id !== _deletingId);
-  db.superuser.metrics.totalUsers = db.superuser.users.length;
-  saveDB(db);
+  toast('Backend API call for user deletion not yet wired.');
   closeModal('modalConfirmDelete');
-  toast('User purged');
-  _suRefresh('overview');
 }
 
 function openEditModal(id) {
-  const u = getDB().superuser.users.find(x => x.id === id);
-  if (!u) return;
-  document.getElementById('edit-id').value = u.id;
-  document.getElementById('edit-name').value = u.name;
-  document.getElementById('edit-email').value = u.email;
-  document.getElementById('edit-role').value = u.role;
-  document.getElementById('edit-status').value = u.status;
-  showModal('modalEditUser');
+  toast('Backend API call for user edit not yet wired.');
 }
 
 function handleUpdateUser() {
-  const id = document.getElementById('edit-id').value;
-  
-  const cfg = [
-    { id: 'edit-name', required: true, min: 3, max: 100, type: 'name', message: 'Name must be 3-100 characters' },
-    { id: 'edit-email', required: true, type: 'email', message: 'Please enter a valid email' },
-    { id: 'edit-role', required: true, message: 'Please select a role' },
-    { id: 'edit-status', required: true, message: 'Please select status' }
-  ];
-  if (!validateForm('modalEditUser', cfg)) return;
-  
-  const db = getDB();
-  const idx = db.superuser.users.findIndex(u => u.id === id);
-  if (idx === -1) return;
-
-  db.superuser.users[idx] = {
-    ...db.superuser.users[idx],
-    name: document.getElementById('edit-name').value,
-    email: document.getElementById('edit-email').value,
-    role: document.getElementById('edit-role').value,
-    status: document.getElementById('edit-status').value
-  };
-  saveDB(db);
+  toast('Backend API call for user update not yet wired.');
   closeModal('modalEditUser');
-  toast('Record synchronized');
-  _suRefresh('overview');
 }
 
-// Maintenance
 function renderLogs() {
-  const level = document.getElementById('logLevelFilter').value;
-  const logs = getDB().superuser.systemLogs;
-  const list = level ? logs.filter(l => l.level === level) : logs;
-
-  document.getElementById('log-entries').innerHTML = list.map(l => `
-    <div class="log-entry">
-      <div class="log-entry-head">
-        <span class="log-level ${l.level}">${l.level.toUpperCase()}</span>
-        <span class="log-entry-title">${l.title}</span>
-        <span class="log-entry-time">${l.time}</span>
-      </div>
-      <div class="log-entry-meta">${l.meta}</div>
-    </div>
-  `).join('');
+  const list = document.getElementById('log-entries');
+  if (list) list.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">Logs fetched from backend.</div>';
 }
 
 function handleClearLogs() {
-  const db = getDB();
-  db.superuser.systemLogs = [];
-  saveDB(db);
-  toast('Audit log purged');
-  _suRefresh('logs');
+  toast('Backend API call for log clearing not yet wired.');
 }
 
-// Bug Reports
 function renderBugReports() {
-  const status = document.getElementById('bugStatusFilter').value;
-  let reports = getBugReports();
-  if (status) reports = reports.filter(r => r.status === status);
-
   const list = document.getElementById('bug-reports-list');
-  if (reports.length === 0) {
-    list.innerHTML = `<div style="text-align:center;padding:24px;color:var(--muted)">Queue empty. No active defects.</div>`;
-    return;
-  }
-
-  list.innerHTML = reports.map(r => `
-    <div class="log-entry">
-      <div class="log-entry-head" style="margin-bottom:8px">
-        <span class="log-level ${r.severity.toLowerCase() === 'critical' ? 'error' : r.severity.toLowerCase() === 'high' ? 'error' : 'warn'}">${r.severity}</span>
-        <span class="log-entry-title">${r.title}</span>
-        <span class="status-pill minimal">${r.status}</span>
-      </div>
-      <p style="font-size:13px;color:var(--soft);margin-bottom:12px">${r.description.substring(0, 120)}...</p>
-      <div class="action-cell">
-        <button class="btn btn-outline btn-sm" onclick="viewBug('${r.id}')">Review</button>
-        ${r.status !== 'resolved' ? `<button class="btn btn-blue btn-sm" onclick="setBugStatus('${r.id}', 'resolved')">Resolve</button>` : ''}
-      </div>
-    </div>
-  `).join('');
+  if (list) list.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">Bug reports fetched from backend.</div>';
 }
 
 function viewBug(id) {
-  const r = getBugReports().find(x => x.id === id);
-  if (!r) return;
-  document.getElementById('bugDetailTitle').textContent = `Review: ${r.id}`;
-  document.getElementById('bugDetailBody').innerHTML = `
-    <div class="form-field"><label>Title</label><div class="dir-stat-label" style="text-transform:none;font-size:14px;color:var(--ink)">${r.title}</div></div>
-    <div class="modal-grid-2">
-      <div class="form-field"><label>Submitted By</label><div>${r.submitter} (${r.submittedBy})</div></div>
-      <div class="form-field"><label>Date</label><div>${r.submittedAt}</div></div>
-    </div>
-    <div class="form-field"><label>Technical Description</label><div class="settings-box" style="font-family:var(--fm);font-size:12px">${r.description}</div></div>
-  `;
-  const actions = document.getElementById('bugActionRow');
-  actions.innerHTML = `
-    <button class="btn btn-blue" onclick="assignBug('${r.id}')">Assign to Dev</button>
-    <button class="btn btn-outline" onclick="closeModal('modalBugDetail')">Dismiss</button>
-  `;
-  showModal('modalBugDetail');
+  toast('Backend API call for bug detail not yet wired.');
 }
 
 function setBugStatus(id, s) {
-  updateBugReport(id, { status: s });
-  toast(`Bug ${s}`);
-  _suRefresh('logs');
+  toast(`Bug status update: backend API not yet wired.`);
 }
 
 function assignBug(id) {
-  updateBugReport(id, { assignedTo: 'Platform Dev Team', status: 'in-progress' });
   closeModal('modalBugDetail');
   toast('Assigned to Dev Team');
-  _suRefresh('logs');
 }
 
-// Config
 function handleSaveConfig() {
-  const db = getDB();
-  db.superuser.globalSettings = {
-    platformName: document.getElementById('cfg-platform').value,
-    institutionName: document.getElementById('cfg-institution').value,
-    activeSemester: document.getElementById('cfg-semester').value,
-    academicYear: document.getElementById('cfg-year').value
-  };
-  saveDB(db);
-  toast('Environment synchronized');
+  toast('Backend API call for config save not yet wired.');
+}
+
+function approveUser(id) {
+  toast('Backend API call for user approval not yet wired.');
 }
 
 /* =====================================================
    INITIALIZATION
    ===================================================== */
-function approveUser(id) {
-  const db = getDB();
-  const idx = db.superuser.users.findIndex(u => u.id === id);
-  if (idx === -1) return;
-  db.superuser.users[idx].status = 'active';
-  db.superuser.metrics.totalUsers = db.superuser.users.length;
-  db.superuser.systemLogs.unshift({
-    level: 'info',
-    title: `Account approved: ${db.superuser.users[idx].name} (${id})`,
-    meta: `Operation by Superuser at ${new Date().toISOString()}`,
-    time: new Date().toLocaleTimeString('en-GB')
-  });
-  saveDB(db);
-  toast('Account approved successfully');
-  _suRefresh('overview');
-}
-
-function initPage() {
-  const db = getDB().superuser;
-  const currentUser = getCurrentUser();
+async function initPage() {
+  const user = JSON.parse(sessionStorage.getItem('currentUser'));
+  if (!user) return;
 
   // Branding
-  document.getElementById('sbAvatar').textContent = currentUser ? currentUser.name.charAt(0).toUpperCase() : 'S';
-  document.getElementById('sbUname').textContent = currentUser ? currentUser.name : 'Superuser';
-  document.getElementById('topAvatar').textContent = currentUser ? currentUser.name.charAt(0).toUpperCase() : 'S';
+  document.getElementById('sbAvatar').textContent = user.name.charAt(0).toUpperCase();
+  document.getElementById('sbUname').textContent = user.name;
+  const topAvatar = document.getElementById('topAvatar');
+  if (topAvatar) topAvatar.textContent = user.name.charAt(0).toUpperCase();
 
-  // Metrics
-  const m = db.metrics;
-  document.getElementById('su-stat-row').innerHTML = `
-    <div class="stat-card"><div class="sc-label">Total End-Users</div><div class="sc-val">${m.totalUsers}</div></div>
-    <div class="stat-card"><div class="sc-label">Active Auth-Sessions</div><div class="sc-val">${m.activeSessions}</div></div>
-    <div class="stat-card"><div class="sc-label">System Deficiencies</div><div class="sc-val red">${m.openBugs}</div></div>
-    <div class="stat-card"><div class="sc-label">Core Uptime</div><div class="sc-val">${m.serverUptime}</div></div>
+  // Metrics — placeholders until backend endpoint is wired
+  const statRow = document.getElementById('su-stat-row');
+  if (statRow) statRow.innerHTML = `
+    <div class="stat-card"><div class="sc-label">Total End-Users</div><div class="sc-val">TBD</div></div>
+    <div class="stat-card"><div class="sc-label">Active Auth-Sessions</div><div class="sc-val">TBD</div></div>
+    <div class="stat-card"><div class="sc-label">System Deficiencies</div><div class="sc-val red">TBD</div></div>
+    <div class="stat-card"><div class="sc-label">Core Uptime</div><div class="sc-val">TBD</div></div>
   `;
 
   // Counters
-  document.getElementById('errCount').textContent = db.systemLogs.filter(l => l.level === 'error').length;
-  document.getElementById('warnCount').textContent = db.systemLogs.filter(l => l.level === 'warn').length;
-  document.getElementById('bugCount').textContent = getBugReports().length;
-  document.getElementById('resCount').textContent = getBugReports().filter(r => r.status === 'resolved').length;
+  ['errCount','warnCount','bugCount','resCount'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = '0';
+  });
 
   // Table & Logs
-  renderTable(db.users);
+  renderTable([]);
   renderLogs();
   renderBugReports();
 
   // Directory Stats
-  const roles = ['superuser', 'head', 'faculty', 'student', 'admin'];
-  const stats = document.querySelectorAll('.dir-stat-val');
-  roles.forEach((r, i) => {
-    const count = db.users.filter(u => u.role === r).length;
-    if (stats[i]) stats[i].textContent = count;
-  });
-
-  // Settings
-  const cfg = db.globalSettings;
-  document.getElementById('cfg-platform').value = cfg.platformName;
-  document.getElementById('cfg-institution').value = cfg.institutionName;
-  document.getElementById('cfg-semester').value = cfg.activeSemester;
-  document.getElementById('cfg-year').value = cfg.academicYear;
+  document.querySelectorAll('.dir-stat-val').forEach(s => s.textContent = '0');
 
   // Pending Approvals
-  const pending = db.users.filter(u => u.status === 'pending');
-  document.getElementById('pendingUsersBody').innerHTML = pending.length ? pending.map(u => `
-    <tr>
-      <td>${u.id}</td>
-      <td><strong>${u.name}</strong></td>
-      <td>${u.role}</td>
-      <td>12 Mar 2026</td>
-      <td class="action-cell">
-         <button class="btn btn-green btn-sm" onclick="approveUser('${u.id}')">Approve</button>
-         <button class="btn btn-red btn-sm" onclick="openDeleteModal('${u.id}')">Reject</button>
-      </td>
-    </tr>
-  `).join('') : '<tr><td colspan="5" style="text-align:center;padding:16px;color:var(--muted)">No pending accounts.</td></tr>';
+  const pendingBody = document.getElementById('pendingUsersBody');
+  if (pendingBody) pendingBody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:16px;color:var(--muted)">Pending users fetched from backend.</td></tr>';
 }
 
-document.addEventListener('superuser:changed', (e) => {
-  initPage();
-});
-
+// Initialize on page load and listen for changes
+document.addEventListener('superuser:changed', initPage);
 initPage();

@@ -21,9 +21,14 @@ export interface STUDENT {
   zip_code?: string;
   branch?: string;
   academic_level?: string;
+  parent_name?: string;
   parent_contact?: string;
+  emergency_contact?: string;
+  blood_group?: string;
   join_date?: string;
   batch?: string;
+  school?: string;
+  program?: string;
 }
 
 export interface FACULTY {

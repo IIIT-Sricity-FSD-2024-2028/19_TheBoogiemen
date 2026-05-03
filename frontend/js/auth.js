@@ -456,6 +456,26 @@ const Validator = {
 window.Validator = Validator;
 
 // ==========================================
+// SESSION HELPERS
+// ==========================================
+function getCurrentUser() {
+    const userStr = sessionStorage.getItem('currentUser');
+    return userStr ? JSON.parse(userStr) : null;
+}
+
+function setCurrentUser(user) {
+    sessionStorage.setItem('currentUser', JSON.stringify(user));
+}
+
+function clearCurrentUser() {
+    sessionStorage.removeItem('currentUser');
+}
+
+window.getCurrentUser = getCurrentUser;
+window.setCurrentUser = setCurrentUser;
+window.clearCurrentUser = clearCurrentUser;
+
+// ==========================================
 // LEGACY AUTH OBJECT (for backward compatibility)
 // ==========================================
 const Auth = {

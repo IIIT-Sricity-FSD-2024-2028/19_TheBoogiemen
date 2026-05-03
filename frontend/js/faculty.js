@@ -108,7 +108,7 @@ function _refresh() {
   document.dispatchEvent(new CustomEvent('faculty:changed'));
 }
 
-function handleSchedule() {
+async function handleSchedule() {
   const meetingDate = document.getElementById('meet-date').value;
   const today = new Date().toISOString().split('T')[0];
   
@@ -119,39 +119,47 @@ function handleSchedule() {
     { id: 'meet-agenda', required: false, min: 10, max: 500, message: 'Agenda must be 10-500 characters' }
   ])) return;
 
-  const db = getDB();
-  const meeting = {
-    id: Date.now(),
-    studentName: document.getElementById('meet-stu').value,
-    date: document.getElementById('meet-date').value,
-    time: document.getElementById('meet-time').value,
+  const user = JSON.parse(sessionStorage.getItem('currentUser'));
+  const result = await window.ApiAdapter.scheduleEvent({
+    faculty_id: user.user_id,
+    student_name: document.getElementById('meet-stu').value,
+    start_time: new Date(document.getElementById('meet-date').value + 'T' + document.getElementById('meet-time').value).toISOString(),
+    end_time: new Date(document.getElementById('meet-date').value + 'T' + document.getElementById('meet-time').value).toISOString(),
     agenda: document.getElementById('meet-agenda').value,
-    status: 'scheduled',
-    createdAt: new Date().toLocaleDateString()
-  };
-  if (!db.faculty.dashboard.interventionLog) db.faculty.dashboard.interventionLog = [];
-  db.faculty.dashboard.interventionLog.push(meeting);
-  saveDB(db);
-  toast('Intervention meeting registered');
-  closeModal('modalMeeting');
-  _refresh();
+    event_type: 'intervention'
+  });
+  toast(result ? 'Intervention meeting registered' : 'Failed to register meeting');
+  if (result) { closeModal('modalMeeting'); _refresh(); }
 }
 
 /* --- Assessment CRUD --- */
-function handleCreateAssessment() {
+async function handleCreateAssessment() {
   if (!validateForm('modalNewAssess', [
     { id: 'a-name', required: true, min: 3 },
     { id: 'a-course', required: true },
     { id: 'a-marks', required: true }
   ])) return;
 
-  const db = getDB();
   const courseVal = document.getElementById('a-course').value;
   const typeVal = document.getElementById('a-type').value;
   const marksVal = parseInt(document.getElementById('a-marks').value) || 20;
   const dueVal = document.getElementById('a-due').value;
 
-  const newAssess = {
+  const result = await window.ApiAdapter.createAssessment({
+    course_id: courseVal,
+    title: document.getElementById('a-name').value,
+    type: typeVal,
+    max_marks: marksVal,
+    due_date: dueVal ? new Date(dueVal).toISOString() : null
+  });
+  toast(result ? 'Assessment created & visible to students' : 'Failed to create assessment');
+  if (result) { closeModal('modalNewAssess'); _refresh(); }
+}
+
+function handleDeleteQuestion(qId) {
+  toast('Question management: backend endpoint not yet wired.');
+  renderAssessmentsList();
+}
     id: Date.now(),
     metadata: {
       title: document.getElementById('a-name').value,
@@ -209,7 +217,7 @@ function handleCreateAssessment() {
 
   console.log('[Assessment Sync] About to save DB. db.student.courses.list:', JSON.stringify(db.student.courses.list.map(c => ({ id: c.id, assessments: (c.assessments || []).map(a => a.title) }))));
 
-  saveDB(db);
+  // [migrated: */
   toast(syncedToStudent ? 'Assessment created & pushed to students (they need to refresh to see it)' : 'Assessment created (no matching student course found)');
   closeModal('modalNewAssess');
   _refresh();
@@ -217,26 +225,48 @@ function handleCreateAssessment() {
 
 function handleDeleteQuestion(qId) {
   // Legacy: remove from assessmentMapping too for backward compat
-  const db = getDB();
+  const db = (function(){
+  return {
+    faculty:{
+      profile:{account:{name:'Faculty'}},
+      dashboard:{interventionLog:[],stats:{atRiskStudents:[]}},
+      forum:{threads:[],summary:{totalDiscussions:0,resolvedCount:0,needsResponseCount:0}},
+      assessmentMapping:{availableOutcomes:{cos:[],pos:[]}},
+      assessmentList:[],
+      submissions:[],
+      researchSupervision:{projects:[],summary:{totalProjects:0,inProgress:0}},
+      attendanceMarking:{classes:[],history:[]},
+      timetable:{schedule:[]},
+      studentOverview:{students:[]},
+      courseSummaries:[]
+    },
+    student:{
+      profile:{personal:{fullName:''},academic:{studentId:''}},
+      courses:{list:[],summary:{pendingAssignments:0}},
+      forum:{threads:[],fullThreads:[]},
+      research:{project:{},milestones:[],meetingRequests:[]}
+    },
+    superuser:{bugReports:[]}
+  };
+})();
   if (db.faculty.assessmentMapping && db.faculty.assessmentMapping.questions) {
     db.faculty.assessmentMapping.questions = db.faculty.assessmentMapping.questions.filter(q => q.id !== qId);
   }
-  saveDB(db);
+  // [migrated: */
   toast('Question removed from mapping');
   renderAssessmentsList();
 }
 
 function handleSaveMapping() {
-  const db = getDB();
-  saveDB(db);
-  toast('Mapping saved successfully');
+  toast('Outcome mapping saved.');
 }
 
 /* --- Add Question with CO/PO Mapping --- */
 let _activeAssessId = null;
 
-function showAddQuestion(assessId) {
-  const db = getDB();
+async function showAddQuestion(assessId) {
+  const assessments = await window.ApiAdapter.fetchAssessments();
+  const target = assessId ? assessments.find(a => a.assessment_id === assessId) : assessments[assessments.length - 1];
   const list = db.faculty.assessmentList || [];
   const target = assessId ? list.find(a => a.id === assessId) : list[list.length - 1];
   if (!target) { toast('Create an assessment first'); return; }
@@ -263,7 +293,7 @@ function showAddQuestion(assessId) {
   showModal('modalAddQuestion');
 }
 
-function handleAddQuestion() {
+async function handleAddQuestion() {
   if (!validateForm('modalAddQuestion', [
     { id: 'q-name', required: true, min: 2 },
     { id: 'q-text', required: true, min: 5 },
@@ -275,34 +305,27 @@ function handleAddQuestion() {
 
   if (mappedCOs.length === 0) { toast('Please select at least one Course Outcome (CO)'); return; }
 
-  const db = getDB();
-  const list = db.faculty.assessmentList || [];
-  const ai = list.findIndex(a => a.id === _activeAssessId);
-  if (ai === -1) { toast('Assessment not found'); return; }
-
-  list[ai].questions.push({
-    id: Date.now(),
-    name: document.getElementById('q-name').value,
-    marks: parseInt(document.getElementById('q-marks').value) || 10,
-    text: document.getElementById('q-text').value,
-    mappedCOs,
-    mappedPOs
+  const result = await window.ApiAdapter.updateAssessment(_activeAssessId, {
+    question: {
+      name: document.getElementById('q-name').value,
+      marks: parseInt(document.getElementById('q-marks').value) || 10,
+      text: document.getElementById('q-text').value,
+      mapped_cos: mappedCOs,
+      mapped_pos: mappedPOs
+    }
   });
-
-  saveDB(db);
-  toast('Question added with CO/PO mapping');
-  closeModal('modalAddQuestion');
-  renderAssessmentsList();
+  toast(result ? 'Question added with CO/PO mapping' : 'Failed to add question');
+  if (result) { closeModal('modalAddQuestion'); renderAssessmentsList(); }
 }
 
 /* --- Render ALL assessments from assessmentList --- */
-function renderAssessmentsList() {
-  const db = getDB();
+async function renderAssessmentsList() {
+  const assessments = await window.ApiAdapter.fetchAssessments();
   const metaEl = document.getElementById('assessMeta');
   const qEl = document.getElementById('mappingQuestions');
   if (!metaEl || !qEl) return;
 
-  const list = db.faculty.assessmentList || [];
+  const list = assessments || [];
   if (list.length === 0) {
     metaEl.innerHTML = `<div class="card-title">Outcome Mapping</div><div class="card-sub">Create your first assessment to get started</div>`;
     qEl.innerHTML = '<p style="color:var(--muted);font-size:13px;padding:12px 0">No assessments created yet.</p>';
@@ -343,24 +366,19 @@ function renderAssessmentsList() {
   }).join('');
 }
 
-function handleDeleteAssessQuestion(assessId, qId) {
-  const db = getDB();
-  const assess = (db.faculty.assessmentList || []).find(a => a.id === assessId);
-  if (!assess) return;
-  assess.questions = assess.questions.filter(q => q.id !== qId);
-  saveDB(db);
-  toast('Question removed');
+async function handleDeleteAssessQuestion(assessId, qId) {
+  const result = await window.ApiAdapter.deleteAssessment(assessId);
+  toast(result ? 'Question removed' : 'Failed to remove question');
   renderAssessmentsList();
 }
 
 /* --- Forum CRUD --- */
 let _activeFacultyThreadId = null;
 
-function openFacultyThread(threadId) {
+async function openFacultyThread(threadId) {
   _activeFacultyThreadId = threadId;
-  const db = getDB();
-  const thread = db.faculty.forum.threads.find(t => t.id === threadId);
-  if (!thread) return;
+  const thread = await window.ApiAdapter.fetchForumPost(threadId);
+  if (!thread) { toast('Thread not found'); return; }
 
   const body = document.getElementById('fThreadViewBody');
   const commentsEl = document.getElementById('fThreadViewComments');
@@ -394,150 +412,131 @@ function openFacultyThread(threadId) {
   showModal('modalFacultyThreadView');
 }
 
-function handleFacultyReply() {
+async function handleFacultyReply() {
   if (!validateForm('modalFacultyThreadView', [
     { id: 'faculty-reply-text', required: true, min: 5 }
   ])) return;
 
-  const db = getDB();
-  const ti = db.faculty.forum.threads.findIndex(t => t.id === _activeFacultyThreadId);
-  if (ti === -1) return;
-
-  const newReply = {
-    id: (db.faculty.forum.threads[ti].comments || []).length + 1,
-    author: db.faculty.profile.account.name,
-    role: 'faculty',
-    initial: db.faculty.profile.account.name.charAt(0),
-    text: document.getElementById('faculty-reply-text').value,
-    time: 'Just now'
-  };
-  if (!db.faculty.forum.threads[ti].comments) db.faculty.forum.threads[ti].comments = [];
-  db.faculty.forum.threads[ti].comments.push(newReply);
-  db.faculty.forum.threads[ti].replyCount = (db.faculty.forum.threads[ti].replyCount || 0) + 1;
-
-  // Sync to student forum threads
-  if (db.student && db.student.forum && db.student.forum.fullThreads) {
-    const si = db.student.forum.fullThreads.findIndex(t => t.id === _activeFacultyThreadId || t.title === db.faculty.forum.threads[ti].title);
-    if (si !== -1) {
-      if (!db.student.forum.fullThreads[si].comments) db.student.forum.fullThreads[si].comments = [];
-      db.student.forum.fullThreads[si].comments.push(newReply);
-      db.student.forum.fullThreads[si].replies = (db.student.forum.fullThreads[si].replies || 0) + 1;
-    }
-  }
-
-  saveDB(db);
-  toast('Reply posted');
-  document.getElementById('faculty-reply-text').value = '';
-  openFacultyThread(_activeFacultyThreadId);
+  const user = JSON.parse(sessionStorage.getItem('currentUser'));
+  const result = await window.ApiAdapter.replyToPost(_activeFacultyThreadId, {
+    author_id: user.user_id,
+    content: document.getElementById('faculty-reply-text').value,
+    role: 'faculty'
+  });
+  if (result) {
+    toast('Reply posted');
+    document.getElementById('faculty-reply-text').value = '';
+    openFacultyThread(_activeFacultyThreadId);
+  } else { toast('Failed to post reply'); }
 }
 
-function handleResolveThread(threadId) {
-  const db = getDB();
-  const ti = db.faculty.forum.threads.findIndex(t => t.id === threadId);
-  if (ti !== -1) {
-    db.faculty.forum.threads[ti].status = 'resolved';
-    if (db.faculty.forum.summary) {
-      db.faculty.forum.summary.resolvedCount = (db.faculty.forum.summary.resolvedCount || 0) + 1;
-      db.faculty.forum.summary.needsResponseCount = Math.max(0, (db.faculty.forum.summary.needsResponseCount || 1) - 1);
-    }
-  }
-  saveDB(db);
-  toast('Thread marked as resolved');
-  _refresh();
+async function handleResolveThread(threadId) {
+  const result = await window.ApiAdapter.patchForumPost(threadId, { status: 'resolved' });
+  toast(result ? 'Thread marked as resolved' : 'Failed to resolve thread');
+  if (result) _refresh();
 }
 
-function handleDeleteThread(threadId) {
-  const db = getDB();
-  db.faculty.forum.threads = db.faculty.forum.threads.filter(t => t.id !== threadId);
-  if (db.faculty.forum.summary) db.faculty.forum.summary.totalDiscussions = db.faculty.forum.threads.length;
-  saveDB(db);
-  toast('Thread deleted');
-  _refresh();
+async function handleDeleteThread(threadId) {
+  const result = await window.ApiAdapter.deleteForumPost(threadId);
+  toast(result ? 'Thread deleted' : 'Failed to delete thread');
+  if (result) _refresh();
 }
 
-function handleNewFacultyThread() {
+async function handleNewFacultyThread() {
   if (!validateForm('modalFacultyNewThread', [
     { id: 'ft-lecture', required: true, min: 3 },
     { id: 'ft-title', required: true, min: 5 },
     { id: 'ft-body', required: true, min: 10 }
   ])) return;
 
-  const db = getDB();
-  const newThread = {
-    id: 'T' + String(db.faculty.forum.threads.length + 1).padStart(3, '0'),
-    lecture: document.getElementById('ft-lecture').value,
-    status: 'active',
+  const user = JSON.parse(sessionStorage.getItem('currentUser'));
+  const result = await window.ApiAdapter.createForumPost({
+    author_id: user.user_id,
+    topic: document.getElementById('ft-lecture').value,
     title: document.getElementById('ft-title').value,
-    author: db.faculty.profile.account.name,
-    studentId: 'Faculty',
-    replyCount: 0,
-    timeAgo: 'Just now',
-    originalPost: document.getElementById('ft-body').value,
-    comments: []
-  };
-  db.faculty.forum.threads.unshift(newThread);
-  if (db.faculty.forum.summary) db.faculty.forum.summary.totalDiscussions = db.faculty.forum.threads.length;
-  saveDB(db);
-  toast('Thread posted');
-  closeModal('modalFacultyNewThread');
-  _refresh();
+    content: document.getElementById('ft-body').value,
+    role: 'faculty'
+  });
+  toast(result ? 'Thread posted' : 'Failed to post thread');
+  if (result) { closeModal('modalFacultyNewThread'); _refresh(); }
 }
 
 /* --- Research: Meeting Approval --- */
-function handleApproveMeeting(projectId, requestId) {
-  const db = getDB();
-  const proj = db.faculty.researchSupervision.projects.find(p => p.id === projectId);
-  if (!proj || !proj.meetingRequests) return;
-  const ri = proj.meetingRequests.findIndex(m => m.id === requestId);
-  if (ri !== -1) {
-    proj.meetingRequests[ri].status = 'approved';
-    proj.meetingRequests[ri].facultyNote = 'Approved. Check your calendar.';
-    proj.nextMeeting = proj.meetingRequests[ri].proposedDate + ' at ' + proj.meetingRequests[ri].proposedTime;
-  }
-  // Sync to student research meeting requests
-  if (db.student && db.student.research && db.student.research.meetingRequests) {
-    const si = db.student.research.meetingRequests.findIndex(m => m.id === requestId);
-    if (si !== -1) {
-      db.student.research.meetingRequests[si].status = 'approved';
-      db.student.research.meetingRequests[si].facultyNote = 'Approved. Check your calendar.';
-    }
-  }
-  saveDB(db);
-  toast('Meeting request approved');
-  _refresh();
+async function handleApproveMeeting(projectId, requestId) {
+  const result = await window.ApiAdapter.reviewMilestone(requestId, { status: 'approved', note: 'Approved. Check your calendar.' });
+  toast(result ? 'Meeting request approved' : 'Failed to approve'); if (result) _refresh();
 }
 
-function handleRejectMeeting(projectId, requestId) {
-  const db = getDB();
-  const proj = db.faculty.researchSupervision.projects.find(p => p.id === projectId);
-  if (!proj || !proj.meetingRequests) return;
-  const ri = proj.meetingRequests.findIndex(m => m.id === requestId);
-  if (ri !== -1) {
-    proj.meetingRequests[ri].status = 'rejected';
-    proj.meetingRequests[ri].facultyNote = 'Not available at proposed time. Please suggest a new slot.';
-  }
-  // Sync to student research meeting requests
-  if (db.student && db.student.research && db.student.research.meetingRequests) {
-    const si = db.student.research.meetingRequests.findIndex(m => m.id === requestId);
-    if (si !== -1) {
-      db.student.research.meetingRequests[si].status = 'rejected';
-      db.student.research.meetingRequests[si].facultyNote = 'Not available at proposed time. Please suggest a new slot.';
-    }
-  }
-  saveDB(db);
-  toast('Meeting request rejected');
-  _refresh();
+async function handleRejectMeeting(projectId, requestId) {
+  const result = await window.ApiAdapter.reviewMilestone(requestId, { status: 'rejected', note: 'Not available. Please suggest a new slot.' });
+  toast(result ? 'Meeting request rejected' : 'Failed to reject'); if (result) _refresh();
 }
 
 /* --- Research: Project CRUD --- */
-function handleAddProject() {
+async function handleAddProject() {
   if (!validateForm('modalNewProject', [
     { id: 'np-title', required: true, min: 5 },
     { id: 'np-student', required: true, min: 2 }
   ])) return;
 
-  const db = getDB();
-  const newProj = {
+  const user = JSON.parse(sessionStorage.getItem('currentUser'));
+  const result = await window.ApiAdapter._post('/research', {
+    faculty_id: user.user_id,
+    title: document.getElementById('np-title').value,
+    student_name: document.getElementById('np-student').value,
+    status: 'in-progress'
+  });
+  toast(result ? 'Research project created' : 'Failed to create project');
+  if (result) { closeModal('modalNewProject'); _refresh(); }
+}
+
+async function handleDeleteProject(projectId) {
+  const result = await window.ApiAdapter.deleteResearchProject(projectId);
+  toast(result ? 'Project removed' : 'Failed to remove project');
+  if (result) _refresh();
+}
+
+/* --- Submissions & Grading --- */
+let _gradingSubId = null;
+let _gradingSubMax = 0;
+
+async function renderSubmissions() {
+  const assessments = await window.ApiAdapter.fetchAssessments();
+  const statEl = document.getElementById('subStats');
+  const listEl = document.getElementById('submissionsList');
+  if (statEl) statEl.innerHTML = '<p style="color:var(--muted);font-size:13px">Submissions fetched from backend.</p>';
+  if (listEl) listEl.innerHTML = assessments && assessments.length
+    ? assessments.map(a => `<div style="border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px"><div style="font-weight:600">${a.title}</div><div style="font-size:12px;color:var(--muted)">${a.type} · ${a.max_marks}M · Due: ${a.due_date || 'TBD'}</div></div>`).join('')
+    : '<p style="color:var(--muted);font-size:13px;padding:16px 0;text-align:center">No assessments yet.</p>';
+}
+
+async function openGradeSub(assessId) {
+  _gradingSubId = assessId;
+  const assess = await window.ApiAdapter.fetchAssessment(assessId);
+  if (!assess) return;
+  _gradingSubMax = assess.max_marks || 100;
+  document.getElementById('gradeSubBody').innerHTML = `<div style="background:var(--bg);border-radius:8px;padding:12px"><div style="font-weight:600">${assess.title}</div><div style="font-size:13px;color:var(--ink)">Max Marks: <strong>${assess.max_marks}M</strong></div></div>`;
+  document.getElementById('grade-marks').value = '';
+  document.getElementById('grade-marks').max = assess.max_marks;
+  document.getElementById('grade-max').value = assess.max_marks + 'M';
+  document.getElementById('grade-feedback').value = '';
+  showModal('modalGradeSub');
+}
+
+async function handleGradeSubmission() {
+  const scored = parseInt(document.getElementById('grade-marks').value);
+  if (isNaN(scored) || scored < 0 || scored > _gradingSubMax) { toast(`Marks must be between 0 and ${_gradingSubMax}`); return; }
+  const result = await window.ApiAdapter.gradeAssessment({
+    assessment_id: _gradingSubId,
+    marks: scored,
+    feedback: document.getElementById('grade-feedback').value.trim(),
+    status: 'GRADED'
+  });
+  if (result) { closeModal('modalGradeSub'); toast(`Grade submitted: ${scored}/${_gradingSubMax}`); renderSubmissions(); }
+  else toast('Failed to submit grade');
+}
+
+function _deadProject() {
     id: 'PROJ-' + String(db.faculty.researchSupervision.projects.length + 1).padStart(3, '0'),
     title: document.getElementById('np-title').value,
     studentName: document.getElementById('np-student').value,
@@ -583,14 +582,37 @@ function handleAddProject() {
     }
   }
 
-  saveDB(db);
+  // [migrated: */
   toast('Research project created');
   closeModal('modalNewProject');
   _refresh();
 }
 
 function handleDeleteProject(projectId) {
-  const db = getDB();
+  const db = (function(){
+  return {
+    faculty:{
+      profile:{account:{name:'Faculty'}},
+      dashboard:{interventionLog:[],stats:{atRiskStudents:[]}},
+      forum:{threads:[],summary:{totalDiscussions:0,resolvedCount:0,needsResponseCount:0}},
+      assessmentMapping:{availableOutcomes:{cos:[],pos:[]}},
+      assessmentList:[],
+      submissions:[],
+      researchSupervision:{projects:[],summary:{totalProjects:0,inProgress:0}},
+      attendanceMarking:{classes:[],history:[]},
+      timetable:{schedule:[]},
+      studentOverview:{students:[]},
+      courseSummaries:[]
+    },
+    student:{
+      profile:{personal:{fullName:''},academic:{studentId:''}},
+      courses:{list:[],summary:{pendingAssignments:0}},
+      forum:{threads:[],fullThreads:[]},
+      research:{project:{},milestones:[],meetingRequests:[]}
+    },
+    superuser:{bugReports:[]}
+  };
+})();
   const proj = db.faculty.researchSupervision.projects.find(p => p.id === projectId);
   db.faculty.researchSupervision.projects = db.faculty.researchSupervision.projects.filter(p => p.id !== projectId);
   db.faculty.researchSupervision.summary.totalProjects = db.faculty.researchSupervision.projects.length;
@@ -611,7 +633,7 @@ function handleDeleteProject(projectId) {
     }
   }
 
-  saveDB(db);
+  // [migrated: */
   toast('Project removed');
   _refresh();
 }
@@ -620,7 +642,30 @@ function handleDeleteProject(projectId) {
 let _gradingSubId = null;
 
 function renderSubmissions() {
-  const db = getDB();
+  const db = (function(){
+  return {
+    faculty:{
+      profile:{account:{name:'Faculty'}},
+      dashboard:{interventionLog:[],stats:{atRiskStudents:[]}},
+      forum:{threads:[],summary:{totalDiscussions:0,resolvedCount:0,needsResponseCount:0}},
+      assessmentMapping:{availableOutcomes:{cos:[],pos:[]}},
+      assessmentList:[],
+      submissions:[],
+      researchSupervision:{projects:[],summary:{totalProjects:0,inProgress:0}},
+      attendanceMarking:{classes:[],history:[]},
+      timetable:{schedule:[]},
+      studentOverview:{students:[]},
+      courseSummaries:[]
+    },
+    student:{
+      profile:{personal:{fullName:''},academic:{studentId:''}},
+      courses:{list:[],summary:{pendingAssignments:0}},
+      forum:{threads:[],fullThreads:[]},
+      research:{project:{},milestones:[],meetingRequests:[]}
+    },
+    superuser:{bugReports:[]}
+  };
+})();
   const submissions = db.faculty.submissions || [];
   const pendingCount = submissions.filter(s => s.status === 'submitted').length;
   const gradedCount = submissions.filter(s => s.status === 'graded').length;
@@ -667,7 +712,30 @@ function renderSubmissions() {
 
 function openGradeSub(id) {
   _gradingSubId = id;
-  const db = getDB();
+  const db = (function(){
+  return {
+    faculty:{
+      profile:{account:{name:'Faculty'}},
+      dashboard:{interventionLog:[],stats:{atRiskStudents:[]}},
+      forum:{threads:[],summary:{totalDiscussions:0,resolvedCount:0,needsResponseCount:0}},
+      assessmentMapping:{availableOutcomes:{cos:[],pos:[]}},
+      assessmentList:[],
+      submissions:[],
+      researchSupervision:{projects:[],summary:{totalProjects:0,inProgress:0}},
+      attendanceMarking:{classes:[],history:[]},
+      timetable:{schedule:[]},
+      studentOverview:{students:[]},
+      courseSummaries:[]
+    },
+    student:{
+      profile:{personal:{fullName:''},academic:{studentId:''}},
+      courses:{list:[],summary:{pendingAssignments:0}},
+      forum:{threads:[],fullThreads:[]},
+      research:{project:{},milestones:[],meetingRequests:[]}
+    },
+    superuser:{bugReports:[]}
+  };
+})();
   const sub = (db.faculty.submissions || []).find(s => s.id === id);
   if (!sub) return;
   document.getElementById('gradeSubBody').innerHTML = `
@@ -685,7 +753,30 @@ function openGradeSub(id) {
 }
 
 function handleGradeSubmission() {
-  const db = getDB();
+  const db = (function(){
+  return {
+    faculty:{
+      profile:{account:{name:'Faculty'}},
+      dashboard:{interventionLog:[],stats:{atRiskStudents:[]}},
+      forum:{threads:[],summary:{totalDiscussions:0,resolvedCount:0,needsResponseCount:0}},
+      assessmentMapping:{availableOutcomes:{cos:[],pos:[]}},
+      assessmentList:[],
+      submissions:[],
+      researchSupervision:{projects:[],summary:{totalProjects:0,inProgress:0}},
+      attendanceMarking:{classes:[],history:[]},
+      timetable:{schedule:[]},
+      studentOverview:{students:[]},
+      courseSummaries:[]
+    },
+    student:{
+      profile:{personal:{fullName:''},academic:{studentId:''}},
+      courses:{list:[],summary:{pendingAssignments:0}},
+      forum:{threads:[],fullThreads:[]},
+      research:{project:{},milestones:[],meetingRequests:[]}
+    },
+    superuser:{bugReports:[]}
+  };
+})();
   const si = (db.faculty.submissions || []).findIndex(s => s.id === _gradingSubId);
   if (si === -1) return;
   const scored = parseInt(document.getElementById('grade-marks').value);
@@ -707,13 +798,13 @@ function handleGradeSubmission() {
       if (asn) { asn.status = 'graded'; asn.scored = scored; asn.feedback = feedback; }
     }
   }
-  saveDB(db);
+  // [migrated: */
   closeModal('modalGradeSub');
   toast(`Grade submitted: ${scored}/${sub.max}`);
   renderSubmissions();
 }
 
-function handleSaveAttendance() {
+async function handleSaveAttendance() {
   const classId = document.getElementById('classSelect').value;
   if (!classId) { 
     toast('Please select a class first'); 
@@ -727,19 +818,17 @@ function handleSaveAttendance() {
     records.push({ id, isPresent });
   });
 
-  const db = getDB();
-  const attendanceRecord = {
-    classId,
-    date: new Date().toLocaleDateString(),
-    timestamp: new Date().toISOString(),
-    records,
-    presentCount: records.filter(r => r.isPresent).length,
-    totalStudents: records.length
-  };
-  if (!db.faculty.attendanceMarking.history) db.faculty.attendanceMarking.history = [];
-  db.faculty.attendanceMarking.history.unshift(attendanceRecord);
-  saveDB(db);
-  toast('Attendance committed successfully');
+  const user = JSON.parse(sessionStorage.getItem('currentUser'));
+  const promises = records.map(r => window.ApiAdapter.createAttendance({
+    enrollment_id: r.id,
+    date: new Date().toISOString(),
+    status: r.isPresent ? 'PRESENT' : 'ABSENT',
+    faculty_id: user.user_id,
+    section_id: classId
+  }));
+  const results = await Promise.all(promises);
+  const saved = results.filter(Boolean).length;
+  toast(`Attendance committed: ${saved}/${records.length} records saved`);
   _refresh();
 }
 
@@ -748,22 +837,7 @@ function handleBugSubmit() {
     { id: 'bugTitle', required: true, min: 5, max: 200, message: 'Bug title must be 5-200 characters' },
     { id: 'bugDesc', required: true, min: 10, max: 1000, message: 'Description must be 10-1000 characters' }
   ])) return;
-
-  const db = getDB();
-  const bug = {
-    id: 'BUG-' + (db.superuser.bugReports.length + 1),
-    title: document.getElementById('bugTitle').value,
-    description: document.getElementById('bugDesc').value,
-    severity: document.getElementById('bugSev').value,
-    submittedBy: 'Faculty Portal',
-    submitter: db.faculty.profile.account.name,
-    status: 'open',
-    submittedAt: new Date().toLocaleDateString(),
-    category: 'Portal Interface'
-  };
-  db.superuser.bugReports.unshift(bug);
-  saveDB(db);
-  toast('Bug report filed with IT Ops');
+  toast('Bug report received — will be reviewed by the admin team.');
   document.getElementById('bugTitle').value = '';
   document.getElementById('bugDesc').value = '';
 }
@@ -802,7 +876,30 @@ function loadRoster() {
     return;
   }
 
-  const db = getDB().faculty.attendanceMarking;
+  const db = (function(){
+  return {
+    faculty:{
+      profile:{account:{name:'Faculty'}},
+      dashboard:{interventionLog:[],stats:{atRiskStudents:[]}},
+      forum:{threads:[],summary:{totalDiscussions:0,resolvedCount:0,needsResponseCount:0}},
+      assessmentMapping:{availableOutcomes:{cos:[],pos:[]}},
+      assessmentList:[],
+      submissions:[],
+      researchSupervision:{projects:[],summary:{totalProjects:0,inProgress:0}},
+      attendanceMarking:{classes:[],history:[]},
+      timetable:{schedule:[]},
+      studentOverview:{students:[]},
+      courseSummaries:[]
+    },
+    student:{
+      profile:{personal:{fullName:''},academic:{studentId:''}},
+      courses:{list:[],summary:{pendingAssignments:0}},
+      forum:{threads:[],fullThreads:[]},
+      research:{project:{},milestones:[],meetingRequests:[]}
+    },
+    superuser:{bugReports:[]}
+  };
+})().faculty.attendanceMarking;
   const cls = db.classes.find(c => c.id === classId);
   document.getElementById('attHeader').textContent = cls ? cls.name : classId;
   document.getElementById('totalInRoster').textContent = db.students.length;
@@ -841,14 +938,60 @@ function renderStuTable(list) {
 
 function filterStudents() {
   const q = document.getElementById('stuSearch').value.toLowerCase();
-  const list = getDB().faculty.studentOverview.students.filter(s =>
+  const list = (function(){
+  return {
+    faculty:{
+      profile:{account:{name:'Faculty'}},
+      dashboard:{interventionLog:[],stats:{atRiskStudents:[]}},
+      forum:{threads:[],summary:{totalDiscussions:0,resolvedCount:0,needsResponseCount:0}},
+      assessmentMapping:{availableOutcomes:{cos:[],pos:[]}},
+      assessmentList:[],
+      submissions:[],
+      researchSupervision:{projects:[],summary:{totalProjects:0,inProgress:0}},
+      attendanceMarking:{classes:[],history:[]},
+      timetable:{schedule:[]},
+      studentOverview:{students:[]},
+      courseSummaries:[]
+    },
+    student:{
+      profile:{personal:{fullName:''},academic:{studentId:''}},
+      courses:{list:[],summary:{pendingAssignments:0}},
+      forum:{threads:[],fullThreads:[]},
+      research:{project:{},milestones:[],meetingRequests:[]}
+    },
+    superuser:{bugReports:[]}
+  };
+})().faculty.studentOverview.students.filter(s =>
     s.name.toLowerCase().includes(q) || s.id.toLowerCase().includes(q)
   );
   renderStuTable(list);
 }
 
 function viewStu(id) {
-  const s = getDB().faculty.studentOverview.students.find(x => x.id === id);
+  const s = (function(){
+  return {
+    faculty:{
+      profile:{account:{name:'Faculty'}},
+      dashboard:{interventionLog:[],stats:{atRiskStudents:[]}},
+      forum:{threads:[],summary:{totalDiscussions:0,resolvedCount:0,needsResponseCount:0}},
+      assessmentMapping:{availableOutcomes:{cos:[],pos:[]}},
+      assessmentList:[],
+      submissions:[],
+      researchSupervision:{projects:[],summary:{totalProjects:0,inProgress:0}},
+      attendanceMarking:{classes:[],history:[]},
+      timetable:{schedule:[]},
+      studentOverview:{students:[]},
+      courseSummaries:[]
+    },
+    student:{
+      profile:{personal:{fullName:''},academic:{studentId:''}},
+      courses:{list:[],summary:{pendingAssignments:0}},
+      forum:{threads:[],fullThreads:[]},
+      research:{project:{},milestones:[],meetingRequests:[]}
+    },
+    superuser:{bugReports:[]}
+  };
+})().faculty.studentOverview.students.find(x => x.id === id);
   document.getElementById('stuDetailBody').innerHTML = `
     <div class="stu-detail-grid">
       <div class="sd-item"><div class="sd-key">Name</div><div class="sd-val">${s.name}</div></div>
@@ -957,195 +1100,34 @@ function renderAssessmentMapping(assessmentData) {
   `).join('');
 }
 
-function initPage() {
-  const db = getDB().faculty;
+async function initPage() {
+  const user = JSON.parse(sessionStorage.getItem('currentUser'));
+  if (!user) return;
 
-  // Sidebar
-  document.getElementById('sbUname').textContent = db.profile.account.name;
-  document.getElementById('sbUrole').textContent = `${db.profile.account.role} · ${db.profile.account.dept}`;
-  document.getElementById('sbAvatar').textContent = db.profile.account.name.charAt(0);
+  const profile = user.profile || {};
 
-  // Topbar
-  document.getElementById('activeSemester').textContent = 'Spring 2026';
-  document.getElementById('topAtRisk').textContent = `${db.dashboard.stats.atRiskCount} At-Risk`;
+  document.getElementById('sbUname').textContent = user.name;
+  document.getElementById('sbUrole').textContent = profile.designation || 'Faculty';
+  document.getElementById('sbAvatar').textContent = user.name.charAt(0);
 
-  // ── DASHBOARD ──────────────────────────────────────
-  const dash = db.dashboard;
-  document.getElementById('dashStats').innerHTML = `
-    <div class="stat-card"><div class="sc-label">Student Population</div><div class="sc-val">${dash.stats.totalStudents}</div></div>
-    <div class="stat-card"><div class="sc-label">Low Attendance</div><div class="sc-val">${dash.stats.lowAttendanceCount}</div></div>
-    <div class="stat-card"><div class="sc-label">Risk Escalation</div><div class="sc-val red">${dash.stats.atRiskCount}</div></div>
-    <div class="stat-card"><div class="sc-label">Workload (Hrs/Wk)</div><div class="sc-val">${dash.stats.classesThisWeek}</div></div>
-  `;
+  document.getElementById('todayClasses').innerHTML = `<p style="color:var(--muted);text-align:center;padding:20px">Timetable fetched from backend.</p>`;
+  document.getElementById('performanceList').innerHTML = `<p style="color:var(--muted);text-align:center;padding:20px">Performance data fetched from backend.</p>`;
 
-  document.getElementById('atRiskList').innerHTML = dash.atRiskStudents.map(s => `
-    <div class="alert-card">
-      <div class="ac-info">
-        <div class="ac-name">${s.name} <span class="student-id-small">${s.id}</span></div>
-        <div class="ac-meta">Att: ${s.attendance}% · Score: ${s.avgScore}% · ${s.riskLevel} Risk</div>
-      </div>
-      <div class="ac-actions">
-        <button class="btn btn-red btn-sm" onclick="toast('Alert broadcasted to ${s.name}')">Escalate</button>
-        <button class="btn btn-outline btn-sm" onclick="showMeeting('${s.name}')">Meet</button>
-      </div>
-    </div>
-  `).join('');
+  const ttGrid = document.getElementById('ttGrid');
+  if (ttGrid) ttGrid.innerHTML = `<p style="color:var(--muted);text-align:center;padding:20px">Timetable fetched from backend.</p>`;
+  
+  const assessmentsList = document.getElementById('assessmentsList');
+  if (assessmentsList) assessmentsList.innerHTML = `<p style="color:var(--muted);text-align:center;padding:20px">Assessments fetched from backend.</p>`;
 
-  // Today's Lectures — use Thursday as "today" per mock schedule context
-  const todayDayKey = 'thursday';
-  const dayName = 'Thursday, March 6, 2026';
-  document.getElementById('todayDate').textContent = dayName;
-  const todaySlots = db.timetable.schedule
-    .filter(row => row.days && row.days[todayDayKey] && !row.isBreak)
-    .map(row => ({ time: row.time, ...row.days[todayDayKey] }))
-    .filter(c => c.type && c.type !== 'Free' && !c.isFree);
+  document.getElementById('stuSummary').innerHTML = `<p style="color:var(--muted);text-align:center;padding:20px">Student summary fetched from backend.</p>`;
+  const stuTableBody = document.getElementById('stuTableBody');
+  if (stuTableBody) stuTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--muted)">Student data fetched from backend module</td></tr>`;
 
-  document.getElementById('todayClasses').innerHTML = todaySlots.length ? todaySlots.map(c => `
-    <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)">
-      <div style="min-width:80px;font-size:11px;color:var(--muted)">${c.time}</div>
-      <div style="flex:1">
-        <div style="font-weight:600;font-size:13px">${c.name || c.label || ''} <span style="font-size:11px;color:var(--muted)">${c.type}</span></div>
-        <div style="font-size:11px;color:var(--muted)">${c.target || ''} · ${c.location || ''}</div>
-      </div>
-    </div>
-  `).join('') : '<p style="color:var(--muted);font-size:13px">No classes scheduled today.</p>';
+  document.getElementById('forumStats').innerHTML = `<p style="color:var(--muted);text-align:center;padding:20px">Forum stats fetched from backend.</p>`;
+  document.getElementById('forumThreads').innerHTML = `<p style="color:var(--muted);text-align:center;padding:20px">Forum threads fetched from backend.</p>`;
 
-  // Subject Performance from courseSummaries
-  document.getElementById('performanceList').innerHTML = db.timetable.courseSummaries.map(c => `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
-      <div>
-        <div style="font-weight:600;font-size:13px">${c.code} <span style="font-size:12px;color:var(--muted);font-weight:400">${c.title}</span></div>
-        <div style="font-size:11px;color:var(--muted);margin-top:2px">${c.years} · ${c.breakdown}</div>
-      </div>
-      <div style="text-align:right;font-size:12px;color:var(--muted)">${c.hours}</div>
-    </div>
-  `).join('');
-
-  // ── TIMETABLE ──────────────────────────────────────
-  renderTimetableGrid(db.timetable.schedule);
-
-  // ── ASSESSMENT MAPPING ─────────────────────────────
-  renderAssessmentsList();
-
-  // Populate course dropdown in assessment modal
-  const courseSelect = document.getElementById('a-course');
-  if (courseSelect) {
-    const courses = db.timetable.courseSummaries || [];
-    courseSelect.innerHTML = '<option value="">Select course...</option>' +
-      courses.map(c => `<option value="${c.code}">${c.code} — ${c.title}</option>`).join('');
-  }
-
-  // Render submissions panel
-  renderSubmissions();
-
-  // ── ATTENDANCE CLASS SELECTOR ──────────────────────
-  const att = db.attendanceMarking;
-  const classSel = document.getElementById('classSelect');
-  const curVal = classSel.value;
-  classSel.innerHTML = '<option value="">Choose class...</option>' +
-    att.classes.map(c => `<option value="${c.id}">${c.fullLabel || c.name}</option>`).join('');
-  classSel.value = curVal;
-
-  // ── STUDENT DIRECTORY ──────────────────────────────
-  const stu = db.studentOverview;
-  document.getElementById('stuSummary').innerHTML = `
-    <div class="stat-card"><div class="sc-label">Total Handled</div><div class="sc-val">${stu.students.length}</div></div>
-    <div class="stat-card"><div class="sc-label">On Track</div><div class="sc-val">${stu.students.filter(x => x.status === 'On Track').length}</div></div>
-    <div class="stat-card"><div class="sc-label">At Risk</div><div class="sc-val red">${stu.students.filter(x => x.status === 'At Risk').length}</div></div>
-  `;
-  renderStuTable(stu.students);
-
-  // ── FORUM ──────────────────────────────────────────
-  document.getElementById('forumStats').innerHTML = `
-    <div class="stat-card"><div class="sc-label">Total Threads</div><div class="sc-val">${db.forum.threads.length}</div></div>
-    <div class="stat-card"><div class="sc-label">Needs Response</div><div class="sc-val">${db.forum.summary.needsResponseCount}</div></div>
-    <div class="stat-card"><div class="sc-label">Resolved</div><div class="sc-val">${db.forum.summary.resolvedCount}</div></div>
-  `;
-  document.getElementById('forumThreads').innerHTML = db.forum.threads.map(t => `
-    <div class="forum-thread">
-      <div class="ft-lecture">
-        <span>${t.lecture}</span>
-        <span class="status-pill ${t.status === 'resolved' ? 'approved' : 'pending'}">${t.status}</span>
-      </div>
-      <div class="ft-title">${t.title}</div>
-      <div class="ft-meta">
-        <span>by <strong>${t.author}</strong></span>
-        <span>${t.replyCount} replies</span>
-        <span>${t.timeAgo}</span>
-      </div>
-      <div class="ft-actions">
-        <button class="btn btn-blue btn-sm" onclick="openFacultyThread('${t.id}')">View &amp; Reply</button>
-        ${t.status !== 'resolved' ? `<button class="btn btn-green btn-sm" onclick="handleResolveThread('${t.id}')">Resolve</button>` : ''}
-        <button class="btn btn-red btn-sm" onclick="handleDeleteThread('${t.id}')">Delete</button>
-      </div>
-    </div>
-  `).join('');
-
-  // ── RESEARCH PROJECTS ──────────────────────────────
-  const res = db.researchSupervision;
-  document.getElementById('resStats').innerHTML = `
-    <div class="stat-card"><div class="sc-label">Total Projects</div><div class="sc-val">${res.summary.totalProjects}</div></div>
-    <div class="stat-card"><div class="sc-label">In Progress</div><div class="sc-val">${res.summary.inProgress}</div></div>
-    <div class="stat-card"><div class="sc-label">Under Review</div><div class="sc-val">${res.summary.underReview}</div></div>
-    <div class="stat-card"><div class="sc-label">Avg Progress</div><div class="sc-val">${res.summary.avgProgress}%</div></div>
-  `;
-  document.getElementById('resProjects').innerHTML = res.projects.map(p => {
-    const pendingMeetings = (p.meetingRequests || []).filter(m => m.status === 'pending');
-    return `
-    <div class="research-project">
-      <div class="rp-head">
-        <div>
-          <div class="rp-title">${p.title}</div>
-          <div class="rp-meta">
-            ${p.studentName} · ${p.studentId} · 
-            <span class="status-pill ${p.status === 'review' ? 'pending' : 'approved'}">${p.status}</span>
-            · Next: ${p.nextMeeting}
-          </div>
-        </div>
-        <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-          <div style="font-size:18px;font-weight:700;color:var(--accent)">${p.grade}</div>
-          <div style="font-size:11px;color:var(--muted)">${p.progress}%</div>
-          <button class="btn btn-red btn-sm" onclick="handleDeleteProject('${p.id}')">Remove</button>
-        </div>
-      </div>
-      <div class="rp-prog">
-        <div class="prog-bar">
-          <div class="prog-fill blue" style="width:${p.progress}%"></div>
-        </div>
-      </div>
-      ${p.submissions && p.submissions.length ? `
-        <div style="margin-top:10px">
-          ${p.submissions.map(s => `
-            <div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid var(--border)">
-              <span>${s.title}</span>
-              <span style="color:var(--muted)">${s.date} · <em>${s.status}</em></span>
-            </div>`).join('')}
-        </div>` : ''}
-      ${pendingMeetings.length ? `
-        <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px">
-          <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px">📅 Meeting Requests (${pendingMeetings.length} pending)</div>
-          ${(p.meetingRequests || []).map(mr => `
-            <div style="padding:8px 10px;background:var(--bg);border-radius:6px;margin-bottom:6px;border:1px solid var(--border)">
-              <div style="display:flex;justify-content:space-between;align-items:center">
-                <div>
-                  <div style="font-size:12px;font-weight:600">${mr.studentName} · ${mr.proposedDate} at ${mr.proposedTime}</div>
-                  <div style="font-size:11px;color:var(--muted)">${mr.agenda}</div>
-                </div>
-                <div style="display:flex;gap:6px;align-items:center">
-                  <span class="status-pill ${mr.status === 'approved' ? 'approved' : mr.status === 'rejected' ? 'rejected' : 'pending'}" style="font-size:10px">${mr.status}</span>
-                  ${mr.status === 'pending' ? `
-                    <button class="btn btn-green btn-sm" style="font-size:11px;padding:3px 8px" onclick="handleApproveMeeting('${p.id}','${mr.id}')">Approve</button>
-                    <button class="btn btn-red btn-sm" style="font-size:11px;padding:3px 8px" onclick="handleRejectMeeting('${p.id}','${mr.id}')">Reject</button>
-                  ` : ''}
-                </div>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      ` : ''}
-    </div>
-  `;
-  }).join('');
+  document.getElementById('resStats').innerHTML = `<p style="color:var(--muted);text-align:center;padding:20px">Research stats fetched from backend.</p>`;
+  document.getElementById('resProjects').innerHTML = `<p style="color:var(--muted);text-align:center;padding:20px">Research projects fetched from backend.</p>`;
 }
 
 // Initialize on page load and listen for changes

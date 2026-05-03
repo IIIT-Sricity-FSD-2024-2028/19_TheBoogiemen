@@ -10,9 +10,12 @@ import { ForumModule } from './modules/forum/forum.forum.module';
 import { LeaveModule } from './modules/leave/leave.leave.module';
 import { AssessmentModule } from './modules/assessment/assessment.assessment.module';
 import { OutcomeModule } from './modules/outcome/outcome.outcome.module';
+import { StateModule } from './modules/state/state.module';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+
+import { AuthController } from './auth.controller';
 
 @Module({
   imports: [
@@ -26,9 +29,10 @@ import { AppService } from './app.service';
     ForumModule,
     LeaveModule,
     AssessmentModule,
-    OutcomeModule
+    OutcomeModule,
+    StateModule
   ],
-  controllers: [AppController],
+  controllers: [AppController, AuthController],
   providers: [AppService],
 })
 export class AppModule {}

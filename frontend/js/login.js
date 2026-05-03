@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  function handleLogin(event) {
+  async function handleLogin(event) {
     event.preventDefault();
     
     // Enhanced validation with regex patterns
@@ -156,36 +156,37 @@ document.addEventListener('DOMContentLoaded', function() {
     const password = document.getElementById('password').value;
     const selectedRole = document.getElementById('loginForm').dataset.role || 'student';
 
-    // Authenticate user
-    const user = authenticateUser(email, password);
+    // Authenticate user via backend
+    const response = await window.ApiAdapter.login(email, password, selectedRole);
 
-    if (!user) {
+    if (!response || !response.success) {
       // Show error
       const passwordField = document.getElementById('password').closest('.field');
       passwordField.classList.add('has-error');
       const span = document.createElement('span');
       span.className = 'field-error';
-      span.textContent = 'Invalid email or password';
+      span.textContent = response ? response.message : 'Invalid email or password';
       passwordField.appendChild(span);
       return;
     }
 
-    // Check if role matches
-    if (user.role !== selectedRole && !(selectedRole === 'admin' && user.role === 'superuser')) {
-      const emailField = document.getElementById('email').closest('.field');
-      emailField.classList.add('has-error');
-      const span = document.createElement('span');
-      span.className = 'field-error';
-      span.textContent = `This account is for ${user.role}, not ${selectedRole}`;
-      emailField.appendChild(span);
-      return;
-    }
+    const user = response.data;
 
-    // Store user session
-    setCurrentUser(user);
+    // Store user session (we will keep setCurrentUser but move its definition to auth.js or state-manager)
+    if (typeof setCurrentUser === 'function') {
+      setCurrentUser(user);
+    } else {
+      sessionStorage.setItem('currentUser', JSON.stringify(user));
+    }
+    localStorage.setItem('bp_user_role', user.role);
 
     // Redirect to appropriate portal
-    const redirect = getRedirectForRole(user.role);
+    let redirect = 'login.html';
+    if (user.role === 'student') redirect = 'student.html';
+    else if (user.role === 'faculty') redirect = 'faculty.html';
+    else if (user.role === 'academic_head') redirect = 'head.html';
+    else if (user.role === 'admin') redirect = 'superuser.html';
+    
     window.location.href = redirect;
   }
 

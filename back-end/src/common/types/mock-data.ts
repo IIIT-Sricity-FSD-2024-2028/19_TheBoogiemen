@@ -25,19 +25,20 @@ const reply_1 = uuidv4();
 const domain_auth_1 = uuidv4();
 
 export const MOCK_USERS: USER[] = [
-  { user_id: SEED.STUDENTS[0], username: 'alice_smith', email: 'alice@university.edu', role: 'student' },
-  { user_id: SEED.STUDENTS[1], username: 'bob_jones', email: 'bob@university.edu', role: 'student' },
-  { user_id: SEED.STUDENTS[2], username: 'charlie_brown', email: 'charlie@university.edu', role: 'student' },
-  { user_id: SEED.FACULTY[0], username: 'dr_miller', email: 'miller@university.edu', role: 'faculty' },
-  { user_id: SEED.FACULTY[1], username: 'dr_clark', email: 'clark@university.edu', role: 'faculty' },
-  { user_id: SEED.ACADEMIC_HEADS[0], username: 'prof_taylor', email: 'taylor@university.edu', role: 'academic_head' },
-  { user_id: SEED.ADMINS[0], username: 'admin_sys', email: 'admin@university.edu', role: 'admin' },
+  { user_id: SEED.STUDENTS[0], username: 'alice_smith', email: 'student@iiits.in', password_hash: 'Student@123', role: 'student' },
+  { user_id: SEED.STUDENTS[1], username: 'bob_jones', email: 'pranjal.student@iiits.in', password_hash: 'Student@123', role: 'student' },
+  { user_id: SEED.STUDENTS[2], username: 'charlie_brown', email: 'charlie@university.edu', password_hash: 'Student@123', role: 'student' },
+  { user_id: SEED.FACULTY[0], username: 'dr_miller', email: 'faculty@iiits.in', password_hash: 'Faculty@123', role: 'faculty' },
+  { user_id: SEED.FACULTY[1], username: 'dr_clark', email: 'professor@iiits.in', password_hash: 'Faculty@123', role: 'faculty' },
+  { user_id: SEED.ACADEMIC_HEADS[0], username: 'prof_taylor', email: 'head@iiits.in', password_hash: 'Head@1234', role: 'academic_head' },
+  { user_id: SEED.ADMINS[0], username: 'admin_sys', email: 'admin@iiits.in', password_hash: 'Admin@12345', role: 'admin' },
+  { user_id: uuidv4(), username: 'super_sys', email: 'superuser@iiits.in', password_hash: 'Super@12345', role: 'admin' }, // Wait, superuser role? The USER role enum is 'student' | 'faculty' | 'admin' | 'academic_head'
 ];
 
 export const MOCK_STUDENTS: STUDENT[] = [
-  { student_id: SEED.STUDENTS[0], user_id: SEED.STUDENTS[0], first_name: 'Alice', last_name: 'Smith', branch: 'Computer Science', academic_level: 'Undergraduate', batch: '2025' },
-  { student_id: SEED.STUDENTS[1], user_id: SEED.STUDENTS[1], first_name: 'Bob', last_name: 'Jones', branch: 'Mechanical Engineering', academic_level: 'Undergraduate', batch: '2026' },
-  { student_id: SEED.STUDENTS[2], user_id: SEED.STUDENTS[2], first_name: 'Charlie', last_name: 'Brown', branch: 'Computer Science', academic_level: 'Undergraduate', batch: '2025' },
+  { student_id: SEED.STUDENTS[0], user_id: SEED.STUDENTS[0], first_name: 'Alice', last_name: 'Smith', branch: 'Computer Science', academic_level: 'Undergraduate', batch: '2025', blood_group: 'O+', emergency_contact: '+91-9876543210', parent_name: 'Robert Smith', school: 'School of Engineering & Technology', program: 'B.Tech in Computer Science and Engineering' },
+  { student_id: SEED.STUDENTS[1], user_id: SEED.STUDENTS[1], first_name: 'Bob', last_name: 'Jones', branch: 'Mechanical Engineering', academic_level: 'Undergraduate', batch: '2026', blood_group: 'A+', emergency_contact: '+91-8765432109', parent_name: 'Michael Jones', school: 'School of Engineering & Technology', program: 'B.Tech in Mechanical Engineering' },
+  { student_id: SEED.STUDENTS[2], user_id: SEED.STUDENTS[2], first_name: 'Charlie', last_name: 'Brown', branch: 'Computer Science', academic_level: 'Undergraduate', batch: '2025', blood_group: 'B+', emergency_contact: '+91-7654321098', parent_name: 'William Brown', school: 'School of Engineering & Technology', program: 'B.Tech in Computer Science and Engineering' },
 ];
 
 export const MOCK_FACULTY: FACULTY[] = [

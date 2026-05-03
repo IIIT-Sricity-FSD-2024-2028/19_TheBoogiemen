@@ -137,7 +137,7 @@ function _nextId(arr) {
 
 // Dashboard
 function renderStats() {
-  const db = getDB().admin.dashboard.institutionalStats;
+  const db = .admin.dashboard.institutionalStats;
   const row = document.getElementById('head-stat-row');
   row.innerHTML = `
     <div class="stat-card"><div class="sc-label">Total Students</div><div class="sc-val">${db.totalStudents}</div></div>
@@ -149,7 +149,7 @@ function renderStats() {
 
 // Reports — populate all four category tabs
 function renderReports() {
-  const cats = getDB().admin.reports.categories;
+  const cats = .admin.reports.categories;
   const tabMap = {
     'Academic Performance': 'report-items-performance',
     'Attendance': 'rcat-attendance',
@@ -222,24 +222,15 @@ function handleAddEvent() {
   ];
   if (!validateForm('modalAddEvent', config)) return;
 
-  const db = getDB();
-  const newEv = {
-    id: _nextId(db.admin.eventScheduler.events),
-    title: document.getElementById('ev-title').value,
-    type: document.getElementById('ev-type').value,
-    dateTime: `${document.getElementById('ev-date').value} at ${document.getElementById('ev-time').value}`,
-    venue: document.getElementById('ev-venue').value,
-    description: document.getElementById('ev-desc').value
-  };
-  db.admin.eventScheduler.events.push(newEv);
-  saveDB(db);
+  const db = 
+  // [migrated: */
   closeModal('modalAddEvent');
   toast('Event scheduled successfully');
   _headRefresh('events');
 }
 
 function renderEvents() {
-  const events = getDB().admin.eventScheduler.events;
+  const events = .admin.eventScheduler.events;
   const list = document.getElementById('events-list');
   const colors = { training: 'blue', meeting: 'green', review: 'amber', event: 'violet' };
   list.innerHTML = events.map(e => `
@@ -255,9 +246,8 @@ function renderEvents() {
 }
 
 function handleDeleteEvent(id) {
-  const db = getDB();
-  db.admin.eventScheduler.events = db.admin.eventScheduler.events.filter(e => e.id !== id);
-  saveDB(db);
+  const db = 
+  // [migrated: */
   _headRefresh('events');
   toast('Event deleted');
 }
@@ -271,24 +261,15 @@ function handleAddResource() {
   ];
   if (!validateForm('modalAddResource', config)) return;
 
-  const db = getDB();
-  const res = {
-    id: 'RES-' + Math.floor(Math.random() * 1000),
-    name: document.getElementById('res-name').value,
-    type: document.getElementById('res-type').value,
-    capacity: document.getElementById('res-cap').value,
-    status: 'available',
-    nextScheduled: 'Not scheduled'
-  };
-  db.admin.resources.facilities.push(res);
-  saveDB(db);
+  const db = 
+  // [migrated: */
   closeModal('modalAddResource');
   toast('Resource added');
   _headRefresh('resources');
 }
 
 function renderResources() {
-  const facilities = getDB().admin.resources.facilities;
+  const facilities = .admin.resources.facilities;
   const tbody = document.getElementById('resources-tbody');
   tbody.innerHTML = facilities.map(f => `
     <tr>
@@ -306,16 +287,15 @@ function renderResources() {
 }
 
 function handleDeleteResource(id) {
-  const db = getDB();
-  db.admin.resources.facilities = db.admin.resources.facilities.filter(f => f.id !== id);
-  saveDB(db);
+  const db = 
+  // [migrated: */
   _headRefresh('resources');
   toast('Resource removed');
 }
 
 // Fees
 function renderFees() {
-  const db = getDB().admin.feeCompliance;
+  const db = .admin.feeCompliance;
   const search = document.getElementById('feeSearch').value.toLowerCase();
   const dept = document.getElementById('feeDeptFilter').value;
 
@@ -357,16 +337,8 @@ function handleAddUser() {
   ];
   if (!validateForm('modalAddUser', config)) return;
 
-  const db = getDB();
-  const user = {
-    id: 'U-' + Math.floor(Math.random() * 1000),
-    name: document.getElementById('u-name').value,
-    email: document.getElementById('u-email').value,
-    role: document.getElementById('u-role').value,
-    status: 'active'
-  };
-  db.admin.userManagement.users.push(user);
-  saveDB(db);
+  const db = 
+  // [migrated: */
   closeModal('modalAddUser');
   toast('User account created');
   _headRefresh('users');
@@ -374,7 +346,7 @@ function handleAddUser() {
 }
 
 function renderUsers() {
-  const users = getDB().admin.userManagement.users;
+  const users = .admin.userManagement.users;
   document.getElementById('users-tbody').innerHTML = users.map(u => `
     <tr>
       <td>${u.id}</td>
@@ -388,15 +360,14 @@ function renderUsers() {
 }
 
 function handleDeleteUser(id) {
-  const db = getDB();
-  db.admin.userManagement.users = db.admin.userManagement.users.filter(u => u.id !== id);
-  saveDB(db);
+  const db = 
+  // [migrated: */
   _headRefresh('users');
   toast('User deleted');
 }
 
 function renderUserStats() {
-  const users = getDB().admin.userManagement.users;
+  const users = .admin.userManagement.users;
   const total = users.length;
   const active = users.filter(u => u.status === 'active').length;
   const pending = users.filter(u => u.status === 'pending').length;
@@ -418,24 +389,15 @@ function handleAddOverride() {
   ];
   if (!validateForm('modalAddOverride', config)) return;
 
-  const db = getDB();
-  const rec = {
-    id: 'O' + Math.floor(Math.random() * 100),
-    name: document.getElementById('ao-name').value,
-    roll: document.getElementById('ao-roll').value,
-    date: document.getElementById('ao-date').value,
-    status: document.getElementById('ao-status').value,
-    reason: document.getElementById('ao-reason').value
-  };
-  db.admin.attendanceOverride.records.push(rec);
-  saveDB(db);
+  const db = 
+  // [migrated: */
   closeModal('modalAddOverride');
   toast('Override applied');
   _headRefresh('attendance');
 }
 
 function renderOverrides() {
-  const records = getDB().admin.attendanceOverride.records;
+  const records = .admin.attendanceOverride.records;
   document.getElementById('override-tbody').innerHTML = records.map(r => `
     <tr>
       <td>${r.id}</td>
@@ -450,9 +412,8 @@ function renderOverrides() {
 }
 
 function handleDeleteOverride(id) {
-  const db = getDB();
-  db.admin.attendanceOverride.records = db.admin.attendanceOverride.records.filter(r => r.id !== id);
-  saveDB(db);
+  const db = 
+  // [migrated: */
   _headRefresh('attendance');
   toast('Override reverted');
 }
@@ -461,61 +422,18 @@ function handleDeleteOverride(id) {
 let _activeCorrId = null;
 
 function renderCorrectionRequests() {
-  const db = getDB();
-  const requests = (db.admin.attendanceOverride.correctionRequests || []);
-  const pendingCount = requests.filter(r => r.status === 'pending').length;
-  const countEl = document.getElementById('pendingCorrCount');
-  if (countEl) countEl.textContent = `${pendingCount} Pending`;
-
-  const tbody = document.getElementById('correction-requests-tbody');
-  if (!tbody) return;
-  tbody.innerHTML = requests.length ? requests.map(r => `
-    <tr>
-      <td><strong>${r.studentName}</strong><br><span style="font-size:11px;color:var(--muted)">${r.studentId}</span></td>
-      <td>${r.course}</td>
-      <td>${r.date}</td>
-      <td style="max-width:200px;font-size:12px">${r.reason}</td>
-      <td><span class="status-pill ${r.status === 'approved' ? 'approved' : r.status === 'rejected' ? 'rejected' : 'pending'}">${r.status}</span></td>
-      <td>
-        ${r.status === 'pending' ? `<button class="btn btn-blue btn-sm" onclick="openCorrectionDecision('${r.id}')">Review</button>` : '<span style="font-size:12px;color:var(--muted)">Decided</span>'}
-      </td>
-    </tr>
-  `).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:16px">No correction requests submitted yet.</td></tr>';
+  const db = 
 }
 
 function openCorrectionDecision(id) {
   _activeCorrId = id;
-  const db = getDB();
-  const req = (db.admin.attendanceOverride.correctionRequests || []).find(r => r.id === id);
-  if (!req) return;
-  document.getElementById('corrDecisionBody').innerHTML = `
-    <div style="background:var(--bg);border-radius:8px;padding:12px;margin-bottom:4px">
-      <div style="font-weight:600;margin-bottom:4px">${req.studentName} <span style="font-size:12px;color:var(--muted)">(${req.studentId})</span></div>
-      <div style="font-size:13px;color:var(--ink)"><strong>Course:</strong> ${req.course} (${req.courseCode || ''})</div>
-      <div style="font-size:13px;color:var(--ink)"><strong>Date:</strong> ${req.date}</div>
-      <div style="font-size:13px;color:var(--ink);margin-top:6px"><strong>Reason:</strong> ${req.reason}</div>
-      <div style="font-size:11px;color:var(--muted);margin-top:4px">Submitted: ${req.submittedOn}</div>
-    </div>
-  `;
-  document.getElementById('corr-note').value = '';
-  showModal('modalDecideCorrection');
+  const db = 
 }
 
 function handleDecideCorrection(decision) {
-  const db = getDB();
-  const reqs = db.admin.attendanceOverride.correctionRequests || [];
-  const ri = reqs.findIndex(r => r.id === _activeCorrId);
-  if (ri === -1) return;
-  reqs[ri].status = decision;
-  reqs[ri].decidedOn = new Date().toLocaleDateString();
-  reqs[ri].note = document.getElementById('corr-note').value;
+  const db = 
 
-  // Also update student's own correctionRequests if it matches
-  const stuReqs = db.student.attendanceTracker.correctionRequests || [];
-  const si = stuReqs.findIndex(r => r.id === _activeCorrId);
-  if (si !== -1) { stuReqs[si].status = decision; }
-
-  saveDB(db);
+  // [migrated: */
   closeModal('modalDecideCorrection');
   _headRefresh('attendance');
   toast(`Correction request ${decision}`);
@@ -525,100 +443,18 @@ function handleDecideCorrection(decision) {
 let _activeLeaveId = null;
 
 function renderLeaves() {
-  const db = getDB();
-  const leaves = (db.admin.attendanceOverride && db.admin.attendanceOverride.leaveApplications) || [];
-  const pendingCount = leaves.filter(l => l.status === 'pending').length;
-  const countEl = document.getElementById('pendingLeaveCount');
-  if (countEl) countEl.textContent = `${pendingCount} Pending`;
-
-  // Stats row
-  const statsEl = document.getElementById('leave-stats');
-  if (statsEl) {
-    const approved = leaves.filter(l => l.status === 'Approved').length;
-    const rejected = leaves.filter(l => l.status === 'Rejected').length;
-    statsEl.innerHTML = `
-      <div class="stat-card"><div class="sc-label">Total Applications</div><div class="sc-val">${leaves.length}</div></div>
-      <div class="stat-card"><div class="sc-label">Pending</div><div class="sc-val" style="color:var(--amber)">${pendingCount}</div></div>
-      <div class="stat-card"><div class="sc-label">Approved</div><div class="sc-val" style="color:var(--green)">${approved}</div></div>
-      <div class="stat-card"><div class="sc-label">Rejected</div><div class="sc-val" style="color:var(--red)">${rejected}</div></div>
-    `;
-  }
-
-  const tbody = document.getElementById('leave-tbody');
-  if (!tbody) return;
-  tbody.innerHTML = leaves.length ? leaves.map(l => `
-    <tr>
-      <td style="font-family:var(--fm);font-size:12px">${l.id}</td>
-      <td><strong>${l.studentName}</strong><br><span style="font-size:11px;color:var(--muted)">${l.studentId}</span></td>
-      <td>${l.type}</td>
-      <td>${l.startDate}</td>
-      <td>${l.endDate}</td>
-      <td style="max-width:200px;font-size:12px">${l.reason}</td>
-      <td><span class="status-pill ${l.status === 'Approved' ? 'approved' : l.status === 'Rejected' ? 'rejected' : 'pending'}">${l.status}</span></td>
-      <td>
-        ${l.status === 'pending' ? `<button class="btn btn-blue btn-sm" onclick="openLeaveDecision('${l.id}')">Review</button>` : '<span style="font-size:12px;color:var(--muted)">Decided</span>'}
-      </td>
-    </tr>
-  `).join('') : '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:16px">No leave applications submitted yet.</td></tr>';
+  const db = 
 }
 
 function openLeaveDecision(id) {
   _activeLeaveId = id;
-  const db = getDB();
-  const leaves = (db.admin.attendanceOverride && db.admin.attendanceOverride.leaveApplications) || [];
-  const req = leaves.find(r => r.id === id);
-  if (!req) return;
-  document.getElementById('leaveDecisionBody').innerHTML = `
-    <div style="background:var(--bg);border-radius:8px;padding:12px;margin-bottom:4px">
-      <div style="font-weight:600;margin-bottom:4px">${req.studentName} <span style="font-size:12px;color:var(--muted)">(${req.studentId})</span></div>
-      <div style="font-size:13px;color:var(--ink)"><strong>Type:</strong> ${req.type}</div>
-      <div style="font-size:13px;color:var(--ink)"><strong>Duration:</strong> ${req.startDate} to ${req.endDate}</div>
-      <div style="font-size:13px;color:var(--ink);margin-top:6px"><strong>Reason:</strong> ${req.reason}</div>
-      <div style="font-size:11px;color:var(--muted);margin-top:4px">Applied: ${req.appliedOn}</div>
-    </div>
-  `;
-  document.getElementById('leave-note').value = '';
-  showModal('modalDecideLeave');
+  const db = 
 }
 
 function handleDecideLeave(decision) {
-  const db = getDB();
-  const leaves = db.admin.attendanceOverride.leaveApplications || [];
-  const li = leaves.findIndex(r => r.id === _activeLeaveId);
-  if (li === -1) return;
+  const db = 
 
-  const note = document.getElementById('leave-note').value.trim();
-
-  // Validate rejection reason
-  if (decision === 'Rejected' && !note) {
-    const noteEl = document.getElementById('leave-note');
-    const parent = noteEl.closest('.form-field');
-    parent.classList.add('has-error');
-    const existing = parent.querySelector('.field-error');
-    if (existing) existing.remove();
-    const errEl = document.createElement('span');
-    errEl.className = 'field-error';
-    errEl.textContent = 'Rejection reason is required';
-    parent.appendChild(errEl);
-    return;
-  }
-
-  leaves[li].status = decision;
-  leaves[li].decidedOn = new Date().toLocaleDateString();
-  leaves[li].rejectionReason = decision === 'Rejected' ? note : null;
-
-  // Sync status back to student's leave applications
-  if (db.student && db.student.leaveManagement && db.student.leaveManagement.applications) {
-    const stuLeave = db.student.leaveManagement.applications.find(
-      s => s.id === leaves[li].studentLeaveId
-    );
-    if (stuLeave) {
-      stuLeave.status = decision;
-      stuLeave.rejectionReason = decision === 'Rejected' ? note : null;
-    }
-  }
-
-  saveDB(db);
+  // [migrated: */
   closeModal('modalDecideLeave');
   _headRefresh('leaves');
   toast(`Leave application ${decision.toLowerCase()}`);
@@ -633,19 +469,8 @@ function handleAddReport() {
   ];
   if (!validateForm('modalAddReport', config)) return;
 
-  const db = getDB();
-  const cat = document.getElementById('rep-cat').value;
-  if (!db.admin.reports.categories[cat]) db.admin.reports.categories[cat] = [];
-  const newReport = {
-    id: 'RP-' + Date.now(),
-    title: document.getElementById('rep-title').value,
-    description: document.getElementById('rep-desc').value,
-    period: document.getElementById('rep-period').value,
-    fileSize: document.getElementById('rep-size').value || '— MB',
-    badgeClass: 'badge'
-  };
-  db.admin.reports.categories[cat].push(newReport);
-  saveDB(db);
+  const db = 
+  // [migrated: */
   closeModal('modalAddReport');
   toast('Report added');
   document.getElementById('rep-title').value = '';
@@ -658,16 +483,7 @@ function handleAddReport() {
 let _editRepCat = null;
 function openEditReport(id, cat) {
   _editRepCat = cat;
-  const db = getDB();
-  const cats = db.admin.reports.categories;
-  const report = (cats[cat] || []).find(r => r.id === id);
-  if (!report) return;
-  document.getElementById('edit-rep-id').value = id;
-  document.getElementById('edit-rep-cat').value = cat;
-  document.getElementById('edit-rep-title').value = report.title;
-  document.getElementById('edit-rep-desc').value = report.description;
-  document.getElementById('edit-rep-period').value = report.period;
-  showModal('modalEditReport');
+  const db = 
 }
 
 function handleEditReport() {
@@ -678,26 +494,16 @@ function handleEditReport() {
   ];
   if (!validateForm('modalEditReport', config)) return;
 
-  const db = getDB();
-  const id = document.getElementById('edit-rep-id').value;
-  const cat = document.getElementById('edit-rep-cat').value;
-  const cats = db.admin.reports.categories;
-  const ri = (cats[cat] || []).findIndex(r => r.id === id);
-  if (ri === -1) return;
-  cats[cat][ri].title = document.getElementById('edit-rep-title').value;
-  cats[cat][ri].description = document.getElementById('edit-rep-desc').value;
-  cats[cat][ri].period = document.getElementById('edit-rep-period').value;
-  saveDB(db);
+  const db = 
+  // [migrated: */
   closeModal('modalEditReport');
   toast('Report updated');
   renderReports();
 }
 
 function handleDeleteReport(id, cat) {
-  const db = getDB();
-  if (!db.admin.reports.categories[cat]) return;
-  db.admin.reports.categories[cat] = db.admin.reports.categories[cat].filter(r => r.id !== id);
-  saveDB(db);
+  const db = 
+  // [migrated: */
   toast('Report deleted');
   renderReports();
 }
@@ -723,16 +529,7 @@ function handleSubmitBug() {
   ];
   if (!validateForm('modalReportBug', config)) return;
 
-  const db = getDB();
-  const report = {
-    title: document.getElementById('bug-title').value,
-    category: document.getElementById('bug-cat').value,
-    severity: document.getElementById('bug-sev').value,
-    description: document.getElementById('bug-desc').value,
-    portalName: 'Academic Head Portal',
-    submitterName: db.admin.settings.account.userId
-  };
-  submitBugReport(report);
+  const db = 
   closeModal('modalReportBug');
   toast('Bug report submitted');
 }
@@ -740,74 +537,82 @@ function handleSubmitBug() {
 /* =====================================================
    INITIALIZATION & EVENTS
    ===================================================== */
-function initPage() {
-  const db = getDB().admin;
+async function initPage() {
+  const user = JSON.parse(sessionStorage.getItem('currentUser'));
+  if (!user) return;
 
-  console.log('=== Academic Head Portal Init ===');
-  console.log('Current User:', getCurrentUser());
-  console.log('Admin DB:', db);
-  console.log('Settings:', db.settings);
-  console.log('Dashboard Stats:', db.dashboard.institutionalStats);
-  console.log('=====================================');
-
-  // Account
-  if (!db.settings || !db.settings.account) {
-    console.error('Missing settings.account in admin database!');
-    console.log('Full admin DB:', db);
-    return;
-  }
-
-  const currentUser = getCurrentUser();
-  const displayName = currentUser ? currentUser.name : db.settings.account.userId;
+  const displayName = user.name || 'Academic Head';
   document.getElementById('sb-initial').textContent = displayName.charAt(0).toUpperCase();
   document.getElementById('sb-name').textContent = displayName;
-  document.getElementById('account-email').textContent = db.settings.account.email;
-  document.getElementById('account-id').textContent = db.settings.account.userId;
+  const accEmail = document.getElementById('account-email');
+  if (accEmail) accEmail.textContent = user.email || 'head@example.com';
+  const accId = document.getElementById('account-id');
+  if (accId) accId.textContent = user.user_id || 'HEAD01';
 
-  renderStats();
-  renderReports();
+  // Fetch all data in parallel
+  const [users, leaves, events, resources, payments, reports, assessments] = await Promise.all([
+    window.ApiAdapter.fetchAllUsers(),
+    window.ApiAdapter.fetchLeaves(),
+    window.ApiAdapter.fetchEvents(),
+    window.ApiAdapter.fetchResources(),
+    window.ApiAdapter.fetchFeePayments(),
+    window.ApiAdapter.fetchReports(),
+    window.ApiAdapter.fetchAssessments()
+  ]);
+
+  const students = (users || []).filter(u => u.role === 'student');
+  const faculty  = (users || []).filter(u => u.role === 'faculty');
+  const pendingLeaves = (leaves || []).filter(l => l.status === 'PENDING').length;
+
+  // Dashboard stats
+  const statsEl = document.getElementById('stats-grid');
+  if (statsEl) statsEl.innerHTML = `
+    <div class="stat-card"><div class="sc-label">Total Students</div><div class="sc-val">${students.length}</div></div>
+    <div class="stat-card"><div class="sc-label">Faculty Members</div><div class="sc-val">${faculty.length}</div></div>
+    <div class="stat-card"><div class="sc-label">Active Courses</div><div class="sc-val">${(assessments||[]).length}</div></div>
+    <div class="stat-card"><div class="sc-label">Pending Leaves</div><div class="sc-val" style="color:var(--amber)">${pendingLeaves}</div></div>
+  `;
+
+  // Users table
+  const tbody = document.getElementById('users-tbody');
+  if (tbody) tbody.innerHTML = (users||[]).length
+    ? (users||[]).map(u => `<tr><td>${u.user_id.slice(0,8)}…</td><td><strong>${u.username||u.email}</strong></td><td>${u.email}</td><td>${u.role}</td><td><span class="status-pill available">active</span></td><td><button class="btn btn-outline btn-sm" onclick="handleDeleteUser('${u.user_id}')">Delete</button></td></tr>`).join('')
+    : '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:16px">No users found.</td></tr>';
+  const totalEl = document.getElementById('statTotalUsers');
+  const activeEl = document.getElementById('statActiveUsers');
+  const pendingEl = document.getElementById('statPendingReviews');
+  if (totalEl) totalEl.textContent = (users||[]).length;
+  if (activeEl) activeEl.textContent = (users||[]).length;
+  if (pendingEl) pendingEl.textContent = pendingLeaves;
+
+  // Events
   renderEvents();
+
+  // Resources
   renderResources();
+
+  // Leaves
+  renderLeaves();
+
+  // Fees
   renderFees();
-  renderUsers();
+
+  // Reports
+  renderReports();
+
+  // Attendance
   renderOverrides();
   renderCorrectionRequests();
-  renderLeaves();
-  renderUserStats();
+}
 
-  // Bar Chart Injection
-  const depts = db.dashboard.departments;
-  document.getElementById('dept-bar-chart').innerHTML = depts.map(d => `
-    <div class="bar-col">
-      <div class="bar-val">${d.passRate}%</div>
-      <div class="bar-fill" style="height:${d.passRate}%"></div>
-      <div class="bar-label">${d.id}</div>
-    </div>
-  `).join('');
+// Initialize on page load
 
-  document.getElementById('dept-stats').innerHTML = depts.map(d => `
-    <div class="dept-stat">
-      <div class="dept-stat-name">${d.id}</div>
-      <div class="dept-stat-val">${d.students}</div>
-      <div class="dept-stat-sub">Students</div>
-    </div>
-  `).join('');
-
-  // Notifications Toggle List
-  const n = db.settings.notifications;
-  const nList = document.getElementById('notification-settings-list');
-  nList.innerHTML = Object.keys(n.types).map(t => `
-    <div class="toggle-row">
-      <div class="toggle-info">
-         <div class="toggle-title">${t.replace(/([A-Z])/g, ' $1')}</div>
-         <div class="toggle-desc">Receive updates for this category</div>
-      </div>
-      <label class="toggle-switch">
-         <input type="checkbox" ${n.types[t] ? 'checked' : ''} />
-         <span class="toggle-slider"></span>
-      </label>
-    </div>
-  `).join('');
+// Initialize on page load and listen for changes
+document.addEventListener('admin:changed', initPage);
+if (typeof syncDatabase === 'function') {
+  syncDatabase().then(() => initPage());
+} else {
+  initPage();
 }
 
 document.addEventListener('head:changed', (e) => {

@@ -103,7 +103,7 @@ function _refresh() {
   document.dispatchEvent(new CustomEvent('student:changed'));
 }
 
-function handleLeave() {
+async function handleLeave() {
   // Enhanced validation with date range check
   const startDate = document.getElementById('l-start').value;
   const endDate = document.getElementById('l-end').value;
@@ -115,114 +115,76 @@ function handleLeave() {
     { id: 'l-reason', required: true, min: 10, max: 500, message: 'Reason must be 10-500 characters' }
   ])) return;
 
-  const db = getDB();
+  const user = JSON.parse(sessionStorage.getItem('currentUser'));
+
   const newLeave = {
-    id: db.student.leaveManagement.applications.length + 1,
-    type: document.getElementById('l-type').value,
-    reason: document.getElementById('l-reason').value,
-    startDate: document.getElementById('l-start').value,
-    endDate: document.getElementById('l-end').value,
-    status: 'Pending',
-    duration: 'TBD',
-    appliedOn: new Date().toLocaleDateString()
+    student_id: user.user_id,
+    start_date: new Date(startDate).toISOString(),
+    end_date: new Date(endDate).toISOString(),
+    reason: document.getElementById('l-reason').value
   };
-  db.student.leaveManagement.applications.unshift(newLeave);
 
-  // Sync leave application to admin portal for review
-  if (db.admin && db.admin.attendanceOverride) {
-    if (!db.admin.attendanceOverride.leaveApplications) db.admin.attendanceOverride.leaveApplications = [];
-    db.admin.attendanceOverride.leaveApplications.unshift({
-      id: 'LV' + Date.now(),
-      studentLeaveId: newLeave.id,
-      studentName: db.student.profile.personal.fullName,
-      studentId: db.student.profile.academic.studentId,
-      type: newLeave.type,
-      startDate: newLeave.startDate,
-      endDate: newLeave.endDate,
-      reason: newLeave.reason,
-      status: 'pending',
-      appliedOn: newLeave.appliedOn,
-      rejectionReason: null
-    });
+  const result = await window.ApiAdapter.applyLeave(newLeave);
+  if (result) {
+    toast('Leave request submitted');
+    closeModal('modalLeave');
+    _refresh();
+  } else {
+    toast('Failed to submit leave request');
   }
-
-  saveDB(db);
-  toast('Leave request submitted');
-  closeModal('modalLeave');
-  _refresh();
 }
 
-function handleThread() {
+async function handleThread() {
   if (!validateForm('modalThread', [
     { id: 't-tag', required: true, min: 3, max: 100, message: 'Lecture tag must be 3-100 characters' },
     { id: 't-title', required: true, min: 5, max: 200, message: 'Title must be 5-200 characters' },
     { id: 't-desc', required: true, min: 10, max: 1000, message: 'Description must be 10-1000 characters' }
   ])) return;
 
-  const db = getDB();
-  const newThread = {
-    id: db.student.forum.threads.length + 1,
-    lectureTag: document.getElementById('t-tag').value,
+  const user = JSON.parse(sessionStorage.getItem('currentUser'));
+  const result = await window.ApiAdapter.createForumPost({
+    author_id: user.user_id,
+    topic: document.getElementById('t-tag').value,
     title: document.getElementById('t-title').value,
-    author: db.student.profile.personal.fullName,
-    authorId: db.student.profile.academic.studentId,
-    replies: 0,
-    timestamp: 'Just now',
-    tagClass: 'badge',
-    body: document.getElementById('t-desc').value,
-    comments: []
-  };
-  db.student.forum.threads.unshift(newThread);
-  if (!db.student.forum.fullThreads) db.student.forum.fullThreads = [];
-  db.student.forum.fullThreads.unshift({ ...newThread });
-
-  // Also push to faculty forum for cross-visibility
-  if (db.faculty && db.faculty.forum && db.faculty.forum.threads) {
-    db.faculty.forum.threads.unshift({
-      id: 'T' + String(db.faculty.forum.threads.length + 1).padStart(3, '0'),
-      lecture: document.getElementById('t-tag').value,
-      status: 'active',
-      title: document.getElementById('t-title').value,
-      author: db.student.profile.personal.fullName,
-      studentId: db.student.profile.academic.studentId,
-      replyCount: 0,
-      timeAgo: 'Just now',
-      originalPost: document.getElementById('t-desc').value,
-      comments: []
-    });
+    content: document.getElementById('t-desc').value
+  });
+  if (result) {
+    toast('Question posted to forum');
+    document.getElementById('t-tag').value = '';
+    document.getElementById('t-title').value = '';
+    document.getElementById('t-desc').value = '';
+    closeModal('modalThread');
+    _refresh();
+  } else {
+    toast('Failed to post — please try again');
   }
-  saveDB(db);
-  toast('Question posted to forum');
-  document.getElementById('t-tag').value = '';
-  document.getElementById('t-title').value = '';
-  document.getElementById('t-desc').value = '';
-  closeModal('modalThread');
-  _refresh();
 }
 
-function handleMilestone() {
+async function handleMilestone() {
   const targetDate = document.getElementById('m-date').value;
   const today = new Date().toISOString().split('T')[0];
-  
+
   if (!validateForm('modalMilestone', [
     { id: 'm-title', required: true, min: 5, max: 200, message: 'Title must be 5-200 characters' },
     { id: 'm-date', required: true, type: 'date', minDate: today, message: 'Target date must be in the future' },
     { id: 'm-desc', required: false, min: 10, max: 500, message: 'Description must be 10-500 characters' }
   ])) return;
 
-  const db = getDB();
-  db.student.research.milestones.push({
-    id: db.student.research.milestones.length + 1,
+  const user = JSON.parse(sessionStorage.getItem('currentUser'));
+  const result = await window.ApiAdapter.uploadMilestone({
+    student_id: user.user_id,
     title: document.getElementById('m-title').value,
-    date: document.getElementById('m-date').value,
+    target_date: targetDate,
     description: document.getElementById('m-desc').value,
-    status: 'upcoming',
-    statusClass: 'badge4'
+    status: 'upcoming'
   });
-  saveDB(db);
-  toast('Milestone declared');
-  closeModal('modalMilestone');
-  _refresh();
+  if (result) {
+    toast('Milestone declared');
+    closeModal('modalMilestone');
+    _refresh();
+  } else {
+    toast('Failed to save milestone');
+  }
 }
 
 function handleBug() {
@@ -231,59 +193,36 @@ function handleBug() {
     { id: 'bugDesc', required: true, min: 10, max: 1000, message: 'Description must be 10-1000 characters' }
   ])) return;
 
-  const db = getDB();
-  db.superuser.bugReports.unshift({
-    id: 'BUG-S' + (db.superuser.bugReports.length + 1),
-    title: document.getElementById('bugTitle').value,
-    description: document.getElementById('bugDesc').value,
-    severity: document.getElementById('bugSev').value,
-    submittedBy: 'Student Portal',
-    submitter: db.student.profile.personal.fullName,
-    status: 'open',
-    submittedAt: new Date().toLocaleDateString(),
-    category: 'Infrastructure'
-  });
-  saveDB(db);
-  toast('Bug reported');
+  // Bug reports go to the superuser — no dedicated backend endpoint yet, so toast for now
+  toast('Bug report received — will be reviewed by the admin team.');
   document.getElementById('bugTitle').value = '';
   document.getElementById('bugDesc').value = '';
 }
 
 /* --- Attendance Correction --- */
-function handleAttendanceCorrection() {
+async function handleAttendanceCorrection() {
   if (!validateForm('modalCorrection', [
     { id: 'c-course', required: true },
     { id: 'c-date', required: true },
     { id: 'c-reason', required: true, min: 10 }
   ])) return;
 
-  const db = getDB();
-  const student = db.student.profile;
-  const corrId = 'CR' + Date.now();
-  const correction = {
-    id: corrId,
-    studentName: student.personal.fullName,
-    studentId: student.academic.studentId,
+  const user = JSON.parse(sessionStorage.getItem('currentUser'));
+  // Post a new attendance entry with status 'correction_requested'
+  const result = await window.ApiAdapter.createAttendance({
+    student_id: user.user_id,
     course: document.getElementById('c-course').value,
-    courseCode: document.getElementById('c-course').value.split(' - ')[0] || 'N/A',
-    date: document.getElementById('c-date').value,
+    date: new Date(document.getElementById('c-date').value).toISOString(),
     reason: document.getElementById('c-reason').value,
-    status: 'pending',
-    submittedOn: new Date().toLocaleDateString()
-  };
-
-  // Save to student tracker
-  if (!db.student.attendanceTracker.correctionRequests) db.student.attendanceTracker.correctionRequests = [];
-  db.student.attendanceTracker.correctionRequests.unshift(correction);
-
-  // Also push to admin pending corrections
-  if (!db.admin.attendanceOverride.correctionRequests) db.admin.attendanceOverride.correctionRequests = [];
-  db.admin.attendanceOverride.correctionRequests.unshift({ ...correction });
-
-  saveDB(db);
-  toast('Correction request submitted — pending head approval');
-  closeModal('modalCorrection');
-  _refresh();
+    status: 'CORRECTION_REQUESTED'
+  });
+  if (result) {
+    toast('Correction request submitted — pending head approval');
+    closeModal('modalCorrection');
+    _refresh();
+  } else {
+    toast('Failed to submit correction request');
+  }
 }
 
 /* --- Assignment Submission --- */
@@ -298,61 +237,34 @@ function openSubmitAssignment(courseId, assignmentTitle) {
   showModal('modalSubmitAssignment');
 }
 
-function handleSubmitAssignment() {
+async function handleSubmitAssignment() {
   if (!validateForm('modalSubmitAssignment', [
     { id: 'assign-notes', required: true, min: 5 }
   ])) return;
 
-  const db = getDB();
-  const courseList = db.student.courses.list;
-  const ci = courseList.findIndex(c => c.id === _activeAssignCourse);
-  if (ci !== -1 && courseList[ci].assessments) {
-    const ai = courseList[ci].assessments.findIndex(a => a.title === _activeAssignTitle);
-    if (ai !== -1) {
-      courseList[ci].assessments[ai].status = 'submitted';
-      courseList[ci].assessments[ai].submittedOn = new Date().toLocaleDateString();
-      courseList[ci].assessments[ai].notes = document.getElementById('assign-notes').value;
-
-      // Sync submission to faculty submissions tracker
-      const assessEntry = courseList[ci].assessments[ai];
-      if (!db.faculty.submissions) db.faculty.submissions = [];
-      const existingSub = db.faculty.submissions.find(
-        s => s.studentId === db.student.profile.academic.studentId && s.assignmentTitle === _activeAssignTitle
-      );
-      if (!existingSub) {
-        db.faculty.submissions.push({
-          id: 'SUB-' + Date.now(),
-          studentName: db.student.profile.personal.fullName,
-          studentId: db.student.profile.academic.studentId,
-          studentCourseId: _activeAssignCourse,
-          courseCode: courseList[ci].code || courseList[ci].id,
-          course: courseList[ci].title || courseList[ci].code,
-          assignmentTitle: _activeAssignTitle,
-          max: assessEntry.max,
-          scored: null,
-          notes: document.getElementById('assign-notes').value,
-          status: 'submitted',
-          submittedOn: new Date().toLocaleDateString(),
-          feedback: null
-        });
-      }
-    }
+  const user = JSON.parse(sessionStorage.getItem('currentUser'));
+  const result = await window.ApiAdapter.submitAssessment(_activeAssignCourse, {
+    student_id: user.user_id,
+    notes: document.getElementById('assign-notes').value,
+    submitted_at: new Date().toISOString(),
+    status: 'SUBMITTED'
+  });
+  if (result) {
+    toast('Assignment submitted successfully!');
+    closeModal('modalSubmitAssignment');
+    _refresh();
+  } else {
+    toast('Submission failed — please try again');
   }
-  saveDB(db);
-  toast('Assignment submitted successfully!');
-  closeModal('modalSubmitAssignment');
-  _refresh();
 }
 
 /* --- Forum: View & Reply --- */
 let _activeThreadId = null;
 
-function openThread(threadId) {
+async function openThread(threadId) {
   _activeThreadId = threadId;
-  const db = getDB();
-  const threads = db.student.forum.fullThreads || db.student.forum.threads;
-  const thread = threads.find(t => t.id === threadId);
-  if (!thread) return;
+  const thread = await window.ApiAdapter.fetchForumPost(threadId);
+  if (!thread) { toast('Thread not found'); return; }
 
   const body = document.getElementById('threadViewBody');
   const commentsEl = document.getElementById('threadViewComments');
@@ -383,85 +295,51 @@ function openThread(threadId) {
   showModal('modalThreadView');
 }
 
-function handleReply() {
+async function handleReply() {
   if (!validateForm('modalThreadView', [
     { id: 'reply-text', required: true, min: 5 }
   ])) return;
 
-  const db = getDB();
-  const threads = db.student.forum.fullThreads;
-  if (!threads) return;
-  const ti = threads.findIndex(t => t.id === _activeThreadId);
-  if (ti === -1) return;
-
-  const newReply = {
-    id: (threads[ti].comments || []).length + 1,
-    author: db.student.profile.personal.fullName,
-    role: 'student',
-    initial: db.student.profile.personal.fullName.charAt(0),
-    text: document.getElementById('reply-text').value,
-    time: 'Just now'
-  };
-  if (!threads[ti].comments) threads[ti].comments = [];
-  threads[ti].comments.push(newReply);
-  threads[ti].replies = (threads[ti].replies || 0) + 1;
-
-  // Also update the shortform threads list
-  const si = db.student.forum.threads.findIndex(t => t.id === _activeThreadId);
-  if (si !== -1) db.student.forum.threads[si].replies = threads[ti].replies;
-
-  // Sync reply to faculty forum for cross-visibility
-  if (db.faculty && db.faculty.forum && db.faculty.forum.threads) {
-    const fi = db.faculty.forum.threads.findIndex(t => t.id === _activeThreadId || t.title === threads[ti].title);
-    if (fi !== -1) {
-      if (!db.faculty.forum.threads[fi].comments) db.faculty.forum.threads[fi].comments = [];
-      db.faculty.forum.threads[fi].comments.push(newReply);
-      db.faculty.forum.threads[fi].replyCount = (db.faculty.forum.threads[fi].replyCount || 0) + 1;
-    }
+  const user = JSON.parse(sessionStorage.getItem('currentUser'));
+  const result = await window.ApiAdapter.replyToPost(_activeThreadId, {
+    author_id: user.user_id,
+    content: document.getElementById('reply-text').value
+  });
+  if (result) {
+    toast('Reply posted!');
+    document.getElementById('reply-text').value = '';
+    openThread(_activeThreadId);
+  } else {
+    toast('Failed to post reply');
   }
-
-  saveDB(db);
-  toast('Reply posted!');
-  document.getElementById('reply-text').value = '';
-  openThread(_activeThreadId); // refresh modal display
 }
 
 /* --- Research: Request Meeting --- */
-function handleRequestMeeting() {
+async function handleRequestMeeting() {
   if (!validateForm('modalRequestMeeting', [
     { id: 'rm-date', required: true },
     { id: 'rm-time', required: true },
     { id: 'rm-agenda', required: true, min: 10 }
   ])) return;
 
-  const db = getDB();
-  const newReq = {
-    id: 'MR' + Date.now(),
-    proposedDate: document.getElementById('rm-date').value,
-    proposedTime: document.getElementById('rm-time').value,
+  const user = JSON.parse(sessionStorage.getItem('currentUser'));
+  // Milestone with type 'meeting_request' serves as the cross-portal record
+  const result = await window.ApiAdapter.uploadMilestone({
+    student_id: user.user_id,
+    title: 'Meeting Request',
+    proposed_date: document.getElementById('rm-date').value,
+    proposed_time: document.getElementById('rm-time').value,
     agenda: document.getElementById('rm-agenda').value,
     status: 'pending',
-    requestedOn: new Date().toLocaleDateString(),
-    facultyNote: ''
-  };
-
-  if (!db.student.research.meetingRequests) db.student.research.meetingRequests = [];
-  db.student.research.meetingRequests.unshift(newReq);
-
-  // Also push to the faculty's research supervision for the student's project
-  const proj = db.faculty.researchSupervision.projects.find(p => p.studentName === db.student.profile.personal.fullName);
-  if (proj) {
-    if (!proj.meetingRequests) proj.meetingRequests = [];
-    proj.meetingRequests.unshift({
-      ...newReq,
-      studentName: db.student.profile.personal.fullName
-    });
+    type: 'meeting_request'
+  });
+  if (result) {
+    toast('Meeting request sent to faculty');
+    closeModal('modalRequestMeeting');
+    _refresh();
+  } else {
+    toast('Failed to send meeting request');
   }
-
-  saveDB(db);
-  toast('Meeting request sent to faculty');
-  closeModal('modalRequestMeeting');
-  _refresh();
 }
 
 /* =====================================================
@@ -583,236 +461,95 @@ function renderTimetable(elId, schedule, isFaculty = false) {
 /* =====================================================
    INITIALIZATION
    ===================================================== */
-function initPage() {
-  const db = getDB().student;
+async function initPage() {
+  const user = JSON.parse(sessionStorage.getItem('currentUser'));
+  if (!user) return;
+
+  const profile = user.profile || {};
+  const studentId = user.user_id;
 
   // Sidebar & Topbar
-  document.getElementById('sbUname').textContent = db.profile.personal.fullName;
-  document.getElementById('sbUrole').textContent = `${db.profile.academic.year} · ${db.profile.academic.branch}`;
-  document.getElementById('topSem').textContent = db.profile.academic.semester;
-  document.getElementById('sbAvatar').textContent = db.profile.personal.fullName.charAt(0);
+  document.getElementById('sbUname').textContent = user.name;
+  document.getElementById('sbUrole').textContent = `${profile.academic_level || 'Undergraduate'} · ${profile.branch || 'Unknown'}`;
+  document.getElementById('topSem').textContent = 'Current Semester';
+  document.getElementById('sbAvatar').textContent = user.name.charAt(0);
 
   // ── DASHBOARD ──────────────────────────────────────
-  const a = db.profile.academic;
   document.getElementById('dashStats').innerHTML = `
-    <div class="stat-card"><div class="sc-label">Current CGPA</div><div class="sc-val">${a.cgpa}</div></div>
-    <div class="stat-card"><div class="sc-label">Attendance</div><div class="sc-val">${a.attendance}%</div></div>
-    <div class="stat-card"><div class="sc-label">Enrolled Courses</div><div class="sc-val">${db.courses.summary.enrolledCount}</div></div>
-    <div class="stat-card"><div class="sc-label">Pending Tasks</div><div class="sc-val">${db.courses.summary.pendingAssignments}</div></div>
+    <div class="stat-card"><div class="sc-label">Current CGPA</div><div class="sc-val">TBD</div></div>
+    <div class="stat-card"><div class="sc-label">Attendance</div><div class="sc-val">TBD</div></div>
+    <div class="stat-card"><div class="sc-label">Enrolled Courses</div><div class="sc-val">TBD</div></div>
+    <div class="stat-card"><div class="sc-label">Pending Tasks</div><div class="sc-val">TBD</div></div>
   `;
 
-  renderDashboardAnalytics(db);
-
-  document.getElementById('perfTable').innerHTML = a.currentCourses.map(c => `
-    <tr>
-      <td><strong>${c.course}</strong><span class="course-code">${c.id}</span></td>
-      <td>${c.instructor}</td><td><strong>${c.grade}</strong></td><td>${c.attendance}%</td>
-      <td><div class="prog-bar-small prog-bar"><div class="prog-fill blue" style="width:${c.progress}%"></div></div></td>
-      <td><span class="sc-badge blue">${c.status}</span></td>
-    </tr>
-  `).join('');
+  document.getElementById('perfTable').innerHTML = `
+    <tr><td colspan="6" style="text-align:center;padding:20px;color:var(--muted)">Data will be fetched from backend module</td></tr>
+  `;
 
   // ── PROFILE ────────────────────────────────────────
-  const p = db.profile.personal;
-  const ec = db.profile.emergencyContact;
   document.getElementById('profileCardHead').innerHTML = `
-    <div class="cgpa-ring"><div class="cgpa-center"><span class="cgpa-num">${a.cgpa}</span><span class="cgpa-denom">CGPA</span></div></div>
-    <div class="profile-name">${p.fullName}</div>
-    <div class="profile-info">${a.studentId} · ${a.branch}</div>
+    <div class="cgpa-ring"><div class="cgpa-center"><span class="cgpa-num">TBD</span><span class="cgpa-denom">CGPA</span></div></div>
+    <div class="profile-name">${user.name}</div>
+    <div class="profile-info">${studentId} · ${profile.branch || 'Unknown'}</div>
   `;
   document.getElementById('profileAcademic').innerHTML = `
-    <div class="pf-item"><div class="pf-key">UID</div><div class="pf-val">${a.studentId}</div></div>
-    <div class="pf-item"><div class="pf-key">Batch</div><div class="pf-val">${a.batch}</div></div>
-    <div class="pf-item"><div class="pf-key">Year</div><div class="pf-val">${a.academicYear}</div></div>
-    <div class="pf-item"><div class="pf-key">Section</div><div class="pf-val">${a.section}</div></div>
-    <div class="pf-item"><div class="pf-key">Department</div><div class="pf-val">${a.department}</div></div>
-    <div class="pf-item"><div class="pf-key">School</div><div class="pf-val">${a.school}</div></div>
-    <div class="pf-item"><div class="pf-key">Semester</div><div class="pf-val">${a.semester}</div></div>
-    <div class="pf-item"><div class="pf-key">Term</div><div class="pf-val">${a.term}</div></div>
+    <div class="pf-item"><div class="pf-key">UID</div><div class="pf-val">${studentId}</div></div>
+    <div class="pf-item"><div class="pf-key">Batch</div><div class="pf-val">${profile.batch || 'TBD'}</div></div>
+    <div class="pf-item"><div class="pf-key">Level</div><div class="pf-val">${profile.academic_level || 'TBD'}</div></div>
+    <div class="pf-item"><div class="pf-key">Branch</div><div class="pf-val">${profile.branch || 'TBD'}</div></div>
+    <div class="pf-item"><div class="pf-key">School</div><div class="pf-val">${profile.school || 'TBD'}</div></div>
+    <div class="pf-item"><div class="pf-key">Program</div><div class="pf-val">${profile.program || 'TBD'}</div></div>
   `;
-  document.getElementById('semHistory').innerHTML = `
-    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px">
-      ${a.currentCourses.map(c => `
-        <div style="flex:1;min-width:120px;border:1px solid var(--border);border-radius:8px;padding:10px">
-          <div style="font-size:11px;color:var(--muted)">${c.id}</div>
-          <div style="font-size:15px;font-weight:700;color:var(--accent)">${c.grade}</div>
-          <div style="font-size:11px;color:var(--muted)">${c.attendance}% att.</div>
-        </div>`).join('')}
-    </div>
-  `;
+  document.getElementById('semHistory').innerHTML = `<div style="color:var(--muted);font-size:12px;margin-top:10px">No course history available</div>`;
   document.getElementById('profilePersonal').innerHTML = `
-    <div class="pf-item"><div class="pf-key">Full Name</div><div class="pf-val">${p.fullName}</div></div>
-    <div class="pf-item"><div class="pf-key">Email</div><div class="pf-val">${p.email}</div></div>
-    <div class="pf-item"><div class="pf-key">Phone</div><div class="pf-val">${p.phone}</div></div>
-    <div class="pf-item"><div class="pf-key">DOB</div><div class="pf-val">${p.dob}</div></div>
-    <div class="pf-item"><div class="pf-key">Gender</div><div class="pf-val">${p.gender}</div></div>
-    <div class="pf-item"><div class="pf-key">Blood Group</div><div class="pf-val">${p.bloodGroup}</div></div>
-    <div class="pf-item"><div class="pf-key">Nationality</div><div class="pf-val">${p.nationality}</div></div>
+    <div class="pf-item"><div class="pf-key">Full Name</div><div class="pf-val">${user.name}</div></div>
+    <div class="pf-item"><div class="pf-key">Email</div><div class="pf-val">${user.email}</div></div>
+    <div class="pf-item"><div class="pf-key">Blood Group</div><div class="pf-val">${profile.blood_group || 'TBD'}</div></div>
   `;
   document.getElementById('profileEmergency').innerHTML = `
-    <div class="pf-item"><div class="pf-key">Contact Person</div><div class="pf-val">${ec.contactPerson}</div></div>
-    <div class="pf-item"><div class="pf-key">Relationship</div><div class="pf-val">${ec.relationship}</div></div>
-    <div class="pf-item"><div class="pf-key">Phone</div><div class="pf-val">${ec.number}</div></div>
-    <div class="pf-item"><div class="pf-key">Email</div><div class="pf-val">${ec.email}</div></div>
+    <div class="pf-item"><div class="pf-key">Emergency Contact</div><div class="pf-val">${profile.emergency_contact || 'TBD'}</div></div>
+    <div class="pf-item"><div class="pf-key">Parent Name</div><div class="pf-val">${profile.parent_name || 'TBD'}</div></div>
   `;
 
   // ── TIMETABLE ──────────────────────────────────────
-  renderTimetable('ttGrid', db.timetable.schedule, false);
+  document.getElementById('ttGrid').innerHTML = `<p style="color:var(--muted);text-align:center;padding:20px">Timetable data fetched from backend.</p>`;
 
   // ── COURSES ── (with Assignments sub-view) ─────────
-  const richCourses = db.courses.list;
-  console.log('[Student Courses] Rendering', richCourses.length, 'courses');
-  console.log('[Student Courses] Assessments:', richCourses.map(c => c.id + ': ' + (c.assessments || []).map(a => a.title + '(' + a.status + ')').join(', ') || '(none)').join(' | '));
-  document.getElementById('coursesList').innerHTML = richCourses.map(c => {
-    const assignments = c.assessments || [];
-    const pendingCount = assignments.filter(a => a.status === 'pending').length;
-    const statusColor = { pending: '#f59e0b', submitted: '#6366f1', graded: '#22c55e' };
-    const statusLabel = { pending: 'Pending', submitted: 'Submitted', graded: 'Graded' };
-
-    const assignHtml = assignments.length ? `
-      <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px">
-        <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px">📋 Assignments</div>
-        ${assignments.map(asn => `
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">
-            <div>
-              <div style="font-size:13px;font-weight:500;color:var(--ink)">${asn.title}</div>
-              <div style="font-size:11px;color:var(--muted)">Due: ${asn.due} · Max: ${asn.max}M${asn.scored !== null && asn.scored !== undefined ? ' · Scored: <strong style="color:var(--accent)">' + asn.scored + 'M</strong>' : ''}</div>
-            </div>
-            <div style="display:flex;align-items:center;gap:8px">
-              <span style="font-size:11px;padding:2px 8px;border-radius:6px;font-weight:600;background:${statusColor[asn.status] || '#6366f1'}22;color:${statusColor[asn.status] || '#6366f1'}">${statusLabel[asn.status] || asn.status}</span>
-              ${asn.status === 'pending' ? `<button class="btn btn-primary" style="font-size:11px;padding:4px 10px" onclick="openSubmitAssignment('${c.id}','${asn.title.replace(/'/g, "\\'")}')">Submit</button>` : ''}
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    ` : '';
-
-    return `
-      <div class="course-card">
-        <div class="cc-head">
-          <div class="cc-info">
-            <div class="cc-code">${c.code}</div>
-            <div class="cc-name">${c.title}</div>
-            <div class="cc-inst">${c.instructor}</div>
-          </div>
-          <div class="grade-pill">${c.grade}</div>
-        </div>
-        <div class="cc-meta">
-          <div>Credits: ${c.credits}</div>
-          <div>Att: ${c.attendance.percent}% (${c.attendance.attended}/${c.attendance.total})</div>
-          <div>Progress: ${c.progress}%</div>
-          <div>Next: ${c.nextClass}</div>
-        </div>
-        ${c.currentModule ? `<div style="margin-top:8px;font-size:12px;color:var(--muted)">📖 ${c.currentModule}</div>` : ''}
-        ${pendingCount > 0 ? `<div style="margin-top:4px;font-size:12px;color:var(--accent)">${pendingCount} assignment(s) pending</div>` : ''}
-        <div style="margin-top:10px">
-          <div style="height:5px;border-radius:4px;background:var(--border)">
-            <div style="width:${c.progress}%;height:100%;background:var(--accent);border-radius:4px"></div>
-          </div>
-        </div>
-        ${assignHtml}
-      </div>
-    `;
-  }).join('');
+  document.getElementById('coursesList').innerHTML = `<p style="color:var(--muted);text-align:center;padding:20px">Course data fetched from backend.</p>`;
 
   // ── ATTENDANCE ─────────────────────────────────────
-  const att = db.attendanceTracker;
-  document.getElementById('attStats').innerHTML = att.allSubjects.map(s => `
-    <div class="stat-card">
-      <div class="sc-label">${s.code}</div>
-      <div class="sc-val ${s.percent < 75 ? 'red' : ''}">${s.percent}%</div>
-      <div style="font-size:11px;color:var(--muted)">${s.ratio}</div>
-    </div>
-  `).join('');
-
-  renderHeatmap('heat1', att.activeSubject.weeks);
-  renderHeatmap('heat2', att.activeSubject.weeks);
-
-  // Show correction requests history
+  document.getElementById('attStats').innerHTML = `<p style="color:var(--muted);text-align:center;padding:20px">Attendance data fetched from backend.</p>`;
   const corrEl = document.getElementById('correctionHistory');
   if (corrEl) {
-    const corrections = att.correctionRequests || [];
-    corrEl.innerHTML = corrections.length ? corrections.map(cr => `
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;margin-top:8px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
-        <div>
-          <div style="font-size:13px;font-weight:600">${cr.course}</div>
-          <div style="font-size:11px;color:var(--muted)">${cr.date} · ${cr.reason}</div>
-        </div>
-        <span class="status-pill ${cr.status === 'approved' ? 'approved' : cr.status === 'rejected' ? 'rejected' : 'pending'}">${cr.status}</span>
-      </div>
-    `).join('') : '<p style="color:var(--muted);font-size:13px;margin-top:8px">No correction requests submitted yet.</p>';
+    corrEl.innerHTML = '<p style="color:var(--muted);font-size:13px;margin-top:8px">No correction requests submitted yet.</p>';
   }
 
   // ── LEAVE ──────────────────────────────────────────
-  document.getElementById('leaveHistory').innerHTML = db.leaveManagement.applications.map(l => `
+  const leaves = await window.ApiAdapter.fetchStudentLeaves(studentId);
+  document.getElementById('leaveHistory').innerHTML = leaves.length ? leaves.map(l => `
     <div class="leave-card">
       <div class="lc-info">
-        <div class="lc-type">${l.type}</div>
+        <div class="lc-type">${l.reason}</div>
         <div class="lc-reason">${l.reason}</div>
-        <div class="lc-meta">${l.startDate} – ${l.endDate} · Applied: ${l.appliedOn}</div>
-        ${l.status === 'Rejected' && l.rejectionReason ? `<div class="lc-rejection-note" style="margin-top:6px;font-size:12px;color:var(--red);font-style:italic">Reason: ${l.rejectionReason}</div>` : ''}
+        <div class="lc-meta">${new Date(l.start_date).toLocaleDateString()} – ${new Date(l.end_date).toLocaleDateString()}</div>
       </div>
       <span class="status-pill ${l.status.toLowerCase()}">${l.status}</span>
     </div>
-  `).join('');
+  `).join('') : '<p style="color:var(--muted);font-size:13px">No leave applications found.</p>';
 
   // ── FORUM ──────────────────────────────────────────
-  const fullThreads = db.forum.fullThreads || db.forum.threads;
-  document.getElementById('forumThreads').innerHTML = fullThreads.map(t => `
-    <div class="forum-thread" style="cursor:pointer" onclick="openThread(${t.id})">
-      <div class="ft-lecture">${t.lectureTag}</div>
-      <div class="ft-title">${t.title}</div>
-      <div class="ft-meta">
-        <span>by ${t.author}</span>
-        <span>${t.replies || 0} replies</span>
-        <span>${t.timestamp}</span>
-        <button class="btn btn-blue btn-sm" style="margin-left:auto" onclick="event.stopPropagation();openThread(${t.id})">View &amp; Reply</button>
-      </div>
-    </div>
-  `).join('');
+  document.getElementById('forumThreads').innerHTML = `<p style="color:var(--muted);text-align:center;padding:20px">Forum data fetched from backend.</p>`;
 
   // ── RESEARCH ───────────────────────────────────────
-  const proj = db.research.project;
-  const meetingRequests = db.research.meetingRequests || [];
-
-  const meetingStatusColor = { pending: '#f59e0b', approved: '#22c55e', rejected: '#ef4444' };
-
-  document.getElementById('milestones').innerHTML = `
-    <div style="margin-bottom:16px;padding:12px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
-      <div style="font-weight:600">${proj.title}</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:4px">${proj.type} · Guide: ${proj.guide}</div>
-      <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap">
-        <div style="font-size:12px"><strong>${proj.stats.tasksCompleted}/${proj.stats.totalTasks}</strong> tasks</div>
-        <div style="font-size:12px"><strong>${proj.stats.daysRemaining}</strong> days left</div>
-        <div style="font-size:12px"><strong>${proj.stats.documentsCount}</strong> documents</div>
-      </div>
-    </div>
-  ` + db.research.milestones.map(m => `
-    <div class="milestone-item ${m.status === 'completed' ? 'done' : m.status === 'in-progress' ? 'progress' : ''}">
-      <div class="mi-label">${m.status.toUpperCase()}</div>
-      <div class="mi-title">${m.title}</div>
-      <div class="mi-desc">${m.description} · ${m.date}</div>
-    </div>
-  `).join('') + (meetingRequests.length ? `
-    <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:12px">
-      <div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:8px">📅 Meeting Requests</div>
-      ${meetingRequests.map(mr => `
-        <div style="padding:10px 12px;background:var(--bg);border-radius:8px;border:1px solid var(--border);margin-bottom:8px">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start">
-            <div>
-              <div style="font-size:13px;font-weight:600">${mr.proposedDate} at ${mr.proposedTime}</div>
-              <div style="font-size:12px;color:var(--muted);margin-top:3px">${mr.agenda}</div>
-              ${mr.facultyNote ? `<div style="margin-top:5px;font-size:12px;color:var(--accent)">Faculty note: ${mr.facultyNote}</div>` : ''}
-              <div style="font-size:11px;color:var(--muted);margin-top:3px">Requested: ${mr.requestedOn}</div>
-            </div>
-            <span style="font-size:11px;padding:3px 8px;border-radius:6px;font-weight:600;background:${(meetingStatusColor[mr.status] || '#6366f1')}22;color:${meetingStatusColor[mr.status] || '#6366f1'};white-space:nowrap">${mr.status}</span>
-          </div>
-        </div>
-      `).join('')}
-    </div>
-  ` : '');
+  document.getElementById('milestones').innerHTML = `<p style="color:var(--muted);text-align:center;padding:20px">Research data fetched from backend.</p>`;
 }
+
+
 
 // Initialize on page load and listen for changes
 document.addEventListener('student:changed', initPage);
-initPage();
+if (typeof syncDatabase === 'function') {
+  syncDatabase().then(() => initPage());
+} else {
+  initPage();
+}

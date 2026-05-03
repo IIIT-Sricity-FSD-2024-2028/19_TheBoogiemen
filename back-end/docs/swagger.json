@@ -61,6 +61,57 @@
         ]
       }
     },
+    "/auth/login": {
+      "post": {
+        "operationId": "AuthController_login",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "role": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
     "/fee/audit": {
       "post": {
         "operationId": "FeeController_auditCompliance",
@@ -4242,6 +4293,64 @@
         },
         "tags": [
           "Outcome"
+        ]
+      }
+    },
+    "/state": {
+      "get": {
+        "operationId": "StateController_getState",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "State"
+        ]
+      },
+      "post": {
+        "operationId": "StateController_setState",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "State"
         ]
       }
     }
