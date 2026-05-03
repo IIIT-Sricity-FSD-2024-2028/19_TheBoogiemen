@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academic Head Dashboard - BarelyPassing</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dashboard-body">
+
+<aside class="sidebar">
+    <div class="sidebar-brand"><h2>BarelyPassing</h2><p>Academic Performance</p></div>
+    <div class="sidebar-user">
+        <div class="user-avatar avatar-h">H</div>
+        <div class="user-info">
+            <h3 id="sidebar-user-name">Academic Head</h3>
+            <p>Academic Head</p>
+        </div>
+    </div>
+    <nav class="sidebar-nav">
+        <a href="#" class="nav-item active" onclick="switchView('dashboard-view',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <span>Dashboard</span>
+        </a>
+        <a href="#" class="nav-item" onclick="switchView('institutional-reports-view',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            <span>Institutional Reports</span>
+        </a>
+        <a href="#" class="nav-item" onclick="switchView('event-scheduler-view',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span>Event Scheduler</span>
+        </a>
+        <a href="#" class="nav-item" onclick="switchView('resource-management-view',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+            <span>Resources</span>
+        </a>
+        <a href="#" class="nav-item" onclick="switchView('fee-compliance-view',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <span>Fee Compliance</span>
+        </a>
+        <a href="#" class="nav-item" onclick="switchView('user-management-view',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>User Management</span>
+        </a>
+        <a href="#" class="nav-item" onclick="switchView('attendance-override-view',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            <span>Overrides</span>
+        </a>
+        <a href="#" class="nav-item" onclick="switchView('leave-management-view',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span>Leave Requests</span>
+        </a>
+    </nav>
+    <div class="sidebar-footer">
+        <a href="#" class="nav-item" onclick="switchView('settings-view',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+            <span>Settings</span>
+        </a>
+        <button class="nav-item" style="color:#ef4444;" onclick="window.Auth.logout()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+            <span>Logout</span>
+        </button>
+    </div>
+</aside>
+
+<div class="main-content">
+    <div class="top-header-bar" id="top-header-bar"><h1 id="page-title">Dashboard</h1></div>
+    <div class="content-body">
+
+        <!-- Dashboard -->
+        <div id="dashboard-view" class="view-section active">
+            <div class="metrics-grid">
+                <div class="metric-card" onclick="switchView('user-management-view',document.querySelector('.nav-item[onclick*=user-management-view]'))" style="cursor:pointer;" title="View all users">
+                    <div class="label">STUDENTS</div><div class="value" id="total-students">0</div><div class="sub">click to manage ↗</div>
+                </div>
+                <div class="metric-card" onclick="switchView('user-management-view',document.querySelector('.nav-item[onclick*=user-management-view]'))" style="cursor:pointer;" title="View all faculty">
+                    <div class="label">FACULTY</div><div class="value" id="total-faculty">0</div><div class="sub">click to manage ↗</div>
+                </div>
+                <div class="metric-card" onclick="switchView('institutional-reports-view',document.querySelector('.nav-item[onclick*=institutional-reports-view]'))" style="cursor:pointer;" title="View reports">
+                    <div class="label">ACTIVE COURSES</div><div class="value" id="total-courses">0</div><div class="sub">click to view report ↗</div>
+                </div>
+                <div class="metric-card" onclick="switchView('institutional-reports-view',document.querySelector('.nav-item[onclick*=institutional-reports-view]'))" style="cursor:pointer;" title="View attainment">
+                    <div class="label">AVG ATTAINMENT</div><div class="value">81%</div><div class="sub">click to view report ↗</div>
+                </div>
+            </div>
+            <div class="stats-card" style="margin-top:20px;">
+                <div class="stats-card-header"><div><h3>System Overview</h3></div></div>
+                <div id="report-dashboard-metrics" class="stats-card-body" style="padding:24px;display:grid;grid-template-columns:1fr 1fr;gap:12px;"></div>
+            </div>
+        </div>
+
+        <!-- Institutional Reports -->
+        <div id="institutional-reports-view" class="view-section" style="display:none;">
+            <div class="stats-card">
+                <div class="stats-card-header"><h3>Institutional Performance</h3></div>
+                <div class="stats-card-body" style="padding:24px;">
+                    <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
+                        <button class="submit-btn" id="nba-export-btn" onclick="renderInstitutionalReports()" style="display:flex;align-items:center;gap:8px;">
+                            ⬇ Export NBA/NAAC Report (CSV)
+                        </button>
+                        <button class="btn-cancel" id="cohort-export-btn" onclick="renderInstitutionalReports()" style="display:flex;align-items:center;gap:8px;">
+                            ⬇ Export Cohort Analysis (CSV)
+                        </button>
+                    </div>
+                    <div style="padding:12px;background:#f8fafc;border-radius:8px;font-size:13px;color:#64748b;border:1px solid #e2e8f0;">
+                        📊 Click either button to load and export data. Includes at-risk students, attainment metrics, and cohort analytics.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Event Scheduler -->
+        <div id="event-scheduler-view" class="view-section" style="display:none;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                <div><h2 style="font-size:22px;font-weight:700;">Event Scheduler</h2></div>
+                <button class="page-action-btn" onclick="openModal('eventModal'); restrictDateToFuture('eventDate');">+ Add Event</button>
+            </div>
+            <div class="stats-card">
+                <div class="stats-card-header"><div><h3>Upcoming Events</h3></div></div>
+                <div class="stats-card-body">
+                    <table class="crud-table">
+                        <thead><tr><th style="width:90px;">Type</th><th>Event Details</th><th>Timing</th><th style="text-align:right;">Actions</th></tr></thead>
+                        <tbody id="eventsTableBody"><tr><td colspan="4" style="text-align:center;color:#64748b;padding:24px;">Loading...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resource Management -->
+        <div id="resource-management-view" class="view-section" style="display:none;">
+            <div class="stats-card">
+                <div class="stats-card-header"><h3>Resource Allocation</h3></div>
+                <div class="stats-card-body" style="padding:24px;"><div id="h-resources-body"></div></div>
+            </div>
+        </div>
+
+        <!-- Fee Compliance -->
+        <div id="fee-compliance-view" class="view-section" style="display:none;">
+            <div class="stats-card">
+                <div class="stats-card-header"><h3>Fee Status Tracking</h3></div>
+                <div class="stats-card-body" style="padding:24px;">
+                    <div class="metrics-grid" style="grid-template-columns:1fr 1fr;margin-bottom:20px;">
+                        <div class="metric-card"><div class="label">OVERDUE ACCOUNTS</div><div class="value" id="fee-overdue-count">0</div></div>
+                        <div class="metric-card"><div class="label">COMPLIANCE RATE</div><div class="value" id="fee-compliance-rate">0%</div></div>
+                    </div>
+                    <div id="h-fees-body"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Management -->
+        <div id="user-management-view" class="view-section" style="display:none;">
+            <div class="stats-card">
+                <div class="stats-card-header">
+                    <div><h3>System User Management</h3><p>Manage all institutional users.</p></div>
+                    <button class="page-action-btn" onclick="openModal('addUserModal')">+ Add User</button>
+                </div>
+                <div class="stats-card-body"><div id="usersTable"></div></div>
+            </div>
+        </div>
+
+        <!-- Attendance Override -->
+        <div id="attendance-override-view" class="view-section" style="display:none;">
+            <div class="stats-card">
+                <div class="stats-card-header"><h3>Attendance Override Requests</h3></div>
+                <div class="stats-card-body" style="padding:24px;"><div id="h-attendance-override-body"><p style="color:#64748b;text-align:center;">No pending attendance overrides to review.</p></div></div>
+            </div>
+        </div>
+
+        <!-- Leave Management -->
+        <div id="leave-management-view" class="view-section" style="display:none;">
+            <div class="stats-card">
+                <div class="stats-card-header"><h3>Leave Request Management</h3></div>
+                <div class="stats-card-body" style="padding:24px;"><div id="h-leave-body"></div></div>
+            </div>
+        </div>
+
+        <!-- Settings -->
+        <div id="settings-view" class="view-section" style="display:none;"></div>
+
+    </div>
+</div>
+
+<!-- Modals -->
+<div id="addUserModal" class="modal-backdrop">
+    <div class="modal-window">
+        <div class="modal-header"><h2>Add New User</h2><button class="close-modal" onclick="closeModal('addUserModal')">&times;</button></div>
+        <form id="addUserForm" onsubmit="event.preventDefault(); submitAddUser();">
+            <div class="modal-body">
+                <div class="form-group"><label>First Name</label><input type="text" id="newFirst" placeholder="First name" required></div>
+                <div class="form-group"><label>Email</label><input type="email" id="newEmail" placeholder="Email address" required></div>
+                <div class="form-group"><label>Password</label><input type="password" id="newPass" placeholder="Minimum 6 characters" required minlength="6"></div>
+                <div class="form-group">
+                    <label>Role</label>
+                    <select id="newRole" required>
+                        <option value="">Select role</option>
+                        <option value="student">Student</option>
+                        <option value="faculty">Faculty</option>
+                        <option value="head">Academic Head</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer"><button type="submit" class="submit-btn" style="flex:1;">Create User</button></div>
+        </form>
+    </div>
+</div>
+
+<div id="editUserModal" class="modal-backdrop">
+    <div class="modal-window">
+        <div class="modal-header"><h2>Edit User</h2><button class="close-modal" onclick="closeModal('editUserModal')">&times;</button></div>
+        <div class="modal-body">
+            <input type="hidden" id="editUserId">
+            <div class="form-group"><label>Username</label><input type="text" id="editUserName" placeholder="Full name"></div>
+            <div class="form-group"><label>Email</label><input type="email" id="editUserEmail" placeholder="Email address"></div>
+            <div class="form-group">
+                <label>Role</label>
+                <select id="editUserRole">
+                    <option value="student">Student</option>
+                    <option value="faculty">Faculty</option>
+                    <option value="head">Academic Head</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="submit-btn" style="flex:1;" onclick="submitEditUser()">Save Changes</button>
+            <button class="btn-cancel" onclick="closeModal('editUserModal')">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div id="eventModal" class="modal-backdrop">
+    <div class="modal-window">
+        <div class="modal-header"><h2>Schedule Event</h2><button class="close-modal" onclick="closeModal('eventModal')">&times;</button></div>
+        <form id="scheduleEventForm" onsubmit="event.preventDefault(); submitScheduleEvent();">
+            <div class="modal-body">
+                <div class="form-group"><label>Event Name <span style="color:#ef4444">*</span></label><input type="text" id="eventName" placeholder="e.g., Annual Sports Meet" required></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Date <span style="color:#ef4444">*</span></label><input type="date" id="eventDate" required></div>
+                    <div class="form-group">
+                        <label>Time <span style="font-size:11px;color:#64748b;">(optional)</span></label>
+                        <div style="display:flex;gap:6px;align-items:center;">
+                            <select id="eventHour" style="flex:1;padding:9px 6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;">
+                                <option value="">Hr</option>
+                                <option>1</option><option>2</option><option>3</option><option>4</option>
+                                <option>5</option><option>6</option><option>7</option><option>8</option>
+                                <option>9</option><option>10</option><option>11</option><option>12</option>
+                            </select>
+                            <span style="font-weight:700;color:#64748b;">:</span>
+                            <select id="eventMinute" style="flex:1;padding:9px 6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;">
+                                <option value="">Min</option>
+                                <option value="00">00</option><option value="15">15</option>
+                                <option value="30">30</option><option value="45">45</option>
+                            </select>
+                            <select id="eventPeriod" style="flex:1;padding:9px 6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;">
+                                <option value="AM">AM</option>
+                                <option value="PM">PM</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group"><label>Venue <span style="color:#ef4444">*</span></label><input type="text" id="eventVenue" placeholder="e.g., Seminar Hall" required></div>
+                <div class="form-group"><label>Description</label><textarea id="eventDesc" placeholder="Describe the event..."></textarea></div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="submit-btn" style="flex:1;">Schedule Event</button>
+                <button type="button" class="btn-cancel" onclick="closeModal('eventModal')">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="editEventModal" class="modal-backdrop">
+    <div class="modal-window">
+        <div class="modal-header"><h2>Edit Event</h2><button class="close-modal" onclick="closeModal('editEventModal')">&times;</button></div>
+        <div class="modal-body">
+            <input type="hidden" id="editEventId">
+            <div class="form-group"><label>Event Name <span style="color:#ef4444">*</span></label><input type="text" id="editEventName" required></div>
+            <div class="form-group"><label>Date <span style="color:#ef4444">*</span></label><input type="date" id="editEventDate" required></div>
+            <div class="form-group"><label>Venue <span style="color:#ef4444">*</span></label><input type="text" id="editEventVenue" required></div>
+        </div>
+        <div class="modal-footer">
+            <button class="submit-btn" style="flex:1;" onclick="submitEditEvent()">Save Changes</button>
+            <button class="btn-cancel" onclick="closeModal('editEventModal')">Cancel</button>
+        </div>
+    </div>
+</div>
+
+
+<!-- ── Add Fee Record Modal ──────────────────────────────────────────────── -->
+<div id="addFeeModal" class="modal-backdrop">
+    <div class="modal-window">
+        <div class="modal-header">
+            <h2>&#x1F4B3; Add Fee Record</h2>
+            <button class="close-modal" onclick="closeModal('addFeeModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>Student <span style="color:#ef4444">*</span></label>
+                <select id="addFeeStudentSel"><option value="">-- Select Student --</option></select>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Semester <span style="color:#ef4444">*</span></label>
+                    <select id="addFeeSemester">
+                        <option value="">-- Select Sem --</option>
+                        <option value="1">Semester 1</option><option value="2">Semester 2</option>
+                        <option value="3">Semester 3</option><option value="4">Semester 4</option>
+                        <option value="5">Semester 5</option><option value="6">Semester 6</option>
+                        <option value="7">Semester 7</option><option value="8">Semester 8</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Fee Type <span style="color:#ef4444">*</span></label>
+                    <select id="addFeeType">
+                        <option value="">-- Type --</option>
+                        <option value="Tuition Fee">Tuition Fee</option>
+                        <option value="Exam Fee">Exam Fee</option>
+                        <option value="Hostel Fee">Hostel Fee</option>
+                        <option value="Lab Fee">Lab Fee</option>
+                        <option value="Library Fee">Library Fee</option>
+                        <option value="Bus Fee">Bus Fee</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Amount (&#x20B9;) <span style="color:#ef4444">*</span></label>
+                    <input type="number" id="addFeeAmount" min="1" placeholder="e.g. 45000">
+                </div>
+                <div class="form-group">
+                    <label>Due Date <span style="color:#ef4444">*</span></label>
+                    <input type="date" id="addFeeDue">
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="submit-btn" style="flex:1;" onclick="submitAddFee()">&#x2795; Add Fee &amp; Notify Student</button>
+            <button class="btn-cancel" onclick="closeModal('addFeeModal')">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Bulk Semester Fee Modal ──────────────────────────────────────────────── -->
+<div id="bulkSemFeeModal" class="modal-backdrop">
+    <div class="modal-window">
+        <div class="modal-header">
+            <h2>&#x1F4C5; Generate Semester Fees for All Students</h2>
+            <button class="close-modal" onclick="closeModal('bulkSemFeeModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div style="padding:10px 12px;background:#eff6ff;border-radius:8px;font-size:13px;color:#1e40af;margin-bottom:14px;">
+                &#x2139; This will create one fee record for <strong>every student</strong> in the system and notify them all.
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Semester <span style="color:#ef4444">*</span></label>
+                    <select id="bulkSemNum">
+                        <option value="">-- Select Sem --</option>
+                        <option value="1">Semester 1</option><option value="2">Semester 2</option>
+                        <option value="3">Semester 3</option><option value="4">Semester 4</option>
+                        <option value="5">Semester 5</option><option value="6">Semester 6</option>
+                        <option value="7">Semester 7</option><option value="8">Semester 8</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Fee Type <span style="color:#ef4444">*</span></label>
+                    <select id="bulkSemFeeType">
+                        <option value="">-- Type --</option>
+                        <option value="Tuition Fee">Tuition Fee</option>
+                        <option value="Exam Fee">Exam Fee</option>
+                        <option value="Hostel Fee">Hostel Fee</option>
+                        <option value="Lab Fee">Lab Fee</option>
+                        <option value="Library Fee">Library Fee</option>
+                        <option value="Bus Fee">Bus Fee</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Amount per Student (&#x20B9;) <span style="color:#ef4444">*</span></label>
+                    <input type="number" id="bulkSemAmount" min="1" placeholder="e.g. 45000">
+                </div>
+                <div class="form-group">
+                    <label>Due Date <span style="color:#ef4444">*</span></label>
+                    <input type="date" id="bulkSemDue">
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="submit-btn" style="flex:1;" onclick="submitBulkSemFee()">&#x1F4E2; Generate &amp; Notify All Students</button>
+            <button class="btn-cancel" onclick="closeModal('bulkSemFeeModal')">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Edit Fee Record Modal ──────────────────────────────────────────────── -->
+<div id="editFeeModal" class="modal-backdrop">
+    <div class="modal-window">
+        <div class="modal-header">
+            <h2>&#x270F; Edit Fee Record</h2>
+            <button class="close-modal" onclick="closeModal('editFeeModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="editFeeId">
+            <input type="hidden" id="editFeeStudentId">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Fee Type <span style="color:#ef4444">*</span></label>
+                    <input type="text" id="editFeeType" placeholder="e.g. Tuition Fee">
+                </div>
+                <div class="form-group">
+                    <label>Semester</label>
+                    <select id="editFeeSemester">
+                        <option value="">-- Select Sem --</option>
+                        <option value="1">Semester 1</option><option value="2">Semester 2</option>
+                        <option value="3">Semester 3</option><option value="4">Semester 4</option>
+                        <option value="5">Semester 5</option><option value="6">Semester 6</option>
+                        <option value="7">Semester 7</option><option value="8">Semester 8</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Amount (&#x20B9;) <span style="color:#ef4444">*</span></label>
+                    <input type="number" id="editFeeAmount" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Due Date <span style="color:#ef4444">*</span></label>
+                    <input type="date" id="editFeeDue">
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="submit-btn" style="flex:1;" onclick="submitEditFee()">&#x1F4BE; Save &amp; Notify Student</button>
+            <button class="btn-cancel" onclick="closeModal('editFeeModal')">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<script src="state.js"></script>
+<script src="script.js"></script>
+<script src="fixes.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const allowedRoles = ['admin', 'head', 'superadmin'];
+    const user = window.Auth.requireAuth(allowedRoles);
+    if (!user) return;
+    const name = (user.first_name || '') + ' ' + (user.last_name || user.username || '');
+    const sn = document.getElementById('sidebar-user-name');
+    if (sn) sn.textContent = name.trim();
+    // Inject notification bell
+    window.Notifications?.injectBell?.();
+    // Load all sections
+    Promise.allSettled([
+        window.renderReports && window.renderReports(),
+        window.renderEventsTable && window.renderEventsTable(),
+        window.renderResourceManagement && window.renderResourceManagement(),
+        window.renderFeeCompliance && window.renderFeeCompliance(),
+        window.renderUsersTable && window.renderUsersTable(),
+        window.renderLeaveManagement && window.renderLeaveManagement(),
+        window.renderAttendanceOverride && window.renderAttendanceOverride(),
+    ]);
+});
+
+</script>
+</body>
+</html>

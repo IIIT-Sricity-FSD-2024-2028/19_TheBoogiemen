@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+back-end/node_modules/
+
+# Build output
+back-end/dist/
+back-end/docs/swagger.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Env
+.env
+.env.local

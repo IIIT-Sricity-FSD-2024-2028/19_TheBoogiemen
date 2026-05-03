@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faculty Dashboard - BarelyPassing</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dashboard-body">
+
+<!-- ── Sidebar ─────────────────────────────────── -->
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <h2>BarelyPassing</h2>
+        <p>Academic Performance &amp; Outcome Tracking</p>
+    </div>
+
+    <div class="sidebar-user">
+        <div class="user-avatar avatar-m" id="sidebar-avatar">M</div>
+        <div class="user-info">
+            <h3 id="sidebar-user-name">Dr. Mallikarjun Reddy</h3>
+            <p>Faculty · CSE Department</p>
+        </div>
+    </div>
+
+    <nav class="sidebar-nav">
+        <a href="#" class="nav-item active" onclick="switchView('dashboard-view', this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <span>Dashboard</span>
+        </a>
+        <a href="#" class="nav-item" onclick="switchView('time-table-view', this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span>My Timetable</span>
+        </a>
+        <a href="#" class="nav-item" onclick="switchView('assessment-mapping-view', this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            <span>Assessment Mapping</span>
+        </a>
+        <a href="#" class="nav-item" onclick="switchView('mark-attendance-view', this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            <span>Mark Attendance</span>
+        </a>
+        <a href="#" class="nav-item" onclick="switchView('student-overview-view', this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>Student Overview</span>
+        </a>
+        <a href="#" class="nav-item" onclick="switchView('discussion-forum-view', this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span>Discussion Forum</span>
+        </a>
+        <a href="#" class="nav-item" onclick="switchView('research-projects-view', this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            <span>Research Projects</span>
+        </a>
+        <a href="#" class="nav-item" onclick="openResourceBookingModal(); return false;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+            <span>Request Resources</span>
+        </a>
+    </nav>
+
+    <div class="sidebar-footer">
+        <a href="#" class="nav-item" onclick="switchView('settings-view', this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+            <span>Settings</span>
+
+        </a>
+        <button class="nav-item" onclick="window.Auth.logout()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+            <span>Logout</span>
+        </button>
+    </div>
+</aside>
+
+<!-- ── Main Area ────────────────────────────────── -->
+<div class="main-content">
+
+    <!-- Top Header Bar -->
+    <div class="top-header-bar" id="top-header-bar">
+        <h1 id="page-title">Faculty Dashboard</h1>
+        <div class="header-badges">
+            <span class="badge-term">Spring 2026</span>
+            <span class="badge-risk">3 At-Risk</span>
+        </div>
+    </div>
+
+    <div class="content-body">
+
+        <!-- ── Dashboard View ──────────────────────── -->
+        <div id="dashboard-view" class="view-section active">
+            <!-- Clickable Metric Cards -->
+            <div class="metrics-grid" style="grid-template-columns:1fr 1fr;">
+                <div class="metric-card" onclick="switchView('student-overview-view',document.querySelector('.nav-item[onclick*=student-overview-view]'))" style="cursor:pointer;" title="View students">
+                    <div class="label">TOTAL STUDENTS</div>
+                    <div class="value" id="f-total-students">—</div>
+                    <div class="sub">click to view all ↗</div>
+                </div>
+                <div class="metric-card" onclick="switchView('time-table-view',document.querySelector('.nav-item[onclick*=time-table-view]'))" style="cursor:pointer;" title="View timetable">
+                    <div class="label">CLASSES THIS WEEK</div>
+                    <div class="value" id="f-classes-week">—</div>
+                    <div class="sub">click to view timetable ↗</div>
+                </div>
+            </div>
+            <!-- At-Risk Students (loaded dynamically) -->
+            <div class="stats-card">
+                <div class="stats-card-header">
+                    <div>
+                        <h3>Early Intervention Required</h3>
+                        <p>Students needing attention based on attendance &amp; performance.</p>
+                    </div>
+                </div>
+                <div class="stats-card-body" id="f-intervention-body">
+                    <div style="text-align:center;color:#64748b;padding:20px;">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Assessment Mapping View ─────────────── -->
+        <div id="assessment-mapping-view" class="view-section" style="display:none;">
+            <div style="display:flex;justify-content:flex-end;gap:12px;margin-bottom:16px;">
+                <button class="page-action-btn" onclick="openModal('assessmentModal')" style="background:#1e293b;">+ Create Assessment</button>
+                <button class="page-action-btn" onclick="openModal('createCourseModal')">+ Create Course</button>
+            </div>
+            <div id="assessmentListContainer"></div>
+        </div>
+
+        <!-- ── Event Scheduler View ────────────────── -->
+        <div id="event-scheduler-view" class="view-section">
+            <div class="stats-card">
+                <div class="stats-card-header">
+                    <div><h3>Upcoming Events</h3></div>
+                    <button class="page-action-btn" onclick="openModal('facultyEventModal'); restrictDateToFuture('fEventDate');">+ Add Event</button>
+                </div>
+                <div class="stats-card-body">
+                    <table class="crud-table">
+                        <thead><tr><th>Type</th><th>Event Details</th><th>Date</th><th>Venue</th></tr></thead>
+                        <tbody id="fEventsTableBody"><tr><td colspan="4" style="text-align:center;color:#64748b;padding:20px;">Loading...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Leave Management View ───────────────── -->
+        <div id="leave-management-view" class="view-section" style="display:none;">
+            <div class="metrics-grid" style="grid-template-columns:1fr 1fr; margin-bottom:20px;">
+                <div class="metric-card">
+                    <div class="label">TOTAL APPLICATIONS</div>
+                    <div class="value" id="fLeaveTotalCount">0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">REJECTED</div>
+                    <div class="value" id="fLeaveRejectedCount">0</div>
+                    <div class="sub red">Not approved</div>
+                </div>
+            </div>
+            <div class="stats-card">
+                <div class="stats-card-header">
+                    <div><h3>Leave Applications</h3></div>
+                    <button class="page-action-btn" onclick="openModal('fLeaveModal'); restrictDateToFuture('fLeaveStart');">+ Apply for Leave</button>
+                </div>
+                <div class="stats-card-body" id="fLeaveListBody">
+                    <div style="text-align:center;color:#64748b;padding:20px;">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Time Table View ───────────────────── -->
+        <div id="time-table-view" class="view-section" style="display:none;">
+            <div class="stats-card">
+                <div class="stats-card-header"><h3>Faculty Timetable</h3></div>
+                <div class="stats-card-body" style="padding:24px; overflow-x: auto;">
+                    <div id="f-timetable-grid"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Mark Attendance View ──────────────── -->
+        <div id="mark-attendance-view" class="view-section" style="display:none;">
+            <div class="stats-card">
+                <div class="stats-card-header"><h3>Mark Attendance</h3></div>
+                <div class="stats-card-body" style="padding:24px;">
+                    <!-- Controls Row -->
+                    <div style="display:grid;grid-template-columns:1fr 1fr auto auto;gap:16px;margin-bottom:24px;align-items:end;">
+                        <div>
+                            <label style="font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px;">Course</label>
+                            <select id="attendance-course-select" onchange="renderMarkAttendanceTable()" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;">
+                                <option value="">— Select Course —</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px;">Date</label>
+                            <input type="date" id="attendance-date" onchange="renderMarkAttendanceTable()" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;box-sizing:border-box;">
+                        </div>
+                        <div>
+                            <label style="font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px;">Quick</label>
+                            <div style="display:flex;gap:6px;">
+                                <button type="button" onclick="markAllAttendance('present')" style="padding:10px 12px;background:#dcfce7;color:#166534;border:1px solid #bbf7d0;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;">All Present</button>
+                                <button type="button" onclick="markAllAttendance('absent')" style="padding:10px 12px;background:#fef2f2;color:#991b1b;border:1px solid #fecaca;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;">All Absent</button>
+                            </div>
+                        </div>
+                        <div>
+                            <div id="attendance-present-count" style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:700;color:#16a34a;white-space:nowrap;">0 of 0</div>
+                        </div>
+                    </div>
+                    <!-- Student Table -->
+                    <div style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;">
+                        <table class="crud-table" style="margin:0;">
+                            <thead>
+                                <tr>
+                                    <th style="width:40px;">#</th>
+                                    <th>Student Name</th>
+                                    <th>ID</th>
+                                    <th style="text-align:center;">Attendance</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendance-student-list">
+                                <tr><td colspan="4" style="text-align:center;color:#64748b;padding:24px;">Select a course above to load students</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <button class="submit-btn" style="margin-top:20px;width:100%;" onclick="submitAttendance()">✓ Save Attendance</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="student-overview-view" class="view-section" style="display:none;">
+            <!-- Broadcast panel -->
+            <div class="stats-card" style="margin-bottom:16px;background:linear-gradient(135deg,#eff6ff,#f0fdf4);">
+                <div class="stats-card-header"><h3>📢 Broadcast Message to All Students</h3></div>
+                <div class="stats-card-body" style="padding:16px;">
+                    <div style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end;">
+                        <div>
+                            <label style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px;">Message to all students</label>
+                            <input type="text" id="facultyBroadcastMsg" placeholder="e.g. Assignment 2 deadline extended to Monday…"
+                                style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;box-sizing:border-box;">
+                        </div>
+                        <button onclick="sendFacultyBroadcast()"
+                            style="padding:10px 20px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700;white-space:nowrap;">
+                            Send to All
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- Quick Actions -->
+            <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+                <button onclick="openMeetingModal()" style="padding:10px 18px;background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;">📅 Schedule Meeting</button>
+                <button onclick="openEnrollStudentModal()" style="padding:10px 18px;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;">📖 Enroll Student in Course</button>
+                <button onclick="openAssignBTPModal()" style="padding:10px 18px;background:#faf5ff;color:#7c3aed;border:1px solid #e9d5ff;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;">📚 Assign BTP Project</button>
+            </div>
+            <!-- Student list -->
+            <div class="stats-card">
+                <div class="stats-card-header"><h3>Student Overview</h3></div>
+                <div class="stats-card-body" style="padding:24px;">
+                    <input type="text" id="student-search-input" placeholder="Search by name or ID..." onkeyup="filterStudentOverview()"
+                        style="padding:10px 12px;width:100%;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;margin-bottom:16px;box-sizing:border-box;">
+                    <div id="student-overview-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;"></div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ── Discussion Forum View ─────────────── -->
+        <div id="discussion-forum-view" class="view-section" style="display:none;">
+            <div class="stats-card">
+                <div class="stats-card-header">
+                    <h3>Discussion Forum</h3>
+                    <button class="page-action-btn" onclick="openModal('newThreadModal')">+ New Thread</button>
+                </div>
+                <div class="stats-card-body" style="padding:0;">
+                    <div id="f-discussion-threads-body"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Research Projects View ────────────── -->
+        <div id="research-projects-view" class="view-section" style="display:none;">
+            <div class="stats-card">
+                <div class="stats-card-header"><h3>Supervised Research Projects</h3></div>
+                <div class="stats-card-body" style="padding:24px;">
+                    <div id="f-research-projects-body"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Settings View ─────────────────────── -->
+        <div id="settings-view" class="view-section" style="display:none;">
+            <!-- Content Injected by script.js -->
+        </div>
+
+    </div><!-- /content-body -->
+</div><!-- /main-content -->
+
+<!-- ════════════════════════════════════════════
+     MODALS
+     ════════════════════════════════════════════ -->
+
+<!-- Send Alert Modal -->
+<div id="sendAlertModal" class="modal-backdrop">
+    <div class="modal-window" style="max-width:480px;">
+        <div class="modal-header">
+            <h2>⚠ Send Alert</h2>
+            <button class="close-modal" onclick="closeModal('sendAlertModal')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="alertStudentId">
+            <input type="hidden" id="alertStudentName">
+            <div class="form-group">
+                <label>Sending alert to: <strong id="alertStudentLabel" style="color:#dc2626;"></strong></label>
+            </div>
+            <div class="form-group">
+                <label>Alert Message <span style="color:#ef4444">*</span></label>
+                <textarea id="alertMessage" rows="4"
+                    placeholder="e.g. Your attendance is below 75%. Please ensure regular attendance to avoid debarment."
+                    style="min-height:100px;"></textarea>
+                <div style="font-size:11px;color:#94a3b8;margin-top:4px;">The student will see this in their notification bell 🔔</div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button type="button" onclick="document.getElementById('alertMessage').value='Your attendance is critically low. Please attend regularly to avoid debarment.'"
+                    style="padding:6px 10px;font-size:11px;border:1px solid #e2e8f0;border-radius:6px;background:#f8fafc;cursor:pointer;">
+                    📉 Low Attendance
+                </button>
+                <button type="button" onclick="document.getElementById('alertMessage').value='Your academic performance needs improvement. Please visit the faculty cabin for guidance.'"
+                    style="padding:6px 10px;font-size:11px;border:1px solid #e2e8f0;border-radius:6px;background:#f8fafc;cursor:pointer;">
+                    📚 Low Performance
+                </button>
+                <button type="button" onclick="document.getElementById('alertMessage').value='You have a pending assignment submission. Please submit immediately.'"
+                    style="padding:6px 10px;font-size:11px;border:1px solid #e2e8f0;border-radius:6px;background:#f8fafc;cursor:pointer;">
+                    📋 Pending Assignment
+                </button>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button onclick="sendCustomAlert()" class="submit-btn" style="flex:1;background:linear-gradient(135deg,#dc2626,#b91c1c);">
+                ⚠ Send Alert
+            </button>
+            <button type="button" class="btn-cancel" onclick="closeModal('sendAlertModal')">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Schedule Meeting Modal (Figma-Exact) -->
+<div id="meetingModal" class="modal-backdrop">
+    <div class="modal-window">
+        <div class="modal-header">
+            <h2>Schedule Meeting</h2>
+            <button class="close-modal" onclick="closeModal('meetingModal')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <form id="meetingForm" onsubmit="event.preventDefault(); submitScheduleMeeting();">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Student</label>
+                    <select id="meetingStudent">
+                        <option value="">— Select Student —</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Date <span style="color:#ef4444">*</span></label>
+                        <input type="date" id="meetingDate">
+                    </div>
+                    <div class="form-group">
+                        <label>Time <span style="color:#ef4444">*</span></label>
+                        <div style="display:flex;gap:6px;align-items:center;">
+                            <select id="meetingHour" style="flex:1;padding:9px 6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;">
+                                <option value="">Hr</option>
+                                <option>1</option><option>2</option><option>3</option><option>4</option>
+                                <option>5</option><option>6</option><option>7</option><option>8</option>
+                                <option>9</option><option>10</option><option>11</option><option>12</option>
+                            </select>
+                            <span style="font-weight:700;color:#64748b;">:</span>
+                            <select id="meetingMinute" style="flex:1;padding:9px 6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;">
+                                <option value="">Min</option>
+                                <option value="00">00</option><option value="15">15</option>
+                                <option value="30">30</option><option value="45">45</option>
+                            </select>
+                            <select id="meetingPeriod" style="flex:1;padding:9px 6px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;">
+                                <option value="AM">AM</option>
+                                <option value="PM">PM</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Meeting Type</label>
+                    <select id="meetingMode">
+                        <option value="">Select meeting type</option>
+                        <option value="in-person">In-Person (Faculty Cabin)</option>
+                        <option value="online">Online (Google Meet)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Agenda</label>
+                    <textarea id="meetingAgenda" placeholder="Discuss academic performance, attendance concerns..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="submit-btn" style="flex:1;">Schedule Meeting</button>
+                <button type="button" class="btn-cancel" onclick="closeModal('meetingModal')">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Create Assessment Modal (Figma-Exact) -->
+<div id="assessmentModal" class="modal-backdrop">
+    <div class="modal-window">
+        <div class="modal-header">
+            <h2>Create New Assessment</h2>
+            <button class="close-modal" onclick="closeModal('assessmentModal')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <form id="createAssessForm" onsubmit="event.preventDefault(); submitCreateAssessment();">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Assessment Name</label>
+                    <input type="text" id="assessName" placeholder="e.g., Mid-term Exam">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Type</label>
+                        <select id="assessType">
+                            <option value="">Select type</option>
+                            <option value="theory">Theory Exam</option>
+                            <option value="practical">Practical / Lab</option>
+                            <option value="assignment">Assignment</option>
+                            <option value="project">Project</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" id="assessDate">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Total Marks</label>
+                        <input type="number" id="assessMarks" min="1" max="1000" placeholder="100">
+                    </div>
+                    <div class="form-group">
+                        <label>Exam Mode</label>
+                        <select id="assessMode">
+                            <option value="offline">Offline (Direct entry)</option>
+                            <option value="online">Online (Students submit first)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Course</label>
+                    <select id="assessCourse">
+                        <option value="">Loading courses…</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="submit-btn" style="flex:1;">Create Assessment</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Create Course Modal -->
+<div id="createCourseModal" class="modal-backdrop">
+    <div class="modal-window">
+        <div class="modal-header">
+            <h2>Create New Course</h2>
+            <button class="close-modal" onclick="closeModal('createCourseModal')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <form id="createCourseForm" onsubmit="event.preventDefault(); submitCreateCourse();">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Course Name</label>
+                    <input type="text" id="newCourseName" placeholder="e.g., Cloud Computing" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Course Code</label>
+                        <input type="text" id="newCourseCode" placeholder="CS501" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Credits</label>
+                        <input type="number" id="newCourseCredits" min="1" max="5" value="4" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Semester</label>
+                    <input type="number" id="newCourseSemester" min="1" max="8" value="6" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="submit-btn" style="flex:1;">Create Course</button>
+                <button type="button" class="btn-cancel" onclick="closeModal('createCourseModal')">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Apply for Leave Modal -->
+<div id="fLeaveModal" class="modal-backdrop">
+    <div class="modal-window">
+        <div class="modal-header">
+            <h2>Apply for Leave</h2>
+            <button class="close-modal" onclick="closeModal('fLeaveModal')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <form id="fLeaveForm" onsubmit="event.preventDefault(); submitFacultyLeave();">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Leave Type</label>
+                    <select id="fLeaveType">
+                        <option value="">Select leave type</option>
+                        <option value="medical">Medical Leave</option>
+                        <option value="personal">Personal Leave</option>
+                        <option value="event">Event/Conference</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Start Date</label>
+                        <input type="date" id="fLeaveStart">
+                    </div>
+                    <div class="form-group">
+                        <label>End Date</label>
+                        <input type="date" id="fLeaveEnd">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Reason</label>
+                    <textarea id="fLeaveReason" placeholder="Provide detailed reason for leave..."></textarea>
+                </div>
+                <div class="upload-zone">Click to upload or drag &amp; drop<br>PDF, JPG, PNG up to 5MB (Optional)</div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="submit-btn" style="flex:1;">Submit Application</button>
+                <button type="button" class="btn-cancel" onclick="closeModal('fLeaveModal')">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modals (Injected by script.js cleanup) -->
+<div id="threadDetailModal" class="modal-backdrop">
+    <div class="modal-window" style="max-width:600px;">
+        <div class="modal-header">
+            <h2 id="threadDetailTitle">Thread</h2>
+            <button class="close-modal" onclick="closeModal('threadDetailModal')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p style="font-size:12px;color:#64748b;margin-bottom:8px;" id="threadDetailAuthor"></p>
+            <p id="threadDetailContent" style="font-size:14px;margin-bottom:16px;line-height:1.7;"></p>
+            <hr style="border:0;border-top:1px solid var(--border);margin-bottom:16px;">
+            <h4 style="font-size:13px;font-weight:600;margin-bottom:12px;">Replies</h4>
+            <div id="threadDetailReplies" style="max-height:200px;overflow-y:auto;"></div>
+            <hr style="border:0;border-top:1px solid var(--border);margin:16px 0 12px;">
+            <input type="hidden" id="threadReplyPostId">
+            <div class="form-group">
+                <label>Post a Reply</label>
+                <textarea id="threadReplyContent" placeholder="Write your reply..." rows="3"></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="submit-btn" style="flex:1;" onclick="submitThreadReply()">Post Reply</button>
+            <button class="btn-cancel" onclick="closeModal('threadDetailModal')">Close</button>
+        </div>
+    </div>
+</div>
+
+
+
+
+<!-- Create Thread Modal -->
+<div id="newThreadModal" class="modal-backdrop">
+    <div class="modal-window">
+        <div class="modal-header">
+            <h2>Start New Discussion</h2>
+            <button class="close-modal" onclick="closeModal('newThreadModal')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <form id="newDiscussionForm" onsubmit="event.preventDefault(); submitNewDiscussion();">
+            <div class="modal-body">
+                <div class="form-group"><label>Topic Title</label><input type="text" id="discTitle" placeholder="What's on your mind?" required></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Category</label><select id="discTag" required><option value="general">General</option><option value="help">Help Wanted</option><option value="event">Event Info</option><option value="academic">Academic</option></select></div>
+                    <div class="form-group"><label>Course ID (Optional)</label><input type="text" id="discCourse" placeholder="e.g. CS301"></div>
+                </div>
+                <div class="form-group"><label>Content</label><textarea id="discContent" rows="4" placeholder="Describe your topic in detail..." required></textarea></div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="submit-btn" style="flex:1;">Post Thread</button>
+                <button type="button" class="btn-cancel" onclick="closeModal('newThreadModal')">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Marks Entry Modal -->
+<div id="marksEntryModal" class="modal-backdrop">
+    <div class="modal-window" style="max-width:580px;">
+        <div class="modal-header">
+            <h2>Enter Marks — <span id="marksAssessmentLabel" style="font-size:16px;color:#6366f1;"></span></h2>
+            <button class="close-modal" onclick="closeModal('marksEntryModal')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="marksAssessmentId">
+            <input type="hidden" id="marksMaxVal">
+            <p style="font-size:12px;color:#64748b;margin-bottom:12px;">Enter marks for each student (out of <strong id="marksMaxDisplay">100</strong>)</p>
+            <div id="marksEntryList" style="max-height:320px;overflow-y:auto;"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="submit-btn" style="flex:1;" onclick="submitMarksEntry()">Save Marks</button>
+            <button class="btn-cancel" onclick="closeModal('marksEntryModal')">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<script src="state.js"></script>
+<script src="script.js"></script>
+<script src="fixes.js"></script>
+
+<!-- Assign BTP Modal -->
+<div id="assignBTPModal" class="modal-backdrop">
+    <div class="modal-window">
+        <div class="modal-header"><h2>📚 Assign BTP Project to Student</h2><button class="close-modal" onclick="closeModal('assignBTPModal')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+        <form id="assignBTPForm" onsubmit="event.preventDefault(); submitAssignBTP();">
+            <div class="modal-body">
+                <div class="form-group"><label>Select Student <span style="color:#ef4444">*</span></label><select id="btpStudentSel" required><option value="">Loading…</option></select></div>
+                <div class="form-group"><label>Project Title <span style="color:#ef4444">*</span></label><input type="text" id="btpTitle" placeholder="e.g., AI-Based Attendance System" required></div>
+                <div class="form-group"><label>Abstract / Description</label><textarea id="btpAbstract" rows="3" placeholder="Brief description of the project…"></textarea></div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="submit-btn" style="flex:1;">Assign Project</button>
+                <button type="button" class="btn-cancel" onclick="closeModal('assignBTPModal')">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Enroll Student in Course Modal -->
+<div id="enrollStudentModal" class="modal-backdrop">
+    <div class="modal-window">
+        <div class="modal-header"><h2>📖 Enroll Student in Course</h2><button class="close-modal" onclick="closeModal('enrollStudentModal')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+        <div class="modal-body">
+            <div class="form-group"><label>Select Student <span style="color:#ef4444">*</span></label><select id="enrollStudentSel"><option value="">Loading…</option></select></div>
+            <div class="form-group"><label>Select Course <span style="color:#ef4444">*</span></label><select id="enrollCourseSel"><option value="">Loading…</option></select></div>
+        </div>
+        <div class="modal-footer">
+            <button onclick="submitEnrollStudent()" class="submit-btn" style="flex:1;">Enroll Student</button>
+            <button type="button" class="btn-cancel" onclick="closeModal('enrollStudentModal')">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Faculty BTP Progress Update Modal -->
+<div id="facultyBTPModal" class="modal-backdrop">
+    <div class="modal-window">
+        <div class="modal-header">
+            <h2>&#x270F; Update BTP Progress</h2>
+            <button class="close-modal" onclick="closeModal('facultyBTPModal')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="facBTPId">
+            <input type="hidden" id="facBTPStudentId">
+            <div class="form-group">
+                <label>Project: <strong id="facBTPTitle" style="color:#6366f1;"></strong></label>
+            </div>
+            <div class="form-group">
+                <label>Progress (%) <span style="color:#ef4444">*</span></label>
+                <input type="number" id="facBTPProgress" min="0" max="100" placeholder="e.g. 60"
+                    style="width:100%;padding:10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;box-sizing:border-box;">
+                <div style="font-size:11px;color:#94a3b8;margin-top:4px;">Enter a value from 0 to 100</div>
+            </div>
+            <div class="form-group">
+                <label>Feedback / Comments for Student</label>
+                <textarea id="facBTPFeedback" rows="3"
+                    placeholder="e.g. Good progress! Please focus on the literature review section next."
+                    style="width:100%;padding:10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;resize:vertical;box-sizing:border-box;"></textarea>
+            </div>
+            <div style="padding:12px;background:#eff6ff;border-radius:8px;font-size:12px;color:#1e40af;margin-top:4px;">
+                &#x1F4A1; The student will receive a notification with the updated progress and your feedback.
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button onclick="submitFacultyBTPProgress()" class="submit-btn" style="flex:1;">&#x1F4CA; Save Progress &amp; Notify Student</button>
+            <button type="button" class="btn-cancel" onclick="closeModal('facultyBTPModal')">Cancel</button>
+        </div>
+    </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    if (!window.location.pathname.includes('faculty.html')) return;
+    const user = window.Auth.requireAuth(['faculty']);
+    if (!user) return;
+    const name = (user.first_name || '') + ' ' + (user.last_name || user.username || '');
+    const sn = document.getElementById('sidebar-user-name');
+    if (sn) sn.textContent = name.trim();
+    // Inject notification bell
+    window.Notifications?.injectBell?.();
+    // Populate attendance & assessment course dropdowns on load
+    api('/faculty/me/courses').then(courses => {
+        const attSel = document.getElementById('attendance-course-select');
+        if (attSel) {
+            attSel.innerHTML = '<option value="">\u2014 Select Course \u2014</option>' +
+                courses.map(c => `<option value="${c.course_id}">${c.course_code} - ${c.course_name}</option>`).join('');
+        }
+        const assSel = document.getElementById('assessCourse');
+        if (assSel) {
+            assSel.innerHTML = '<option value="">Select course</option>' +
+                courses.map(c => `<option value="${c.course_id}">${c.course_code} \u2013 ${c.course_name}</option>`).join('');
+        }
+    }).catch(e => console.warn('courses load:', e));
+    // Load initial dashboard data
+    Promise.allSettled([
+        window.renderFacultyDashboard && window.renderFacultyDashboard(),
+        window.renderFacultyTimetable && window.renderFacultyTimetable(),
+        window.renderFacultyStudents && window.renderFacultyStudents(),
+        window.renderDiscussions && window.renderDiscussions(),
+        window.renderFacultyResearch && window.renderFacultyResearch(),
+        window.renderFacultyLeaveList && window.renderFacultyLeaveList(),
+        window.renderFacultyEventsTable && window.renderFacultyEventsTable(),
+        window.renderAssessmentList && window.renderAssessmentList(),
+    ]);
+});
+
+</script>
+</body>
+</html>
