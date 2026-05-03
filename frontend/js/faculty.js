@@ -142,13 +142,13 @@ async function handleSchedule() {
   if (api) {
     try {
       await api.post('/resources/events', {
-        resource_id: '550e8400-e29b-41d4-a716-446655440000',
-        start_time: document.getElementById('meet-date').value + 'T' + document.getElementById('meet-time').value + ':00',
-        end_time: document.getElementById('meet-date').value + 'T' + document.getElementById('meet-time').value + ':00',
+        resource_id: '158ec2d8-2b81-4b77-aa97-15ea2fb54611',
+        start_time: document.getElementById('meet-date').value + 'T' + document.getElementById('meet-time').value + ':00Z',
+        end_time: document.getElementById('meet-date').value + 'T' + document.getElementById('meet-time').value + ':00Z',
         event_type: 'seminar'
       });
     } catch (err) {
-      console.warn('[API] Schedule sync failed:', err.message);
+      console.error('[API] Schedule sync failed:', err.message);
     }
   }
 

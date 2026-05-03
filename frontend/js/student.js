@@ -15,6 +15,14 @@
 // API shortcut (available after api-client.js loads)
 const _api = () => window.API_CLIENT?.api;
 
+// Backend seed UUIDs for API calls
+const BACKEND_SEEDS = {
+  STUDENT_ID: '550e8400-e29b-41d4-a716-446655440000',
+  TOPIC_ID: '342b4512-c2e5-4081-b7ae-24a6e3d24268',
+  PROJECT_ID: '421dff1d-ff1e-4cb8-8c1d-1aaf42f1f6ba',
+  RESOURCE_ID: '158ec2d8-2b81-4b77-aa97-15ea2fb54611'
+};
+
 
 /* =====================================================
    UI CONTROLLERS
@@ -158,14 +166,14 @@ async function handleLeave() {
     try {
       const session = window.API_CLIENT?.getSession();
       await api.post('/leaves', {
-        student_id: session?.userId || '550e8400-e29b-41d4-a716-446655440000',
-        start_date: document.getElementById('l-start').value,
-        end_date: document.getElementById('l-end').value,
+        student_id: session?.userId || BACKEND_SEEDS.STUDENT_ID,
+        start_date: document.getElementById('l-start').value + 'T00:00:00Z',
+        end_date: document.getElementById('l-end').value + 'T00:00:00Z',
         reason: document.getElementById('l-reason').value,
         doc_ref: document.getElementById('l-type').value
       });
     } catch (err) {
-      console.warn('[API] Leave sync failed:', err.message);
+      console.error('[API] Leave sync failed:', err.message);
     }
   }
 
@@ -222,11 +230,11 @@ async function handleThread() {
   if (api) {
     try {
       await api.post('/forum', {
-        topic_id: document.getElementById('t-tag').value,
+        topic_id: BACKEND_SEEDS.TOPIC_ID,
         content: document.getElementById('t-title').value + '\n\n' + document.getElementById('t-desc').value
       });
     } catch (err) {
-      console.warn('[API] Forum sync failed:', err.message);
+      console.error('[API] Forum sync failed:', err.message);
     }
   }
 
@@ -266,17 +274,14 @@ async function handleMilestone() {
   if (api) {
     try {
       const projects = await api.get('/research');
-      const projectId = (projects && projects.length > 0) ? projects[0].project_id : null;
-      if (projectId) {
-        await api.post('/research/milestones', {
-          project_id: projectId,
-          title: document.getElementById('m-title').value,
-          submission_date: document.getElementById('m-date').value,
-          description: document.getElementById('m-desc').value
-        });
-      }
+      const projectId = (projects && projects.length > 0) ? projects[0].project_id : BACKEND_SEEDS.PROJECT_ID;
+      await api.post('/research/milestones', {
+        project_id: projectId,
+        file_type: 'PDF',
+        description: (document.getElementById('m-title').value + ' — ' + (document.getElementById('m-desc').value || 'No description'))
+      });
     } catch (err) {
-      console.warn('[API] Milestone sync failed:', err.message);
+      console.error('[API] Milestone sync failed:', err.message);
     }
   }
 

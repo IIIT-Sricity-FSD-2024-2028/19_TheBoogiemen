@@ -19,7 +19,7 @@ export class LeaveController {
   constructor(private readonly leaveService: LeaveService) {}
 
   @Post()
-  @SetMetadata('roles', ['student'])
+  @SetMetadata('roles', ['student', 'academic_head'])
   @ApiBody({ type: ApplyLeaveInputDto })
   @ApiResponse({ status: 201, type: LeaveOutputDto })
   async applyLeave(@Body() dto: ApplyLeaveInputDto) {

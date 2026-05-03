@@ -17,7 +17,7 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Patch(':id/role')
-  @SetMetadata('roles', ['academic_head'])
+  @SetMetadata('roles', ['academic_head', 'admin'])
   @ApiParam({ name: 'id', description: 'User ID' })
   @ApiBody({ type: UpdateRoleInputDto })
   @ApiResponse({ status: 200, type: UserOutputDto })
@@ -56,7 +56,7 @@ export class UserController {
   }
 
   @Post()
-  @SetMetadata('roles', ['admin'])
+  @SetMetadata('roles', ['admin', 'academic_head'])
   @ApiBody({ type: UpdateUserInputDto })
   @ApiResponse({ status: 201, type: UserOutputDto })
   async createUser(@Body() dto: UpdateUserInputDto) {
@@ -75,7 +75,7 @@ export class UserController {
   }
 
   @Delete(':id')
-  @SetMetadata('roles', ['admin'])
+  @SetMetadata('roles', ['admin', 'academic_head'])
   @ApiParam({ name: 'id', description: 'User ID' })
   @ApiResponse({ status: 200, description: 'User deleted successfully' })
   async deleteUser(@Param('id') id: string) {

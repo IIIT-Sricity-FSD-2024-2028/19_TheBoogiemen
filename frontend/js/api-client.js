@@ -49,6 +49,8 @@ async function request(method, path, body = null) {
   };
   if (body) options.body = JSON.stringify(body);
 
+  console.log(`[API] ${method} ${BASE_URL}${path}`, body || '', `(role: ${currentRole})`);
+
   const res = await fetch(`${BASE_URL}${path}`, options);
 
   // Handle non-JSON responses gracefully
@@ -56,14 +58,20 @@ async function request(method, path, body = null) {
   try {
     json = await res.json();
   } catch (_) {
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) {
+      console.error(`[API] ${method} ${path} → ${res.status} (no body)`);
+      throw new Error(`HTTP ${res.status}`);
+    }
     return null;
   }
 
   if (!res.ok) {
     const msg = json?.message || `HTTP ${res.status}`;
+    console.error(`[API] ${method} ${path} → ${res.status}:`, json);
     throw new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
   }
+
+  console.log(`[API] ${method} ${path} → ${res.status} ✓`, json.data ? '(has data)' : '');
 
   // Backend wraps in { success, data, message }
   return json.data ?? json;

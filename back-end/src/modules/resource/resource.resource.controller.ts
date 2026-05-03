@@ -18,7 +18,7 @@ export class ResourceController {
   constructor(private readonly resourceService: ResourceService) {}
 
   @Post('events')
-  @SetMetadata('roles', ['faculty', 'admin'])
+  @SetMetadata('roles', ['faculty', 'admin', 'academic_head'])
   @ApiBody({ type: ScheduleEventInputDto })
   @ApiResponse({ status: 201, type: EventOutputDto })
   async scheduleEvent(@Body() dto: ScheduleEventInputDto) {
@@ -54,7 +54,7 @@ export class ResourceController {
   }
 
   @Post()
-  @SetMetadata('roles', ['admin'])
+  @SetMetadata('roles', ['admin', 'academic_head'])
   @ApiBody({ type: CreateResourceInputDto })
   @ApiResponse({ status: 201, description: 'Create resource' })
   async createResource(@Body() dto: CreateResourceInputDto) {
@@ -63,7 +63,7 @@ export class ResourceController {
   }
 
   @Put(':id')
-  @SetMetadata('roles', ['admin'])
+  @SetMetadata('roles', ['admin', 'academic_head'])
   @ApiBody({ type: UpdateResourceInputDto })
   @ApiResponse({ status: 200, description: 'Full update of resource' })
   async updateResource(@Param('id') id: string, @Body() dto: UpdateResourceInputDto) {
@@ -72,7 +72,7 @@ export class ResourceController {
   }
 
   @Patch(':id')
-  @SetMetadata('roles', ['admin'])
+  @SetMetadata('roles', ['admin', 'academic_head'])
   @ApiBody({ type: UpdateResourceInputDto })
   @ApiResponse({ status: 200, description: 'Partial update of resource' })
   async patchResource(@Param('id') id: string, @Body() dto: UpdateResourceInputDto) {
@@ -81,7 +81,7 @@ export class ResourceController {
   }
 
   @Delete(':id')
-  @SetMetadata('roles', ['admin'])
+  @SetMetadata('roles', ['admin', 'academic_head'])
   @ApiResponse({ status: 200, description: 'Delete resource' })
   async deleteResource(@Param('id') id: string) {
     await this.resourceService.deleteResource(id);
@@ -105,7 +105,7 @@ export class ResourceController {
   }
 
   @Put('events/:id')
-  @SetMetadata('roles', ['admin', 'faculty'])
+  @SetMetadata('roles', ['admin', 'faculty', 'academic_head'])
   @ApiBody({ type: ScheduleEventInputDto })
   @ApiResponse({ status: 200, description: 'Update event' })
   async updateEvent(@Param('id') id: string, @Body() dto: ScheduleEventInputDto) {
@@ -114,7 +114,7 @@ export class ResourceController {
   }
 
   @Delete('events/:id')
-  @SetMetadata('roles', ['admin', 'faculty'])
+  @SetMetadata('roles', ['admin', 'faculty', 'academic_head'])
   @ApiResponse({ status: 200, description: 'Delete event' })
   async deleteEvent(@Param('id') id: string) {
     await this.resourceService.deleteEvent(id);

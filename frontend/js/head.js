@@ -243,13 +243,13 @@ async function handleAddEvent() {
   if (api) {
     try {
       await api.post('/resources/events', {
-        resource_id: '550e8400-e29b-41d4-a716-446655440000',
-        start_time: document.getElementById('ev-date').value + 'T' + document.getElementById('ev-time').value + ':00',
-        end_time: document.getElementById('ev-date').value + 'T' + document.getElementById('ev-time').value + ':00',
+        resource_id: '158ec2d8-2b81-4b77-aa97-15ea2fb54611',
+        start_time: document.getElementById('ev-date').value + 'T' + document.getElementById('ev-time').value + ':00Z',
+        end_time: document.getElementById('ev-date').value + 'T' + document.getElementById('ev-time').value + ':00Z',
         event_type: 'seminar'
       });
     } catch (err) {
-      console.warn('[API] Event sync failed:', err.message);
+      console.error('[API] Event sync failed:', err.message);
     }
   }
 
@@ -314,7 +314,7 @@ async function handleAddResource() {
         capacity: parseInt(document.getElementById('res-cap').value) || 0
       });
     } catch (err) {
-      console.warn('[API] Resource sync failed:', err.message);
+      console.error('[API] Resource sync failed:', err.message);
     }
   }
 
@@ -409,13 +409,16 @@ async function handleAddUser() {
   const api = _api();
   if (api) {
     try {
+      // Map frontend role to backend enum
+      const roleMap = { 'Student': 'student', 'Faculty': 'faculty', 'Admin': 'academic_head' };
+      const backendRole = roleMap[document.getElementById('u-role').value] || 'student';
       await api.post('/users', {
         username: document.getElementById('u-name').value,
         email: document.getElementById('u-email').value,
-        role: document.getElementById('u-role').value
+        role: backendRole
       });
     } catch (err) {
-      console.warn('[API] User sync failed:', err.message);
+      console.error('[API] User sync failed:', err.message);
     }
   }
 

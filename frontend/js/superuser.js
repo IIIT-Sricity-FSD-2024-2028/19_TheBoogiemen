@@ -150,13 +150,16 @@ async function handleAddUser() {
   const api = _api();
   if (api) {
     try {
+      // Map frontend role to backend enum
+      const roleMap = { 'student': 'student', 'faculty': 'faculty', 'head': 'academic_head', 'admin': 'admin' };
+      const backendRole = roleMap[document.getElementById('u-role').value] || 'student';
       await api.post('/users', {
         username: document.getElementById('u-name').value,
         email: document.getElementById('u-email').value,
-        role: document.getElementById('u-role').value
+        role: backendRole
       });
     } catch (err) {
-      console.warn('[API] User provision sync failed:', err.message);
+      console.error('[API] User provision sync failed:', err.message);
     }
   }
 
@@ -222,7 +225,7 @@ async function performDelete() {
     try {
       await api.delete('/users/' + _deletingId);
     } catch (err) {
-      console.warn('[API] Delete sync failed:', err.message);
+      console.error('[API] Delete sync failed:', err.message);
     }
   }
 
@@ -270,11 +273,14 @@ async function handleUpdateUser() {
   const api = _api();
   if (api) {
     try {
+      // Map frontend role to backend enum
+      const roleMap = { 'student': 'student', 'faculty': 'faculty', 'head': 'academic_head', 'admin': 'admin', 'superuser': 'admin' };
+      const backendRole = roleMap[document.getElementById('edit-role').value] || 'student';
       await api.patch('/users/' + id + '/role', {
-        role: document.getElementById('edit-role').value
+        role: backendRole
       });
     } catch (err) {
-      console.warn('[API] Update sync failed:', err.message);
+      console.error('[API] Update sync failed:', err.message);
     }
   }
 
