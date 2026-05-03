@@ -95,7 +95,7 @@ export const MOCK_RESOURCES: RESOURCE[] = [
 
 export const MOCK_EVENTS: EVENT[] = [
   { id: evt_1, resource_id: SEED.RESOURCES[0], start_time: '2026-04-26T10:00:00Z', end_time: '2026-04-26T12:00:00Z', event_type: 'lecture' },
-  { id: 'evt2-uuid', resource_id: SEED.RESOURCES[1], start_time: '2026-05-01T14:00:00Z', end_time: '2026-05-01T16:00:00Z', event_type: 'workshop' },
+  { id: 'evt2-uuid', resource_id: SEED.RESOURCES[1], start_time: '2026-05-01T14:00:00Z', end_time: '2026-05-01T16:00:00Z', event_type: 'seminar' },
 ];
 
 export const MOCK_ASSESSMENTS: ASSESSMENT[] = [
