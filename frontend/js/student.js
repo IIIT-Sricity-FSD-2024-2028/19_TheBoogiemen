@@ -1,4 +1,4 @@
-﻿/**
+/**
  * student.js - Student Portal Scripts
  * BarelyPassing - Academic Progress & Outcome Tracking
  */
@@ -67,23 +67,26 @@ function toast(msg) {
   toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
 }
 
-function validateForm(mid, cfg) {
-  clearErrors(mid);
+function validateForm(modalId, cfg) {
+  clearErrors(modalId);
   let ok = true;
   cfg.forEach(f => {
-    const i = document.getElementById(f.id);
-    const v = i.value.trim();
+    const el = document.getElementById(f.id);
+    if (!el) return;
+    const v = el.value.trim();
     let e = '';
-    if (f.required && !v) e = 'Mandatory field';
-    else if (f.min && v.length < f.min) e = `Min ${f.min} chars`;
+    if (f.required && !v) e = f.message || 'This field is required';
+    else if (f.min && v.length < f.min) e = f.message || `Min ${f.min} characters required`;
     if (e) {
       ok = false;
-      const p = i.closest('.form-field');
-      p.classList.add('has-error');
-      const s = document.createElement('span');
-      s.className = 'field-error';
-      s.textContent = e;
-      p.appendChild(s);
+      const p = el.closest('.form-field') || el.closest('.field') || el.parentElement;
+      if (p) {
+        p.classList.add('has-error');
+        const s = document.createElement('span');
+        s.className = 'field-error';
+        s.textContent = e;
+        p.appendChild(s);
+      }
     }
   });
   return ok;
@@ -104,27 +107,28 @@ function _refresh() {
 }
 
 async function handleLeave() {
-  // Enhanced validation with date range check
   const startDate = document.getElementById('l-start').value;
-  const endDate = document.getElementById('l-end').value;
-  
+  const endDate   = document.getElementById('l-end').value;
+
   if (!validateForm('modalLeave', [
-    { id: 'l-type', required: true, message: 'Please select leave type' },
-    { id: 'l-start', required: true, type: 'date', message: 'Select start date' },
-    { id: 'l-end', required: true, type: 'date', minDate: startDate, message: 'End date must be after start date' },
-    { id: 'l-reason', required: true, min: 10, max: 500, message: 'Reason must be 10-500 characters' }
+    { id: 'l-type',   required: true, message: 'Please select a leave type' },
+    { id: 'l-start',  required: true, message: 'Select start date' },
+    { id: 'l-end',    required: true, message: 'Select end date' },
+    { id: 'l-reason', required: true, min: 5, message: 'Reason required (min 5 chars)' }
   ])) return;
 
+  if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
+    toast('End date cannot be before start date');
+    return;
+  }
+
   const user = JSON.parse(sessionStorage.getItem('currentUser'));
-
-  const newLeave = {
-    student_id: user.user_id,
+  const result = await window.ApiAdapter.applyLeave({
+    student_id: user.student_id || user.user_id,
     start_date: new Date(startDate).toISOString(),
-    end_date: new Date(endDate).toISOString(),
-    reason: document.getElementById('l-reason').value
-  };
-
-  const result = await window.ApiAdapter.applyLeave(newLeave);
+    end_date:   new Date(endDate).toISOString(),
+    reason:     document.getElementById('l-reason').value
+  });
   if (result) {
     toast('Leave request submitted');
     closeModal('modalLeave');
@@ -136,23 +140,23 @@ async function handleLeave() {
 
 async function handleThread() {
   if (!validateForm('modalThread', [
-    { id: 't-tag', required: true, min: 3, max: 100, message: 'Lecture tag must be 3-100 characters' },
-    { id: 't-title', required: true, min: 5, max: 200, message: 'Title must be 5-200 characters' },
-    { id: 't-desc', required: true, min: 10, max: 1000, message: 'Description must be 10-1000 characters' }
+    { id: 't-tag',   required: true, min: 2, message: 'Topic tag required (min 2 chars)' },
+    { id: 't-title', required: true, min: 3, message: 'Title required (min 3 chars)' },
+    { id: 't-desc',  required: true, min: 5, message: 'Description required (min 5 chars)' }
   ])) return;
 
   const user = JSON.parse(sessionStorage.getItem('currentUser'));
   const result = await window.ApiAdapter.createForumPost({
-    author_id: user.user_id,
-    topic: document.getElementById('t-tag').value,
-    title: document.getElementById('t-title').value,
+    author_id: user.student_id || user.user_id,
+    topic:   document.getElementById('t-tag').value,
+    title:   document.getElementById('t-title').value,
     content: document.getElementById('t-desc').value
   });
   if (result) {
-    toast('Question posted to forum');
-    document.getElementById('t-tag').value = '';
+    toast('Question posted to forum!');
+    document.getElementById('t-tag').value   = '';
     document.getElementById('t-title').value = '';
-    document.getElementById('t-desc').value = '';
+    document.getElementById('t-desc').value  = '';
     closeModal('modalThread');
     _refresh();
   } else {
@@ -161,29 +165,25 @@ async function handleThread() {
 }
 
 async function handleMilestone() {
-  const targetDate = document.getElementById('m-date').value;
-  const today = new Date().toISOString().split('T')[0];
-
   if (!validateForm('modalMilestone', [
-    { id: 'm-title', required: true, min: 5, max: 200, message: 'Title must be 5-200 characters' },
-    { id: 'm-date', required: true, type: 'date', minDate: today, message: 'Target date must be in the future' },
-    { id: 'm-desc', required: false, min: 10, max: 500, message: 'Description must be 10-500 characters' }
+    { id: 'm-title', required: true, min: 3, message: 'Title required (min 3 chars)' },
+    { id: 'm-date',  required: true, message: 'Target date is required' }
   ])) return;
 
   const user = JSON.parse(sessionStorage.getItem('currentUser'));
   const result = await window.ApiAdapter.uploadMilestone({
-    student_id: user.user_id,
-    title: document.getElementById('m-title').value,
-    target_date: targetDate,
-    description: document.getElementById('m-desc').value,
-    status: 'upcoming'
+    student_id:  user.student_id || user.user_id,
+    title:       document.getElementById('m-title').value,
+    target_date: document.getElementById('m-date').value,
+    description: document.getElementById('m-desc')?.value || '',
+    status:      'upcoming'
   });
   if (result) {
-    toast('Milestone declared');
+    toast('Milestone added successfully!');
     closeModal('modalMilestone');
     _refresh();
   } else {
-    toast('Failed to save milestone');
+    toast('Failed to save milestone — try again');
   }
 }
 
@@ -202,26 +202,30 @@ function handleBug() {
 /* --- Attendance Correction --- */
 async function handleAttendanceCorrection() {
   if (!validateForm('modalCorrection', [
-    { id: 'c-course', required: true },
-    { id: 'c-date', required: true },
-    { id: 'c-reason', required: true, min: 10 }
+    { id: 'c-course', required: true, message: 'Please select a course' },
+    { id: 'c-date',   required: true, message: 'Please select a date' },
+    { id: 'c-reason', required: true, min: 5, message: 'Please provide a reason (min 5 chars)' }
   ])) return;
 
+  // Store as a report (correction request) since the attendance DTO requires enrollment_id
   const user = JSON.parse(sessionStorage.getItem('currentUser'));
-  // Post a new attendance entry with status 'correction_requested'
-  const result = await window.ApiAdapter.createAttendance({
-    student_id: user.user_id,
-    course: document.getElementById('c-course').value,
-    date: new Date(document.getElementById('c-date').value).toISOString(),
-    reason: document.getElementById('c-reason').value,
-    status: 'CORRECTION_REQUESTED'
+  const course = document.getElementById('c-course').value;
+  const date   = document.getElementById('c-date').value;
+  const reason = document.getElementById('c-reason').value;
+
+  const result = await window.ApiAdapter.createReport({
+    reporter_id:   user.student_id || user.user_id,
+    report_type:   'ATTENDANCE_CORRECTION',
+    title:         `Correction Request: ${course} on ${date}`,
+    description:   `Course: ${course}\nDate: ${date}\nReason: ${reason}`,
+    status:        'PENDING'
   });
   if (result) {
-    toast('Correction request submitted — pending head approval');
+    toast('Correction request submitted — pending academic head approval');
     closeModal('modalCorrection');
     _refresh();
   } else {
-    toast('Failed to submit correction request');
+    toast('Failed to submit — please try again');
   }
 }
 
@@ -239,17 +243,19 @@ function openSubmitAssignment(courseId, assignmentTitle) {
 
 async function handleSubmitAssignment() {
   if (!validateForm('modalSubmitAssignment', [
-    { id: 'assign-notes', required: true, min: 5 }
+    { id: 'assign-notes', required: true, min: 3, message: 'Please add submission notes (min 3 chars)' }
   ])) return;
 
   const user = JSON.parse(sessionStorage.getItem('currentUser'));
-  const result = await window.ApiAdapter.submitAssessment(_activeAssignCourse, {
-    student_id: user.user_id,
-    notes: document.getElementById('assign-notes').value,
-    submitted_at: new Date().toISOString(),
-    status: 'SUBMITTED'
+  // Use gradeAssessment endpoint to record student submission
+  const result = await window.ApiAdapter.gradeAssessment({
+    assessment_id: _activeAssignCourse,
+    student_id:    user.student_id || user.user_id,
+    notes:         document.getElementById('assign-notes').value,
+    submitted_at:  new Date().toISOString(),
+    status:        'SUBMITTED'
   });
-  if (result) {
+  if (result !== null) {
     toast('Assignment submitted successfully!');
     closeModal('modalSubmitAssignment');
     _refresh();

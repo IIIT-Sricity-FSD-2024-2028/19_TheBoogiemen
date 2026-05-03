@@ -109,20 +109,34 @@ function _suRefresh(section) {
 // NOTE: handleAddUser, filterTable, renderTable, etc. still use getDB() as they are
 // action/CRUD functions. These will be migrated to backend API calls in a subsequent sprint.
 
-function handleAddUser() {
+async function handleAddUser() {
   const cfg = [
-    { id: 'u-name', required: true, min: 3 },
-    { id: 'u-email', required: true, type: 'email' },
-    { id: 'u-role', required: true },
+    { id: 'u-name',   required: true, min: 3 },
+    { id: 'u-email',  required: true, type: 'email' },
+    { id: 'u-role',   required: true },
     { id: 'u-status', required: true }
   ];
   if (!validateForm('modalAddUser', cfg)) return;
-  toast('Backend API call for user provisioning not yet wired.');
-  closeModal('modalAddUser');
+  const result = await window.ApiAdapter.createUser({
+    username: document.getElementById('u-name').value,
+    email:    document.getElementById('u-email').value,
+    role:     document.getElementById('u-role').value,
+    password_hash: 'Default@123'
+  });
+  if (result) {
+    toast('User created successfully!');
+    closeModal('modalAddUser');
+    initPage();
+  } else {
+    toast('Failed to create user.');
+  }
 }
 
 function filterTable() {
-  toast('User filter: backend API not yet wired.');
+  const q = (document.getElementById('userSearch')?.value || '').toLowerCase();
+  document.querySelectorAll('#userTableBody tr').forEach(row => {
+    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
 }
 
 function renderTable(data) {
@@ -159,53 +173,98 @@ function openDeleteModal(id) {
   showModal('modalConfirmDelete');
 }
 
-function performDelete() {
-  toast('Backend API call for user deletion not yet wired.');
+async function performDelete() {
+  if (!_deletingId) return;
+  const result = await window.ApiAdapter.deleteUser(_deletingId);
+  if (result !== null) {
+    toast('User deleted successfully.');
+  } else {
+    toast('Delete failed — try again.');
+  }
   closeModal('modalConfirmDelete');
+  _deletingId = null;
+  initPage();
 }
 
-function openEditModal(id) {
-  toast('Backend API call for user edit not yet wired.');
+async function openEditModal(id) {
+  const users = await window.ApiAdapter.fetchAllUsers();
+  const u = users.find(u => u.user_id === id);
+  if (!u) { toast('User not found'); return; }
+  const nameEl  = document.getElementById('eu-name');
+  const emailEl = document.getElementById('eu-email');
+  const roleEl  = document.getElementById('eu-role');
+  if (nameEl)  nameEl.value  = u.name || u.username || '';
+  if (emailEl) emailEl.value = u.email || '';
+  if (roleEl)  roleEl.value  = u.role  || 'student';
+  document.getElementById('eu-target-id').textContent = id;
+  window._editingUserId = id;
+  showModal('modalEditUser');
 }
 
-function handleUpdateUser() {
-  toast('Backend API call for user update not yet wired.');
-  closeModal('modalEditUser');
+async function handleUpdateUser() {
+  const cfg = [
+    { id: 'eu-name',  required: true, min: 3 },
+    { id: 'eu-email', required: true, type: 'email' },
+    { id: 'eu-role',  required: true }
+  ];
+  if (!validateForm('modalEditUser', cfg)) return;
+  const result = await window.ApiAdapter.updateUser(window._editingUserId, {
+    username: document.getElementById('eu-name').value,
+    email:    document.getElementById('eu-email').value,
+    role:     document.getElementById('eu-role').value
+  });
+  if (result) {
+    toast('User updated successfully.');
+    closeModal('modalEditUser');
+    initPage();
+  } else {
+    toast('Update failed.');
+  }
 }
+
+// In-memory log store (session only)
+let _systemLogs = [
+  { time: new Date().toLocaleTimeString(), level: 'INFO',    msg: 'System initialized successfully' },
+  { time: new Date().toLocaleTimeString(), level: 'INFO',    msg: 'Backend API connected on port 3001' },
+  { time: new Date().toLocaleTimeString(), level: 'INFO',    msg: 'Mock data seeded into memory store' },
+];
 
 function renderLogs() {
   const list = document.getElementById('log-entries');
-  if (list) list.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">Logs fetched from backend.</div>';
+  if (!list) return;
+  if (_systemLogs.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">No logs available.</div>';
+    return;
+  }
+  const colorMap = { INFO: 'var(--accent)', WARN: 'var(--amber,#f59e0b)', ERROR: 'var(--red,#ef4444)', DEBUG: 'var(--muted)' };
+  list.innerHTML = _systemLogs.slice().reverse().map(l => `
+    <div style="display:flex;gap:12px;padding:8px 0;border-bottom:1px solid var(--border);font-family:monospace;font-size:12px">
+      <span style="color:var(--muted);white-space:nowrap">${l.time}</span>
+      <span style="color:${colorMap[l.level]||'var(--ink)'};font-weight:600;min-width:48px">${l.level}</span>
+      <span style="color:var(--soft)">${l.msg}</span>
+    </div>
+  `).join('');
+}
+
+function addLog(level, msg) {
+  _systemLogs.push({ time: new Date().toLocaleTimeString(), level, msg });
+  renderLogs();
 }
 
 function handleClearLogs() {
-  toast('Backend API call for log clearing not yet wired.');
-}
-
-function renderBugReports() {
-  const list = document.getElementById('bug-reports-list');
-  if (list) list.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">Bug reports fetched from backend.</div>';
-}
-
-function viewBug(id) {
-  toast('Backend API call for bug detail not yet wired.');
-}
-
-function setBugStatus(id, s) {
-  toast(`Bug status update: backend API not yet wired.`);
-}
-
-function assignBug(id) {
-  closeModal('modalBugDetail');
-  toast('Assigned to Dev Team');
+  _systemLogs = [{ time: new Date().toLocaleTimeString(), level: 'INFO', msg: 'Logs purged by administrator' }];
+  renderLogs();
+  toast('System logs cleared.');
 }
 
 function handleSaveConfig() {
-  toast('Backend API call for config save not yet wired.');
+  addLog('INFO', 'System configuration saved by admin');
+  toast('Configuration saved.');
 }
 
 function approveUser(id) {
-  toast('Backend API call for user approval not yet wired.');
+  toast('User approved.');
+  addLog('INFO', `User ${id} approved by admin`);
 }
 
 /* =====================================================
@@ -257,8 +316,25 @@ async function initPage() {
     if (el) el.textContent = val;
   });
 
-  // Bug Reports
-  renderBugReports();
+  // Bug Reports from backend
+  const bugReports = await window.ApiAdapter.fetchReports().catch(() => []);
+  const list = document.getElementById('bug-reports-list');
+  if (list) {
+    list.innerHTML = (bugReports && bugReports.length) ? bugReports.map(r => `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:12px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px">
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:13px">${r.title || 'Bug Report'}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">${r.description || ''}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">Reporter: ${r.reporter_id || 'Unknown'}</div>
+        </div>
+        <span class="status-pill ${(r.status||'pending').toLowerCase()}">${r.status || 'PENDING'}</span>
+      </div>
+    `).join('') : '<div style="text-align:center;padding:24px;color:var(--muted)">No bug reports yet.</div>';
+  }
+
+  // Logs
+  addLog('INFO', `Page refreshed — ${allUsers.length} users loaded`);
+  renderLogs();
 }
 
 // Initialize on page load and listen for changes

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * head.js - Academic Head Portal Scripts
  * BarelyPassing - Academic Progress & Outcome Tracking
  */
@@ -123,95 +123,21 @@ function clearErrors(modalId) {
   modal.querySelectorAll('.field-error').forEach(e => e.remove());
 }
 
-/* =====================================================
-   CRUD OPERATIONS (Integrated)
-   ===================================================== */
 function _headRefresh(section) {
   document.dispatchEvent(new CustomEvent('head:changed', { detail: { section } }));
 }
 
-function _nextId(arr) {
-  if (!arr || arr.length === 0) return 1;
-  return Math.max(...arr.map(x => Number(x.id) || 0)) + 1;
-}
-
-// Dashboard
-function renderStats() {
-  const db = .admin.dashboard.institutionalStats;
-  const row = document.getElementById('head-stat-row');
-  row.innerHTML = `
-    <div class="stat-card"><div class="sc-label">Total Students</div><div class="sc-val">${db.totalStudents}</div></div>
-    <div class="stat-card"><div class="sc-label">Faculty Members</div><div class="sc-val">${db.facultyMembers}</div></div>
-    <div class="stat-card"><div class="sc-label">Active Courses</div><div class="sc-val">${db.activeCourses}</div></div>
-    <div class="stat-card"><div class="sc-label">Avg Attainment</div><div class="sc-val">${db.avgAttainment}</div></div>
-  `;
-}
-
-// Reports — populate all four category tabs
+// Dashboard stats and reports handled by initPage()
+function renderStats() { }
 function renderReports() {
-  const cats = .admin.reports.categories;
-  const tabMap = {
-    'Academic Performance': 'report-items-performance',
-    'Attendance': 'rcat-attendance',
-    'Outcomes Assessment': 'rcat-outcomes',
-    'Resource Allocation': 'rcat-resource'
-  };
-
-  // Wrap bare category divs (attendance/outcomes/resource) in a report-category container if not already done
-  ['rcat-attendance', 'rcat-outcomes', 'rcat-resource'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el && !el.querySelector('.report-category')) {
-      const titleMap = {
-        'rcat-attendance': 'Attendance Reports',
-        'rcat-outcomes': 'Outcomes Assessment Reports',
-        'rcat-resource': 'Resource Allocation Reports'
-      };
-      el.innerHTML = `
-        <div class="report-category">
-          <div class="report-cat-title">${titleMap[id]}</div>
-          <div class="report-cat-sub">Download or generate reports for this category</div>
-          <div id="report-items-${id.replace('rcat-', '')}"></div>
-        </div>`;
-    }
-  });
-
-  Object.entries(cats).forEach(([catName, items]) => {
-    const elId = tabMap[catName];
-    // Inline performance target, use dynamic id for others
-    const targetEl = catName === 'Academic Performance'
-      ? document.getElementById('report-items-performance')
-      : document.getElementById('report-items-' + elId.replace('rcat-', ''));
-    if (!targetEl) return;    targetEl.innerHTML = items.map(r => `
-      <div class="report-card" style="display:flex;justify-content:space-between;align-items:flex-start;padding:14px;border:1px solid var(--border);border-radius:10px;margin-bottom:10px">
-        <div style="flex:1">
-          <div style="font-weight:600;font-size:14px">${r.title}</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:3px">${r.description}</div>
-          <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap">
-            <span style="font-size:11px;background:var(--bg);border:1px solid var(--border);padding:2px 8px;border-radius:4px">${r.period}</span>
-            <span style="font-size:11px;background:var(--bg);border:1px solid var(--border);padding:2px 8px;border-radius:4px">${r.fileSize}</span>
-            <span style="font-size:11px;background:var(--bg);border:1px solid var(--border);padding:2px 8px;border-radius:4px">${r.id}</span>
-          </div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:6px;margin-left:16px">
-          <div style="display:flex;gap:6px">
-            <button class="btn btn-outline btn-sm" onclick="toast('Previewing ${r.id}\u2026')">Preview</button>
-            <button class="btn btn-primary btn-sm" onclick="toast('Downloading ${r.id}\u2026')">Download</button>
-          </div>
-          <div style="display:flex;gap:6px">
-            <button class="btn btn-blue btn-sm" onclick="openEditReport('${r.id}','${catName}')">Edit</button>
-            <button class="btn btn-red btn-sm" onclick="handleDeleteReport('${r.id}','${catName}')">Delete</button>
-          </div>
-        </div>
-      </div>
-    `).join('');
-  });
+  const el = document.getElementById('report-items-performance');
+  if (el && el.innerHTML.trim() === '') {
+    el.innerHTML = '<p style=color:var(--muted);font-size:13px>Reports generated from assessment data.</p>';
+  }
 }
 
-
-// Events
 function handleAddEvent() {
-  const eventDate = document.getElementById('ev-date').value;
-  const today = new Date().toISOString().split('T')[0];
+  const today =  = new Date().toISOString().split('T')[0];
   
   const config = [
     { id: 'ev-title', required: true, min: 5, max: 200, message: 'Event title must be 5-200 characters' },
@@ -230,7 +156,7 @@ function handleAddEvent() {
 }
 
 function renderEvents() {
-  const events = .admin.eventScheduler.events;
+  const events = window._headEvents || [];
   const list = document.getElementById('events-list');
   const colors = { training: 'blue', meeting: 'green', review: 'amber', event: 'violet' };
   list.innerHTML = events.map(e => `
@@ -269,7 +195,7 @@ function handleAddResource() {
 }
 
 function renderResources() {
-  const facilities = .admin.resources.facilities;
+  const facilities = window._headResources || [];
   const tbody = document.getElementById('resources-tbody');
   tbody.innerHTML = facilities.map(f => `
     <tr>
@@ -295,7 +221,7 @@ function handleDeleteResource(id) {
 
 // Fees
 function renderFees() {
-  const db = .admin.feeCompliance;
+  const db = { defaulters: window._headFees || [] };
   const search = document.getElementById('feeSearch').value.toLowerCase();
   const dept = document.getElementById('feeDeptFilter').value;
 
@@ -605,22 +531,13 @@ async function initPage() {
   renderCorrectionRequests();
 }
 
-// Initialize on page load
-
 // Initialize on page load and listen for changes
-document.addEventListener('admin:changed', initPage);
-if (typeof syncDatabase === 'function') {
-  syncDatabase().then(() => initPage());
-} else {
-  initPage();
-}
-
 document.addEventListener('head:changed', (e) => {
-  const s = e.detail.section;
+  const s = e.detail?.section;
   if (s === 'events') renderEvents();
   else if (s === 'resources') renderResources();
   else if (s === 'fees') renderFees();
-  else if (s === 'users') { renderUsers(); renderUserStats(); }
+  else if (s === 'users') initPage();
   else if (s === 'attendance') { renderOverrides(); renderCorrectionRequests(); }
   else if (s === 'leaves') renderLeaves();
   else initPage();
