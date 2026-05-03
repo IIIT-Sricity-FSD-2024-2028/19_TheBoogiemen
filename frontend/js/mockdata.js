@@ -51,7 +51,7 @@ const studentMockDatabase = {
   },
   profile: {
     academic: {
-      studentId: "S20240010146",
+      studentId: "550e8400-e29b-41d4-a716-446655440000",
       academicYear: "UG-2",
       department: "Computer Science & Engineering",
       school: "School of Engineering & Technology",
@@ -248,8 +248,8 @@ const studentMockDatabase = {
       { id: "cs303", code: "CS303", name: "Software Engineering", instructor: "Dr. Mallikarjun", percent: 95, ratio: "36/38", isSelected: false }
     ],
     correctionRequests: [
-      { id: "CR001", studentName: "Faham", studentId: "S20240010146", course: "Database Management Systems", courseCode: "CS301", date: "2026-03-10", reason: "Was attending a university event — have proof", status: "pending", submittedOn: "2026-03-11" },
-      { id: "CR002", studentName: "Faham", studentId: "S20240010146", course: "Machine Learning", courseCode: "CS302", date: "2026-03-05", reason: "Medical appointment — doctor's note attached", status: "approved", submittedOn: "2026-03-06" }
+      { id: "CR001", studentName: "Faham", studentId: "550e8400-e29b-41d4-a716-446655440000", course: "Database Management Systems", courseCode: "CS301", date: "2026-03-10", reason: "Was attending a university event — have proof", status: "pending", submittedOn: "2026-03-11" },
+      { id: "CR002", studentName: "Faham", studentId: "550e8400-e29b-41d4-a716-446655440000", course: "Machine Learning", courseCode: "CS302", date: "2026-03-05", reason: "Medical appointment — doctor's note attached", status: "approved", submittedOn: "2026-03-06" }
     ]
   },
   leaveManagement: {
@@ -270,12 +270,12 @@ const studentMockDatabase = {
     ],
     lectureOptions: ["Lecture 13: Data Preprocessing", "Lecture 14: Neural Networks", "Lecture 15: Machine Learning Algorithms", "Lecture 16: Model Evaluation"],
     fullThreads: [
-      { id: 1, lectureTag: "Lecture 15: Machine Learning Algorithms", title: "Clarification on gradient descent optimization", author: "Faham", authorId: "S20240010146", replies: 12, timestamp: "2 hours ago", tagClass: "badge", body: "I'm struggling to understand the mathematical intuition behind the learning rate parameter in gradient descent. How does adjusting it affect convergence?", comments: [
+      { id: 1, lectureTag: "Lecture 15: Machine Learning Algorithms", title: "Clarification on gradient descent optimization", author: "Faham", authorId: "550e8400-e29b-41d4-a716-446655440000", replies: 12, timestamp: "2 hours ago", tagClass: "badge", body: "I'm struggling to understand the mathematical intuition behind the learning rate parameter in gradient descent. How does adjusting it affect convergence?", comments: [
         { id: 1, author: "Dr. Shams", role: "faculty", initial: "D", text: "The learning rate controls step size during gradient descent. Too large → overshooting; Too small → slow convergence. Typical range: 0.001–0.1.", time: "1 hour ago" },
         { id: 2, author: "Pranjal", role: "student", initial: "P", text: "I recommend reading Chapter 4 of Deep Learning by Goodfellow — it explains adaptive learning rates really well.", time: "45 mins ago" }
       ]},
       { id: 2, lectureTag: "Lecture 14: Neural Networks", title: "Backpropagation implementation doubt", author: "Pranjal", authorId: "S20240010147", replies: 8, timestamp: "5 hours ago", tagClass: "badge2", body: "When implementing backpropagation manually, I'm getting different gradients than the expected output. Should we use ReLU activation for all layers or only hidden layers?", comments: [] },
-      { id: 3, lectureTag: "Lecture 13: Data Preprocessing", title: "Best practices for handling missing values", author: "Faham", authorId: "S20240010146", replies: 15, timestamp: "1 day ago", tagClass: "badge3", body: "In the dataset given for Assignment 2, about 15% values are missing. Should I use mean/median imputation or try a model-based approach like KNN imputer?", comments: [
+      { id: 3, lectureTag: "Lecture 13: Data Preprocessing", title: "Best practices for handling missing values", author: "Faham", authorId: "550e8400-e29b-41d4-a716-446655440000", replies: 15, timestamp: "1 day ago", tagClass: "badge3", body: "In the dataset given for Assignment 2, about 15% values are missing. Should I use mean/median imputation or try a model-based approach like KNN imputer?", comments: [
         { id: 1, author: "Dr. Shams", role: "faculty", initial: "D", text: "For numerical features, median is safer than mean (robust to outliers). KNN imputation is excellent but computationally heavy for large datasets.", time: "23 hours ago" }
       ]}
     ]
@@ -300,7 +300,7 @@ const studentMockDatabase = {
     ]
   },
   settings: {
-    account: { email: "faham@university.edu", userId: "S20240010146", role: "Student", createdAt: "January 15, 2023" },
+    account: { email: "faham@university.edu", userId: "550e8400-e29b-41d4-a716-446655440000", role: "Student", createdAt: "January 15, 2023" },
     notifications: {
       channels: { email: true, push: true },
       types: { attendanceAlerts: true, gradeUpdates: true, forumReplies: false, systemAnnouncements: true }
@@ -468,7 +468,7 @@ const facultyMockDatabase = {
     lectures: ["All Topics", "Lecture-15", "Lecture-16", "Lecture-17"]
   },
   submissions: [
-    { id: "SUB-001", studentName: "Faham", studentId: "S20240010146", studentCourseId: "cs301", courseCode: "CS301", course: "Database Management Systems", assignmentTitle: "Assignment 1: SQL Implementation", max: 20, scored: null, notes: "https://github.com/faham/sql-assignment", status: "submitted", submittedOn: "3/14/2026", feedback: null },
+    { id: "SUB-001", studentName: "Faham", studentId: "550e8400-e29b-41d4-a716-446655440000", studentCourseId: "cs301", courseCode: "CS301", course: "Database Management Systems", assignmentTitle: "Assignment 1: SQL Implementation", max: 20, scored: null, notes: "https://github.com/faham/sql-assignment", status: "submitted", submittedOn: "3/14/2026", feedback: null },
     { id: "SUB-002", studentName: "Pranjal", studentId: "S20240010147", studentCourseId: "cs301", courseCode: "CS301", course: "Database Management Systems", assignmentTitle: "Assignment 1: SQL Implementation", max: 20, scored: null, notes: "https://github.com/pranjal/sql-impl", status: "submitted", submittedOn: "3/13/2026", feedback: null }
   ],
   researchSupervision: {
@@ -567,12 +567,12 @@ const academicHeadMockDatabase = {
       { id: "O3", name: "Pranjal", roll: "12347", date: "March 15, 2026", status: "present", reason: "Event" }
     ],
     correctionRequests: [
-      { id: "CR001", studentName: "Faham", studentId: "S20240010146", course: "Database Management Systems", courseCode: "CS301", date: "2026-03-10", reason: "Was attending a university event — have proof", status: "pending", submittedOn: "2026-03-11" },
+      { id: "CR001", studentName: "Faham", studentId: "550e8400-e29b-41d4-a716-446655440000", course: "Database Management Systems", courseCode: "CS301", date: "2026-03-10", reason: "Was attending a university event — have proof", status: "pending", submittedOn: "2026-03-11" },
       { id: "CR002", studentName: "Pranjal", studentId: "S20240010147", course: "Machine Learning", courseCode: "CS302", date: "2026-03-05", reason: "Medical appointment — doctor's note attached", status: "pending", submittedOn: "2026-03-06" },
       { id: "CR003", studentName: "Harshini", studentId: "S20240010085", course: "Operating Systems", courseCode: "CS304", date: "2026-03-08", reason: "Internet connectivity issues during online class", status: "approved", submittedOn: "2026-03-09", decidedOn: "2026-03-10" }
     ],
     leaveApplications: [
-      { id: "LV001", studentName: "Faham", studentId: "S20240010146", type: "Event Participation", startDate: "2026-03-15", endDate: "2026-03-17", reason: "Participating in Inter-College Hackathon at IIT Delhi", status: "pending", appliedOn: "2026-03-04", rejectionReason: null },
+      { id: "LV001", studentName: "Faham", studentId: "550e8400-e29b-41d4-a716-446655440000", type: "Event Participation", startDate: "2026-03-15", endDate: "2026-03-17", reason: "Participating in Inter-College Hackathon at IIT Delhi", status: "pending", appliedOn: "2026-03-04", rejectionReason: null },
       { id: "LV002", studentName: "Pranjal", studentId: "S20240010147", type: "Medical Leave", startDate: "2026-03-20", endDate: "2026-03-22", reason: "Surgery scheduled at city hospital", status: "pending", appliedOn: "2026-03-01", rejectionReason: null }
     ]
   },
@@ -594,9 +594,9 @@ const superuserMockDatabase = {
     serverUptime: "99.98%"
   },
   users: [
-    { id: "USR-0001", name: "Pranjal Sharma",       email: "pranjal@university.edu",          role: "superuser", status: "active" },
-    { id: "USR-0002", name: "Dr. Kavitha Nair",      email: "kavitha.nair@university.edu",     role: "head",      status: "active" },
-    { id: "USR-0003", name: "Dr. Mallikarjun Reddy", email: "m.reddy@university.edu",          role: "faculty",   status: "active" },
+    { id: "550e8400-e29b-41d4-a716-446655440000", name: "Pranjal Sharma",       email: "pranjal@university.edu",          role: "superuser", status: "active" },
+    { id: "3a18b76c-fb1d-4034-8c83-05c04ccfbdb5", name: "Dr. Kavitha Nair",      email: "kavitha.nair@university.edu",     role: "head",      status: "active" },
+    { id: "f3ca9b7f-ad88-4228-b21a-dc7dc33b664d", name: "Dr. Mallikarjun Reddy", email: "m.reddy@university.edu",          role: "faculty",   status: "active" },
     { id: "USR-1042", name: "Rahul Sharma",          email: "rahul.cse2101@university.edu",    role: "student",   status: "active" },
     { id: "USR-1043", name: "Amit Kumar",            email: "amit.me2108@university.edu",      role: "student",   status: "suspended" },
     { id: "USR-0089", name: "Dr. Anitha Rajan",      email: "a.rajan@university.edu",          role: "faculty",   status: "inactive" },

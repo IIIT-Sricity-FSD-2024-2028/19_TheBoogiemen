@@ -238,7 +238,7 @@ async function handleCreateAssessment() {
       await api.post('/assessments', {
         course_id: 'c2c11818-5a02-4fc6-b2fc-24ee2df8fb1f',
         title: newAssess.metadata.title,
-        type: newAssess.metadata.type,
+        type: newAssess.metadata.type.toUpperCase(),
         max_marks: newAssess.metadata.totalMarks,
         due_date: newAssess.dueVal || '2026-06-01T00:00:00Z',
         weightage: 10
@@ -838,7 +838,7 @@ async function handleSaveAttendance() {
       await api.post('/attendance', {
         enrollment_id: 'e81dff1d-ff1e-4cb8-8c1d-1aaf42f1f6ba',
         date: new Date().toISOString(),
-        status: records.some(r => r.isPresent) ? 'present' : 'absent',
+        status: records.some(r => r.isPresent) ? 'PRESENT' : 'ABSENT',
         faculty_id: '3a18b76c-fb1d-4034-8c83-05c04ccfbdb5'
       });
 

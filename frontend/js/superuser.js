@@ -223,9 +223,7 @@ async function performDelete() {
   const api = _api();
   if (api && _deletingId) {
     try {
-      // Map legacy ID to a valid UUID
-      const targetUuid = (_deletingId === 'USR-0002') ? '3a18b76c-fb1d-4034-8c83-05c04ccfbdb5' : '550e8400-e29b-41d4-a716-446655440000';
-      await api.delete('/users/' + targetUuid);
+      await api.delete('/users/' + _deletingId);
     } catch (err) {
       console.error('[API] Delete sync failed:', err.message);
     }
