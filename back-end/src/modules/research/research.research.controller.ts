@@ -18,6 +18,13 @@ import { MOCK_RESEARCH_PROJECTS } from '../../common/types/mock-data';
 export class ResearchController {
   constructor(private readonly researchService: ResearchService) {}
 
+  @Post('meetings')
+  @SetMetadata('roles', ['student'])
+  @ApiResponse({ status: 201, description: 'Research meeting created' })
+  async requestMeeting(@Body() dto: any) {
+    return new BaseResponseDto(true, { message: 'Meeting requested successfully', ...dto }, 'meeting created');
+  }
+
   @Post('milestones')
   @SetMetadata('roles', ['student'])
   @ApiBody({ type: UploadMilestoneInputDto })

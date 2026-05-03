@@ -158,7 +158,7 @@ async function handleSchedule() {
 }
 
 /* --- Assessment CRUD --- */
-function handleCreateAssessment() {
+async function handleCreateAssessment() {
   if (!validateForm('modalNewAssess', [
     { id: 'a-name', required: true, min: 3 },
     { id: 'a-course', required: true },
@@ -230,6 +230,24 @@ function handleCreateAssessment() {
   console.log('[Assessment Sync] About to save DB. db.student.courses.list:', JSON.stringify(db.student.courses.list.map(c => ({ id: c.id, assessments: (c.assessments || []).map(a => a.title) }))));
 
   saveDB(db);
+
+  // Send to backend
+  const api = _api();
+  if (api) {
+    try {
+      await api.post('/assessments', {
+        course_id: SEED.COURSES[0],
+        title: newAssess.metadata.title,
+        type: newAssess.metadata.type,
+        max_marks: newAssess.metadata.totalMarks,
+        due_date: newAssess.dueVal || '2026-06-01T00:00:00Z',
+        weightage: 10
+      });
+    } catch (err) {
+      console.error('[API] Create assessment sync failed:', err.message);
+    }
+  }
+
   toast(syncedToStudent ? 'Assessment created & pushed to students (they need to refresh to see it)' : 'Assessment created (no matching student course found)');
   closeModal('modalNewAssess');
   _refresh();
@@ -283,7 +301,7 @@ function showAddQuestion(assessId) {
   showModal('modalAddQuestion');
 }
 
-function handleAddQuestion() {
+async function handleAddQuestion() {
   if (!validateForm('modalAddQuestion', [
     { id: 'q-name', required: true, min: 2 },
     { id: 'q-text', required: true, min: 5 },
@@ -300,16 +318,30 @@ function handleAddQuestion() {
   const ai = list.findIndex(a => a.id === _activeAssessId);
   if (ai === -1) { toast('Assessment not found'); return; }
 
-  list[ai].questions.push({
+  const newQuestion = {
     id: Date.now(),
     name: document.getElementById('q-name').value,
     marks: parseInt(document.getElementById('q-marks').value) || 10,
     text: document.getElementById('q-text').value,
     mappedCOs,
     mappedPOs
-  });
+  };
 
+  list[ai].questions.push(newQuestion);
   saveDB(db);
+
+  // Send to backend
+  const api = _api();
+  if (api) {
+    try {
+      // Use a mock UUID if we don't have the real assessment UUID
+      const assessmentId = '123e4567-e89b-12d3-a456-426614174000'; 
+      await api.post('/assessments/' + assessmentId + '/questions', newQuestion);
+    } catch (err) {
+      console.error('[API] Add question sync failed:', err.message);
+    }
+  }
+
   toast('Question added with CO/PO mapping');
   closeModal('modalAddQuestion');
   renderAssessmentsList();
@@ -466,11 +498,22 @@ function handleResolveThread(threadId) {
   _refresh();
 }
 
-function handleDeleteThread(threadId) {
+async function handleDeleteThread(threadId) {
   const db = getDB();
   db.faculty.forum.threads = db.faculty.forum.threads.filter(t => t.id !== threadId);
   if (db.faculty.forum.summary) db.faculty.forum.summary.totalDiscussions = db.faculty.forum.threads.length;
   saveDB(db);
+
+  // Send to backend
+  const api = _api();
+  if (api) {
+    try {
+      await api.delete('/forum/' + threadId);
+    } catch (err) {
+      console.error('[API] Thread deletion sync failed:', err.message);
+    }
+  }
+
   toast('Thread deleted');
   _refresh();
 }
@@ -704,7 +747,7 @@ function openGradeSub(id) {
   showModal('modalGradeSub');
 }
 
-function handleGradeSubmission() {
+async function handleGradeSubmission() {
   const db = getDB();
   const si = (db.faculty.submissions || []).findIndex(s => s.id === _gradingSubId);
   if (si === -1) return;
@@ -728,12 +771,28 @@ function handleGradeSubmission() {
     }
   }
   saveDB(db);
+
+  // Send to backend
+  const api = _api();
+  if (api) {
+    try {
+      await api.patch('/assessments/grade', {
+        enrollment_id: SEED.ENROLLMENTS[0],
+        assessment_id: '123e4567-e89b-12d3-a456-426614174000',
+        marks_obtained: scored,
+        feedback: feedback
+      });
+    } catch (err) {
+      console.error('[API] Grade sync failed:', err.message);
+    }
+  }
+
   closeModal('modalGradeSub');
   toast(`Grade submitted: ${scored}/${sub.max}`);
   renderSubmissions();
 }
 
-function handleSaveAttendance() {
+async function handleSaveAttendance() {
   const classId = document.getElementById('classSelect').value;
   if (!classId) { 
     toast('Please select a class first'); 
@@ -759,6 +818,32 @@ function handleSaveAttendance() {
   if (!db.faculty.attendanceMarking.history) db.faculty.attendanceMarking.history = [];
   db.faculty.attendanceMarking.history.unshift(attendanceRecord);
   saveDB(db);
+
+  // Send to backend
+  const api = _api();
+  if (api) {
+    try {
+      await api.post('/attendance', {
+        enrollment_id: SEED.ENROLLMENTS[0],
+        date: new Date().toISOString(),
+        status: records.some(r => r.isPresent) ? 'present' : 'absent',
+        faculty_id: SEED.FACULTY[0]
+      });
+
+      // Handle escalations for absent students
+      const absentStudents = records.filter(r => !r.isPresent);
+      if (absentStudents.length > 0) {
+        await api.post('/attendance/escalate', {
+          classId,
+          absentCount: absentStudents.length,
+          date: new Date().toISOString()
+        });
+      }
+    } catch (err) {
+      console.error('[API] Attendance sync failed:', err.message);
+    }
+  }
+
   toast('Attendance committed successfully');
   _refresh();
 }

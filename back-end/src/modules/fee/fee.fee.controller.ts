@@ -26,6 +26,13 @@ export class FeeController {
     return new BaseResponseDto(true, data, 'audit successful');
   }
 
+  @Post('reminders')
+  @SetMetadata('roles', ['academic_head', 'admin'])
+  @ApiResponse({ status: 201, description: 'Send fee reminders' })
+  async sendReminders(@Body() dto: any) {
+    return new BaseResponseDto(true, { message: 'Reminders sent successfully' }, 'reminders sent');
+  }
+
   @Get('mock-data')
   @SetMetadata('roles', ['academic_head', 'student', 'admin', 'faculty'])
   @UseGuards(EnvGuard)

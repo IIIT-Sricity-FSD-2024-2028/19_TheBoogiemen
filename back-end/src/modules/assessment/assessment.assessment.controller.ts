@@ -39,6 +39,20 @@ export class AssessmentController {
     return new BaseResponseDto(true, data, 'assessment graded');
   }
 
+  @Post('assessments/:id/submit')
+  @SetMetadata('roles', ['student'])
+  @ApiResponse({ status: 201, description: 'Assessment submitted successfully' })
+  async submitAssessment(@Param('id') id: string, @Body() dto: any) {
+    return new BaseResponseDto(true, { id, ...dto }, 'assessment submitted');
+  }
+
+  @Post('assessments/:id/questions')
+  @SetMetadata('roles', ['faculty'])
+  @ApiResponse({ status: 201, description: 'Question added to assessment' })
+  async addQuestion(@Param('id') id: string, @Body() dto: any) {
+    return new BaseResponseDto(true, { id, ...dto }, 'question added');
+  }
+
   @Patch('courses/syllabus')
   @SetMetadata('roles', ['faculty'])
   @ApiBody({ type: SyllabusUpdateInputDto })

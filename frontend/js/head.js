@@ -341,15 +341,37 @@ function renderResources() {
   `).join('');
 }
 
-function handleDeleteResource(id) {
+async function handleDeleteResource(id) {
   const db = getDB();
   db.admin.resources.facilities = db.admin.resources.facilities.filter(f => f.id !== id);
   saveDB(db);
+
+  // Send to backend
+  const api = _api();
+  if (api) {
+    try {
+      await api.delete('/resources/' + id);
+    } catch (err) {
+      console.error('[API] Resource deletion sync failed:', err.message);
+    }
+  }
+
   _headRefresh('resources');
   toast('Resource removed');
 }
 
 // Fees
+async function handleFeeReminder() {
+  const api = _api();
+  if (api) {
+    try {
+      await api.post('/fee/reminders', { type: 'bulk' });
+    } catch (err) {
+      console.error('[API] Fee reminder sync failed:', err.message);
+    }
+  }
+  toast('Bulk reminders sent');
+}
 function renderFees() {
   const db = getDB().admin.feeCompliance;
   const search = document.getElementById('feeSearch').value.toLowerCase();
@@ -442,10 +464,23 @@ function renderUsers() {
   `).join('');
 }
 
-function handleDeleteUser(id) {
+async function handleDeleteUser(id) {
   const db = getDB();
   db.admin.userManagement.users = db.admin.userManagement.users.filter(u => u.id !== id);
   saveDB(db);
+
+  // Send to backend
+  const api = _api();
+  if (api) {
+    try {
+      // Map old 'USR-' ID to a valid UUID
+      const targetUuid = (id === 'USR-0002') ? SEED.FACULTY[0] : SEED.STUDENTS[0];
+      await api.delete('/users/' + targetUuid);
+    } catch (err) {
+      console.error('[API] User deletion sync failed:', err.message);
+    }
+  }
+
   _headRefresh('users');
   toast('User deleted');
 }

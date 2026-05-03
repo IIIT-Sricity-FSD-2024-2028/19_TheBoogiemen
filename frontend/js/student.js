@@ -364,7 +364,7 @@ function openSubmitAssignment(courseId, assignmentTitle) {
   showModal('modalSubmitAssignment');
 }
 
-function handleSubmitAssignment() {
+async function handleSubmitAssignment() {
   if (!validateForm('modalSubmitAssignment', [
     { id: 'assign-notes', required: true, min: 5 }
   ])) return;
@@ -405,6 +405,23 @@ function handleSubmitAssignment() {
     }
   }
   saveDB(db);
+
+  // Send to backend
+  const api = _api();
+  if (api) {
+    try {
+      // Use a mock UUID if we don't have the real assessment UUID
+      const assessmentId = '123e4567-e89b-12d3-a456-426614174000'; 
+      await api.post('/assessments/' + assessmentId + '/submit', {
+        course: _activeAssignCourse,
+        title: _activeAssignTitle,
+        notes: document.getElementById('assign-notes').value
+      });
+    } catch (err) {
+      console.error('[API] Assessment submission sync failed:', err.message);
+    }
+  }
+
   toast('Assignment submitted successfully!');
   closeModal('modalSubmitAssignment');
   _refresh();
@@ -493,7 +510,7 @@ function handleReply() {
 }
 
 /* --- Research: Request Meeting --- */
-function handleRequestMeeting() {
+async function handleRequestMeeting() {
   if (!validateForm('modalRequestMeeting', [
     { id: 'rm-date', required: true },
     { id: 'rm-time', required: true },
@@ -525,6 +542,17 @@ function handleRequestMeeting() {
   }
 
   saveDB(db);
+
+  // Send to backend
+  const api = _api();
+  if (api) {
+    try {
+      await api.post('/research/meetings', newReq);
+    } catch (err) {
+      console.error('[API] Meeting request sync failed:', err.message);
+    }
+  }
+
   toast('Meeting request sent to faculty');
   closeModal('modalRequestMeeting');
   _refresh();

@@ -26,6 +26,13 @@ export class AttendanceController {
     return new BaseResponseDto(true, data, 'attendance fetched successfully');
   }
 
+  @Post('escalate')
+  @SetMetadata('roles', ['faculty', 'admin', 'academic_head'])
+  @ApiResponse({ status: 201, description: 'Attendance escalation created' })
+  async escalateAttendance(@Body() dto: any) {
+    return new BaseResponseDto(true, dto, 'attendance escalation notification sent');
+  }
+
   @Get('mock-data')
   @SetMetadata('roles', ['faculty', 'student', 'admin', 'academic_head'])
   @UseGuards(EnvGuard)

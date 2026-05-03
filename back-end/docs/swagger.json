@@ -116,6 +116,44 @@
         ]
       }
     },
+    "/fee/reminders": {
+      "post": {
+        "operationId": "FeeController_sendReminders",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Send fee reminders"
+          }
+        },
+        "tags": [
+          "Fee"
+        ]
+      }
+    },
     "/fee/mock-data": {
       "get": {
         "operationId": "FeeController_getMockData",
@@ -1206,6 +1244,44 @@
         ]
       }
     },
+    "/attendance/escalate": {
+      "post": {
+        "operationId": "AttendanceController_escalateAttendance",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Attendance escalation created"
+          }
+        },
+        "tags": [
+          "Attendance"
+        ]
+      }
+    },
     "/attendance/mock-data": {
       "get": {
         "operationId": "AttendanceController_getMockData",
@@ -2080,6 +2156,44 @@
         },
         "tags": [
           "Resource"
+        ]
+      }
+    },
+    "/research/meetings": {
+      "post": {
+        "operationId": "ResearchController_requestMeeting",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Research meeting created"
+          }
+        },
+        "tags": [
+          "Research"
         ]
       }
     },
@@ -3539,6 +3653,98 @@
                 }
               }
             }
+          }
+        },
+        "tags": [
+          "Assessment"
+        ]
+      }
+    },
+    "/assessments/{id}/submit": {
+      "post": {
+        "operationId": "AssessmentController_submitAssessment",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Assessment submitted successfully"
+          }
+        },
+        "tags": [
+          "Assessment"
+        ]
+      }
+    },
+    "/assessments/{id}/questions": {
+      "post": {
+        "operationId": "AssessmentController_addQuestion",
+        "parameters": [
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "faculty",
+                "admin",
+                "academic_head"
+              ]
+            },
+            "description": "Role for Role-Based Access Control"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Question added to assessment"
           }
         },
         "tags": [
