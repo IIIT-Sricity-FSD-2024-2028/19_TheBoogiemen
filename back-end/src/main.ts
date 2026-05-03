@@ -10,7 +10,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origin: '*',
+    origin: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
@@ -57,6 +57,6 @@ async function bootstrap() {
   }
   fs.writeFileSync(path.join(docsPath, 'swagger.json'), JSON.stringify(document, null, 2));
 
-  await app.listen(3000);
+  await app.listen(3001);
 }
 bootstrap();

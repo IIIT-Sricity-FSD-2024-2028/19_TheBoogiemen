@@ -36,7 +36,7 @@ export class ReportController {
   }
 
   @Get()
-  @SetMetadata('roles', ['admin', 'faculty', 'student'])
+  @SetMetadata('roles', ['admin', 'faculty', 'student', 'academic_head'])
   @ApiResponse({ status: 200, description: 'Fetch all saved reports' })
   async getAllReports() {
     const data = await this.reportService.getAllReports();
@@ -44,7 +44,7 @@ export class ReportController {
   }
 
   @Get(':id')
-  @SetMetadata('roles', ['admin', 'faculty', 'student'])
+  @SetMetadata('roles', ['admin', 'faculty', 'student', 'academic_head'])
   @ApiResponse({ status: 200, description: 'Fetch saved report by ID' })
   async getReportById(@Param('id') id: string) {
     const data = await this.reportService.getReportById(id);

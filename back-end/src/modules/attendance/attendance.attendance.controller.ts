@@ -55,7 +55,7 @@ export class AttendanceController {
   }
 
   @Post()
-  @SetMetadata('roles', ['admin', 'faculty'])
+  @SetMetadata('roles', ['admin', 'faculty', 'student'])
   @ApiBody({ type: CreateAttendanceInputDto })
   @ApiResponse({ status: 201, description: 'Create attendance log' })
   async createLog(@Body() dto: CreateAttendanceInputDto) {

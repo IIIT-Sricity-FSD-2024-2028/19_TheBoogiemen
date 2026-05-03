@@ -50,7 +50,7 @@ export class LeaveController {
   }
 
   @Get()
-  @SetMetadata('roles', ['admin', 'academic_head', 'faculty'])
+  @SetMetadata('roles', ['admin', 'academic_head', 'faculty', 'student'])
   @ApiResponse({ status: 200, description: 'Fetch all leave requests' })
   async getAllLeaves() {
     const data = await this.leaveService.getAllLeaves();

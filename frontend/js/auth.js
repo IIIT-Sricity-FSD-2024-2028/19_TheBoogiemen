@@ -456,26 +456,6 @@ const Validator = {
 window.Validator = Validator;
 
 // ==========================================
-// SESSION HELPERS
-// ==========================================
-function getCurrentUser() {
-    const userStr = sessionStorage.getItem('currentUser');
-    return userStr ? JSON.parse(userStr) : null;
-}
-
-function setCurrentUser(user) {
-    sessionStorage.setItem('currentUser', JSON.stringify(user));
-}
-
-function clearCurrentUser() {
-    sessionStorage.removeItem('currentUser');
-}
-
-window.getCurrentUser = getCurrentUser;
-window.setCurrentUser = setCurrentUser;
-window.clearCurrentUser = clearCurrentUser;
-
-// ==========================================
 // LEGACY AUTH OBJECT (for backward compatibility)
 // ==========================================
 const Auth = {
@@ -844,3 +824,50 @@ function validateForm(modalId, config) {
 
 // Export globally for all portals to use
 window.validateForm = validateForm;
+
+/**
+ * Session Management Helpers
+ */
+function getCurrentUser() {
+  const user = sessionStorage.getItem('currentUser');
+  return user ? JSON.parse(user) : null;
+}
+
+function setCurrentUser(user) {
+  sessionStorage.setItem('currentUser', JSON.stringify(user));
+}
+
+function handleLogout() {
+  sessionStorage.removeItem('currentUser');
+  window.location.href = 'login.html';
+}
+
+/**
+ * Simple global bug reporting stub
+ */
+function handleBug() {
+  const title = document.getElementById('bugTitle')?.value;
+  const desc = document.getElementById('bugDesc')?.value;
+  const sev = document.getElementById('bugSev')?.value;
+  
+  if (!title || !desc) {
+    if (window.toast) window.toast('Please provide a title and description');
+    else alert('Please provide a title and description');
+    return;
+  }
+  
+  if (window.toast) {
+    window.toast('Bug report submitted to IT Ops');
+  } else {
+    alert('Bug report submitted to IT Ops');
+  }
+  
+  if (document.getElementById('bugTitle')) document.getElementById('bugTitle').value = '';
+  if (document.getElementById('bugDesc')) document.getElementById('bugDesc').value = '';
+}
+
+// Export session helpers
+window.getCurrentUser = getCurrentUser;
+window.setCurrentUser = setCurrentUser;
+window.handleLogout = handleLogout;
+window.handleBug = handleBug;

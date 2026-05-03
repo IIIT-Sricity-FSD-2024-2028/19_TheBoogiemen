@@ -39,7 +39,7 @@ export class UserController {
   }
 
   @Get(':id')
-  @SetMetadata('roles', ['admin', 'academic_head'])
+  @SetMetadata('roles', ['admin', 'academic_head', 'faculty'])
   @ApiParam({ name: 'id', description: 'User ID' })
   @ApiResponse({ status: 200, type: UserOutputDto })
   async getUserById(@Param('id') id: string) {
@@ -48,7 +48,7 @@ export class UserController {
   }
 
   @Get()
-  @SetMetadata('roles', ['admin', 'academic_head'])
+  @SetMetadata('roles', ['admin', 'academic_head', 'faculty'])
   @ApiResponse({ status: 200, type: [UserOutputDto] })
   async getAllUsers() {
     const data = await this.userService.getAllUsers();

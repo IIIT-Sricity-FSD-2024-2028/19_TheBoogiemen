@@ -170,9 +170,9 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
 
-    const user = response.data;
+    const user = response.data.currentUser || response.data;
 
-    // Store user session (we will keep setCurrentUser but move its definition to auth.js or state-manager)
+    // Store user session
     if (typeof setCurrentUser === 'function') {
       setCurrentUser(user);
     } else {
@@ -186,7 +186,7 @@ document.addEventListener('DOMContentLoaded', function() {
     else if (user.role === 'faculty') redirect = 'faculty.html';
     else if (user.role === 'academic_head') redirect = 'head.html';
     else if (user.role === 'admin') redirect = 'superuser.html';
-    
+
     window.location.href = redirect;
   }
 

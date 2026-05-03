@@ -24,7 +24,12 @@ export class AuthController {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    if (role && user.role !== role && !(role === 'admin' && user.role === 'admin')) {
+    // Normalize frontend role aliases to backend roles
+    const normalizedRole = role === 'head' ? 'academic_head'
+      : role === 'superuser' ? 'admin'
+      : role;
+
+    if (normalizedRole && user.role !== normalizedRole) {
       throw new UnauthorizedException(`Account is for ${user.role}, not ${role}`);
     }
 
@@ -39,11 +44,24 @@ export class AuthController {
     return {
       success: true,
       data: {
-        user_id: user.user_id,
-        email: user.email,
-        name: profile ? `${profile.first_name} ${profile.last_name}` : user.username,
-        role: user.role,
-        profile
+        currentUser: {
+          user_id: user.user_id,
+          email: user.email,
+          name: profile ? `${(profile as any).first_name} ${(profile as any).last_name}` : user.username,
+          role: user.role,
+          username: user.username,
+          ...(user.role === 'student' && profile ? {
+            student_id: (profile as any).student_id,
+            branch: (profile as any).branch,
+            batch: (profile as any).batch,
+            program: (profile as any).program,
+          } : {}),
+          ...(user.role === 'faculty' && profile ? {
+            faculty_id: (profile as any).faculty_id,
+            designation: (profile as any).designation,
+            department_id: (profile as any).department_id,
+          } : {}),
+        }
       },
       message: 'Login successful'
     };

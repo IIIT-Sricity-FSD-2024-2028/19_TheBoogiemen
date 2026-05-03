@@ -58,6 +58,13 @@ function closeSidebar() {
   document.getElementById('overlaySb').classList.remove('show');
 }
 
+function filterStudents() {
+  const q = (document.getElementById('studentSearch') || document.getElementById('studentSearchInput') || { value: '' }).value.toLowerCase();
+  document.querySelectorAll('#students-tbody tr, #studentTableBody tr').forEach(row => {
+    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
 let toastTimer;
 function toast(msg) {
   const el = document.getElementById('toastEl');
@@ -158,103 +165,6 @@ async function handleCreateAssessment() {
 
 function handleDeleteQuestion(qId) {
   toast('Question management: backend endpoint not yet wired.');
-  renderAssessmentsList();
-}
-    id: Date.now(),
-    metadata: {
-      title: document.getElementById('a-name').value,
-      course: courseVal,
-      type: typeVal,
-      totalMarks: marksVal
-    },
-    availableOutcomes: db.faculty.assessmentMapping.availableOutcomes,
-    questions: []
-  };
-
-  // Store in assessment list — does NOT overwrite assessmentMapping
-  if (!db.faculty.assessmentList) db.faculty.assessmentList = [];
-  db.faculty.assessmentList.push(newAssess);
-
-  // Sync: Create assignment in student courses for matching course
-  let syncedToStudent = false;
-  if (db.student && db.student.courses && db.student.courses.list) {
-    const courseMap = { 'CS301': 'cs301', 'CS302': 'cs302', 'CS303': 'cs303', 'CS304': 'cs304', 'CS305': 'cs305' };
-    const stuCourseId = courseMap[courseVal] || courseVal.toLowerCase();
-    console.log('[Assessment Sync] Faculty selected:', courseVal, '→ Student course ID:', stuCourseId);
-    console.log('[Assessment Sync] Student courses:', db.student.courses.list.map(c => c.id + '/' + c.code).join(', '));
-    const ci = db.student.courses.list.findIndex(c => c.id === stuCourseId || c.code === courseVal);
-    console.log('[Assessment Sync] Match index:', ci);
-    if (ci !== -1) {
-      if (!db.student.courses.list[ci].assessments) db.student.courses.list[ci].assessments = [];
-      const exists = db.student.courses.list[ci].assessments.find(a => a.title === newAssess.metadata.title);
-      console.log('[Assessment Sync] Exists check:', !!exists, 'Current assessments:', db.student.courses.list[ci].assessments.map(a => a.title).join(', '));
-      if (!exists) {
-        db.student.courses.list[ci].assessments.push({
-          title: newAssess.metadata.title,
-          due: dueVal || 'TBD',
-          status: 'pending',
-          max: marksVal,
-          scored: null,
-          facultyAssessmentId: newAssess.id
-        });
-        if (!db.student.courses.summary) db.student.courses.summary = { pendingAssignments: 0 };
-        db.student.courses.summary.pendingAssignments = db.student.courses.list.reduce(
-          (sum, c) => sum + (c.assessments || []).filter(a => a.status === 'pending').length, 0
-        );
-        syncedToStudent = true;
-        console.log('[Assessment Sync] ✅ Pushed to student course:', db.student.courses.list[ci].id);
-        console.log('[Assessment Sync] Updated assessments:', db.student.courses.list[ci].assessments.map(a => a.title + ' (' + a.status + ')').join(', '));
-      } else {
-        console.log('[Assessment Sync] ⚠️ Already exists, skipping');
-      }
-    }
-  } else {
-    console.log('[Assessment Sync] ❌ db.student.courses.list not found:', !!db.student, !!db.student?.courses, !!db.student?.courses?.list);
-  }
-
-  // Initialize faculty submissions tracker
-  if (!db.faculty.submissions) db.faculty.submissions = [];
-
-  console.log('[Assessment Sync] About to save DB. db.student.courses.list:', JSON.stringify(db.student.courses.list.map(c => ({ id: c.id, assessments: (c.assessments || []).map(a => a.title) }))));
-
-  // [migrated: */
-  toast(syncedToStudent ? 'Assessment created & pushed to students (they need to refresh to see it)' : 'Assessment created (no matching student course found)');
-  closeModal('modalNewAssess');
-  _refresh();
-}
-
-function handleDeleteQuestion(qId) {
-  // Legacy: remove from assessmentMapping too for backward compat
-  const db = (function(){
-  return {
-    faculty:{
-      profile:{account:{name:'Faculty'}},
-      dashboard:{interventionLog:[],stats:{atRiskStudents:[]}},
-      forum:{threads:[],summary:{totalDiscussions:0,resolvedCount:0,needsResponseCount:0}},
-      assessmentMapping:{availableOutcomes:{cos:[],pos:[]}},
-      assessmentList:[],
-      submissions:[],
-      researchSupervision:{projects:[],summary:{totalProjects:0,inProgress:0}},
-      attendanceMarking:{classes:[],history:[]},
-      timetable:{schedule:[]},
-      studentOverview:{students:[]},
-      courseSummaries:[]
-    },
-    student:{
-      profile:{personal:{fullName:''},academic:{studentId:''}},
-      courses:{list:[],summary:{pendingAssignments:0}},
-      forum:{threads:[],fullThreads:[]},
-      research:{project:{},milestones:[],meetingRequests:[]}
-    },
-    superuser:{bugReports:[]}
-  };
-})();
-  if (db.faculty.assessmentMapping && db.faculty.assessmentMapping.questions) {
-    db.faculty.assessmentMapping.questions = db.faculty.assessmentMapping.questions.filter(q => q.id !== qId);
-  }
-  // [migrated: */
-  toast('Question removed from mapping');
-  renderAssessmentsList();
 }
 
 function handleSaveMapping() {
@@ -267,11 +177,9 @@ let _activeAssessId = null;
 async function showAddQuestion(assessId) {
   const assessments = await window.ApiAdapter.fetchAssessments();
   const target = assessId ? assessments.find(a => a.assessment_id === assessId) : assessments[assessments.length - 1];
-  const list = db.faculty.assessmentList || [];
-  const target = assessId ? list.find(a => a.id === assessId) : list[list.length - 1];
   if (!target) { toast('Create an assessment first'); return; }
-  _activeAssessId = target.id;
-  const outcomes = target.availableOutcomes || db.faculty.assessmentMapping.availableOutcomes;
+  _activeAssessId = target.assessment_id;
+  const outcomes = { cos: [], pos: [] };  // outcomes from backend assessment
 
   const coEl = document.getElementById('q-co-checkboxes');
   coEl.innerHTML = (outcomes.cos || []).map(co =>
