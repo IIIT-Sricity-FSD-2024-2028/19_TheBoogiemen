@@ -466,7 +466,7 @@ function openThread(threadId) {
   showModal('modalThreadView');
 }
 
-function handleReply() {
+async function handleReply() {
   if (!validateForm('modalThreadView', [
     { id: 'reply-text', required: true, min: 5 }
   ])) return;
@@ -504,6 +504,20 @@ function handleReply() {
   }
 
   saveDB(db);
+
+  // Send to backend
+  const api = _api();
+  if (api) {
+    try {
+      await api.post('/forum/' + _activeThreadId + '/reply', {
+        text: newReply.text,
+        author: newReply.author,
+        role: newReply.role
+      });
+    } catch (err) {
+      console.error('[API] Forum reply sync failed:', err.message);
+    }
+  }
   toast('Reply posted!');
   document.getElementById('reply-text').value = '';
   openThread(_activeThreadId); // refresh modal display

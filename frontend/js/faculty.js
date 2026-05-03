@@ -236,7 +236,7 @@ async function handleCreateAssessment() {
   if (api) {
     try {
       await api.post('/assessments', {
-        course_id: SEED.COURSES[0],
+        course_id: '123e4567-e89b-12d3-a456-426614174001',
         title: newAssess.metadata.title,
         type: newAssess.metadata.type,
         max_marks: newAssess.metadata.totalMarks,
@@ -446,7 +446,7 @@ function openFacultyThread(threadId) {
   showModal('modalFacultyThreadView');
 }
 
-function handleFacultyReply() {
+async function handleFacultyReply() {
   if (!validateForm('modalFacultyThreadView', [
     { id: 'faculty-reply-text', required: true, min: 5 }
   ])) return;
@@ -478,6 +478,20 @@ function handleFacultyReply() {
   }
 
   saveDB(db);
+
+  // Send to backend
+  const api = _api();
+  if (api) {
+    try {
+      await api.post('/forum/' + _activeFacultyThreadId + '/reply', {
+        text: newReply.text,
+        author: newReply.author,
+        role: newReply.role
+      });
+    } catch (err) {
+      console.error('[API] Forum reply sync failed:', err.message);
+    }
+  }
   toast('Reply posted');
   document.getElementById('faculty-reply-text').value = '';
   openFacultyThread(_activeFacultyThreadId);
@@ -777,7 +791,7 @@ async function handleGradeSubmission() {
   if (api) {
     try {
       await api.patch('/assessments/grade', {
-        enrollment_id: SEED.ENROLLMENTS[0],
+        enrollment_id: '123e4567-e89b-12d3-a456-426614174002',
         assessment_id: '123e4567-e89b-12d3-a456-426614174000',
         marks_obtained: scored,
         feedback: feedback
@@ -824,10 +838,10 @@ async function handleSaveAttendance() {
   if (api) {
     try {
       await api.post('/attendance', {
-        enrollment_id: SEED.ENROLLMENTS[0],
+        enrollment_id: '123e4567-e89b-12d3-a456-426614174002',
         date: new Date().toISOString(),
         status: records.some(r => r.isPresent) ? 'present' : 'absent',
-        faculty_id: SEED.FACULTY[0]
+        faculty_id: '123e4567-e89b-12d3-a456-426614174003'
       });
 
       // Handle escalations for absent students

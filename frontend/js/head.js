@@ -474,7 +474,7 @@ async function handleDeleteUser(id) {
   if (api) {
     try {
       // Map old 'USR-' ID to a valid UUID
-      const targetUuid = (id === 'USR-0002') ? SEED.FACULTY[0] : SEED.STUDENTS[0];
+      const targetUuid = (id === 'USR-0002') ? '123e4567-e89b-12d3-a456-426614174004' : '123e4567-e89b-12d3-a456-426614174005';
       await api.delete('/users/' + targetUuid);
     } catch (err) {
       console.error('[API] User deletion sync failed:', err.message);
