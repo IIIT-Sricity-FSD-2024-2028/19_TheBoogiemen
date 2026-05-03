@@ -170,46 +170,110 @@ window.renderStudentTimetable = async function() {
 };
 
 function renderTimetableGrid(data) {
-    if (!data || !data.grid) return '<p style="color:#64748b;text-align:center;">No timetable data</p>';
+    if (!data || !data.grid) return '<div style="text-align:center;padding:40px 20px;"><div style="font-size:48px;margin-bottom:16px;">📅</div><p style="color:#64748b;font-size:15px;font-weight:600;">No timetable data available</p><p style="color:#94a3b8;font-size:13px;margin-top:4px;">Your schedule will appear here once classes are assigned.</p></div>';
     const days  = data.days  || ['MON','TUE','WED','THU','FRI'];
     const times = data.times || ['09:00','10:00','11:00','12:00','13:00','14:00','15:00'];
-    const dayLabels = { MON:'Mon', TUE:'Tue', WED:'Wed', THU:'Thu', FRI:'Fri' };
-    const typeColors = {
-        lab:     { bg:'#fef3c7', border:'#f59e0b', text:'#92400e' },
-        lecture: { bg:'#eff6ff', border:'#6366f1', text:'#1e40af' },
-        tutorial:{ bg:'#f0fdf4', border:'#22c55e', text:'#166534' },
+    const dayLabels = { MON:'Monday', TUE:'Tuesday', WED:'Wednesday', THU:'Thursday', FRI:'Friday' };
+    const dayShort  = { MON:'Mon', TUE:'Tue', WED:'Wed', THU:'Thu', FRI:'Fri' };
+    const dayColors = {
+        MON: { bg:'#6366f1', light:'#eef2ff' },
+        TUE: { bg:'#8b5cf6', light:'#f5f3ff' },
+        WED: { bg:'#0ea5e9', light:'#f0f9ff' },
+        THU: { bg:'#f59e0b', light:'#fffbeb' },
+        FRI: { bg:'#10b981', light:'#ecfdf5' },
     };
-    // Build a per-day list of ALL slots (allowing same day multiple times)
-    // grid[day][time] can be an array of slots or a single slot
-    let html = `<div style="overflow-x:auto;">
-    <table style="width:100%;border-collapse:separate;border-spacing:4px;font-size:12px;min-width:600px;">
+    const typeColors = {
+        lab:      { bg:'linear-gradient(135deg, #fef3c7, #fde68a)', border:'#f59e0b', text:'#92400e', icon:'🔬' },
+        lecture:  { bg:'linear-gradient(135deg, #eff6ff, #dbeafe)', border:'#6366f1', text:'#1e40af', icon:'📖' },
+        tutorial: { bg:'linear-gradient(135deg, #f0fdf4, #dcfce7)', border:'#22c55e', text:'#166534', icon:'✏️' },
+    };
+
+    function formatTime(t) {
+        const [h, m] = t.split(':').map(Number);
+        const suffix = h >= 12 ? 'PM' : 'AM';
+        const h12 = h > 12 ? h - 12 : h === 0 ? 12 : h;
+        return `${h12}:${m.toString().padStart(2,'0')} ${suffix}`;
+    }
+
+    // Check if grid actually has any slots
+    let totalSlots = 0;
+    days.forEach(d => { if (data.grid[d]) totalSlots += Object.keys(data.grid[d]).length; });
+    if (totalSlots === 0) return '<div style="text-align:center;padding:40px 20px;"><div style="font-size:48px;margin-bottom:16px;">📭</div><p style="color:#64748b;font-size:15px;font-weight:600;">No classes scheduled this week</p></div>';
+
+    let html = `<div style="overflow-x:auto;border-radius:12px;border:1px solid #e2e8f0;">
+    <table style="width:100%;border-collapse:separate;border-spacing:0;font-size:13px;min-width:750px;background:#fff;">
     <thead><tr>
-        <th style="width:70px;padding:8px;background:#f1f5f9;border-radius:6px;color:#64748b;font-size:11px;font-weight:700;text-align:center;">Time</th>
-        ${days.map(d => `<th style="padding:8px;background:#6366f1;border-radius:6px;color:#fff;font-size:11px;font-weight:700;text-align:center;">${dayLabels[d]||d}</th>`).join('')}
+        <th style="width:90px;padding:14px 12px;background:linear-gradient(135deg,#f8fafc,#f1f5f9);color:#475569;font-size:11px;font-weight:800;text-align:center;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid #e2e8f0;border-right:1px solid #e2e8f0;position:sticky;left:0;z-index:1;">
+            <div style="display:flex;align-items:center;justify-content:center;gap:4px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Time
+            </div>
+        </th>
+        ${days.map(d => {
+            const dc = dayColors[d] || { bg:'#6366f1', light:'#eef2ff' };
+            return `<th style="padding:14px 8px;background:${dc.bg};color:#fff;font-size:12px;font-weight:700;text-align:center;letter-spacing:0.5px;border-bottom:2px solid ${dc.bg};">
+                <div style="font-size:13px;font-weight:800;">${dayShort[d]||d}</div>
+                <div style="font-size:9px;opacity:0.8;margin-top:2px;font-weight:500;">${dayLabels[d]||d}</div>
+            </th>`;
+        }).join('')}
     </tr></thead>
     <tbody>`;
-    times.forEach(t => {
-        html += `<tr><td style="padding:6px 8px;font-size:10px;color:#64748b;font-weight:700;text-align:center;vertical-align:top;white-space:nowrap;">${t}</td>`;
+
+    times.forEach((t, idx) => {
+        const isEvenRow = idx % 2 === 0;
+        const rowBg = isEvenRow ? '#ffffff' : '#fafbfc';
+        html += `<tr style="background:${rowBg};">
+            <td style="padding:10px 8px;font-size:12px;color:#475569;font-weight:700;text-align:center;vertical-align:middle;white-space:nowrap;border-right:1px solid #e2e8f0;background:${isEvenRow ? '#f8fafc' : '#f1f5f9'};position:sticky;left:0;z-index:1;">
+                <div style="font-size:13px;font-weight:800;color:#334155;">${formatTime(t)}</div>
+            </td>`;
         days.forEach(d => {
             const cell = data.grid[d] && data.grid[d][t];
-            if (!cell) { html += `<td style="padding:4px;"><div style="min-height:52px;"></div></td>`; return; }
-            // Support both array of slots and single slot for same time slot
+            if (!cell) {
+                html += `<td style="padding:6px;vertical-align:top;border-bottom:1px solid #f1f5f9;">
+                    <div style="min-height:60px;border-radius:8px;background:#f8fafc;border:1px dashed #e2e8f0;display:flex;align-items:center;justify-content:center;">
+                        <span style="font-size:18px;opacity:0.15;">—</span>
+                    </div>
+                </td>`;
+                return;
+            }
             const slots = Array.isArray(cell) ? cell : [cell];
-            html += `<td style="padding:4px;vertical-align:top;">`;
+            html += `<td style="padding:6px;vertical-align:top;border-bottom:1px solid #f1f5f9;">`;
             slots.forEach(slot => {
                 const c = typeColors[slot.type] || typeColors.lecture;
-                html += `<div style="padding:7px 8px;background:${c.bg};border-radius:6px;border-left:3px solid ${c.border};margin-bottom:3px;">
-                    <div style="font-weight:700;color:${c.text};font-size:11px;">${slot.course_code||''}</div>
-                    ${slot.course_name ? `<div style="font-size:10px;color:#64748b;margin-top:1px;">${slot.course_name}</div>` : ''}
-                    ${slot.room ? `<div style="font-size:10px;color:#94a3b8;">📍 ${slot.room}</div>` : ''}
-                    ${slot.type ? `<div style="font-size:9px;background:${c.border}22;color:${c.text};padding:1px 5px;border-radius:10px;display:inline-block;margin-top:2px;font-weight:600;">${slot.type}</div>` : ''}
+                html += `<div style="padding:10px 12px;background:${c.bg};border-radius:10px;border-left:4px solid ${c.border};margin-bottom:4px;box-shadow:0 1px 3px rgba(0,0,0,0.06);transition:transform 0.15s, box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)'" onmouseout="this.style.transform='';this.style.boxShadow='0 1px 3px rgba(0,0,0,0.06)'">
+                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+                        <span style="font-size:12px;">${c.icon}</span>
+                        <span style="font-weight:800;color:${c.text};font-size:13px;letter-spacing:0.3px;">${slot.course_code||''}</span>
+                    </div>
+                    ${slot.course_name ? `<div style="font-size:11px;color:#475569;font-weight:500;margin-bottom:4px;line-height:1.3;">${slot.course_name}</div>` : ''}
+                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                        ${slot.room ? `<span style="font-size:10px;color:#64748b;display:flex;align-items:center;gap:3px;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${slot.room}</span>` : ''}
+                        ${slot.type ? `<span style="font-size:9px;background:${c.border}18;color:${c.text};padding:2px 8px;border-radius:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">${slot.type}</span>` : ''}
+                    </div>
                 </div>`;
             });
             html += `</td>`;
         });
         html += `</tr>`;
     });
+
     html += `</tbody></table></div>`;
+
+    // Legend
+    html += `<div style="display:flex;gap:16px;margin-top:16px;padding:12px 16px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;flex-wrap:wrap;align-items:center;">
+        <span style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Legend:</span>
+        <span style="display:flex;align-items:center;gap:5px;font-size:12px;color:#1e40af;font-weight:600;">
+            <span style="width:12px;height:12px;border-radius:3px;background:#6366f1;display:inline-block;"></span>Lecture
+        </span>
+        <span style="display:flex;align-items:center;gap:5px;font-size:12px;color:#92400e;font-weight:600;">
+            <span style="width:12px;height:12px;border-radius:3px;background:#f59e0b;display:inline-block;"></span>Lab
+        </span>
+        <span style="display:flex;align-items:center;gap:5px;font-size:12px;color:#166534;font-weight:600;">
+            <span style="width:12px;height:12px;border-radius:3px;background:#22c55e;display:inline-block;"></span>Tutorial
+        </span>
+        <span style="margin-left:auto;font-size:11px;color:#94a3b8;font-weight:500;">${totalSlots} classes/week</span>
+    </div>`;
+
     return html;
 }
 
@@ -374,10 +438,20 @@ async function submitLeaveApplication() {
     if (!end_date)                { showToast('End date is required', 'warning'); return; }
     if (end_date < start_date)    { showToast('End date cannot be before start date', 'warning'); return; }
     if (!reason || reason.length < 10) { showToast('Please provide a reason (at least 10 characters)', 'warning'); return; }
+    // Handle optional file attachment
+    const fileInput = document.getElementById('leaveFileInput');
+    const file = fileInput?.files?.[0];
+    if (file && file.size > 5 * 1024 * 1024) { showToast('File must be under 5MB', 'warning'); return; }
+    const fullReason = file ? `${reason} [Attached: ${file.name}]` : reason;
     try {
-        await api('/leave', { method:'POST', body: JSON.stringify({ leave_type, start_date, end_date, reason }) });
-        showToast('Leave application submitted!', 'success');
+        await api('/leave', { method:'POST', body: JSON.stringify({ leave_type, start_date, end_date, reason: fullReason }) });
+        showToast(file ? `Leave application submitted with ${file.name}! ✅` : 'Leave application submitted!', 'success');
         closeModal('leaveModal');
+        // Reset upload zone
+        if (fileInput) fileInput.value = '';
+        const fn = document.getElementById('leaveFileName'); if (fn) fn.textContent = 'No file chosen';
+        const fi = document.getElementById('leaveFileIcon'); if (fi) fi.textContent = '📄';
+        const dz = document.getElementById('leaveDropZone'); if (dz) { dz.style.borderColor = '#cbd5e1'; dz.style.background = '#f8fafc'; }
         renderStudentLeave();
     } catch(e) { showToast('Failed: ' + e.message, 'error'); }
 }
@@ -1132,10 +1206,20 @@ window.submitFacultyLeave = async function() {
     if (!end_date)             { showToast('End date is required', 'warning'); return; }
     if (end_date < start_date) { showToast('End date cannot be before start date', 'warning'); return; }
     if (!reason || reason.length < 10) { showToast('Reason must be at least 10 characters', 'warning'); return; }
+    // Handle optional file attachment
+    const fileInput = document.getElementById('fLeaveFileInput');
+    const file = fileInput?.files?.[0];
+    if (file && file.size > 5 * 1024 * 1024) { showToast('File must be under 5MB', 'warning'); return; }
+    const fullReason = file ? `${reason} [Attached: ${file.name}]` : reason;
     try {
-        await api('/leave', { method:'POST', body: JSON.stringify({ leave_type, start_date, end_date, reason }) });
-        showToast('Leave applied!', 'success');
+        await api('/leave', { method:'POST', body: JSON.stringify({ leave_type, start_date, end_date, reason: fullReason }) });
+        showToast(file ? `Leave applied with ${file.name}! ✅` : 'Leave applied!', 'success');
         closeModal('fLeaveModal');
+        // Reset upload zone
+        if (fileInput) fileInput.value = '';
+        const fn = document.getElementById('fLeaveFileName'); if (fn) fn.textContent = 'No file chosen';
+        const fi = document.getElementById('fLeaveFileIcon'); if (fi) fi.textContent = '📄';
+        const dz = document.getElementById('fLeaveDropZone'); if (dz) { dz.style.borderColor = '#cbd5e1'; dz.style.background = '#f8fafc'; }
         renderFacultyLeaveList();
     } catch(e) { showToast('Failed: ' + e.message, 'error'); }
 };
@@ -2010,13 +2094,22 @@ window.openAssignBTPModal = async function() {
         studentSel.innerHTML = '<option value="">Loading students\u2026</option>';
         studentSel.style.borderColor = '';
         try {
-            const allUsers = await api('/admin/users');
+            const [allUsers, profiles] = await Promise.all([
+                api('/admin/users'),
+                api('/faculty/me/students').catch(() => [])
+            ]);
+            const profileMap = {};
+            (profiles||[]).forEach(p => { profileMap[p.user_id] = p; });
             const students = (allUsers||[]).filter(u => u.role === 'student');
             if (!students.length) {
                 studentSel.innerHTML = '<option value="">No students found in the system</option>';
             } else {
                 studentSel.innerHTML = '<option value="">\u2014 Select Student \u2014</option>' +
-                    students.map(s => `<option value="${s.user_id}">${s.first_name||s.username||''} ${s.last_name||''} (${s.user_id})</option>`).join('');
+                    students.map(s => {
+                        const p = profileMap[s.user_id] || {};
+                        const name = `${p.first_name||s.first_name||s.username||''} ${p.last_name||s.last_name||''}`.trim();
+                        return `<option value="${s.user_id}">${name} (${s.user_id})</option>`;
+                    }).join('');
             }
         } catch(e) {
             studentSel.innerHTML = '<option value="">Error loading students \u2014 is server running?</option>';
@@ -2068,10 +2161,19 @@ window.openEnrollStudentModal = async function() {
     if (studentSel) {
         studentSel.innerHTML = '<option value="">Loading…</option>';
         try {
-            const allUsers = await api('/admin/users');
+            const [allUsers, profiles] = await Promise.all([
+                api('/admin/users'),
+                api('/faculty/me/students').catch(() => [])
+            ]);
+            const profileMap = {};
+            (profiles||[]).forEach(p => { profileMap[p.user_id] = p; });
             const students = (allUsers||[]).filter(u => u.role === 'student');
             studentSel.innerHTML = '<option value="">— Select Student —</option>' +
-                students.map(s => `<option value="${s.user_id}">${s.first_name||s.username||''} ${s.last_name||''} (${s.user_id})</option>`).join('');
+                students.map(s => {
+                    const p = profileMap[s.user_id] || {};
+                    const name = `${p.first_name||s.first_name||s.username||''} ${p.last_name||s.last_name||''}`.trim();
+                    return `<option value="${s.user_id}">${name} (${s.user_id})</option>`;
+                }).join('');
         } catch(e) { studentSel.innerHTML = '<option value="">Error loading students</option>'; }
     }
     if (courseSel) {

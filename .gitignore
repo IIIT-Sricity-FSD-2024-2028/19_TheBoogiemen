@@ -21,3 +21,8 @@ npm-debug.log*
 # Env
 .env
 .env.local
+
+# Excluded from repo
+Videos/
+FFSD_CoursePlan_S2026.pdf
+*.zip

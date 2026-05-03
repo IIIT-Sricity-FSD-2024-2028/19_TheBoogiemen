@@ -245,7 +245,21 @@
                     <label>Reason</label>
                     <textarea id="leaveReason" placeholder="Provide detailed reason for leave..."></textarea>
                 </div>
-                <div class="upload-zone">Click to upload or drag &amp; drop<br><small>PDF, JPG, PNG up to 5MB (Optional)</small></div>
+                <div class="form-group">
+                    <label>Supporting Document <span style="font-size:11px;color:#94a3b8;font-weight:400;">(Optional)</span></label>
+                    <div id="leaveDropZone" style="border:2px dashed #cbd5e1;border-radius:10px;padding:24px;text-align:center;background:#f8fafc;transition:all .2s;cursor:pointer;"
+                        onclick="document.getElementById('leaveFileInput').click()"
+                        ondragover="event.preventDefault();this.style.borderColor='#6366f1';this.style.background='#eef2ff';"
+                        ondragleave="this.style.borderColor='#cbd5e1';this.style.background='#f8fafc';"
+                        ondrop="event.preventDefault();this.style.borderColor='#16a34a';this.style.background='#f0fdf4';var f=event.dataTransfer.files[0];if(f){document.getElementById('leaveFileInput').files=event.dataTransfer.files;document.getElementById('leaveFileName').textContent=f.name;document.getElementById('leaveFileIcon').textContent='✅';}">
+                        <input type="file" id="leaveFileInput" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style="display:none;"
+                            onchange="var f=this.files[0];document.getElementById('leaveFileName').textContent=f?f.name:'No file chosen';document.getElementById('leaveFileIcon').textContent=f?'✅':'📄';document.getElementById('leaveDropZone').style.borderColor=f?'#16a34a':'#cbd5e1';document.getElementById('leaveDropZone').style.background=f?'#f0fdf4':'#f8fafc';">
+                        <div id="leaveFileIcon" style="font-size:32px;margin-bottom:8px;">📄</div>
+                        <button type="button" style="padding:8px 18px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">Choose File</button>
+                        <div id="leaveFileName" style="margin-top:10px;font-size:12px;color:#64748b;font-weight:600;">No file chosen</div>
+                        <div style="font-size:11px;color:#94a3b8;margin-top:4px;">PDF, JPG, PNG up to 5MB</div>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="submit" class="submit-btn" style="flex:1;">Submit Application</button>
