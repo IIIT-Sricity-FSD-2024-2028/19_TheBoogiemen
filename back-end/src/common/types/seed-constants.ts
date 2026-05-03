@@ -45,5 +45,13 @@ export const SEED = {
   PROJECTS: [
     '421dff1d-ff1e-4cb8-8c1d-1aaf42f1f6ba',
     'e99c15bf-3ee8-4903-bbcc-0453715d3119',
+  ],
+  ENROLLMENTS: [
+    'e81dff1d-ff1e-4cb8-8c1d-1aaf42f1f6ba',
+    'e92c15bf-3ee8-4903-bbcc-0453715d3119',
+  ],
+  MARKS: [
+    'a81dff1d-ff1e-4cb8-8c1d-1aaf42f1f6ba',
+    'a92c15bf-3ee8-4903-bbcc-0453715d3119',
   ]
 };

@@ -25,24 +25,24 @@ const reply_1 = uuidv4();
 const domain_auth_1 = uuidv4();
 
 export const MOCK_USERS: USER[] = [
-  { user_id: SEED.STUDENTS[0], username: 'alice_smith', email: 'alice@university.edu', role: 'student' },
-  { user_id: SEED.STUDENTS[1], username: 'bob_jones', email: 'bob@university.edu', role: 'student' },
-  { user_id: SEED.STUDENTS[2], username: 'charlie_brown', email: 'charlie@university.edu', role: 'student' },
-  { user_id: SEED.FACULTY[0], username: 'dr_miller', email: 'miller@university.edu', role: 'faculty' },
-  { user_id: SEED.FACULTY[1], username: 'dr_clark', email: 'clark@university.edu', role: 'faculty' },
-  { user_id: SEED.ACADEMIC_HEADS[0], username: 'prof_taylor', email: 'taylor@university.edu', role: 'academic_head' },
-  { user_id: SEED.ADMINS[0], username: 'admin_sys', email: 'admin@university.edu', role: 'admin' },
+  { user_id: SEED.STUDENTS[0], username: 'student', email: 'student@iiits.in', role: 'student' },
+  { user_id: SEED.STUDENTS[1], username: 'pranjal', email: 'pranjal.student@iiits.in', role: 'student' },
+  { user_id: SEED.STUDENTS[2], username: 'harshith', email: 'harshith@iiits.in', role: 'student' },
+  { user_id: SEED.FACULTY[0], username: 'faculty', email: 'faculty@iiits.in', role: 'faculty' },
+  { user_id: SEED.FACULTY[1], username: 'professor', email: 'professor@iiits.in', role: 'faculty' },
+  { user_id: SEED.ACADEMIC_HEADS[0], username: 'head', email: 'head@iiits.in', role: 'academic_head' },
+  { user_id: SEED.ADMINS[0], username: 'admin', email: 'admin@iiits.in', role: 'admin' },
 ];
 
 export const MOCK_STUDENTS: STUDENT[] = [
-  { student_id: SEED.STUDENTS[0], user_id: SEED.STUDENTS[0], first_name: 'Alice', last_name: 'Smith', branch: 'Computer Science', academic_level: 'Undergraduate', batch: '2025' },
-  { student_id: SEED.STUDENTS[1], user_id: SEED.STUDENTS[1], first_name: 'Bob', last_name: 'Jones', branch: 'Mechanical Engineering', academic_level: 'Undergraduate', batch: '2026' },
-  { student_id: SEED.STUDENTS[2], user_id: SEED.STUDENTS[2], first_name: 'Charlie', last_name: 'Brown', branch: 'Computer Science', academic_level: 'Undergraduate', batch: '2025' },
+  { student_id: SEED.STUDENTS[0], user_id: SEED.STUDENTS[0], first_name: 'Faham', last_name: '', branch: 'Computer Science', academic_level: 'Undergraduate', batch: '2024-2028' },
+  { student_id: SEED.STUDENTS[1], user_id: SEED.STUDENTS[1], first_name: 'Pranjal', last_name: '', branch: 'Computer Science', academic_level: 'Undergraduate', batch: '2024-2028' },
+  { student_id: SEED.STUDENTS[2], user_id: SEED.STUDENTS[2], first_name: 'Harshith', last_name: '', branch: 'Computer Science', academic_level: 'Undergraduate', batch: '2024-2028' },
 ];
 
 export const MOCK_FACULTY: FACULTY[] = [
-  { faculty_id: SEED.FACULTY[0], user_id: SEED.FACULTY[0], first_name: 'David', last_name: 'Miller', designation: 'Professor', department_id: 'CS_DEPT' },
-  { faculty_id: SEED.FACULTY[1], user_id: SEED.FACULTY[1], first_name: 'Emma', last_name: 'Clark', designation: 'Associate Professor', department_id: 'ME_DEPT' },
+  { faculty_id: SEED.FACULTY[0], user_id: SEED.FACULTY[0], first_name: 'Dr. Shams', last_name: '', designation: 'Professor', department_id: 'CS_DEPT' },
+  { faculty_id: SEED.FACULTY[1], user_id: SEED.FACULTY[1], first_name: 'Dr. Bablani', last_name: '', designation: 'Associate Professor', department_id: 'ME_DEPT' },
 ];
 
 export const MOCK_COURSES: COURSE[] = [
@@ -55,8 +55,8 @@ export const MOCK_SECTIONS: SECTION_INFO[] = [
 ];
 
 export const MOCK_ENROLLMENTS: ENROLLMENT[] = [
-  { enrollment_id: enr_1, student_id: SEED.STUDENTS[0], section_id: SEED.SECTIONS[0], status: 'ACTIVE' },
-  { enrollment_id: enr_2, student_id: SEED.STUDENTS[2], section_id: SEED.SECTIONS[0], status: 'ACTIVE' },
+  { enrollment_id: SEED.ENROLLMENTS[0], student_id: SEED.STUDENTS[0], section_id: SEED.SECTIONS[0], status: 'ACTIVE' },
+  { enrollment_id: SEED.ENROLLMENTS[1], student_id: SEED.STUDENTS[2], section_id: SEED.SECTIONS[0], status: 'ACTIVE' },
 ];
 
 export const MOCK_FEE_STRUCTURES: FEE_STRUCTURE[] = [
@@ -89,8 +89,8 @@ export const MOCK_ASSESSMENTS: ASSESSMENT[] = [
 ];
 
 export const MOCK_MARKS: MARKS_ENTRY[] = [
-  { entry_id: mark_1, assessment_id: SEED.ASSESSMENTS[0], student_id: SEED.STUDENTS[0], marks: 85, status: 'GRADED' },
-  { entry_id: mark_2, assessment_id: SEED.ASSESSMENTS[0], student_id: SEED.STUDENTS[2], marks: 92, status: 'GRADED' },
+  { entry_id: SEED.MARKS[0], assessment_id: SEED.ASSESSMENTS[0], student_id: SEED.STUDENTS[0], marks: 85, status: 'GRADED' },
+  { entry_id: SEED.MARKS[1], assessment_id: SEED.ASSESSMENTS[0], student_id: SEED.STUDENTS[2], marks: 92, status: 'GRADED' },
 ];
 
 export const MOCK_OUTCOMES: LEARNING_OUTCOME[] = [

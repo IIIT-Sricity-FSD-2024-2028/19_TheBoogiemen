@@ -411,7 +411,7 @@ async function handleSubmitAssignment() {
   if (api) {
     try {
       // Use a mock UUID if we don't have the real assessment UUID
-      const assessmentId = '123e4567-e89b-12d3-a456-426614174000'; 
+      const assessmentId = 'e7c2ba43-1cf0-4be6-aab8-ac8a6a6839a8'; 
       await api.post('/assessments/' + assessmentId + '/submit', {
         course: _activeAssignCourse,
         title: _activeAssignTitle,

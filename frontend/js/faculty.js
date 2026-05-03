@@ -236,7 +236,7 @@ async function handleCreateAssessment() {
   if (api) {
     try {
       await api.post('/assessments', {
-        course_id: '123e4567-e89b-12d3-a456-426614174001',
+        course_id: 'c2c11818-5a02-4fc6-b2fc-24ee2df8fb1f',
         title: newAssess.metadata.title,
         type: newAssess.metadata.type,
         max_marks: newAssess.metadata.totalMarks,
@@ -335,7 +335,7 @@ async function handleAddQuestion() {
   if (api) {
     try {
       // Use a mock UUID if we don't have the real assessment UUID
-      const assessmentId = '123e4567-e89b-12d3-a456-426614174000'; 
+      const assessmentId = 'e7c2ba43-1cf0-4be6-aab8-ac8a6a6839a8'; 
       await api.post('/assessments/' + assessmentId + '/questions', newQuestion);
     } catch (err) {
       console.error('[API] Add question sync failed:', err.message);
@@ -791,10 +791,8 @@ async function handleGradeSubmission() {
   if (api) {
     try {
       await api.patch('/assessments/grade', {
-        enrollment_id: '123e4567-e89b-12d3-a456-426614174002',
-        assessment_id: '123e4567-e89b-12d3-a456-426614174000',
-        marks_obtained: scored,
-        feedback: feedback
+        entry_id: 'a81dff1d-ff1e-4cb8-8c1d-1aaf42f1f6ba',
+        marks: scored
       });
     } catch (err) {
       console.error('[API] Grade sync failed:', err.message);
@@ -838,10 +836,10 @@ async function handleSaveAttendance() {
   if (api) {
     try {
       await api.post('/attendance', {
-        enrollment_id: '123e4567-e89b-12d3-a456-426614174002',
+        enrollment_id: 'e81dff1d-ff1e-4cb8-8c1d-1aaf42f1f6ba',
         date: new Date().toISOString(),
         status: records.some(r => r.isPresent) ? 'present' : 'absent',
-        faculty_id: '123e4567-e89b-12d3-a456-426614174003'
+        faculty_id: '3a18b76c-fb1d-4034-8c83-05c04ccfbdb5'
       });
 
       // Handle escalations for absent students
