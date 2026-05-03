@@ -401,6 +401,10 @@ async function handleSubmitAssignment() {
           submittedOn: new Date().toLocaleDateString(),
           feedback: null
         });
+      } else {
+        existingSub.notes = document.getElementById('assign-notes').value;
+        existingSub.status = 'submitted';
+        existingSub.submittedOn = new Date().toLocaleDateString();
       }
     }
   }
