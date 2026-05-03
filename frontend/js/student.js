@@ -1,4 +1,4 @@
-/**
+﻿/**
  * student.js - Student Portal Scripts
  * BarelyPassing - Academic Progress & Outcome Tracking
  */
@@ -497,23 +497,25 @@ async function initPage() {
   `;
 
   // ── PERFORMANCE TABLE ──────────────────────────────
-  document.getElementById('perfTable').innerHTML = attendance.map(att => {
+  document.getElementById('perfTable').innerHTML = attendance.length ? attendance.map(att => {
     const courseAss = assessments.find(a => a.course_id === att.course_id) || {};
+    const courseName = att.course_name || att.subject || att.course_id;
+    const pct = att.percentage || 0;
     return `
       <tr>
         <td><strong>${att.course_id}</strong><div style="font-size:11px;color:var(--muted)">${att.course_name}</div></td>
         <td>Dr. Faculty</td>
-        <td>${courseAss.score || 'N/A'}</td>
-        <td>${att.percentage.toFixed(0)}%</td>
+        <td>${courseAss.score != null ? courseAss.score : 'N/A'}</td>
+        <td>${pct.toFixed ? pct.toFixed(0) : pct}%</td>
         <td>
           <div style="height:6px;width:60px;background:var(--border);border-radius:3px;overflow:hidden">
-            <div style="width:${att.percentage}%;height:100%;background:var(--accent)"></div>
+            <div style="width:${Math.min(pct,100)}%;height:100%;background:var(--accent)"></div>
           </div>
         </td>
         <td><span class="status-pill ${att.flagged ? 'rejected' : 'approved'}">${att.flagged ? 'Low' : 'Good'}</span></td>
       </tr>
     `;
-  }).join('');
+  }).join('') : '<tr><td colspan=6 style=text-align:center;padding:20px;color:var(--muted)>No performance data available.</td></tr>';
 
   // ── PROFILE ────────────────────────────────────────
   document.getElementById('profileCardHead').innerHTML = `
