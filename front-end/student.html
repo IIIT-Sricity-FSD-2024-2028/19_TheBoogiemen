@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - BarelyPassing</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dashboard-body">
+
+<aside class="sidebar">
+    <div class="sidebar-brand"><h2>BarelyPassing</h2></div>
+    <div class="sidebar-user">
+        <div class="user-avatar avatar-f" id="sidebar-avatar">F</div>
+        <div class="user-info">
+            <h3 id="sidebar-user-name">Faham</h3>
+            <p>Student · UG-2 · Computer</p>
+        </div>
+    </div>
+    <nav class="sidebar-nav">
+        <a href="#" class="nav-item active" onclick="switchView('dashboard-view',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <span>Dashboard</span>
+        </a>
+        <a href="#" class="nav-item" onclick="switchView('my-profile-view',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span>My Profile</span>
+        </a>
+        <a href="#" class="nav-item" onclick="switchView('time-table-view',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span>Time Table</span>
+        </a>
+        <a href="#" class="nav-item" onclick="switchView('my-courses-view',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            <span>My Courses</span>
+        </a>
+        <a href="#" class="nav-item" onclick="switchView('attendance-view',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            <span>Attendance</span>
+        </a>
+        <a href="#" class="nav-item" onclick="switchView('leave-management-view',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span>Leave Management</span>
+        </a>
+        <a href="#" class="nav-item" onclick="switchView('discussion-forum-view',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span>Discussion Forum</span>
+        </a>
+        <a href="#" class="nav-item" onclick="switchView('research-projects-view',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            <span>Research Projects</span>
+        </a>
+    </nav>
+    <div class="sidebar-footer">
+        <a href="#" class="nav-item" onclick="switchView('settings-view',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+            <span>Settings</span>
+        </a>
+        <button class="nav-item" onclick="window.Auth.logout()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+            <span>Logout</span>
+        </button>
+    </div>
+</aside>
+
+<div class="main-content">
+<div class="top-header-bar" id="top-header-bar">
+        <h1 id="page-title">Dashboard</h1>
+        <div class="header-badges">
+            <span class="badge-term">Spring 2026</span>
+            <span class="badge-semester">4th Semester</span>
+        </div>
+    </div>
+    <div class="content-body">
+
+        <!-- Dashboard View -->
+        <div id="dashboard-view" class="view-section active">
+            <div style="margin-bottom:20px;">
+                <h2 id="welcome-message" style="font-size:22px;font-weight:700;color:#0f172a;">Welcome back, Faham</h2>
+                <p style="font-size:14px;color:#64748b;">Here's your academic progress overview</p>
+            </div>
+            <div class="predicted-grade-box">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+                <div>
+                    <div class="box-title">Predicted Final Grade</div>
+                    <div class="box-subtitle">Based on current performance: <strong>A+</strong></div>
+                </div>
+            </div>
+            <!-- Scheduled Meetings Alert -->
+            <div id="upcoming-meetings-card" style="display:none;margin-bottom:20px;">
+                <div class="stats-card" style="border-left:4px solid #6366f1;">
+                    <div class="stats-card-header">
+                        <h3>📅 Upcoming Meetings</h3>
+                        <span id="meetings-count" style="padding:4px 10px;background:#eff6ff;color:#1e40af;border-radius:20px;font-size:12px;font-weight:700;"></span>
+                    </div>
+                    <div class="stats-card-body" style="padding:16px;" id="upcoming-meetings-list"></div>
+                </div>
+            </div>
+            <!-- Online Submissions Alert -->
+            <div id="pending-submissions-card" style="display:none;margin-bottom:20px;">
+                <div class="stats-card">
+                    <div class="stats-card-header">
+                        <h3>📤 Pending Online Submissions</h3>
+                        <span id="pending-sub-count" style="padding:4px 10px;background:#fef3c7;color:#92400e;border-radius:20px;font-size:12px;font-weight:700;"></span>
+                    </div>
+                    <div class="stats-card-body" style="padding:16px;" id="pending-submissions-list"></div>
+                </div>
+            </div>
+            <div class="stats-card">
+                <div class="stats-card-header"><h3>📚 Syllabus Completion Tracker</h3></div>
+                <div class="stats-card-body" style="padding:20px;" id="syllabus-tracker-body">
+                    <div style="text-align:center;color:#64748b;padding:16px;">Loading syllabus data...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Leave Management View -->
+        <div id="leave-management-view" class="view-section" style="display:none;">
+            <div class="metrics-grid" style="grid-template-columns:1fr 1fr;margin-bottom:20px;">
+                <div class="metric-card">
+                    <div class="label">TOTAL APPLICATIONS</div>
+                    <div class="value" id="leaveTotalCount">0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">REJECTED</div>
+                    <div class="value" id="leaveRejectedCount">0</div>
+                    <div class="sub red">Not approved</div>
+                </div>
+            </div>
+            <div class="stats-card">
+                <div class="stats-card-header">
+                    <div>
+                        <h3>Leave Applications</h3>
+                        <p style="font-size:13px;color:#64748b;">Your submitted leave requests and their status</p>
+                    </div>
+                    <button class="page-action-btn" onclick="openModal('leaveModal'); restrictDateToFuture('leaveStart');">+ Apply for Leave</button>
+                </div>
+                <div class="stats-card-body" id="leaveListBody">
+                    <div style="text-align:center;color:#64748b;padding:20px;">Loading...</div>
+                </div>
+            </div>
+        </div>
+        <!-- My Profile View -->
+        <div id="my-profile-view" class="view-section" style="display:none;">
+            <div class="stats-card">
+                <div class="stats-card-header"><h3>Student Profile</h3></div>
+                <div class="stats-card-body" id="profile-details-body" style="padding:24px;"></div>
+            </div>
+        </div>
+
+        <!-- Time Table View -->
+        <div id="time-table-view" class="view-section" style="display:none;">
+            <div class="stats-card">
+                <div class="stats-card-header"><h3>Weekly Time Table</h3></div>
+                <div class="stats-card-body" style="padding:24px; overflow-x: auto;">
+                    <div id="timetable-grid"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Settings View ─────────────────────── -->
+        <div id="settings-view" class="view-section" style="display:none;">
+            <!-- Content Injected by script.js -->
+        </div>
+
+        <div id="my-courses-view" class="view-section" style="display:none;">
+            <div class="stats-card">
+                <div class="stats-card-header">
+                    <h3>Enrolled Courses</h3>
+                    <span style="padding:6px 14px;background:#f0fdf4;color:#15803d;border-radius:20px;font-size:12px;font-weight:600;border:1px solid #bbf7d0;">✓ Faculty-assigned courses</span>
+                </div>
+                <div class="stats-card-body" style="padding:24px;">
+                    <div id="my-courses-list" style="display:grid;grid-template-columns:1fr;gap:15px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attendance View -->
+        <div id="attendance-view" class="view-section" style="display:none;">
+            <div class="stats-card">
+                <div class="stats-card-header"><h3>Attendance Heatmap & Overview</h3></div>
+                <div class="stats-card-body" style="padding:24px;">
+                    <div id="attendance-overview-body"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Discussion Forum View -->
+        <div id="discussion-forum-view" class="view-section" style="display:none;">
+            <div class="stats-card">
+                <div class="stats-card-header">
+                    <h3>Discussion Forum</h3>
+                    <button class="page-action-btn" onclick="openModal('newThreadModal')">+ New Thread</button>
+                </div>
+                <div class="stats-card-body" style="padding:0;">
+                    <div id="discussion-threads-body"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Research Projects View -->
+        <div id="research-projects-view" class="view-section" style="display:none;">
+            <div class="stats-card">
+                <div class="stats-card-header"><h3>My Research Projects (BTP)</h3></div>
+                <div class="stats-card-body" style="padding:24px;">
+                    <div id="research-projects-body"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Apply for Leave Modal (Figma-Exact) -->
+<div id="leaveModal" class="modal-backdrop">
+    <div class="modal-window">
+        <div class="modal-header">
+            <h2>Apply for Leave</h2>
+            <button class="close-modal" onclick="closeModal('leaveModal')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <form id="leaveForm" onsubmit="event.preventDefault(); submitLeaveApplication();">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Leave Type</label>
+                    <select id="leaveType">
+                        <option value="">Select leave type</option>
+                        <option value="medical">Medical Leave</option>
+                        <option value="personal">Personal Leave</option>
+                        <option value="event">Event Participation</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Start Date</label>
+                        <input type="date" id="leaveStart">
+                    </div>
+                    <div class="form-group">
+                        <label>End Date</label>
+                        <input type="date" id="leaveEnd">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Reason</label>
+                    <textarea id="leaveReason" placeholder="Provide detailed reason for leave..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Supporting Document <span style="font-size:11px;color:#94a3b8;font-weight:400;">(Optional)</span></label>
+                    <div id="leaveDropZone" style="border:2px dashed #cbd5e1;border-radius:10px;padding:24px;text-align:center;background:#f8fafc;transition:all .2s;cursor:pointer;"
+                        onclick="document.getElementById('leaveFileInput').click()"
+                        ondragover="event.preventDefault();this.style.borderColor='#6366f1';this.style.background='#eef2ff';"
+                        ondragleave="this.style.borderColor='#cbd5e1';this.style.background='#f8fafc';"
+                        ondrop="event.preventDefault();this.style.borderColor='#16a34a';this.style.background='#f0fdf4';var f=event.dataTransfer.files[0];if(f){document.getElementById('leaveFileInput').files=event.dataTransfer.files;document.getElementById('leaveFileName').textContent=f.name;document.getElementById('leaveFileIcon').textContent='✅';}">
+                        <input type="file" id="leaveFileInput" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style="display:none;"
+                            onchange="var f=this.files[0];document.getElementById('leaveFileName').textContent=f?f.name:'No file chosen';document.getElementById('leaveFileIcon').textContent=f?'✅':'📄';document.getElementById('leaveDropZone').style.borderColor=f?'#16a34a':'#cbd5e1';document.getElementById('leaveDropZone').style.background=f?'#f0fdf4':'#f8fafc';">
+                        <div id="leaveFileIcon" style="font-size:32px;margin-bottom:8px;">📄</div>
+                        <button type="button" style="padding:8px 18px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">Choose File</button>
+                        <div id="leaveFileName" style="margin-top:10px;font-size:12px;color:#64748b;font-weight:600;">No file chosen</div>
+                        <div style="font-size:11px;color:#94a3b8;margin-top:4px;">PDF, JPG, PNG up to 5MB</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="submit-btn" style="flex:1;">Submit Application</button>
+                <button type="button" class="btn-cancel" onclick="closeModal('leaveModal')">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Enroll Course Modal -->
+<div id="enrollCourseModal" class="modal-backdrop">
+    <div class="modal-window">
+        <div class="modal-header">
+            <h2>Enroll in a New Course</h2>
+            <button class="close-modal" onclick="closeModal('enrollCourseModal')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <form id="enrollCourseForm" onsubmit="event.preventDefault(); submitCourseEnrollment();">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Select Course</label>
+                    <select id="enrollCourseId" required>
+                        <option value="">Loading courses...</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="submit-btn" style="flex:1;">Enroll</button>
+                <button type="button" class="btn-cancel" onclick="closeModal('enrollCourseModal')">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Submit BTP Work Modal (Student only uploads work — faculty updates progress) -->
+<div id="updateProgressModal" class="modal-backdrop">
+    <div class="modal-window">
+        <div class="modal-header">
+            <h2>&#x1F4E4; Submit Your BTP Work</h2>
+            <button class="close-modal" onclick="closeModal('updateProgressModal')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        </div>
+        <form id="updateProgressForm" onsubmit="event.preventDefault(); submitResearchProgress();">
+            <input type="hidden" id="researchProgressId">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Project: <strong id="btpProjectTitle" style="color:#6366f1;"></strong></label>
+                </div>
+                <div class="form-group">
+                    <label>Work Description / Submission Notes <span style="color:#ef4444">*</span></label>
+                    <textarea id="btpSubmissionNotes" rows="3" placeholder="Describe what you have done, challenges faced, next steps..." required
+                        style="width:100%;padding:10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;resize:vertical;box-sizing:border-box;"></textarea>
+                    <div id="btpNotesError" style="font-size:11px;color:#ef4444;margin-top:3px;display:none;"></div>
+                </div>
+                <div class="form-group">
+                    <label>Upload Work File <span style="color:#ef4444">*</span> <span style="font-size:11px;color:#64748b;">(PDF, DOCX, ZIP – max 10MB)</span></label>
+                    <div id="btpDropZone" style="border:2px dashed #6366f1;border-radius:10px;padding:24px;text-align:center;background:#fafafa;transition:background .2s;cursor:pointer;" onclick="document.getElementById('btpFileInput').click()">
+                        <input type="file" id="btpFileInput" accept=".pdf,.doc,.docx,.zip,.ppt,.pptx" style="display:none;"
+                            onchange="
+                                var f=this.files[0];
+                                document.getElementById('btpFileName').textContent = f ? f.name : 'No file chosen';
+                                document.getElementById('btpFileIcon').textContent = f ? '&#x2705;' : '&#x1F4C4;';
+                                document.getElementById('btpDropZone').style.background = f ? '#f0fdf4' : '#fafafa';
+                                document.getElementById('btpDropZone').style.borderColor = f ? '#16a34a' : '#6366f1';
+                            ">
+                        <div id="btpFileIcon" style="font-size:32px;margin-bottom:8px;">&#x1F4C4;</div>
+                        <button type="button" style="padding:8px 18px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">Choose File</button>
+                        <div id="btpFileName" style="margin-top:10px;font-size:12px;color:#64748b;font-weight:600;">No file chosen</div>
+                        <div id="btpFileError" style="font-size:11px;color:#ef4444;margin-top:4px;display:none;">&#x26A0; A file is required to submit work.</div>
+                    </div>
+                </div>
+                <div style="padding:10px 12px;background:#fef9c3;border-radius:8px;font-size:12px;color:#92400e;">
+                    &#x1F4A1; Your faculty will review and update your BTP progress after reviewing your work.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="submit-btn" style="flex:1;">&#x1F4E4; Submit Work to Faculty</button>
+                <button type="button" class="btn-cancel" onclick="closeModal('updateProgressModal')">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modals -->
+<div id="newThreadModal" class="modal-backdrop">
+    <div class="modal-window">
+        <div class="modal-header">
+            <h2>Start New Discussion</h2>
+            <button class="close-modal" onclick="closeModal('newThreadModal')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        </div>
+        <form id="newDiscussionForm" onsubmit="event.preventDefault(); submitNewDiscussion();">
+            <div class="modal-body">
+                <div class="form-group"><label>Topic Title</label><input type="text" id="discTitle" placeholder="What's on your mind?" required></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Category</label><select id="discTag" required><option value="general">General</option><option value="help">Help Wanted</option><option value="event">Event Info</option><option value="academic">Academic</option></select></div>
+                    <div class="form-group"><label>Course ID (Optional)</label><input type="text" id="discCourse" placeholder="e.g. CS301"></div>
+                </div>
+                <div class="form-group"><label>Content</label><textarea id="discContent" rows="4" placeholder="Describe your topic in detail..." required></textarea></div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="submit-btn" style="flex:1;">Post Thread</button>
+                <button type="button" class="btn-cancel" onclick="closeModal('newThreadModal')">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Thread Detail Modal -->
+<div id="threadDetailModal" class="modal-backdrop">
+    <div class="modal-window" style="max-width:600px;">
+        <div class="modal-header">
+            <h2 id="threadDetailTitle">Thread</h2>
+            <button class="close-modal" onclick="closeModal('threadDetailModal')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p style="font-size:12px;color:#64748b;margin-bottom:8px;" id="threadDetailAuthor"></p>
+            <p id="threadDetailContent" style="font-size:14px;margin-bottom:16px;line-height:1.7;"></p>
+            <hr style="border:0;border-top:1px solid var(--border);margin-bottom:16px;">
+            <h4 style="font-size:13px;font-weight:600;margin-bottom:12px;">Replies</h4>
+            <div id="threadDetailReplies" style="max-height:200px;overflow-y:auto;"></div>
+            <hr style="border:0;border-top:1px solid var(--border);margin:16px 0 12px;">
+            <input type="hidden" id="threadReplyPostId">
+            <div class="form-group">
+                <label>Post a Reply</label>
+                <textarea id="threadReplyContent" placeholder="Write your reply..." rows="3"></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="submit-btn" style="flex:1;" onclick="submitThreadReply()">Post Reply</button>
+            <button class="btn-cancel" onclick="closeModal('threadDetailModal')">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Submit Online Work Modal -->
+<div id="submitWorkModal" class="modal-backdrop">
+    <div class="modal-window">
+        <div class="modal-header">
+            <h2>📤 Submit Work</h2>
+            <button class="close-modal" onclick="closeModal('submitWorkModal')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        </div>
+        <form id="submitWorkForm" onsubmit="event.preventDefault(); submitOnlineWork();">
+            <input type="hidden" id="submissionAssessmentId">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Assessment: <strong id="submissionAssessLabel" style="color:#6366f1;"></strong></label>
+                </div>
+                <div class="form-group">
+                    <label>Submission Notes / Work Description <span style="color:#ef4444">*</span></label>
+                    <textarea id="submissionNotes" rows="4" placeholder="Describe your work, approach taken, key findings..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Attach File (PDF, DOCX, ZIP – max 15MB)</label>
+                    <div style="border:2px dashed #e2e8f0;border-radius:8px;padding:20px;text-align:center;background:#f8fafc;">
+                        <input type="file" id="submissionFileInput" accept=".pdf,.doc,.docx,.zip,.ppt,.pptx" style="display:none;" onchange="document.getElementById('submissionFileName').textContent = this.files[0]?.name || 'No file chosen';">
+                        <div style="font-size:32px;margin-bottom:8px;">📎</div>
+                        <button type="button" onclick="document.getElementById('submissionFileInput').click()" style="padding:10px 20px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">Choose File</button>
+                        <div id="submissionFileName" style="margin-top:8px;font-size:12px;color:#64748b;">No file chosen (optional)</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="submit-btn" style="flex:1;">✓ Submit Work</button>
+                <button type="button" class="btn-cancel" onclick="closeModal('submitWorkModal')">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="state.js"></script>
+
+<script src="script.js"></script>
+<script src="fixes.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    if (!window.location.pathname.includes('student.html')) return;
+    const user = window.Auth.requireAuth(['student']);
+    if (!user) return;
+    const name = (user.first_name || '') + ' ' + (user.last_name || user.username || '');
+    const sn = document.getElementById('sidebar-user-name');
+    const wm = document.getElementById('welcome-message');
+    if (sn) sn.textContent = name.trim();
+    if (wm) wm.textContent = 'Welcome back, ' + (name.trim() || 'Student');
+    // Load all sections using fixes.js renderers
+    Promise.allSettled([
+        window.renderStudentProfile && window.renderStudentProfile(),
+        window.renderStudentAttendance && window.renderStudentAttendance(),
+        window.renderStudentCourses && window.renderStudentCourses(),
+        window.renderStudentLeave && window.renderStudentLeave(),
+        window.renderStudentTimetable && window.renderStudentTimetable(),
+        window.renderDiscussions && window.renderDiscussions(),
+        window.renderStudentResearch && window.renderStudentResearch(),
+        window.renderPendingSubmissions && window.renderPendingSubmissions(),
+        window.renderStudentMeetings && window.renderStudentMeetings(),
+    ]);
+    // Inject notification bell
+    window.Notifications?.injectBell?.();
+});
+
+</script>
+</body>
+</html>
