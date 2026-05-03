@@ -629,14 +629,16 @@ const superuserMockDatabase = {
 // ==========================================
 
 // Schema version — bump to force re-seed from mock data
-const DB_VERSION = 4;
+const DB_VERSION = 6;
 
 // Seed the in-memory DB from mock data
 let inMemoryDB = {
     student:    studentMockDatabase,
     faculty:    facultyMockDatabase,
     admin:      academicHeadMockDatabase,
-    superuser:  superuserMockDatabase
+    superuser:  superuserMockDatabase,
+    dynamicCredentials: [],
+    deletedUsers: []
 };
 
 // On first load, seed localStorage if empty or outdated
@@ -679,7 +681,9 @@ function getMockData() {
         student:    studentMockDatabase,
         faculty:    facultyMockDatabase,
         admin:      academicHeadMockDatabase,
-        superuser:  superuserMockDatabase
+        superuser:  superuserMockDatabase,
+        dynamicCredentials: [],
+        deletedUsers: []
     };
 }
 
@@ -692,7 +696,9 @@ function resetDatabase() {
         student:    JSON.parse(JSON.stringify(studentMockDatabase)),
         faculty:    JSON.parse(JSON.stringify(facultyMockDatabase)),
         admin:      JSON.parse(JSON.stringify(academicHeadMockDatabase)),
-        superuser:  JSON.parse(JSON.stringify(superuserMockDatabase))
+        superuser:  JSON.parse(JSON.stringify(superuserMockDatabase)),
+        dynamicCredentials: [],
+        deletedUsers: []
     };
     console.log('Database reset to mockdata.js defaults');
     return inMemoryDB;
@@ -759,12 +765,22 @@ function updateBugReport(id, patch) {
  * Validate user credentials and return user info.
  */
 function authenticateUser(email, password) {
-    const user = userCredentials.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
+    // Merge static credentials with superuser-provisioned dynamic ones
+    const dynamicCreds = (getDB().dynamicCredentials || []);
+    const allCredentials = [...userCredentials, ...dynamicCreds];
+    // Build a blocklist of deleted user emails
+    const deletedEmails = (getDB().deletedUsers || []).map(e => e.toLowerCase());
+    const user = allCredentials.find(u =>
+        u.email.toLowerCase() === email.toLowerCase() &&
+        u.password === password &&
+        !deletedEmails.includes(u.email.toLowerCase())
+    );
     if (user) {
         return {
             email: user.email,
             name: user.name,
-            role: user.role
+            role: user.role,
+            userId: user.userId || null
         };
     }
     return null;
@@ -816,15 +832,36 @@ function reverseMapRole(apiRole) {
 
 /**
  * Set the current user session (used by login page).
+ * If the user has a per-user userId (superuser-provisioned), use that.
+ * Otherwise fall back to the role-based seed UUID.
  */
 function setCurrentUser(user) {
     const apiRole = ROLE_TO_API_ROLE[user.role] || user.role;
-    const seedId = ROLE_SEED_UUIDS[user.role] || '';
+    const seedId = user.userId || ROLE_SEED_UUIDS[user.role] || '';
     if (window.API_CLIENT) {
         window.API_CLIENT.setSession(apiRole, seedId);
     } else {
         localStorage.setItem('__session_role', apiRole);
         localStorage.setItem('__session_user_id', seedId);
+    }
+
+    // Personalize the student profile so the portal shows this user's identity
+    if (user.role === 'student' || apiRole === 'student') {
+        const db = getDB();
+        db.student.profile.personal.fullName = user.name;
+        db.student.profile.personal.email = user.email;
+        db.student.profile.academic.studentId = seedId;
+        db.student.analytics.student.name = user.name;
+        saveDB(db);
+    }
+    // Personalize faculty profile for dynamically provisioned faculty
+    if (user.role === 'faculty' || apiRole === 'faculty') {
+        const db = getDB();
+        if (db.faculty && db.faculty.profile && db.faculty.profile.account) {
+            db.faculty.profile.account.name = user.name;
+            db.faculty.profile.account.email = user.email;
+        }
+        saveDB(db);
     }
 }
 

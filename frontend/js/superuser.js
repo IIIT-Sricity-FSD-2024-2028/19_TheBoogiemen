@@ -144,6 +144,27 @@ async function handleAddUser() {
     meta: `Operation by Superuser at ${new Date().toISOString()}`,
     time: new Date().toLocaleTimeString('en-GB')
   });
+
+  // 3. Register login credentials for the new user
+  const passwordInput = document.getElementById('u-password').value;
+  const defaultPassword = user.role.charAt(0).toUpperCase() + user.role.slice(1) + '@123';
+  const finalPassword = passwordInput && passwordInput.length >= 8 ? passwordInput : defaultPassword;
+  // Generate a unique user ID for this account
+  const newUserId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : ('usr-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9));
+  if (!db.dynamicCredentials) db.dynamicCredentials = [];
+  db.dynamicCredentials.push({
+    email: user.email,
+    password: finalPassword,
+    role: user.role,
+    name: user.name,
+    userId: newUserId
+  });
+
+  // Also remove from deletedUsers blocklist if re-provisioning a previously deleted email
+  if (db.deletedUsers) {
+    db.deletedUsers = db.deletedUsers.filter(e => e.toLowerCase() !== user.email.toLowerCase());
+  }
+
   saveDB(db);
 
   // 2. Fire API in background
@@ -215,8 +236,33 @@ function openDeleteModal(id) {
 async function performDelete() {
   // 1. Always update local DB first
   const db = getDB();
+
+  // Capture the user's email BEFORE removing from directory
+  const deletedUser = db.superuser.users.find(u => u.id === _deletingId);
+
   db.superuser.users = db.superuser.users.filter(u => u.id !== _deletingId);
   db.superuser.metrics.totalUsers = db.superuser.users.length;
+
+  // Block the deleted user from logging in
+  if (deletedUser && deletedUser.email) {
+    if (!db.deletedUsers) db.deletedUsers = [];
+    if (!db.deletedUsers.includes(deletedUser.email.toLowerCase())) {
+      db.deletedUsers.push(deletedUser.email.toLowerCase());
+    }
+    // Also remove from dynamicCredentials if they were superuser-provisioned
+    if (db.dynamicCredentials) {
+      db.dynamicCredentials = db.dynamicCredentials.filter(c => c.email.toLowerCase() !== deletedUser.email.toLowerCase());
+    }
+  }
+
+  // Log the deletion
+  db.superuser.systemLogs.unshift({
+    level: 'warn',
+    title: `Purged user: ${deletedUser ? deletedUser.name : _deletingId} (${_deletingId})`,
+    meta: `Operation by Superuser at ${new Date().toISOString()}`,
+    time: new Date().toLocaleTimeString('en-GB')
+  });
+
   saveDB(db);
 
   // 2. Fire API in background
