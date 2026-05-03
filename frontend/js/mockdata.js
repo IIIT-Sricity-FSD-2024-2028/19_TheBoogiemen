@@ -625,92 +625,39 @@ const superuserMockDatabase = {
 };
 
 // ==========================================
-// LOCAL STORAGE INITIALIZATION
+// IN-MEMORY DATABASE (No localStorage)
 // ==========================================
 
-// Increment this when the data schema changes to force a re-seed.
-const DB_VERSION = 3;
-
-// In-memory database (source of truth from mockdata.js)
-let inMemoryDB = null;
-
-function initDatabase() {
-    const existing = localStorage.getItem('ffsd');
-    const versionKey = 'ffsd_v';
-    const storedVersion = parseInt(localStorage.getItem(versionKey) || '0', 10);
-
-    // Always initialize in-memory DB from mockdata
-    inMemoryDB = {
-        student:    studentMockDatabase,
-        faculty:    facultyMockDatabase,
-        admin:      academicHeadMockDatabase,
-        superuser:  superuserMockDatabase
-    };
-
-    // Only seed localStorage if no data exists OR if the schema version changed.
-    if (!existing || storedVersion !== DB_VERSION) {
-        localStorage.setItem('ffsd', JSON.stringify(inMemoryDB));
-        localStorage.setItem(versionKey, String(DB_VERSION));
-        console.log("Database seeded from mockdata.js (version " + DB_VERSION + ").");
-    } else {
-        console.log("Database already seeded (version " + DB_VERSION + "). Using existing data.");
-    }
-}
-
-// Run the initialization immediately
-initDatabase();
-
-// ==========================================
-// DEBUG / RESET FUNCTIONS
-// ==========================================
+// In-memory database — the ONLY source of truth for display-only fallback data.
+// CRUD operations for workflow-specific features go through the API instead.
+let inMemoryDB = {
+    student:    studentMockDatabase,
+    faculty:    facultyMockDatabase,
+    admin:      academicHeadMockDatabase,
+    superuser:  superuserMockDatabase
+};
 
 /**
- * Reset database to default mock data from mockdata.js
- * Call resetDatabase() in browser console to force reset
+ * Get the entire in-memory database.
+ * Used as a fallback data source for UI sections without backend endpoints
+ * (timetables, profiles, department stats, system logs, etc.).
  */
-function resetDatabase() {
-    localStorage.removeItem('ffsd');
-    localStorage.removeItem('ffsd_v');
-    
-    // Re-initialize from mockdata
-    inMemoryDB = {
-        student:    studentMockDatabase,
-        faculty:    facultyMockDatabase,
-        admin:      academicHeadMockDatabase,
-        superuser:  superuserMockDatabase
-    };
-    
-    localStorage.setItem('ffsd', JSON.stringify(inMemoryDB));
-    localStorage.setItem('ffsd_v', String(DB_VERSION));
-    
-    console.log('Database reset to mockdata.js defaults');
-    console.log('Current DB:', inMemoryDB);
+function getDB() {
     return inMemoryDB;
 }
 
-// ==========================================
-// CRUD HELPER FUNCTIONS (For the whole team to use)
-// ==========================================
-
-// Get the entire current state of the database (from localStorage)
-function getDB() {
-    const data = localStorage.getItem('ffsd');
-    if (!data) {
-        console.warn('Database empty! Re-initializing from mockdata.js...');
-        initDatabase();
-        return JSON.parse(localStorage.getItem('ffsd'));
-    }
-    return JSON.parse(data);
-}
-
-// Save the database after making a change (to localStorage)
+/**
+ * Save changes to the in-memory database.
+ * Used only for local-only data mutations (bug reports, etc.) that have
+ * no backend endpoint. API-backed features should use api-client.js instead.
+ */
 function saveDB(data) {
-    localStorage.setItem('ffsd', JSON.stringify(data));
-    // Also update in-memory copy
     inMemoryDB = data;
 }
 
-// Get the original mockdata (read-only reference)
+/**
+ * Get the original mockdata (read-only reference).
+ */
 function getMockData() {
     return {
         student:    studentMockDatabase,
@@ -720,19 +667,27 @@ function getMockData() {
     };
 }
 
+/**
+ * Reset database to default mock data.
+ * Call resetDatabase() in browser console to force reset.
+ */
+function resetDatabase() {
+    inMemoryDB = {
+        student:    JSON.parse(JSON.stringify(studentMockDatabase)),
+        faculty:    JSON.parse(JSON.stringify(facultyMockDatabase)),
+        admin:      JSON.parse(JSON.stringify(academicHeadMockDatabase)),
+        superuser:  JSON.parse(JSON.stringify(superuserMockDatabase))
+    };
+    console.log('Database reset to mockdata.js defaults');
+    return inMemoryDB;
+}
+
 // ==========================================
-// BUG REPORT HELPERS
+// BUG REPORT HELPERS (local-only, no backend endpoint)
 // ==========================================
 
 /**
  * Submit a bug report from any portal.
- * @param {string} title       - Short title of the bug
- * @param {string} description - Detailed description
- * @param {string} category    - 'Bug' | 'Feature Request' | 'UX Issue' | 'Performance'
- * @param {string} severity    - 'Low' | 'Medium' | 'High' | 'Critical'
- * @param {string} portalName  - e.g. 'Student Portal'
- * @param {string} submitterName - Name of the logged-in user
- * @returns {object} The newly created bug report object
  */
 function submitBugReport({ title, description, category, severity, portalName, submitterName }) {
     const db = getDB();
@@ -756,14 +711,13 @@ function submitBugReport({ title, description, category, severity, portalName, s
         status: 'open',
         assignedTo: null
     };
-    db.superuser.bugReports = [report, ...reports]; // newest first
+    db.superuser.bugReports = [report, ...reports];
     saveDB(db);
     return report;
 }
 
 /**
  * Get all bug reports (for the superuser panel).
- * @returns {Array} Array of bug report objects
  */
 function getBugReports() {
     return (getDB().superuser.bugReports) || [];
@@ -771,8 +725,6 @@ function getBugReports() {
 
 /**
  * Update the status / assignee of a bug report.
- * @param {string} id     - Bug report ID (e.g. 'BUG-001')
- * @param {object} patch  - Fields to update: { status, assignedTo }
  */
 function updateBugReport(id, patch) {
     const db = getDB();
@@ -788,10 +740,7 @@ function updateBugReport(id, patch) {
 // ==========================================
 
 /**
- * Validate user credentials and return user info
- * @param {string} email 
- * @param {string} password 
- * @returns {object|null} User info if valid, null otherwise
+ * Validate user credentials and return user info.
  */
 function authenticateUser(email, password) {
     const user = userCredentials.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
@@ -805,50 +754,94 @@ function authenticateUser(email, password) {
     return null;
 }
 
+// Role-to-seed-UUID mapping for the API client
+const ROLE_SEED_UUIDS = {
+    student:   '550e8400-e29b-41d4-a716-446655440000',
+    faculty:   '3a18b76c-fb1d-4034-8c83-05c04ccfbdb5',
+    head:      'f3ca9b7f-ad88-4228-b21a-dc7dc33b664d',
+    admin:     '811db334-edc7-43ca-a0ba-e2c7a95b8d23',
+    superuser: '811db334-edc7-43ca-a0ba-e2c7a95b8d23',
+};
+
+// Map frontend role names to backend x-user-role values
+const ROLE_TO_API_ROLE = {
+    student:   'student',
+    faculty:   'faculty',
+    head:      'academic_head',
+    admin:     'admin',
+    superuser: 'admin',
+};
+
 /**
- * Get the currently logged in user from session storage
- * @returns {object|null}
+ * Get the currently logged in user.
+ * Checks localStorage session keys set by api-client.js.
  */
 function getCurrentUser() {
-    const userStr = sessionStorage.getItem('currentUser');
-    return userStr ? JSON.parse(userStr) : null;
+    const role = localStorage.getItem('__session_role');
+    const userId = localStorage.getItem('__session_user_id');
+    if (!role || !userId) return null;
+    // Derive user info from mock data based on role
+    const db = getDB();
+    let name = 'User';
+    if (role === 'student')        name = db.student?.profile?.personal?.fullName || 'Student';
+    else if (role === 'faculty')   name = db.faculty?.profile?.account?.name || 'Faculty';
+    else if (role === 'academic_head') name = 'Academic Head';
+    else if (role === 'admin')     name = 'Super Admin';
+    return { email: '', name, role: reverseMapRole(role), userId };
 }
 
 /**
- * Set the current user in session storage
- * @param {object} user 
+ * Reverse-map API role to frontend role for UI checks.
+ */
+function reverseMapRole(apiRole) {
+    const map = { student: 'student', faculty: 'faculty', academic_head: 'head', admin: 'superuser' };
+    return map[apiRole] || apiRole;
+}
+
+/**
+ * Set the current user session (used by login page).
  */
 function setCurrentUser(user) {
-    sessionStorage.setItem('currentUser', JSON.stringify(user));
+    const apiRole = ROLE_TO_API_ROLE[user.role] || user.role;
+    const seedId = ROLE_SEED_UUIDS[user.role] || '';
+    if (window.API_CLIENT) {
+        window.API_CLIENT.setSession(apiRole, seedId);
+    } else {
+        localStorage.setItem('__session_role', apiRole);
+        localStorage.setItem('__session_user_id', seedId);
+    }
 }
 
 /**
- * Clear the current user from session storage
+ * Clear the current user session.
  */
 function clearCurrentUser() {
-    sessionStorage.removeItem('currentUser');
+    if (window.API_CLIENT) {
+        window.API_CLIENT.clearSession();
+    } else {
+        localStorage.removeItem('__session_role');
+        localStorage.removeItem('__session_user_id');
+    }
 }
 
 /**
- * Get the redirect URL for a given role
- * @param {string} role 
- * @returns {string}
+ * Get the redirect URL for a given role.
  */
 function getRedirectForRole(role) {
     const redirects = {
         'student': 'student.html',
         'faculty': 'faculty.html',
         'head': 'head.html',
-        'admin': 'superuser.html',  // Admin goes to superuser portal
+        'admin': 'superuser.html',
         'superuser': 'superuser.html'
     };
     return redirects[role] || 'student.html';
 }
 
 /**
- * Handle logout - clear session and redirect to login
+ * Handle logout - clear session and redirect to login.
  */
 function handleLogout() {
     clearCurrentUser();
     window.location.href = 'login.html';
-}
+}

@@ -1,36 +1,10 @@
 /**
  * state-manager.js - Centralized State Management
- * Handles localStorage persistence, state changes, and UI updates
+ * Adapted for API-based backend. No more localStorage for data persistence.
+ * Only localStorage keys allowed: __session_role, __session_user_id (via api-client.js).
  */
 
 const StateManager = {
-  // State storage keys
-  keys: {
-    session: 'bp_session',
-    role: 'bp_user_role',
-    userData: 'bp_user_data',
-    db: 'ffsd',
-    dbVersion: 'ffsd_v'
-  },
-
-  // Get state from localStorage
-  getState(key) {
-    const data = localStorage.getItem(key);
-    return data ? JSON.parse(data) : null;
-  },
-
-  // Set state in localStorage
-  setState(key, value) {
-    localStorage.setItem(key, JSON.stringify(value));
-    this.dispatchChange(key, value);
-  },
-
-  // Remove state from localStorage
-  removeState(key) {
-    localStorage.removeItem(key);
-    this.dispatchChange(key, null);
-  },
-
   // Event listeners for state changes
   listeners: {},
 
@@ -47,38 +21,34 @@ const StateManager = {
     if (this.listeners[key]) {
       this.listeners[key].forEach(callback => callback(value));
     }
-    // Dispatch custom event for DOM listeners
     document.dispatchEvent(new CustomEvent(`state:${key}`, { detail: value }));
   },
 
-  // Check session validity
+  // Check session validity using api-client session keys
   validateSession() {
-    const session = this.getState(this.keys.session);
-    if (!session) return false;
-    
-    const expiry = new Date(session.expiresAt);
-    if (expiry < new Date()) {
-      this.clearSession();
-      return false;
-    }
-    return true;
+    const role = localStorage.getItem('__session_role');
+    const userId = localStorage.getItem('__session_user_id');
+    return !!(role && userId);
   },
 
   // Clear session
   clearSession() {
-    this.removeState(this.keys.session);
-    this.removeState(this.keys.role);
-    this.removeState(this.keys.userData);
+    if (window.API_CLIENT) {
+      window.API_CLIENT.clearSession();
+    } else {
+      localStorage.removeItem('__session_role');
+      localStorage.removeItem('__session_user_id');
+    }
   },
 
-  // Get current user role
+  // Get current user role (returns the API role string)
   getCurrentRole() {
-    return this.getState(this.keys.role);
+    return localStorage.getItem('__session_role');
   },
 
-  // Get current user data
+  // Get current user data from mockdata.js in-memory DB
   getCurrentUserData() {
-    return this.getState(this.keys.userData);
+    return typeof getCurrentUser === 'function' ? getCurrentUser() : null;
   },
 
   // Protected route check
@@ -87,102 +57,75 @@ const StateManager = {
       window.location.href = 'login.html';
       return false;
     }
-    
+
     const currentRole = this.getCurrentRole();
-    if (requiredRoles.length > 0 && !requiredRoles.includes(currentRole)) {
-      // Redirect to appropriate portal based on role
+    // Map API roles to frontend roles for role checks
+    const roleMap = { student: 'student', faculty: 'faculty', academic_head: 'head', admin: 'superuser' };
+    const frontendRole = roleMap[currentRole] || currentRole;
+
+    if (requiredRoles.length > 0 && !requiredRoles.includes(frontendRole) && !requiredRoles.includes(currentRole)) {
       const roleRedirects = {
         student: 'student.html',
         faculty: 'faculty.html',
-        head: 'head.html',
+        academic_head: 'head.html',
         admin: 'superuser.html',
-        superuser: 'superuser.html'
       };
       window.location.href = roleRedirects[currentRole] || 'login.html';
       return false;
     }
-    
+
     return true;
   },
 
-  // Initialize database if needed
-  initDatabase() {
-    const existing = localStorage.getItem(this.keys.db);
-    const version = localStorage.getItem(this.keys.dbVersion);
-    
-    if (!existing || version !== '1') {
-      console.log('Database initialized');
-      // Trigger database seed from mockdata.js
-      if (typeof initDatabase === 'function') {
-        initDatabase();
-      }
-    }
-  },
-
-  // Get database
+  // Get database (delegates to mockdata.js getDB)
   getDB() {
-    return this.getState(this.keys.db);
+    return typeof getDB === 'function' ? getDB() : null;
   },
 
-  // Save database
+  // Save database (delegates to mockdata.js saveDB)
   saveDB(data) {
-    this.setState(this.keys.db, data);
+    if (typeof saveDB === 'function') saveDB(data);
+    this.dispatchChange('db', data);
   },
 
   // Check role permissions
   hasPermission(requiredRole) {
     const currentRole = this.getCurrentRole();
     const roleHierarchy = {
-      superuser: 4,
-      admin: 4,
-      head: 3,
+      superuser: 4, admin: 4,
+      academic_head: 3, head: 3,
       faculty: 2,
-      student: 1
+      student: 1,
     };
-    
-    const requiredLevel = roleHierarchy[requiredRole] || 0;
-    const currentLevel = roleHierarchy[currentRole] || 0;
-    
-    return currentLevel >= requiredLevel;
+    return (roleHierarchy[currentRole] || 0) >= (roleHierarchy[requiredRole] || 0);
   },
 
   // Render UI based on role
   renderByRole(roleConfigs) {
     const currentRole = this.getCurrentRole();
-    
     Object.keys(roleConfigs).forEach(selector => {
       const element = document.querySelector(selector);
       if (!element) return;
-      
       const config = roleConfigs[selector];
-      const isVisible = config.roles.includes(currentRole);
-      
-      element.style.display = isVisible ? '' : 'none';
+      element.style.display = config.roles.includes(currentRole) ? '' : 'none';
     });
   },
 
   // Update UI elements with user data
   updateUserInfo() {
     const userData = this.getCurrentUserData();
-    const session = this.getSession();
-    
-    if (!userData || !session) return;
-    
-    // Update common elements
-    const nameElements = document.querySelectorAll('.user-name, .sb-uname, #sbUname, #sb-name');
-    nameElements.forEach(el => {
-      el.textContent = userData.name || userData.userName || session.userId;
+    if (!userData) return;
+
+    document.querySelectorAll('.user-name, .sb-uname, #sbUname, #sb-name').forEach(el => {
+      el.textContent = userData.name || 'User';
     });
-    
-    const roleElements = document.querySelectorAll('.user-role, .sb-urole, #sbUrole, #sb-role');
-    roleElements.forEach(el => {
-      el.textContent = session.role || 'User';
+
+    document.querySelectorAll('.user-role, .sb-urole, #sbUrole, #sb-role').forEach(el => {
+      el.textContent = userData.role || 'User';
     });
-    
-    const avatarElements = document.querySelectorAll('.user-avatar, .sb-avatar, #sbAvatar, #sb-initial, #topAvatar');
-    avatarElements.forEach(el => {
-      const name = userData.name || userData.userName || session.userId;
-      el.textContent = name.charAt(0).toUpperCase();
+
+    document.querySelectorAll('.user-avatar, .sb-avatar, #sbAvatar, #sb-initial, #topAvatar').forEach(el => {
+      el.textContent = (userData.name || 'U').charAt(0).toUpperCase();
     });
   }
 };

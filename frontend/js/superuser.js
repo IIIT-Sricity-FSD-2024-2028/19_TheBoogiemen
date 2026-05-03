@@ -12,6 +12,9 @@
   }
 })();
 
+// API shortcut — superuser uses 'admin' role for backend access
+const _api = () => window.API_CLIENT?.api;
+
 /* =====================================================
    ARCHITECTURE: UI CONTROLLERS
    ===================================================== */
@@ -112,7 +115,7 @@ function _nextId(arr) {
 }
 
 // Provisioning
-function handleAddUser() {
+async function handleAddUser() {
   const cfg = [
     { id: 'u-name', required: true, min: 3, max: 100, type: 'name', message: 'Name must be 3-100 characters' },
     { id: 'u-email', required: true, type: 'email', message: 'Please enter a valid institutional email' },
@@ -121,29 +124,35 @@ function handleAddUser() {
   ];
   if (!validateForm('modalAddUser', cfg)) return;
 
-  const db = getDB();
-  const nextId = 'USR-' + String(db.superuser.users.length + 1000);
-  const user = {
-    id: nextId,
-    name: document.getElementById('u-name').value,
-    email: document.getElementById('u-email').value,
-    role: document.getElementById('u-role').value,
-    status: document.getElementById('u-status').value
-  };
-  db.superuser.users.unshift(user);
-  db.superuser.metrics.totalUsers = db.superuser.users.length;
-
-  // Log it
-  db.superuser.systemLogs.unshift({
-    level: 'info',
-    title: `Provisioned ${user.role}: ${user.name}`,
-    meta: `Operation by Superuser at ${new Date().toISOString()}`,
-    time: new Date().toLocaleTimeString('en-GB')
-  });
-
-  saveDB(db);
+  const api = _api();
+  try {
+    if (api) {
+      await api.post('/users', {
+        username: document.getElementById('u-name').value,
+        email: document.getElementById('u-email').value,
+        role: document.getElementById('u-role').value
+      });
+      toast('Account provisioned via API');
+    } else {
+      const db = getDB();
+      const nextId = 'USR-' + String(db.superuser.users.length + 1000);
+      const user = {
+        id: nextId,
+        name: document.getElementById('u-name').value,
+        email: document.getElementById('u-email').value,
+        role: document.getElementById('u-role').value,
+        status: document.getElementById('u-status').value
+      };
+      db.superuser.users.unshift(user);
+      db.superuser.metrics.totalUsers = db.superuser.users.length;
+      saveDB(db);
+      toast('Account provisioned (offline)');
+    }
+  } catch (err) {
+    console.error('User creation error:', err);
+    toast('Error: ' + err.message);
+  }
   closeModal('modalAddUser');
-  toast('Account provisioned successfully');
   _suRefresh('overview');
 }
 
@@ -191,13 +200,24 @@ function openDeleteModal(id) {
   showModal('modalConfirmDelete');
 }
 
-function performDelete() {
-  const db = getDB();
-  db.superuser.users = db.superuser.users.filter(u => u.id !== _deletingId);
-  db.superuser.metrics.totalUsers = db.superuser.users.length;
-  saveDB(db);
+async function performDelete() {
+  const api = _api();
+  try {
+    if (api && _deletingId) {
+      await api.delete('/users/' + _deletingId);
+      toast('User purged via API');
+    } else {
+      const db = getDB();
+      db.superuser.users = db.superuser.users.filter(u => u.id !== _deletingId);
+      db.superuser.metrics.totalUsers = db.superuser.users.length;
+      saveDB(db);
+      toast('User purged (offline)');
+    }
+  } catch (err) {
+    console.error('Delete error:', err);
+    toast('Error: ' + err.message);
+  }
   closeModal('modalConfirmDelete');
-  toast('User purged');
   _suRefresh('overview');
 }
 
@@ -212,7 +232,7 @@ function openEditModal(id) {
   showModal('modalEditUser');
 }
 
-function handleUpdateUser() {
+async function handleUpdateUser() {
   const id = document.getElementById('edit-id').value;
   
   const cfg = [
@@ -222,21 +242,33 @@ function handleUpdateUser() {
     { id: 'edit-status', required: true, message: 'Please select status' }
   ];
   if (!validateForm('modalEditUser', cfg)) return;
-  
-  const db = getDB();
-  const idx = db.superuser.users.findIndex(u => u.id === id);
-  if (idx === -1) return;
 
-  db.superuser.users[idx] = {
-    ...db.superuser.users[idx],
-    name: document.getElementById('edit-name').value,
-    email: document.getElementById('edit-email').value,
-    role: document.getElementById('edit-role').value,
-    status: document.getElementById('edit-status').value
-  };
-  saveDB(db);
+  const api = _api();
+  try {
+    if (api) {
+      await api.patch('/users/' + id + '/role', {
+        role: document.getElementById('edit-role').value
+      });
+      toast('Role updated via API');
+    } else {
+      const db = getDB();
+      const idx = db.superuser.users.findIndex(u => u.id === id);
+      if (idx === -1) return;
+      db.superuser.users[idx] = {
+        ...db.superuser.users[idx],
+        name: document.getElementById('edit-name').value,
+        email: document.getElementById('edit-email').value,
+        role: document.getElementById('edit-role').value,
+        status: document.getElementById('edit-status').value
+      };
+      saveDB(db);
+      toast('Record synchronized (offline)');
+    }
+  } catch (err) {
+    console.error('Update error:', err);
+    toast('Error: ' + err.message);
+  }
   closeModal('modalEditUser');
-  toast('Record synchronized');
   _suRefresh('overview');
 }
 

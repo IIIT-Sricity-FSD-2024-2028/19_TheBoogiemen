@@ -6,11 +6,15 @@
 // Check authentication on page load
 (function checkAuth() {
   const currentUser = getCurrentUser();
-  if (!currentUser || currentUser.role !== 'student') {
+  if (!currentUser || (currentUser.role !== 'student')) {
     window.location.href = 'login.html';
     return;
   }
 })();
+
+// API shortcut (available after api-client.js loads)
+const _api = () => window.API_CLIENT?.api;
+
 
 /* =====================================================
    UI CONTROLLERS
@@ -103,7 +107,7 @@ function _refresh() {
   document.dispatchEvent(new CustomEvent('student:changed'));
 }
 
-function handleLeave() {
+async function handleLeave() {
   // Enhanced validation with date range check
   const startDate = document.getElementById('l-start').value;
   const endDate = document.getElementById('l-end').value;
@@ -115,84 +119,88 @@ function handleLeave() {
     { id: 'l-reason', required: true, min: 10, max: 500, message: 'Reason must be 10-500 characters' }
   ])) return;
 
-  const db = getDB();
-  const newLeave = {
-    id: db.student.leaveManagement.applications.length + 1,
-    type: document.getElementById('l-type').value,
-    reason: document.getElementById('l-reason').value,
-    startDate: document.getElementById('l-start').value,
-    endDate: document.getElementById('l-end').value,
-    status: 'Pending',
-    duration: 'TBD',
-    appliedOn: new Date().toLocaleDateString()
-  };
-  db.student.leaveManagement.applications.unshift(newLeave);
+  const api = _api();
+  const session = window.API_CLIENT?.getSession();
 
-  // Sync leave application to admin portal for review
-  if (db.admin && db.admin.attendanceOverride) {
-    if (!db.admin.attendanceOverride.leaveApplications) db.admin.attendanceOverride.leaveApplications = [];
-    db.admin.attendanceOverride.leaveApplications.unshift({
-      id: 'LV' + Date.now(),
-      studentLeaveId: newLeave.id,
-      studentName: db.student.profile.personal.fullName,
-      studentId: db.student.profile.academic.studentId,
-      type: newLeave.type,
-      startDate: newLeave.startDate,
-      endDate: newLeave.endDate,
-      reason: newLeave.reason,
-      status: 'pending',
-      appliedOn: newLeave.appliedOn,
-      rejectionReason: null
-    });
+  try {
+    if (api) {
+      await api.post('/leaves', {
+        student_id: session?.userId || '550e8400-e29b-41d4-a716-446655440000',
+        start_date: document.getElementById('l-start').value,
+        end_date: document.getElementById('l-end').value,
+        reason: document.getElementById('l-reason').value,
+        doc_ref: document.getElementById('l-type').value
+      });
+      toast('Leave request submitted via API');
+    } else {
+      // Fallback to in-memory
+      const db = getDB();
+      const newLeave = {
+        id: db.student.leaveManagement.applications.length + 1,
+        type: document.getElementById('l-type').value,
+        reason: document.getElementById('l-reason').value,
+        startDate: document.getElementById('l-start').value,
+        endDate: document.getElementById('l-end').value,
+        status: 'Pending',
+        duration: 'TBD',
+        appliedOn: new Date().toLocaleDateString()
+      };
+      db.student.leaveManagement.applications.unshift(newLeave);
+      saveDB(db);
+      toast('Leave request submitted (offline)');
+    }
+  } catch (err) {
+    console.error('Leave submission error:', err);
+    if (window.UI_HELPERS) window.UI_HELPERS.showError('Leave submission failed: ' + err.message);
+    else toast('Error: ' + err.message);
   }
-
-  saveDB(db);
-  toast('Leave request submitted');
   closeModal('modalLeave');
   _refresh();
 }
 
-function handleThread() {
+
+async function handleThread() {
   if (!validateForm('modalThread', [
     { id: 't-tag', required: true, min: 3, max: 100, message: 'Lecture tag must be 3-100 characters' },
     { id: 't-title', required: true, min: 5, max: 200, message: 'Title must be 5-200 characters' },
     { id: 't-desc', required: true, min: 10, max: 1000, message: 'Description must be 10-1000 characters' }
   ])) return;
 
-  const db = getDB();
-  const newThread = {
-    id: db.student.forum.threads.length + 1,
-    lectureTag: document.getElementById('t-tag').value,
-    title: document.getElementById('t-title').value,
-    author: db.student.profile.personal.fullName,
-    authorId: db.student.profile.academic.studentId,
-    replies: 0,
-    timestamp: 'Just now',
-    tagClass: 'badge',
-    body: document.getElementById('t-desc').value,
-    comments: []
-  };
-  db.student.forum.threads.unshift(newThread);
-  if (!db.student.forum.fullThreads) db.student.forum.fullThreads = [];
-  db.student.forum.fullThreads.unshift({ ...newThread });
+  const api = _api();
 
-  // Also push to faculty forum for cross-visibility
-  if (db.faculty && db.faculty.forum && db.faculty.forum.threads) {
-    db.faculty.forum.threads.unshift({
-      id: 'T' + String(db.faculty.forum.threads.length + 1).padStart(3, '0'),
-      lecture: document.getElementById('t-tag').value,
-      status: 'active',
-      title: document.getElementById('t-title').value,
-      author: db.student.profile.personal.fullName,
-      studentId: db.student.profile.academic.studentId,
-      replyCount: 0,
-      timeAgo: 'Just now',
-      originalPost: document.getElementById('t-desc').value,
-      comments: []
-    });
+  try {
+    if (api) {
+      await api.post('/forum', {
+        topic_id: document.getElementById('t-tag').value,
+        content: document.getElementById('t-title').value + '\n\n' + document.getElementById('t-desc').value
+      });
+      toast('Question posted to forum via API');
+    } else {
+      // Fallback to in-memory
+      const db = getDB();
+      const newThread = {
+        id: db.student.forum.threads.length + 1,
+        lectureTag: document.getElementById('t-tag').value,
+        title: document.getElementById('t-title').value,
+        author: db.student.profile.personal.fullName,
+        authorId: db.student.profile.academic.studentId,
+        replies: 0,
+        timestamp: 'Just now',
+        tagClass: 'badge',
+        body: document.getElementById('t-desc').value,
+        comments: []
+      };
+      db.student.forum.threads.unshift(newThread);
+      if (!db.student.forum.fullThreads) db.student.forum.fullThreads = [];
+      db.student.forum.fullThreads.unshift({ ...newThread });
+      saveDB(db);
+      toast('Question posted to forum (offline)');
+    }
+  } catch (err) {
+    console.error('Forum post error:', err);
+    if (window.UI_HELPERS) window.UI_HELPERS.showError('Forum post failed: ' + err.message);
+    else toast('Error: ' + err.message);
   }
-  saveDB(db);
-  toast('Question posted to forum');
   document.getElementById('t-tag').value = '';
   document.getElementById('t-title').value = '';
   document.getElementById('t-desc').value = '';
@@ -200,7 +208,8 @@ function handleThread() {
   _refresh();
 }
 
-function handleMilestone() {
+
+async function handleMilestone() {
   const targetDate = document.getElementById('m-date').value;
   const today = new Date().toISOString().split('T')[0];
   
@@ -210,20 +219,48 @@ function handleMilestone() {
     { id: 'm-desc', required: false, min: 10, max: 500, message: 'Description must be 10-500 characters' }
   ])) return;
 
-  const db = getDB();
-  db.student.research.milestones.push({
-    id: db.student.research.milestones.length + 1,
-    title: document.getElementById('m-title').value,
-    date: document.getElementById('m-date').value,
-    description: document.getElementById('m-desc').value,
-    status: 'upcoming',
-    statusClass: 'badge4'
-  });
-  saveDB(db);
-  toast('Milestone declared');
+  const api = _api();
+
+  try {
+    if (api) {
+      // Get the first research project to attach the milestone to
+      const projects = await api.get('/research');
+      const projectId = (projects && projects.length > 0) ? projects[0].project_id : null;
+
+      if (projectId) {
+        await api.post('/research/milestones', {
+          project_id: projectId,
+          title: document.getElementById('m-title').value,
+          submission_date: document.getElementById('m-date').value,
+          description: document.getElementById('m-desc').value
+        });
+        toast('Milestone declared via API');
+      } else {
+        toast('No research project found. Create one first.');
+      }
+    } else {
+      // Fallback to in-memory
+      const db = getDB();
+      db.student.research.milestones.push({
+        id: db.student.research.milestones.length + 1,
+        title: document.getElementById('m-title').value,
+        date: document.getElementById('m-date').value,
+        description: document.getElementById('m-desc').value,
+        status: 'upcoming',
+        statusClass: 'badge4'
+      });
+      saveDB(db);
+      toast('Milestone declared (offline)');
+    }
+  } catch (err) {
+    console.error('Milestone error:', err);
+    if (window.UI_HELPERS) window.UI_HELPERS.showError('Milestone failed: ' + err.message);
+    else toast('Error: ' + err.message);
+  }
   closeModal('modalMilestone');
   _refresh();
 }
+
 
 function handleBug() {
   if (!validateForm('panel-settings', [

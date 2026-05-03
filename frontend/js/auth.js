@@ -573,58 +573,61 @@ const Auth = {
     return { isValid: true, message: '' };
   },
 
-  // Create session in localStorage
+  // Create session using api-client session keys
   createSession(role, userData) {
-    const session = {
-      role: role,
-      userId: userData.email,
-      userName: userData.name || userData.email.split('@')[0],
-      loginTime: new Date().toISOString(),
-      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    // Map frontend role to backend API role
+    const apiRoleMap = { student: 'student', faculty: 'faculty', head: 'academic_head', admin: 'admin', superuser: 'admin' };
+    const seedUUIDs = {
+      student:   '550e8400-e29b-41d4-a716-446655440000',
+      faculty:   '3a18b76c-fb1d-4034-8c83-05c04ccfbdb5',
+      head:      'f3ca9b7f-ad88-4228-b21a-dc7dc33b664d',
+      admin:     '811db334-edc7-43ca-a0ba-e2c7a95b8d23',
+      superuser: '811db334-edc7-43ca-a0ba-e2c7a95b8d23',
     };
-    
-    localStorage.setItem('bp_session', JSON.stringify(session));
-    localStorage.setItem('bp_user_role', role);
-    localStorage.setItem('bp_user_data', JSON.stringify(userData));
-    
-    return session;
+    const apiRole = apiRoleMap[role] || role;
+    const userId = seedUUIDs[role] || '';
+
+    if (window.API_CLIENT) {
+      window.API_CLIENT.setSession(apiRole, userId);
+    } else {
+      localStorage.setItem('__session_role', apiRole);
+      localStorage.setItem('__session_user_id', userId);
+    }
+
+    return { role: apiRole, userId, userName: userData.name || userData.email };
   },
 
   // Get current session
   getSession() {
-    const session = localStorage.getItem('bp_session');
-    return session ? JSON.parse(session) : null;
+    const role = localStorage.getItem('__session_role');
+    const userId = localStorage.getItem('__session_user_id');
+    if (!role || !userId) return null;
+    return { role, userId };
   },
 
   // Check if user is logged in
   isAuthenticated() {
-    const session = this.getSession();
-    if (!session) return false;
-    
-    // Check expiration
-    if (new Date(session.expiresAt) < new Date()) {
-      this.logout();
-      return false;
-    }
-    return true;
+    return !!(localStorage.getItem('__session_role') && localStorage.getItem('__session_user_id'));
   },
 
-  // Get user role
+  // Get user role (returns API role string)
   getUserRole() {
-    return localStorage.getItem('bp_user_role');
+    return localStorage.getItem('__session_role');
   },
 
-  // Get user data
+  // Get user data from in-memory mock data
   getUserData() {
-    const data = localStorage.getItem('bp_user_data');
-    return data ? JSON.parse(data) : null;
+    return typeof getCurrentUser === 'function' ? getCurrentUser() : null;
   },
 
   // Logout
   logout() {
-    localStorage.removeItem('bp_session');
-    localStorage.removeItem('bp_user_role');
-    localStorage.removeItem('bp_user_data');
+    if (window.API_CLIENT) {
+      window.API_CLIENT.clearSession();
+    } else {
+      localStorage.removeItem('__session_role');
+      localStorage.removeItem('__session_user_id');
+    }
     window.location.href = 'login.html';
   },
 

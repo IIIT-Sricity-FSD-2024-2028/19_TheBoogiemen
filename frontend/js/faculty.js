@@ -12,6 +12,9 @@
   }
 })();
 
+// API shortcut
+const _api = () => window.API_CLIENT?.api;
+
 /* =====================================================
    CONTROLLERS
    ===================================================== */
@@ -108,7 +111,7 @@ function _refresh() {
   document.dispatchEvent(new CustomEvent('faculty:changed'));
 }
 
-function handleSchedule() {
+async function handleSchedule() {
   const meetingDate = document.getElementById('meet-date').value;
   const today = new Date().toISOString().split('T')[0];
   
@@ -119,20 +122,36 @@ function handleSchedule() {
     { id: 'meet-agenda', required: false, min: 10, max: 500, message: 'Agenda must be 10-500 characters' }
   ])) return;
 
-  const db = getDB();
-  const meeting = {
-    id: Date.now(),
-    studentName: document.getElementById('meet-stu').value,
-    date: document.getElementById('meet-date').value,
-    time: document.getElementById('meet-time').value,
-    agenda: document.getElementById('meet-agenda').value,
-    status: 'scheduled',
-    createdAt: new Date().toLocaleDateString()
-  };
-  if (!db.faculty.dashboard.interventionLog) db.faculty.dashboard.interventionLog = [];
-  db.faculty.dashboard.interventionLog.push(meeting);
-  saveDB(db);
-  toast('Intervention meeting registered');
+  const api = _api();
+  try {
+    if (api) {
+      await api.post('/resources/events', {
+        resource_id: '550e8400-e29b-41d4-a716-446655440000',
+        start_time: document.getElementById('meet-date').value + 'T' + document.getElementById('meet-time').value + ':00',
+        end_time: document.getElementById('meet-date').value + 'T' + document.getElementById('meet-time').value + ':00',
+        event_type: 'seminar'
+      });
+      toast('Meeting scheduled via API');
+    } else {
+      const db = getDB();
+      const meeting = {
+        id: Date.now(),
+        studentName: document.getElementById('meet-stu').value,
+        date: document.getElementById('meet-date').value,
+        time: document.getElementById('meet-time').value,
+        agenda: document.getElementById('meet-agenda').value,
+        status: 'scheduled',
+        createdAt: new Date().toLocaleDateString()
+      };
+      if (!db.faculty.dashboard.interventionLog) db.faculty.dashboard.interventionLog = [];
+      db.faculty.dashboard.interventionLog.push(meeting);
+      saveDB(db);
+      toast('Meeting registered (offline)');
+    }
+  } catch (err) {
+    console.error('Schedule error:', err);
+    toast('Error: ' + err.message);
+  }
   closeModal('modalMeeting');
   _refresh();
 }

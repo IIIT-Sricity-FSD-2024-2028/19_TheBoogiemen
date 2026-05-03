@@ -1,0 +1,324 @@
+Here is your complete workflow context document, drawn directly from the SRS activity and sequence diagrams:
+
+---
+
+## Workflow Context Document — Academic Progress & Outcome Tracking System
+
+*Pass this alongside the backend implementation prompt and frontend integration prompt to give your agent full behavioral context for every workflow.*
+
+---
+
+### WORKFLOW 1 — Track Fee Compliance
+**Actor**: Academic Head
+**External Services**: Payment Gateway, Notification Service
+**Trigger**: Academic Head initiates an institutional compliance audit from the admin dashboard.
+
+**Flow**:
+1. Academic Head clicks "View Fee Compliance" on the admin dashboard.
+2. System sends `GET /fees/status` to the backend.
+3. Backend enters a **Payment Check Loop** — for each student in the batch, it queries the Payment Gateway with a `BatchID` to retrieve their payment status.
+4. Payment Gateway returns a `Paid/Pending` list.
+5. System displays the **Defaulter List** on the dashboard (students with `PENDING` status).
+6. Academic Head reviews the list and clicks **"Send Reminders"**.
+7. Frontend sends `POST /alerts/fees` to the backend.
+8. Backend instructs the Notification Service to send an email (`"Pay Dues"`) to each defaulting student.
+9. Notification Service acknowledges — status is queued.
+10. Dashboard shows **"Reminders Sent"** confirmation.
+
+**Business Rules**:
+- Only students with `status = PENDING` appear in the defaulter list.
+- Compliant students (`status = PAID`) are marked as administratively compliant and excluded.
+- Reminders are sent in bulk — one trigger covers all pending students in the batch.
+- The audit is scoped to a `year_id`; cross-year audits are not supported in this workflow.
+
+---
+
+### WORKFLOW 2 — Generate Progress Reports
+**Actor**: Academic Head
+**External Services**: File Storage System, Notification Service
+**Trigger**: Academic Head selects a learner or cohort and initiates batch report generation.
+
+**Flow**:
+1. Academic Head clicks **"Generate Batch Reports"** on the admin dashboard.
+2. Frontend sends `POST /reports/generate` to the backend.
+3. Backend fetches grades and attendance data from the database for the selected learner or cohort.
+4. Backend generates a **PDF Report Card** per student, aggregating scholastic achievement data.
+5. PDF is sent to the **File Storage System**, which indexes and archives it.
+6. Backend instructs the **Notification Service** to email the report to parents/guardians.
+7. Notification Service confirms delivery.
+8. Dashboard shows **"Reports Dispatched"**.
+9. Academic Head can also **Download/View** the finalized report directly from the UI.
+
+**Business Rules**:
+- Reports are generated at the cohort (batch) level, not per individual request.
+- Data aggregated includes: marks entries, attendance percentage, and outcome achievement levels.
+- The generated PDF is archived in File Storage with an index reference — it is not ephemeral.
+- Email dispatch to parents is automatic upon generation — no separate trigger required.
+- The `generated_at` timestamp must be embedded in every report.
+
+---
+
+### WORKFLOW 3 — Manage User Roles & Oversee Master Attendance
+**Actor**: Academic Head
+**External Services**: Notification Service
+**Trigger**: Academic Head accesses the management dashboard and selects either "Access Management" or "Institutional Presence" path.
+
+**This workflow has two parallel sub-flows:**
+
+#### Sub-flow A — Role Management
+1. Academic Head navigates to the admin dashboard and selects the **Access Management** path.
+2. Selects a user and chooses a new role (e.g., Student → TA).
+3. Frontend sends `POST /users/update-role` to the backend.
+4. Backend updates the RBAC registry: `UPDATE Users SET Role = 'TA'`.
+5. Database confirms success.
+6. Backend triggers Notification Service: `Notify User("Role Changed")`.
+7. Dashboard shows **"Role Updated"**.
+
+#### Sub-flow B — Attendance Oversight
+1. Academic Head selects the **Institutional Presence** path.
+2. System displays classroom engagement trends (attendance aggregates per course/section).
+3. Backend evaluates whether engagement is **below threshold** (< 75% attendance).
+4. If **below threshold** → system triggers an **Early Intervention Protocol**:
+   - Backend dispatches a notice to the relevant faculty via the Notification Service.
+   - The student is added to the **Daily Defaulter Report** visible to the Academic Head.
+   - An `"At-Risk Warning"` is logged in the system.
+5. If **above threshold** → no action; dashboard simply displays current stats.
+6. Loop continues for all students/sections being monitored.
+
+**Business Rules**:
+- The two sub-flows (role management and attendance oversight) are independent — the Academic Head chooses which path to take.
+- Role changes must be reflected immediately in the RBAC registry so the user's next request uses the new role.
+- The 75% threshold is the hard cutoff for triggering early intervention — it is not configurable per course.
+- Notifications go to faculty (not to the student directly) when attendance is flagged at the institutional level.
+
+---
+
+### WORKFLOW 4 — Manage Resources & Event Schedules
+**Actor**: Academic Head
+**External Services**: Calendar Service
+**Trigger**: Academic Head defines a new event and its required academic resources.
+
+**Flow**:
+1. Academic Head defines the event and its required resources on the admin dashboard.
+2. Frontend sends `POST /calendar/event` to the backend.
+3. Backend checks for **logical conflicts via calendar service** — specifically, whether the requested resource is already booked for an overlapping time slot.
+4. **If schedule conflict exists**:
+   - System returns conflict information to the Academic Head.
+   - Academic Head is prompted to **reschedule the event** (adjust time/resource).
+   - The flow loops back to step 1.
+5. **If no conflict**:
+   - Backend commits the event to the **Institutional Calendar**.
+   - Event record is inserted into the database.
+   - Event is also added to **Google Calendar** (Calendar Service sync).
+   - Calendar Service confirms: `"Event Created"`.
+   - Dashboard shows **"Event Scheduled"** and confirms resource allocation.
+6. Academic Head sees the **"Confirm Resource Allocation"** screen with the final booking.
+
+**Business Rules**:
+- Conflict detection is mandatory — no event can be saved without passing the conflict check.
+- Conflict is defined as: any existing event on the same resource where `existing.start < new.end AND existing.end > new.start`.
+- On conflict, the system must clearly communicate which resource is double-booked and for which time slot.
+- If `event_type = 'assessment'`, an `AssessmentVenue` record is also created linking the event.
+- Google Calendar sync is automatic on successful booking — it is not optional.
+
+---
+
+### WORKFLOW 5 — Upload Honours/BTP Milestone
+**Actor**: Student
+**External Services**: File Storage System, Notification Service
+**Trigger**: Student selects a capstone/research deliverable to submit.
+
+**Flow**:
+1. Student enters the Research/Project portal and selects a **Capstone Research Deliverable**.
+2. Student attaches a file.
+3. System validates the **file format**:
+   - **If invalid** (not PDF or DOCX): System shows `"Unsupported Format Error"`. Flow ends — student must re-attach.
+   - **If valid** (PDF or DOCX):
+4. File is uploaded to the **File Storage System**, which indexes the milestone.
+5. System **logs the submission timeline** (timestamp recorded in database).
+6. Student receives a **"Success Notification"** on screen and via Notification Service.
+7. Faculty guide is notified asynchronously that a new milestone is pending review.
+
+**Business Rules**:
+- Only `PDF` and `DOCX` file formats are accepted. Any other format must be rejected with an explicit error.
+- The submission timeline log is immutable — once logged, it cannot be edited by the student.
+- Each milestone submission is linked to a specific `project_id` from the student's active research project.
+- Faculty notification is asynchronous — the student's success screen does not wait for faculty acknowledgment.
+- Initial milestone status is always `PENDING_REVIEW` on creation.
+
+---
+
+### WORKFLOW 6 — Post in Contextual Forum
+**Actor**: Student (primary poster); Faculty (respondent)
+**External Services**: Notification Service (asynchronous)
+**Trigger**: Student enters the peer discourse environment and selects a specific lecture topic.
+
+**Flow**:
+1. Student enters the **Forum Interface** and selects a specific lecture topic/thread.
+2. Student submits a query or scholarly contribution.
+3. Frontend sends `POST /forum/thread` to the backend.
+4. Backend **inserts the thread** into the discussion database.
+5. Forum shows **"Post Live"** confirmation to the student.
+6. **Asynchronously**, the backend triggers a notification: `Alert("New Query")` to the relevant faculty.
+7. Faculty receives the alert, navigates to the forum, and **views the thread**.
+8. Faculty selects **"POST Reply"** and submits a response.
+9. Backend inserts the reply (`INSERT Reply`).
+10. Student receives a **"Notify Response"** notification.
+
+**Business Rules**:
+- Posts are contextual — they are scoped to a specific `topic_id` (lecture topic), not a free-form general forum.
+- Faculty sees only posts filtered by their research domain / assigned courses — not all posts system-wide.
+- The faculty notification is asynchronous — posting does not block on notification delivery.
+- Students are notified when their post receives a reply.
+- Minimum content length for a post is 10 characters (enforced by DTO validation).
+- Anonymous posting is referenced in the SRS survey but is not implemented in the backend workflow — posts are always attributed to the author's `user_id`.
+
+---
+
+### WORKFLOW 7 — Apply for Leave
+**Actor**: Student (applicant); Admin/Faculty (approver)
+**External Services**: Notification Service
+**Trigger**: Student submits an authorized absence request with supporting documentation.
+
+**Flow**:
+1. Student submits a leave request via the dashboard, attaching valid exigency documentation (doc reference).
+2. Frontend sends `POST /leave/apply` to the backend.
+3. Backend **checks the attendance threshold** for the student — retrieves their current attendance percentage.
+4. Backend **logs the Temporary Exemption Request** with `status = PENDING`.
+5. Notification Service sends an alert to the **Faculty Mentor** for verification.
+6. Faculty reviews the request — sees student details and their current attendance percentage.
+7. Faculty/Admin sends `POST /leave/approve` (or `PATCH /leaves/:id/approve`).
+8. Backend updates attendance records: `UPDATE Attendance Status = 'EXCUSED'` for all logs matching the leave date range.
+9. Notification Service sends `Notify("Leave Approved")` to the student.
+10. Dashboard shows **"Approval Confirmed"** to the approving party.
+11. Student's dashboard updates to show their leave as `APPROVED`.
+
+**Business Rules**:
+- Attendance check on application is informational — it does not block submission (a student can apply even if attendance is already low).
+- The `doc_ref` field is optional in the DTO but represents the document reference string (URL or filename) — no actual file upload in this backend.
+- When approved, **all** attendance log entries within `start_date` to `end_date` for the student must be marked `EXCUSED` — not just one entry.
+- Faculty linked to the student's enrolled courses during the leave period must be notified on approval.
+- A leave cannot be approved if it is already in `APPROVED` status (guard against double-approval).
+
+---
+
+### WORKFLOW 8 — Create Assignment/Quiz
+**Actor**: Faculty
+**External Services**: Calendar Service
+**Trigger**: Faculty defines assessment parameters and publishes the assignment/quiz.
+
+**Flow**:
+1. Faculty opens the Faculty Dashboard and defines assessment parameters: title, type (QUIZ/ASSIGNMENT/EXAM), max marks, course, and due date.
+2. Frontend sends `POST /assessments/create` (or `POST /assessments`) to the backend.
+3. Backend creates a **Scholastic Evaluation Entry** in the database (`INSERT Assignment Details`).
+4. Backend confirms success.
+5. Backend creates a **calendar event** for the due date and syncs it with the **Calendar Service**.
+6. Calendar Service confirms: `"Event Synced"`.
+7. Enrolled students are notified of the new assessment.
+8. Faculty dashboard shows **"Assignment Published"**.
+
+**Business Rules**:
+- `max_marks` must be ≥ 1 (enforced by DTO `@Min(1)`).
+- `due_date` must be a valid ISO 8601 date string.
+- `type` is strictly one of: `'QUIZ'`, `'ASSIGNMENT'`, `'EXAM'`.
+- On creation, the assessment is automatically mapped to learning outcomes via the Outcome module (call `OutcomeService.mapAssessmentToOutcomes`).
+- All students enrolled in the `course_id` must receive a notification.
+- The calendar sync is automatic — it is not a separate user action.
+
+---
+
+### WORKFLOW 9 — Update Syllabus, Grades & Marks
+**Actor**: Faculty
+**External Services**: Notification Service
+**Trigger**: Faculty chooses to update either curriculum progression (syllabus) or scholastic achievement (marks/grades).
+
+**This workflow has two parallel update paths:**
+
+#### Path A — Curriculum Progression (Syllabus Update)
+1. Faculty selects **"Mark Instructional Unit as Complete"**.
+2. Frontend sends `PATCH /courses/syllabus` with `{ course_id, topic }`.
+3. Backend adds the topic to the course's completed topics array.
+4. Backend recalculates: `raw_percentage = (completed_topics / total_topics) * 100`.
+5. Backend updates the **Syllabus Progress Bar** (stored on the course entity).
+6. Enrolled students are notified: `"Syllabus Updated"`.
+7. Faculty dashboard shows success.
+
+#### Path B — Scholastic Achievement (Marks/Grades Update)
+1. Faculty selects **"Input Marks/Grades"**.
+2. Frontend sends `PATCH /assessments/grade` with `{ entry_id, marks }`.
+3. Backend validates: `marks <= assessment.max_marks`.
+   - **If out of range**: Returns `400 BadRequestException("Correct Entry Error")` — faculty must re-enter.
+   - **If within range**:
+4. Backend updates the **Student Academic Record** (marks entry set to `GRADED`).
+5. Backend triggers outcome achievement update: recalculates `raw_percentage` and `achievement_level` for the student.
+6. Backend sends `POST /academic/update-records` equivalent — transaction committed.
+7. Class average is recalculated.
+8. Notification Service sends `"New Grades/Syllabus Updated"` to the affected student(s).
+9. Faculty dashboard shows **"Records Updated Successfully"**.
+
+**Business Rules**:
+- The two paths (syllabus vs. marks) are mutually exclusive per request — one `PATCH` call handles one type of update.
+- Marks validation (`marks <= max_marks`) is a hard block — invalid marks must not be persisted.
+- On a successful grade update, `StudentOutcome` records must be upserted automatically — the faculty does not trigger this separately.
+- Achievement levels: `≥90% = EXCELLENT`, `≥75% = GOOD`, `≥50% = SATISFACTORY`, `< 50% = NEEDS_IMPROVEMENT`.
+- Syllabus completion `raw_percentage` is a floating point value stored on the course entity.
+- Class average recalculation is a backend side-effect — not exposed as a separate endpoint.
+
+---
+
+### WORKFLOW 10 — Review Research & Mentorship
+**Actor**: Faculty
+**External Services**: File Storage System, Notification Service
+**Trigger**: Faculty clicks "Review Milestone" on the Faculty Dashboard.
+
+**Flow**:
+1. Faculty opens the **Scholarly Mentorship Portal** on the Faculty Dashboard.
+2. Faculty clicks **"Review Milestone"**.
+3. Frontend sends `GET /research/submission` (or fetches milestone by ID).
+4. Backend retrieves the **file link** from the database.
+5. Backend fetches the actual PDF/DOCX from the **File Storage System** using the URL.
+6. File Storage returns the file stream.
+7. Backend renders/returns the file reference so the Faculty Dashboard can display or link to it.
+8. Faculty reviews the submission and submits feedback/comments.
+9. Frontend sends `POST /research/feedback` (or `PATCH /research/milestones/:id/review`) with `{ milestone_id, comments, status }`.
+10. Backend validates that the faculty is the assigned guide for this project (`project.faculty_id === facultyId`) — else throws `403 ForbiddenException`.
+11. Backend updates the **Feedback Table** (milestone record) with comments and new status (`APPROVED` / `REJECTED` / `REVISION_NEEDED`).
+12. Backend shows **"Feedback Saved"** to faculty.
+13. Notification Service sends `"Alert Student of Formative Feedback"` to the student.
+14. Student receives the notification on their research portal.
+
+**Business Rules**:
+- Faculty can only review milestones belonging to projects they are assigned to as guide — cross-project review is forbidden.
+- Valid review statuses are strictly: `APPROVED`, `REJECTED`, `REVISION_NEEDED`.
+- Both `comments` and `status` are required fields for a review submission — partial review is not accepted.
+- Student notification is sent **after** the feedback is persisted — not before.
+- The file is never re-uploaded during review — faculty only reads and comments on the existing submission.
+- If the milestone is already `APPROVED`, the backend should guard against overwriting with `REJECTED` without a fresh submission (optional enhancement — flag in implementation notes).
+
+---
+
+### Cross-Workflow Notification Rules (Global)
+
+These rules apply across all 10 workflows wherever `NotificationService` is invoked:
+
+| Event | Recipient(s) | Message |
+|---|---|---|
+| Fee arrears detected | Student | `"Fee arrears detected — please clear dues"` |
+| Report generated | Parents (via email) | `"Progress report available"` |
+| Role changed | Affected user | `"Your role has been updated"` |
+| Attendance < 75% | Student + Faculty | `"Warning: Attendance Low"` |
+| Milestone uploaded | Faculty guide | `"New milestone pending review"` |
+| Milestone reviewed | Student | `"Formative feedback received"` |
+| New forum post | Faculty (domain-matched) | `"New query posted in your topic"` |
+| Forum reply received | Original poster | `"Your post has a new reply"` |
+| Leave applied | Faculty mentor | `"Leave request pending verification"` |
+| Leave approved | Student | `"Leave Approved"` |
+| Assessment created | Enrolled students | `"New assessment published"` |
+| Marks entered | Student | `"New Grades/Syllabus Updated"` |
+| Syllabus updated | Enrolled students | `"Syllabus Updated"` |
+
+All notifications in this system are **mock** — `console.log('[NOTIFY] to:', recipientId, 'msg:', message)` — no real email/SMS infrastructure is implemented.
+
+---
+
+This context document, combined with your backend implementation prompt and frontend integration prompt, gives your agent the complete behavioral specification for all 10 workflows. The key additions over the backend prompt alone are the **exact UI trigger points**, **loop and branch conditions** from the activity diagrams, **external service interaction sequences** from the sequence diagrams, and the **cross-workflow notification table** that your agent can use to ensure consistency across all modules.

@@ -12,6 +12,9 @@
   }
 })();
 
+// API shortcut
+const _api = () => window.API_CLIENT?.api;
+
 /* =====================================================
    CORE UI LOGIC
    ===================================================== */
@@ -209,7 +212,7 @@ function renderReports() {
 
 
 // Events
-function handleAddEvent() {
+async function handleAddEvent() {
   const eventDate = document.getElementById('ev-date').value;
   const today = new Date().toISOString().split('T')[0];
   
@@ -222,19 +225,36 @@ function handleAddEvent() {
   ];
   if (!validateForm('modalAddEvent', config)) return;
 
-  const db = getDB();
-  const newEv = {
-    id: _nextId(db.admin.eventScheduler.events),
-    title: document.getElementById('ev-title').value,
-    type: document.getElementById('ev-type').value,
-    dateTime: `${document.getElementById('ev-date').value} at ${document.getElementById('ev-time').value}`,
-    venue: document.getElementById('ev-venue').value,
-    description: document.getElementById('ev-desc').value
-  };
-  db.admin.eventScheduler.events.push(newEv);
-  saveDB(db);
+  const api = _api();
+  try {
+    if (api) {
+      // Use the resources module events endpoint
+      await api.post('/resources/events', {
+        resource_id: '550e8400-e29b-41d4-a716-446655440000',
+        start_time: document.getElementById('ev-date').value + 'T' + document.getElementById('ev-time').value + ':00',
+        end_time: document.getElementById('ev-date').value + 'T' + document.getElementById('ev-time').value + ':00',
+        event_type: 'seminar'
+      });
+      toast('Event scheduled via API');
+    } else {
+      const db = getDB();
+      const newEv = {
+        id: _nextId(db.admin.eventScheduler.events),
+        title: document.getElementById('ev-title').value,
+        type: document.getElementById('ev-type').value,
+        dateTime: `${document.getElementById('ev-date').value} at ${document.getElementById('ev-time').value}`,
+        venue: document.getElementById('ev-venue').value,
+        description: document.getElementById('ev-desc').value
+      };
+      db.admin.eventScheduler.events.push(newEv);
+      saveDB(db);
+      toast('Event scheduled (offline)');
+    }
+  } catch (err) {
+    console.error('Event error:', err);
+    toast('Error: ' + err.message);
+  }
   closeModal('modalAddEvent');
-  toast('Event scheduled successfully');
   _headRefresh('events');
 }
 
@@ -263,7 +283,7 @@ function handleDeleteEvent(id) {
 }
 
 // Resources
-function handleAddResource() {
+async function handleAddResource() {
   const config = [
     { id: 'res-name', required: true, min: 3, max: 100, message: 'Resource name must be 3-100 characters' },
     { id: 'res-type', required: true, message: 'Please select resource type' },
@@ -271,19 +291,34 @@ function handleAddResource() {
   ];
   if (!validateForm('modalAddResource', config)) return;
 
-  const db = getDB();
-  const res = {
-    id: 'RES-' + Math.floor(Math.random() * 1000),
-    name: document.getElementById('res-name').value,
-    type: document.getElementById('res-type').value,
-    capacity: document.getElementById('res-cap').value,
-    status: 'available',
-    nextScheduled: 'Not scheduled'
-  };
-  db.admin.resources.facilities.push(res);
-  saveDB(db);
+  const api = _api();
+  try {
+    if (api) {
+      await api.post('/resources', {
+        name: document.getElementById('res-name').value,
+        type: document.getElementById('res-type').value,
+        capacity: parseInt(document.getElementById('res-cap').value) || 0
+      });
+      toast('Resource added via API');
+    } else {
+      const db = getDB();
+      const res = {
+        id: 'RES-' + Math.floor(Math.random() * 1000),
+        name: document.getElementById('res-name').value,
+        type: document.getElementById('res-type').value,
+        capacity: document.getElementById('res-cap').value,
+        status: 'available',
+        nextScheduled: 'Not scheduled'
+      };
+      db.admin.resources.facilities.push(res);
+      saveDB(db);
+      toast('Resource added (offline)');
+    }
+  } catch (err) {
+    console.error('Resource error:', err);
+    toast('Error: ' + err.message);
+  }
   closeModal('modalAddResource');
-  toast('Resource added');
   _headRefresh('resources');
 }
 
@@ -349,7 +384,7 @@ function renderFees() {
 }
 
 // Users
-function handleAddUser() {
+async function handleAddUser() {
   const config = [
     { id: 'u-name', required: true, min: 3, max: 100, type: 'name', message: 'Name must be 3-100 characters' },
     { id: 'u-email', required: true, type: 'email', message: 'Please enter a valid institutional email' },
@@ -357,18 +392,33 @@ function handleAddUser() {
   ];
   if (!validateForm('modalAddUser', config)) return;
 
-  const db = getDB();
-  const user = {
-    id: 'U-' + Math.floor(Math.random() * 1000),
-    name: document.getElementById('u-name').value,
-    email: document.getElementById('u-email').value,
-    role: document.getElementById('u-role').value,
-    status: 'active'
-  };
-  db.admin.userManagement.users.push(user);
-  saveDB(db);
+  const api = _api();
+  try {
+    if (api) {
+      await api.post('/users', {
+        username: document.getElementById('u-name').value,
+        email: document.getElementById('u-email').value,
+        role: document.getElementById('u-role').value
+      });
+      toast('User created via API');
+    } else {
+      const db = getDB();
+      const user = {
+        id: 'U-' + Math.floor(Math.random() * 1000),
+        name: document.getElementById('u-name').value,
+        email: document.getElementById('u-email').value,
+        role: document.getElementById('u-role').value,
+        status: 'active'
+      };
+      db.admin.userManagement.users.push(user);
+      saveDB(db);
+      toast('User created (offline)');
+    }
+  } catch (err) {
+    console.error('User error:', err);
+    toast('Error: ' + err.message);
+  }
   closeModal('modalAddUser');
-  toast('User account created');
   _headRefresh('users');
   renderUserStats();
 }
