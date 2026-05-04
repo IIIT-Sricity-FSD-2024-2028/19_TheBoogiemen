@@ -514,8 +514,22 @@ function handleResolveThread(threadId) {
 
 async function handleDeleteThread(threadId) {
   const db = getDB();
+  const threadToDelete = db.faculty.forum.threads.find(t => t.id === threadId);
+  const threadTitle = threadToDelete ? threadToDelete.title : null;
+
   db.faculty.forum.threads = db.faculty.forum.threads.filter(t => t.id !== threadId);
   if (db.faculty.forum.summary) db.faculty.forum.summary.totalDiscussions = db.faculty.forum.threads.length;
+
+  // Sync deletion to student portal
+  if (threadTitle && db.student && db.student.forum) {
+    if (db.student.forum.threads) {
+      db.student.forum.threads = db.student.forum.threads.filter(t => t.title !== threadTitle);
+    }
+    if (db.student.forum.fullThreads) {
+      db.student.forum.fullThreads = db.student.forum.fullThreads.filter(t => t.title !== threadTitle);
+    }
+  }
+
   saveDB(db);
 
   // Send to backend
