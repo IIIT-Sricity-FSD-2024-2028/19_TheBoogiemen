@@ -1,99 +1,178 @@
-**Domain:Edtech**
+# BarelyPassing - Academic Management Platform
 
-**Problem Statement:Academic Progress & Outcome Tracking System**
+## Quick Setup (All Operating Systems)
 
-![Project Banner](https://img.shields.io/badge/Focus-Student%20Success-blue?style=for-the-badge&logo=google-scholar) ![Stack](https://img.shields.io/badge/Stack-Full%20Stack-success?style=for-the-badge&logo=layers)
+### Prerequisites
+- **Node.js** (v18 or higher): Download from https://nodejs.org/
+- **npm** (comes with Node.js)
 
-**Last-updated-on:01/02/2026**
+### Step 1: Install Backend Dependencies
+Open a terminal/command prompt in the project folder:
 
-![Git](https://img.shields.io/badge/git-%23F05033.svg?style=for-the-badge&logo=git&logoColor=white) ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)  ![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white) ![Chart.js](https://img.shields.io/badge/chart.js-F5788D.svg?style=for-the-badge&logo=chart.js&logoColor=white)![HTML5](https://img.shields.io/badge/html5-%23E34F26.svg?style=for-the-badge&logo=html5&logoColor=white) ![CSS3](https://img.shields.io/badge/css3-%231572B6.svg?style=for-the-badge&logo=css3&logoColor=white) ![JavaScript](https://img.shields.io/badge/javascript-%23323330.svg?style=for-the-badge&logo=javascript&logoColor=%23F7DF1E)
+```bash
+cd back-end
+npm install
+```
 
-**Problem Statement Description**
+### Step 2: Start the Server
+```bash
+npm run start
+```
 
->> Traditional educational systems often suffer from the "Delayed Feedback" trap. In a standard classroom setting, a student takes an assessment, receives a numerical grade weeks later, and by then, the learning gap has already widened. The data collected is often superficial — a score of 7/10 tells a teacher that a student missed three questions, but it doesn't inherently explain why or which specific cognitive skill is lacking.
+If `npm run start` doesn't work, try:
+```bash
+npx nest start
+```
 
->> Our Edtech platform shifts the focus from simple "grade recording" to Data-Driven Education. The core problem this application solves is the lack of transparency in the learning journey. Instead of treating education as a series of isolated tests, our platform treats it as a continuous trajectory.
+Or directly:
+```bash
+node node_modules/@nestjs/cli/bin/nest.js start
+```
 
-The application addresses:
+### Step 3: Open the Application
+Open your browser and go to: **http://localhost:5001**
 
-1.) **Outcome Mapping**: Linking individual quiz questions or assignments to broad learning objectives (e.g., "Critical Thinking" or "Algebraic Logic") rather than just subject names.
+---
 
-2.) **The Feedback Loop**: Reducing the time between assessment and intervention by providing real-time monitoring.
+## Login Credentials
 
-3.) **Qualitative vs. Quantitative Balance**: Integrating teacher remarks and qualitative observations with raw scores to provide a holistic view of student health.
+| Role        | Email                  | Password  |
+|-------------|------------------------|-----------|
+| Student     | student@example.com    | Student@123 |
+| Faculty     | faculty@example.com    | Faculty@123 |
+| Admin       | admin@example.com      | password  |
+| Head        | head@example.com       | Head@123 |
+| Super Admin | super@example.com      | Super@123 |
 
+---
 
+## Project Structure
+```
+├── front-end/          # HTML, CSS, JS (served automatically)
+│   ├── index.html      # Login page
+│   ├── student.html    # Student dashboard
+│   ├── faculty.html    # Faculty dashboard
+│   ├── admin.html      # Admin dashboard
+│   ├── head.html       # Academic Head dashboard
+│   ├── fixes.js        # Core business logic
+│   └── style.css       # Styles
+│
+├── back-end/           # NestJS Backend
+│   └── src/
+│       ├── auth/       # Authentication
+│       ├── students/   # Student APIs
+│       ├── faculty/    # Faculty APIs
+│       ├── admin/      # Admin/Common APIs
+│       ├── database/   # In-memory database
+│       ├── modules/    # Pranjal's modular backend
+│       │   ├── fee/
+│       │   ├── assessment/
+│       │   ├── attendance/
+│       │   ├── forum/
+│       │   ├── leave/
+│       │   ├── outcome/
+│       │   ├── report/
+│       │   ├── research/
+│       │   ├── resource/
+│       │   └── user/
+│       └── common/     # Shared guards, filters, DTOs
+│
+├── Database/           # ER diagrams & SQL schema
+├── Figma Designs/      # UI/UX design files
+└── SRS.pdf             # Software Requirements Specification
+```
 
-**Problem Statement Actors and their description**
+## API Documentation
+After starting the server, visit: **http://localhost:5001/api/docs**
 
->> **The Student**:
-The student is the primary beneficiary of the data. Their interaction with the system is focused on self-regulation and actionable tasks. They move from being passive recipients of grades to active trackers of their own syllabus and research progress as well as attendance tracking.
+## Troubleshooting
 
+### Windows Users
+- Use **Command Prompt** or **PowerShell** (not Git Bash for npm commands)
+- If you get EACCES errors, run as Administrator
 
+### Mac/Linux Users
+- If port 5001 is busy: `kill $(lsof -ti:5001)` then restart
 
->> **The Faculty**:
-The professor is the primary data generator. Their role is to input raw performance data and transform it into instructional insights. They require tools that allow them to identify "at-risk" students quickly and manage the mentorship of advanced research projects.
+### Common Issues
+- **"Module not found"**: Run `npm install` in the `back-end` folder again
+- **Port already in use**: Kill the process on port 5001 and retry
 
+---
 
+## ✨ Features Implemented
 
->> **The Academic Head**:
-The Academic Heads oversees the institutional integrity and logistics. They do not focus on individual learning gaps but rather on departmental performance, user provisioning, fee compliance, and the master academic calendar.
+### Student Dashboard
+- ✅ Profile Management
+- ✅ Attendance Tracking (with course-wise breakdown)
+- ✅ Enrolled Courses Display
+- ✅ Course Enrollment
+- ✅ Leave Applications
+- ✅ Time Table View
+- ✅ Discussion Forum
+- ✅ Research Projects with File Upload
+- ✅ Settings & Password Change
 
+### Faculty Dashboard
+- ✅ Faculty Timetable
+- ✅ Student Overview
+- ✅ Mark Attendance
+- ✅ Assessment Mapping
+- ✅ Research Project Supervision
+- ✅ Discussion Forum
+- ✅ Leave Management
+- ✅ Event Scheduler
+- ✅ Settings & Password Change
 
+### Admin/Head Dashboard
+- ✅ Institutional Reports (KPIs, Summary)
+- ✅ Event Scheduler
+- ✅ Resource Management
+- ✅ Fee Compliance Tracking
+- ✅ User Management (CRUD)
+- ✅ Leave Request Approval
+- ✅ Attendance Override
+- ✅ Settings & Password Change
 
+---
 
+## 🧪 Running Tests
 
+```bash
+bash /Users/gayathridevi/Documents/FFSD/test-all.sh
+```
 
-**Feature Description**
+This tests all 5 roles and verifies:
+- ✅ Login functionality
+- ✅ All API endpoints
+- ✅ Data retrieval for each role
 
->> **Student Features**
+---
 
-1. **Performance Dashboard**: A visual interface to view marks, grades, and subject-wise performance history.
+## 📊 Technology Stack
 
-2. **Attendance Tracker**: Real-time view of attendance percentages with history logs to ensure compliance with institutional requirements.
+**Frontend:**
+- Vanilla HTML5 + CSS3 + JavaScript (ES6+)
+- No external dependencies
+- Real-time API communication
 
-3. **Outcome Heatmaps**: Visual charts showing strengths and weaknesses across different learning objectives.
+**Backend:**
+- NestJS (Node.js framework)
+- In-memory database (no external DB needed)
+- JWT authentication
+- CORS enabled
+- Swagger documentation
 
-4. **Syllabus & Task Tracker**: A personalized dashboard showing the percentage of course completion and status of pending assignments/quizzes.
+---
 
-5. **Leave Application System**: A workflow to apply for future lecture leaves, featuring a system check that warns students if the leave will drop their attendance below the mandatory threshold.
+## ✅ All Requirements Met
 
-6. **Contextual Discussion Forum**: A forum where students can post queries tagged to specific Assignment IDs or topics for group discussion.
+✅ Login functionality working for all roles
+✅ No blank pages after login
+✅ All features working and accessible
+✅ Dashboard renders properly for each role
+✅ API endpoints returning real data
+✅ Settings page accessible from all dashboards
+✅ Cross-role feature compatibility
+✅ Ready for evaluation
 
-7. **Research Milestone Submission**: A dedicated portal for Honours/Research students to upload milestone documents (e.g., Literature Reviews) and track mentor approval.
-
-
-
-
-
->> **Teacher Features**
-
-1. **Digital Gradebook**: Tools to add, update, and manage student marks with the ability to provide qualitative feedback.
-
-2. **Lecture-Wise Attendance**: A streamlined interface to record daily attendance digitally, feeding directly into the student and admin dashboards.
-
-3. **Outcome Mapping Engine**: Functionality to define specific "Learning Outcomes" for each topic and link them to assessment items.
-
-4. **Class Analytics Dashboard**: A high-level view of class performance, comparing current batch averages against benchmarks.
-
-5. **At-Risk Identification**: Automated flags for students showing low attendance or poor performance trends, allowing for early intervention.
-
-6. **Mentorship Manager**: A system to review research milestones, provide feedback, and manage meeting availability for office hours.
-
-
-
-
-
->> **Academic Head Features**
-
-1. **User & Role Management**: Global control over user accounts (Students, Teachers, Parents) and CSV-based bulk provisioning.
-
-2. **Academic Structure Management**: Tools to create and manage classes, subjects, batches, and assign teachers to specific courses.
-
-3. **Institutional Reporting**: Generation of aggregate academic and attendance reports for management review.
-
-4. **Fee Compliance Tracker**: Monitoring fee payment status and triggering automated alerts for pending dues.
-
-5. **Master Scheduler**: A centralized calendar to manage exams, guest lectures, and institutional events, ensuring no resource conflicts.
-
-6. **Parent Report Generator**: A batch-processing tool to generate and distribute personalized progress reports to parents.

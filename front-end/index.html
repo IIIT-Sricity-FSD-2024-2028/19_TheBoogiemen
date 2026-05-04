@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BarelyPassing - Academic Performance Platform</title>
+    <!-- Use same premium styling rules -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--text-main); line-height: 1.6; overflow-x: hidden; }
+
+        /* Navbar */
+        nav { display: flex; justify-content: space-between; align-items: center; padding: 24px 8%; position: fixed; width: 100%; top: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); z-index: 100; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .logo { font-size: 24px; font-weight: 700; background: linear-gradient(135deg, #60a5fa, #a78bfa); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .nav-links { display: flex; gap: 32px; align-items: center; }
+        .nav-links a { color: var(--text-main); text-decoration: none; font-weight: 500; transition: color 0.3s; }
+        .nav-links a:hover { color: var(--primary); }
+        
+        .btn { padding: 12px 24px; border-radius: 8px; font-weight: 600; text-decoration: none; transition: all 0.3s; cursor: pointer; display: inline-block; }
+        .btn-outline { border: 1px solid rgba(255,255,255,0.2); color: white; }
+        .btn-outline:hover { background: rgba(255,255,255,0.1); }
+        .btn-primary { background: var(--primary); color: white; border: none; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4); }
+        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6); }
+
+        /* Hero */
+        .hero { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 0 20px; position: relative; }
+        .hero-glow { position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(59,130,246,0.15) 0%, rgba(15,23,42,0) 70%); top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: -1; pointer-events: none; }
+        .hero h1 { font-size: 64px; font-weight: 800; letter-spacing: -1px; margin-bottom: 24px; max-width: 900px; line-height: 1.1; }
+        .hero h1 span { background: linear-gradient(135deg, #60a5fa, #c084fc); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero p { font-size: 20px; color: var(--text-muted); max-width: 600px; margin-bottom: 40px; }
+        .hero-btns { display: flex; gap: 16px; }
+
+        /* Features */
+        .features { padding: 100px 8%; background: #0b1121; }
+        .section-title { text-align: center; font-size: 36px; margin-bottom: 64px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 32px; }
+        .feature-card { background: var(--bg-card); padding: 40px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); transition: transform 0.3s, box-shadow 0.3s; }
+        .feature-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .feature-icon { width: 48px; height: 48px; background: rgba(59,130,246,0.1); color: var(--primary); display: flex; justify-content: center; align-items: center; border-radius: 12px; margin-bottom: 24px; }
+        .feature-icon svg { width: 24px; height: 24px; }
+        .feature-card h3 { font-size: 20px; margin-bottom: 12px; }
+        .feature-card p { color: var(--text-muted); font-size: 15px; }
+
+        /* Footer */
+        footer { padding: 40px 8%; text-align: center; color: var(--text-muted); border-top: 1px solid rgba(255,255,255,0.05); font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">BarelyPassing</div>
+        <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="login.html" class="btn btn-primary" style="padding: 8px 20px;">Sign In</a>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-glow"></div>
+        <h1>Modernize your campus with <span>BarelyPassing</span></h1>
+        <p>A completely unified portal for Outcome-Based Education, managing everything from student attendance and faculty workloads to institutional accreditation reporting.</p>
+        <div class="hero-btns">
+            <a href="login.html" class="btn btn-primary">Login to Dashboard</a>
+        </div>
+    </section>
+
+    <section class="features" id="features">
+        <h2 class="section-title">Everything you need to run an institution</h2>
+        <div class="grid-3">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20v-6M6 20v-4M18 20V10M2 20h20M4 10l8-8 8 8"></path></svg>
+                </div>
+                <h3>Academic Progress</h3>
+                <p>Track CGPA, calculate Outcome-Based Education (OBE) mapping for NAAC/NBA automatically, and flag at-risk students for early intervention.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75M9 7a4 4 0 100 8 4 4 0 000-8z"></path></svg>
+                </div>
+                <h3>Role-Based Workflows</h3>
+                <p>Secure login portals segregated perfectly for Students, Faculty, Academic Heads, and the Super-Admin. Every user only sees what they need to.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                </div>
+                <h3>Event & Leave Scheduling</h3>
+                <p>Fully automated approval pipelines for leave processing and built-in institutional event schedulers accessible across all hierarchy levels.</p>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        &copy; 2026 BarelyPassing Educational Platforms. Designed for IIITS. All rights reserved.
+    </footer>
+
+</body>
+</html>
