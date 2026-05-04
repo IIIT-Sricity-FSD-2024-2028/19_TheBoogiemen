@@ -8,23 +8,23 @@ export class InMemoryDbService {
   ];
 
   public users = [
-    { user_id: 'u1', username: 'student', password: 'password', email: 'student@example.com', role: 'student' },
-    { user_id: 'u2', username: 'faculty', password: 'password', email: 'faculty@example.com', role: 'faculty' },
-    { user_id: 'u3', username: 'admin', password: 'password', email: 'admin@example.com', role: 'admin' },
-    { user_id: 'u4', username: 'head', password: 'password', email: 'head@example.com', role: 'head' },
-    { user_id: 'u5', username: 'superadmin', password: 'password', email: 'super@example.com', role: 'superadmin' },
-    { user_id: 'u6', username: 'student2', password: 'password', email: 'student2@example.com', role: 'student' },
-    { user_id: 'u7', username: 'faculty2', password: 'password', email: 'faculty2@example.com', role: 'faculty' },
+    { user_id: 'u1', username: 'student', password: 'Pass@123', email: 'student@iiits.in', role: 'student' },
+    { user_id: 'u2', username: 'faculty', password: 'Pass@123', email: 'faculty@iiits.in', role: 'faculty' },
+    { user_id: 'u3', username: 'admin', password: 'Pass@123', email: 'admin@iiits.in', role: 'admin' },
+    { user_id: 'u4', username: 'head', password: 'Pass@123', email: 'head@iiits.in', role: 'head' },
+    { user_id: 'u5', username: 'superadmin', password: 'Pass@123', email: 'superadmin@iiits.in', role: 'superadmin' },
+    { user_id: 'u6', username: 'student2', password: 'Pass@123', email: 'student2@iiits.in', role: 'student' },
+    { user_id: 'u7', username: 'faculty2', password: 'Pass@123', email: 'faculty2@iiits.in', role: 'faculty' },
   ];
 
   public students = [
-    { user_id: 'u1', first_name: 'John', last_name: 'Doe', branch: 'CS', batch: '2022-2026', cgpa: 8.5, section: 'A', dob: '2004-05-15', phone: '9876543210', join_date: '2022-08-01', email: 'student@example.com' },
-    { user_id: 'u6', first_name: 'Alice', last_name: 'Vance', branch: 'CS', batch: '2022-2026', cgpa: 5.8, section: 'B', dob: '2004-06-20', phone: '9876543211', join_date: '2022-08-01', email: 'student2@example.com' },
+    { user_id: 'u1', first_name: 'John', last_name: 'Doe', branch: 'CS', batch: '2022-2026', cgpa: 8.5, section: 'A', dob: '2004-05-15', phone: '9876543210', join_date: '2022-08-01', email: 'student@iiits.in' },
+    { user_id: 'u6', first_name: 'Alice', last_name: 'Vance', branch: 'CS', batch: '2022-2026', cgpa: 5.8, section: 'B', dob: '2004-06-20', phone: '9876543211', join_date: '2022-08-01', email: 'student2@iiits.in' },
   ];
 
   public faculty = [
-    { user_id: 'u2', first_name: 'Jane', last_name: 'Smith', designation: 'Assistant Professor', department_id: 'dept1', email: 'faculty@example.com', phone: '9000000001' },
-    { user_id: 'u7', first_name: 'Robert', last_name: 'Wilson', designation: 'Associate Professor', department_id: 'dept1', email: 'faculty2@example.com', phone: '9000000002' },
+    { user_id: 'u2', first_name: 'Jane', last_name: 'Smith', designation: 'Assistant Professor', department_id: 'dept1', email: 'faculty@iiits.in', phone: '9000000001' },
+    { user_id: 'u7', first_name: 'Robert', last_name: 'Wilson', designation: 'Associate Professor', department_id: 'dept1', email: 'faculty2@iiits.in', phone: '9000000002' },
   ];
 
   public courses = [
