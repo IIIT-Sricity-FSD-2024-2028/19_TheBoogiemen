@@ -1754,7 +1754,10 @@ window.submitAddUser = async function() {
     const role       = document.getElementById('newRole')?.value;
     if (!first_name)              { showToast('First name is required', 'warning'); return; }
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showToast('Enter a valid email address', 'warning'); return; }
-    if (!password || password.length < 6) { showToast('Password must be at least 6 characters', 'warning'); return; }
+    if (!password || password.length < 8)     { showToast('Password must be at least 8 characters', 'warning'); return; }
+    if (!/[A-Z]/.test(password))              { showToast('Password must contain at least 1 uppercase letter', 'warning'); return; }
+    if (!/[0-9]/.test(password))              { showToast('Password must contain at least 1 number', 'warning'); return; }
+    if (!/[^A-Za-z0-9]/.test(password))       { showToast('Password must contain at least 1 special character', 'warning'); return; }
     if (!role)                    { showToast('Please select a role', 'warning'); return; }
     try {
         await api('/users', { method:'POST', body: JSON.stringify({ first_name, email, password, role }) });
