@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Headers, BadRequestException } from '@nestjs/common';
 import { StudentsService } from './students.service';
 import { Roles } from '../auth/roles.guard';
-import { ApiTags, ApiOperation, ApiHeader, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiHeader, ApiResponse , ApiBody} from '@nestjs/swagger';
 
 @ApiTags('Students')
 @Controller('students')
@@ -82,6 +82,7 @@ export class StudentsController {
   @ApiHeader({ name: 'user-id', description: 'User ID of the logged-in student' })
   @ApiResponse({ status: 201, description: 'Enrollment successful' })
   @ApiResponse({ status: 400, description: 'Already enrolled or course not found' })
+  @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async enroll(@Body() body: any, @Headers('user-id') userId: string) {
     if (!userId) throw new BadRequestException('user-id header required');
     const courseId = body.course_id || body.courseId;

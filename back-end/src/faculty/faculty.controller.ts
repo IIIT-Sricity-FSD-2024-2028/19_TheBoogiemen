@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Headers, Param, BadRequestException } from '@nestjs/common';
 import { FacultyService } from './faculty.service';
 import { Roles } from '../auth/roles.guard';
-import { ApiTags, ApiOperation, ApiHeader, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiHeader, ApiResponse , ApiBody} from '@nestjs/swagger';
 
 @ApiTags('Faculty')
 @Controller('faculty')
@@ -86,6 +86,7 @@ export class FacultyController {
   @ApiHeader({ name: 'role', description: 'Must be: faculty' })
   @ApiResponse({ status: 201, description: 'Attendance recorded successfully' })
   @ApiResponse({ status: 400, description: 'Invalid request body' })
+  @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async recordAttendance(@Body() body: any) {
     if (!body.course_id || !body.date || !body.records) {
       throw new BadRequestException('course_id, date, and records are required');
@@ -98,6 +99,7 @@ export class FacultyController {
   @ApiOperation({ summary: 'Record marks for a student assessment' })
   @ApiHeader({ name: 'role', description: 'Must be: faculty' })
   @ApiResponse({ status: 201, description: 'Marks recorded successfully' })
+  @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async postMarks(@Body() body: any) {
     return this.facultyService.postMarks(body);
   }

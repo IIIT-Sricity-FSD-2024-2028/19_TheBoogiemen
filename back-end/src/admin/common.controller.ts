@@ -20,6 +20,7 @@ export class CommonController {
   @ApiOperation({ summary: 'Create a new course' })
   @ApiHeader({ name: 'role', description: 'Role: faculty|head|admin|superadmin' })
   @ApiHeader({ name: 'user-id', description: 'Creator user ID' })
+  @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async createCourse(@Body() body: any, @Headers('user-id') userId: string) {
     if (!body.course_name || !body.course_code) throw new BadRequestException('course_name and course_code are required');
     if (this.db.courses.find(c => c.course_code === body.course_code)) throw new BadRequestException('Course code already exists');
@@ -85,6 +86,7 @@ export class CommonController {
   @ApiOperation({ summary: 'Create a new assessment' })
   @ApiHeader({ name: 'role', description: 'Role: faculty|admin|head|superadmin' })
   @ApiHeader({ name: 'user-id', description: 'Faculty user ID' })
+  @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async createAssessment(@Body() body: any, @Headers('user-id') userId: string) {
     const id = `a${Date.now()}`;
     const newAssessment = { assessment_id: id, faculty_id: userId, weightage: body.weightage || 10, ...body };
@@ -108,6 +110,7 @@ export class CommonController {
   @Post('marks')
   @Roles('faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Record marks for a student (locked once entered)' })
+  @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async recordMarks(@Body() body: any) {
     if (!body.student_id || !body.assessment_id) throw new BadRequestException('student_id and assessment_id required');
     // Marks lock: reject if already entered
@@ -130,6 +133,7 @@ export class CommonController {
 
   @Post('submissions')
   @ApiOperation({ summary: 'Student submits work for an online assessment' })
+  @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async createSubmission(@Body() body: any, @Headers('user-id') userId: string) {
     if (!body.assessment_id) throw new BadRequestException('assessment_id required');
     // Upsert — allow re-submission
@@ -169,6 +173,7 @@ export class CommonController {
   @Post('attendance')
   @Roles('faculty')
   @ApiOperation({ summary: 'Record bulk attendance for a course session' })
+  @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async recordAttendance(@Body() body: any) {
     const { course_id, date, records } = body;
     if (!course_id || !date || !records) throw new BadRequestException('course_id, date, and records required');
@@ -203,6 +208,7 @@ export class CommonController {
   @Post('discussions')
   @ApiOperation({ summary: 'Create a new discussion post' })
   @ApiHeader({ name: 'user-id', description: 'Author user ID' })
+  @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async createDiscussion(@Body() body: any, @Headers('user-id') userId: string) {
     const user = this.db.users.find(u => u.user_id === userId);
     const student = this.db.students.find(s => s.user_id === userId);
@@ -219,6 +225,7 @@ export class CommonController {
   @Post('discussions/:postId/replies')
   @ApiOperation({ summary: 'Reply to a discussion post' })
   @ApiHeader({ name: 'user-id', description: 'Replier user ID' })
+  @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async createReply(@Param('postId') postId: string, @Body() body: any, @Headers('user-id') userId: string) {
     const user = this.db.users.find(u => u.user_id === userId);
     const student = this.db.students.find(s => s.user_id === userId);
@@ -258,6 +265,7 @@ export class CommonController {
   @Patch('research/:id/status')
   @Roles('faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Update research project status' })
+  @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async updateResearchStatus(@Param('id') id: string, @Body() body: { status: string }) {
     const project = this.db.research_projects.find(p => p.project_id === id);
     if (!project) throw new NotFoundException('Project not found');
@@ -268,6 +276,7 @@ export class CommonController {
   @Patch('research/:id/progress')
   @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Update research project progress, submission notes, or faculty feedback' })
+  @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async updateResearchProgress(@Param('id') id: string, @Body() body: any) {
     const project = this.db.research_projects.find(p => p.project_id === id);
     if (!project) throw new NotFoundException('Project not found');
@@ -283,6 +292,7 @@ export class CommonController {
   @ApiOperation({ summary: 'Create a new research/BTP project and assign to a student' })
   @ApiHeader({ name: 'role', description: 'Role: faculty|admin|head|superadmin' })
   @ApiHeader({ name: 'user-id', description: 'Faculty user ID (supervisor)' })
+  @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async createResearch(@Body() body: any, @Headers('user-id') userId: string) {
     if (!body.student_id || !body.title) throw new BadRequestException('student_id and title are required');
     const student = this.db.students.find(s => s.user_id === body.student_id);
@@ -320,6 +330,7 @@ export class CommonController {
   @Roles('admin', 'superadmin', 'head', 'faculty')
   @ApiOperation({ summary: 'Create a new institutional event' })
   @ApiHeader({ name: 'role', description: 'Role: admin|superadmin|head|faculty' })
+  @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async createEvent(@Body() body: any) {
     if (!body.event_name || !body.date || !body.venue) throw new BadRequestException('event_name, date, and venue are required');
     const id = `ev${Date.now()}`;
@@ -332,6 +343,7 @@ export class CommonController {
   @Roles('admin', 'superadmin', 'head', 'faculty')
   @ApiOperation({ summary: 'Update an existing event' })
   @ApiHeader({ name: 'role', description: 'Role: admin|superadmin|head|faculty' })
+  @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async updateEvent(@Param('id') id: string, @Body() body: any) {
     const event = this.db.events.find(e => e.event_id === id);
     if (!event) throw new NotFoundException('Event not found');
@@ -366,6 +378,7 @@ export class CommonController {
   @ApiOperation({ summary: 'Submit a new leave application' })
   @ApiHeader({ name: 'role', description: 'Role: student|faculty' })
   @ApiHeader({ name: 'user-id', description: 'Applicant user ID' })
+  @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async applyLeave(@Body() body: any, @Headers('user-id') userId: string) {
     if (!body.leave_type || !body.start_date || !body.end_date || !body.reason) {
       throw new BadRequestException('leave_type, start_date, end_date, and reason are required');
@@ -383,6 +396,7 @@ export class CommonController {
   @Roles('admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Approve or reject a leave application' })
   @ApiHeader({ name: 'role', description: 'Role: admin|head|superadmin' })
+  @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async updateLeave(@Param('id') id: string, @Body() body: { status: string }) {
     const leave = this.db.leave_applications.find(l => l.leave_id === id);
     if (!leave) throw new NotFoundException('Leave application not found');
@@ -408,6 +422,7 @@ export class CommonController {
   @Roles('admin', 'superadmin', 'head')
   @ApiOperation({ summary: 'Create a new system user' })
   @ApiHeader({ name: 'role', description: 'Role: admin|superadmin|head' })
+  @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async createUser(@Body() body: any) {
     if (!body.email || !body.role) throw new BadRequestException('email and role are required');
     if (this.db.users.find(u => u.email === body.email)) throw new BadRequestException('Email already exists');
@@ -425,6 +440,7 @@ export class CommonController {
   @Put('users/:id')
   @Roles('admin', 'superadmin', 'head')
   @ApiOperation({ summary: 'Update a user record' })
+  @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async updateUser(@Param('id') id: string, @Body() body: any) {
     const user = this.db.users.find(u => u.user_id === id);
     if (!user) throw new NotFoundException('User not found');
@@ -488,6 +504,7 @@ export class CommonController {
   @Post('resources')
   @Roles('admin', 'superadmin', 'head')
   @ApiOperation({ summary: 'Add a new resource' })
+  @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async createResource(@Body() body: any) {
     const id = `res${Date.now()}`;
     const newRes = { resource_id: id, status: 'available', ...body };
@@ -498,6 +515,7 @@ export class CommonController {
   @Put('resources/:id')
   @Roles('admin', 'head', 'superadmin', 'faculty')
   @ApiOperation({ summary: 'Update resource status or details' })
+  @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async updateResource(@Param('id') id: string, @Body() body: any) {
     const res = this.db.resources.find(r => r.resource_id === id);
     if (!res) throw new NotFoundException('Resource not found');
@@ -539,6 +557,7 @@ export class CommonController {
   @Roles('admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Add a new fee record for a student' })
   @ApiHeader({ name: 'role', description: 'Role: admin|head|superadmin' })
+  @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async createFee(@Body() body: any) {
     if (!body.student_id || !body.fee_type || !body.amount || !body.due_date) {
       throw new BadRequestException('student_id, fee_type, amount, and due_date are required');
@@ -552,6 +571,7 @@ export class CommonController {
   @Put('fees/:id')
   @Roles('admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Update an existing fee record' })
+  @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async updateFee(@Param('id') id: string, @Body() body: any) {
     const fee = this.db.fees.find(f => f.fee_id === id);
     if (!fee) throw new NotFoundException('Fee record not found');
@@ -565,6 +585,7 @@ export class CommonController {
   @Roles('faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Enroll a student in a course (faculty/admin action)' })
   @ApiHeader({ name: 'role', description: 'Role: faculty|admin|head|superadmin' })
+  @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async enrollStudentByCourse(@Body() body: any) {
     const { student_id, course_id } = body;
     if (!student_id || !course_id) throw new BadRequestException('student_id and course_id are required');
@@ -586,6 +607,7 @@ export class CommonController {
   @Roles('faculty', 'admin', 'head')
   @ApiOperation({ summary: 'Schedule a meeting with a student' })
   @ApiHeader({ name: 'role', description: 'Role: faculty|admin|head' })
+  @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async scheduleMeeting(@Body() body: any) {
     return { success: true, message: 'Meeting scheduled successfully', meeting: { meeting_id: `mt${Date.now()}`, ...body, created_at: new Date().toISOString() } };
   }
@@ -608,6 +630,7 @@ export class CommonController {
   @Roles('faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Update syllabus completion for a course+section' })
   @ApiHeader({ name: 'user-id', description: 'Faculty user ID' })
+  @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async updateSyllabusProgress(@Body() body: any, @Headers('user-id') userId: string) {
     if (!body.course_id || !body.section || body.progress === undefined) throw new BadRequestException('course_id, section, and progress required');
     const existing = this.db.syllabus_progress.find(s => s.course_id === body.course_id && s.section === body.section);
@@ -628,6 +651,7 @@ export class CommonController {
   @Roles('student')
   @ApiOperation({ summary: 'Student requests attendance correction' })
   @ApiHeader({ name: 'user-id', description: 'Student user ID' })
+  @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async createAttendanceRequest(@Body() body: any, @Headers('user-id') userId: string) {
     if (!body.course_id || !body.date || !body.reason) throw new BadRequestException('course_id, date, and reason required');
     // Allow past and today dates (student requests attendance for a day they were absent)
@@ -665,6 +689,7 @@ export class CommonController {
   @Patch('attendance-request/:id')
   @Roles('admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Admin approves or rejects an attendance request' })
+  @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async updateAttendanceRequest(@Param('id') id: string, @Body() body: any) {
     const req = this.db.attendance_requests.find(r => r.request_id === id);
     if (!req) throw new NotFoundException('Attendance request not found');
@@ -694,6 +719,7 @@ export class CommonController {
   @Roles('faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Faculty requests a resource booking' })
   @ApiHeader({ name: 'user-id', description: 'Requesting user ID' })
+  @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async createResourceBooking(@Body() body: any, @Headers('user-id') userId: string) {
     if (!body.resource_id || !body.date || !body.purpose) throw new BadRequestException('resource_id, date, and purpose required');
     const resource = this.db.resources.find(r => r.resource_id === body.resource_id);
@@ -725,6 +751,7 @@ export class CommonController {
   @Patch('resource-booking/:id')
   @Roles('admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Admin approves or rejects a resource booking' })
+  @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async updateResourceBooking(@Param('id') id: string, @Body() body: any) {
     const booking = this.db.resource_bookings.find(b => b.booking_id === id);
     if (!booking) throw new NotFoundException('Booking not found');
