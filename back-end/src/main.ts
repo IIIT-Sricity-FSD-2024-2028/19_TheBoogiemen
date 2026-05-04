@@ -52,6 +52,10 @@ async function bootstrap() {
       'Academic Progress & Outcome Tracking API. Headers required: "role" (student|faculty|admin|head|superadmin), "user-id" (e.g., u1).'
     )
     .setVersion('1.0')
+    .addApiKey({ type: 'apiKey', in: 'header', name: 'role' }, 'role')
+    .addApiKey({ type: 'apiKey', in: 'header', name: 'user-id' }, 'user-id')
+    .addSecurityRequirements('role')
+    .addSecurityRequirements('user-id')
     .build();
     
   const document = SwaggerModule.createDocument(app, config);
