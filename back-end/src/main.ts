@@ -4,6 +4,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import * as path from 'path';
 import * as express from 'express';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -17,13 +18,8 @@ async function bootstrap() {
     allowedHeaders: 'Content-Type, Accept, role, user-id, Authorization',
   });
 
-  // 2. Request Logging Middleware
-  app.use((req, res, next) => {
-    const timestamp = new Date().toISOString();
-    const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
-    console.log(`[${timestamp}] ${req.method} ${req.url} - IP: ${ip}`);
-    next();
-  });
+  // 2. Global Interceptors (Logging)
+  app.useGlobalInterceptors(new LoggingInterceptor());
 
   // 3. Global Validation
   app.useGlobalPipes(
