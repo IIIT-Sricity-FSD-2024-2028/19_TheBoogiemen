@@ -24,6 +24,9 @@ window.Auth = {
         if (user) {
             headers['role'] = user.role;
             headers['user-id'] = user.user_id;
+            if (user.organization_id) {
+                headers['x-organization-id'] = user.organization_id;
+            }
         }
 
         const res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });

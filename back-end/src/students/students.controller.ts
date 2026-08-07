@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Headers, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Headers, BadRequestException, Req } from '@nestjs/common';
 import { StudentsService } from './students.service';
 import { Roles } from '../auth/roles.guard';
 import { ApiTags, ApiOperation, ApiHeader, ApiResponse , ApiBody} from '@nestjs/swagger';
@@ -15,9 +15,9 @@ export class StudentsController {
   @ApiHeader({ name: 'user-id', description: 'User ID of the logged-in student' })
   @ApiResponse({ status: 200, description: 'Student profile data' })
   @ApiResponse({ status: 403, description: 'Access denied — students only' })
-  async getProfile(@Headers('user-id') userId: string) {
+  async getProfile(@Headers('user-id') userId: string, @Req() req: any) {
     if (!userId) throw new BadRequestException('user-id header required');
-    return this.studentsService.getProfile(userId);
+    return this.studentsService.getProfile(userId, req.tenantId);
   }
 
   @Get('me/attendance')
@@ -26,9 +26,9 @@ export class StudentsController {
   @ApiHeader({ name: 'role', description: 'Must be: student' })
   @ApiHeader({ name: 'user-id', description: 'User ID of the logged-in student' })
   @ApiResponse({ status: 200, description: 'Attendance records and per-course summary' })
-  async getAttendance(@Headers('user-id') userId: string) {
+  async getAttendance(@Headers('user-id') userId: string, @Req() req: any) {
     if (!userId) throw new BadRequestException('user-id header required');
-    return this.studentsService.getAttendance(userId);
+    return this.studentsService.getAttendance(userId, req.tenantId);
   }
 
   @Get('me/courses')
@@ -37,9 +37,9 @@ export class StudentsController {
   @ApiHeader({ name: 'role', description: 'Must be: student' })
   @ApiHeader({ name: 'user-id', description: 'User ID of the logged-in student' })
   @ApiResponse({ status: 200, description: 'List of enrolled courses with enrollment status' })
-  async getCourses(@Headers('user-id') userId: string) {
+  async getCourses(@Headers('user-id') userId: string, @Req() req: any) {
     if (!userId) throw new BadRequestException('user-id header required');
-    return this.studentsService.getCourses(userId);
+    return this.studentsService.getCourses(userId, req.tenantId);
   }
 
   @Get('me/marks')
@@ -48,9 +48,9 @@ export class StudentsController {
   @ApiHeader({ name: 'role', description: 'Must be: student' })
   @ApiHeader({ name: 'user-id', description: 'User ID of the logged-in student' })
   @ApiResponse({ status: 200, description: 'Marks with assessment and course details' })
-  async getMarks(@Headers('user-id') userId: string) {
+  async getMarks(@Headers('user-id') userId: string, @Req() req: any) {
     if (!userId) throw new BadRequestException('user-id header required');
-    return this.studentsService.getMarks(userId);
+    return this.studentsService.getMarks(userId, req.tenantId);
   }
 
   @Get('me/fees')
@@ -59,9 +59,9 @@ export class StudentsController {
   @ApiHeader({ name: 'role', description: 'Must be: student' })
   @ApiHeader({ name: 'user-id', description: 'User ID of the logged-in student' })
   @ApiResponse({ status: 200, description: 'Student fee records' })
-  async getFees(@Headers('user-id') userId: string) {
+  async getFees(@Headers('user-id') userId: string, @Req() req: any) {
     if (!userId) throw new BadRequestException('user-id header required');
-    return this.studentsService.getFees(userId);
+    return this.studentsService.getFees(userId, req.tenantId);
   }
 
   @Get('me/timetable')
@@ -70,9 +70,9 @@ export class StudentsController {
   @ApiHeader({ name: 'role', description: 'Must be: student' })
   @ApiHeader({ name: 'user-id', description: 'User ID of the logged-in student' })
   @ApiResponse({ status: 200, description: 'Weekly timetable grid for student section' })
-  async getTimetable(@Headers('user-id') userId: string) {
+  async getTimetable(@Headers('user-id') userId: string, @Req() req: any) {
     if (!userId) throw new BadRequestException('user-id header required');
-    return this.studentsService.getTimetable(userId);
+    return this.studentsService.getTimetable(userId, req.tenantId);
   }
 
   @Post('enroll')
@@ -83,10 +83,10 @@ export class StudentsController {
   @ApiResponse({ status: 201, description: 'Enrollment successful' })
   @ApiResponse({ status: 400, description: 'Already enrolled or course not found' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async enroll(@Body() body: any, @Headers('user-id') userId: string) {
+  async enroll(@Body() body: any, @Headers('user-id') userId: string, @Req() req: any) {
     if (!userId) throw new BadRequestException('user-id header required');
     const courseId = body.course_id || body.courseId;
     if (!courseId) throw new BadRequestException('course_id is required');
-    return this.studentsService.enroll(userId, courseId);
+    return this.studentsService.enroll(userId, courseId, req.tenantId);
   }
 }

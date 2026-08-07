@@ -66,7 +66,8 @@ export class InMemoryDbService implements OnModuleInit {
         for (const key in data) {
           if (Array.isArray(data[key]) && this[key]) {
             this[key].length = 0; // Clear proxy array
-            this[key].push(...data[key]); // Push into proxy array (will not persist due to isLoaded=false)
+            const populated = data[key].map(item => ({ ...item, organization_id: item.organization_id || 'default-tenant-1' }));
+            this[key].push(...populated); // Push into proxy array (will not persist due to isLoaded=false)
           }
         }
         
