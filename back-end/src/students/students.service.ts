@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InMemoryDbService } from '../database/in-memory-db.service';
+import { ATTENDANCE_STATUS, normalizeAttendanceStatus, summariseAttendance } from '../common/academic-rules';
 
 @Injectable()
 export class StudentsService {
@@ -14,35 +15,39 @@ export class StudentsService {
   async getAttendance(userId: string) {
     const records = this.db.attendance_log.filter((a) => a.student_id === userId);
 
-    // Group by course to create summary
-    const courseStats: Record<string, any> = {};
+    // Group by course to create summary.
+    // M-02: a session excused by approved leave counts as attended, so a student
+    // is no longer penalised for absence the institution itself authorised.
+    const byCourse: Record<string, any[]> = {};
     records.forEach(r => {
-      if (!courseStats[r.course_id]) {
-        const c = this.db.courses.find(course => course.course_id === r.course_id);
-        courseStats[r.course_id] = {
-          course_id: r.course_id,
-          course_code: c?.course_code || r.course_id,
-          course_name: c?.course_name || 'Unknown',
-          present: 0,
-          absent: 0,
-          total: 0,
-        };
-      }
-      courseStats[r.course_id].total++;
-      if (r.status === 'present') courseStats[r.course_id].present++;
-      else courseStats[r.course_id].absent++;
+      (byCourse[r.course_id] ||= []).push(r);
     });
 
-    const summary = Object.values(courseStats).map((s: any) => ({
-      ...s,
-      percentage: s.total > 0 ? Math.round((s.present / s.total) * 100) : 0,
-    }));
+    const summary = Object.entries(byCourse).map(([course_id, rows]) => {
+      const c = this.db.courses.find(course => course.course_id === course_id);
+      const stats = summariseAttendance(rows);
+      return {
+        course_id,
+        course_code: c?.course_code || course_id,
+        course_name: c?.course_name || 'Unknown',
+        present: stats.present,
+        absent: stats.absent,
+        excused: stats.excused,
+        total: stats.total,
+        percentage: stats.percentage,
+      };
+    });
 
-    const totalPresent = records.filter(r => r.status === 'present').length;
-    const totalAbsent = records.filter(r => r.status === 'absent').length;
-    const overallPct = records.length > 0 ? Math.round((totalPresent / records.length) * 100) : 0;
+    const overall = summariseAttendance(records);
 
-    return { summary, records, totalPresent, totalAbsent, overallPct };
+    return {
+      summary,
+      records,
+      totalPresent: overall.present,
+      totalAbsent: overall.absent,
+      totalExcused: overall.excused,
+      overallPct: overall.percentage,
+    };
   }
 
   async getCourses(userId: string) {

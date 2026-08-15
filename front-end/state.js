@@ -28,7 +28,13 @@ window.Auth = {
 
         const res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
 
+        // A 401 means the session is no longer valid, so we sign the user out.
+        // Endpoints must NOT use 401 to report a bad value the user typed (e.g.
+        // a wrong current password on the change-password form) — that would end
+        // the session instead of showing an error. Log the origin so any future
+        // stray 401 is traceable rather than looking like a random logout.
         if (res.status === 401) {
+            console.warn(`[Auth] Session rejected by ${endpoint} — signing out.`);
             window.Auth.logout();
             return null;
         }

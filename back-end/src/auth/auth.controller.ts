@@ -1,4 +1,5 @@
 import { Controller, Post, Body, Headers, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { v4 as uuidv4 } from 'uuid';
 import { AuthService } from './auth.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiHeader } from '@nestjs/swagger';
 import { LoginDto, SignupDto, ChangePasswordDto } from '../common/dto/app.dto';
@@ -91,7 +92,8 @@ export class AuthController {
           phone:      ''
         });
         this.db.enrollment.push({
-          enrollment_id: `e${this.db.enrollment.length + 1}`,
+          // H-07: length-derived ids re-use values that already exist.
+          enrollment_id: uuidv4(),
           student_id: id,
           course_id:  'c1',
           year_id:    'y1',
@@ -133,10 +135,11 @@ export class AuthController {
       if (!body.current_password || !body.new_password) {
         throw new BadRequestException('Current and new passwords are required');
       }
-      const result = await this.authService.changePassword(userId, body.current_password, body.new_password);
-      if (!result) {
-        throw new BadRequestException('Current password is incorrect or user not found');
-      }
+      // changePassword throws a specific BadRequest/Unauthorized on failure; it
+      // never returns a falsy result, so the old `if (!result)` branch was dead
+      // and only served to mask the real reason from the user.
+      await this.authService.changePassword(userId, body.current_password, body.new_password);
+      console.log(`[AUTH] Password changed for user_id: ${userId}`);
       return { success: true, message: 'Password changed successfully' };
     } catch (error) {
       if (error instanceof BadRequestException || error instanceof UnauthorizedException) {

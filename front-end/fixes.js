@@ -125,10 +125,13 @@ window.renderStudentAttendance = async function() {
     if (!el) return;
     try {
         const data = await api('/students/me/attendance');
-        const { totalPresent=0, totalAbsent=0, overallPct=0, summary=[] } = data;
-        let html = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;">
+        const { totalPresent=0, totalAbsent=0, totalExcused=0, overallPct=0, summary=[] } = data;
+        // M-02: excused sessions (approved leave) are shown separately and count
+        // towards the overall percentage rather than against it.
+        let html = `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;">
             <div style="text-align:center;padding:16px;background:#f0fdf4;border-radius:8px;"><div style="font-size:12px;color:#64748b;margin-bottom:4px;">PRESENT</div><div style="font-size:32px;font-weight:700;color:#16a34a;">${totalPresent}</div></div>
             <div style="text-align:center;padding:16px;background:#fef2f2;border-radius:8px;"><div style="font-size:12px;color:#64748b;margin-bottom:4px;">ABSENT</div><div style="font-size:32px;font-weight:700;color:#ef4444;">${totalAbsent}</div></div>
+            <div style="text-align:center;padding:16px;background:#fefce8;border-radius:8px;" title="Sessions covered by approved leave — these do not count against you."><div style="font-size:12px;color:#64748b;margin-bottom:4px;">ON LEAVE</div><div style="font-size:32px;font-weight:700;color:#ca8a04;">${totalExcused}</div></div>
             <div style="text-align:center;padding:16px;background:#eff6ff;border-radius:8px;"><div style="font-size:12px;color:#64748b;margin-bottom:4px;">OVERALL %</div><div style="font-size:32px;font-weight:700;color:#2563eb;">${overallPct}%</div></div>
         </div>`;
         if (summary.length) {
@@ -540,7 +543,9 @@ window.renderSettings = function() {
         <div style="padding:20px;background:#f8fafc;border-radius:8px;">
             <h4 style="margin:0 0 16px;font-size:14px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Change Password</h4>
             <input type="password" id="currentPass" placeholder="Current password" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;box-sizing:border-box;font-size:14px;">
-            <input type="password" id="newPass" placeholder="New password (min 6 chars)" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:6px;margin-bottom:16px;box-sizing:border-box;font-size:14px;">
+            <input type="password" id="newPass" placeholder="New password" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:6px;margin-bottom:6px;box-sizing:border-box;font-size:14px;">
+            <input type="password" id="confirmPass" placeholder="Confirm new password" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:6px;margin-bottom:8px;box-sizing:border-box;font-size:14px;">
+            <p style="margin:0 0 14px;font-size:11px;color:#94a3b8;line-height:1.5;">Must be at least 8 characters and include an uppercase letter, a lowercase letter, a number and a special character (@$!%*?&amp;) &mdash; the same rule the sign-in page enforces.</p>
             <button onclick="changePassword()" style="width:100%;padding:12px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;">Update Password</button>
         </div>
     </div></div>`;
@@ -549,14 +554,30 @@ window.renderSettings = function() {
 window.changePassword = async function() {
     const current = document.getElementById('currentPass')?.value;
     const newPass = document.getElementById('newPass')?.value;
-    if (!current || !newPass) { showToast('Fill both fields', 'warning'); return; }
-    if (newPass.length < 6) { showToast('New password too short', 'warning'); return; }
+    const confirm = document.getElementById('confirmPass')?.value;
+
+    if (!current || !newPass) { showToast('Fill in your current and new password', 'warning'); return; }
+    if (confirm !== undefined && newPass !== confirm) { showToast('New passwords do not match', 'warning'); return; }
+    if (newPass === current) { showToast('New password must be different from your current one', 'warning'); return; }
+    // Mirror the server policy (and the sign-in page) so a user cannot set a
+    // password here that they would then be unable to log in with.
+    if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(newPass)) {
+        showToast('Password needs 8+ characters with an uppercase, lowercase, number and special character', 'warning');
+        return;
+    }
+
     try {
         await api('/auth/change-password', { method:'POST', body: JSON.stringify({ current_password: current, new_password: newPass }) });
-        showToast('Password updated!', 'success');
-        document.getElementById('currentPass').value = '';
-        document.getElementById('newPass').value = '';
-    } catch(e) { showToast(e.message || 'Failed to change password', 'error'); }
+        showToast('Password updated! Use it the next time you sign in.', 'success');
+        ['currentPass', 'newPass', 'confirmPass'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+    } catch(e) {
+        // A wrong current password now returns 400, so it surfaces here as a
+        // message instead of being swallowed by the global 401 logout handler.
+        showToast(e.message || 'Failed to change password', 'error');
+    }
 };
 // ── Faculty: Timetable ───────────────────────────────────────────────────────
 window.renderFacultyTimetable = async function() {
@@ -591,8 +612,12 @@ window.renderFacultyStudents = async function() {
                 branch: p.branch || p.department || '',
                 batch: p.batch || '',
                 section: p.section || '',
-                attendance_pct: p.attendance_pct || 0,
-                is_at_risk: p.is_at_risk || (p.cgpa && p.cgpa < 6.5),
+                // M-04: trust the server's verdict. Re-deriving it here with yet
+                // another threshold (6.5) was a fourth competing definition of
+                // "at risk". null attendance means "no data", not zero.
+                attendance_pct: (p.attendance_pct === null || p.attendance_pct === undefined) ? null : p.attendance_pct,
+                is_at_risk: !!p.is_at_risk,
+                risk_reasons: p.risk_reasons || [],
             };
         });
         if (!students.length) { el.innerHTML = '<div style="padding:20px;text-align:center;color:#64748b;">No students found.</div>'; return; }
@@ -613,7 +638,10 @@ function renderStudentCards(students) {
         const riskBg    = s.is_at_risk ? '#fef2f2' : (s.cgpa && s.cgpa < 7 ? '#fef9c3' : '#dcfce7');
         const riskLabel = s.is_at_risk ? 'AT RISK'  : (s.cgpa && s.cgpa < 7 ? 'LOW CGPA' : 'GOOD');
         const cgpaColor = (s.cgpa && s.cgpa < 6) ? '#dc2626' : (s.cgpa && s.cgpa < 7) ? '#d97706' : '#16a34a';
-        const attColor  = (s.attendance_pct||0) < 75 ? '#ef4444' : '#16a34a';
+        // Distinguish "no attendance recorded" from a genuine 0%.
+        const hasAtt    = s.attendance_pct !== null && s.attendance_pct !== undefined;
+        const attText   = hasAtt ? `${s.attendance_pct}%` : 'N/A';
+        const attColor  = !hasAtt ? '#94a3b8' : (s.attendance_pct < 75 ? '#ef4444' : '#16a34a');
         const sid = s.user_id;
         const fname = (s.first_name||'').replace(/'/g, '');
         const safeFullName = fullName.replace(/'/g, '');
@@ -634,7 +662,7 @@ function renderStudentCards(students) {
                 </div>
                 <div style="text-align:center;">
                     <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.5px;">Attendance</div>
-                    <div style="font-size:18px;font-weight:800;color:${attColor};">${s.attendance_pct||0}%</div>
+                    <div style="font-size:18px;font-weight:800;color:${attColor};">${attText}</div>
                 </div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
@@ -964,9 +992,9 @@ window.renderFacultyDashboard = async function() {
             Object.values(tt.grid).forEach(day => { slots += Object.keys(day).length; });
             classesEl.textContent = slots;
         }).catch(() => { if (classesEl) classesEl.textContent = '—'; });
-        // At-risk students (CGPA < 7 or low attendance)
+        // At-risk students — flagged by the server's single shared rule (M-04).
         if (bodyEl) {
-            const atRisk = students.filter(s => (s.cgpa && s.cgpa < 7) || s.is_at_risk);
+            const atRisk = students.filter(s => s.is_at_risk);
             if (!atRisk.length) {
                 bodyEl.innerHTML = '<div style="text-align:center;padding:24px;color:#16a34a;font-weight:600;">✓ No students currently flagged for intervention</div>';
             } else {
@@ -1754,7 +1782,7 @@ window.submitAddUser = async function() {
     const role       = document.getElementById('newRole')?.value;
     if (!first_name)              { showToast('First name is required', 'warning'); return; }
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showToast('Enter a valid email address', 'warning'); return; }
-    if (!password || password.length < 6) { showToast('Password must be at least 6 characters', 'warning'); return; }
+    if (!password || password.length < 8) { showToast('Password must be at least 8 characters', 'warning'); return; }
     if (!role)                    { showToast('Please select a role', 'warning'); return; }
     try {
         await api('/users', { method:'POST', body: JSON.stringify({ first_name, email, password, role }) });
@@ -1778,6 +1806,8 @@ window.openEditUser = function(u) {
     document.getElementById('editUserName').value = u.username;
     document.getElementById('editUserEmail').value = u.email;
     document.getElementById('editUserRole').value = u.role;
+    // Remember the role we opened with, so we only call the role endpoint on a real change.
+    window._editUserOriginalRole = u.role;
     openModal('editUserModal');
 };
 
@@ -1786,8 +1816,15 @@ window.submitEditUser = async function() {
     const username = document.getElementById('editUserName').value;
     const email = document.getElementById('editUserEmail').value;
     const role = document.getElementById('editUserRole').value;
+    const originalRole = window._editUserOriginalRole;
     try {
-        await api(`/users/${id}`, { method:'PUT', body: JSON.stringify({ username, email, role }) });
+        // Profile fields and role are now separate calls. The server rejects a
+        // `role` key on the profile route so that a routine edit can never carry
+        // a privilege change, and the role endpoint applies its own ceiling.
+        await api(`/users/${id}`, { method:'PUT', body: JSON.stringify({ username, email }) });
+        if (role && role !== originalRole) {
+            await api(`/users/${id}/role`, { method:'PATCH', body: JSON.stringify({ role }) });
+        }
         showToast('User updated!', 'success');
         closeModal('editUserModal');
         renderUsersTable();
@@ -1847,7 +1884,12 @@ window.renderAttendanceOverride = async function() {
     if (!el) return;
     try {
         const leaves = await api('/leave');
-        const overrides = leaves.filter(l => l.leave_type === 'medical' && l.status === 'pending');
+        // M-09: compare case-insensitively. The student form posts "medical" while
+        // older records store "Medical", so the previous exact match against the
+        // lowercase literal never matched anything and this list was always empty.
+        const overrides = leaves.filter(l =>
+            String(l.leave_type || '').trim().toLowerCase() === 'medical' &&
+            String(l.status || '').trim().toLowerCase() === 'pending');
         if (!overrides.length) { el.innerHTML = '<p style="text-align:center;color:#64748b;">No pending overrides.</p>'; return; }
         el.innerHTML = overrides.map(l => `
             <div style="padding:12px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;">
@@ -2862,17 +2904,44 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div></div>`;
             document.body.appendChild(m);
         }
+
+        // Render whichever view is already active on page load.
+        // switchView() is the only other caller of triggerViewRender(), and it
+        // only fires on a nav click — so the landing view's widgets (e.g. the
+        // student Syllabus Completion tracker) stayed blank until the user
+        // navigated away and came back. Runs here, after the containers above
+        // have been injected.
+        const activeView = document.querySelector('.view-section.active');
+        if (activeView && activeView.id) renderViewWidgets(activeView.id);
     }, 600);
 
     // Hook dashboard render to also render new widgets
     const _origTrigger = window.triggerViewRender;
     window.triggerViewRender = function(viewId) {
         if (_origTrigger) _origTrigger(viewId);
-        if (viewId === 'dashboard-view') {
-            setTimeout(() => { renderActionRequired(); renderSyllabusTracker(); renderFacultySyllabusManager(); }, 200);
-        }
-        if (viewId === 'attendance-override-view') setTimeout(() => renderAdminAttendanceRequests(), 200);
-        if (viewId === 'mark-attendance-view') setTimeout(() => renderFacultyAttendanceRequests(), 200);
-        if (viewId === 'resource-management-view') setTimeout(() => renderAdminResourceBookings(), 200);
+        setTimeout(() => renderViewWidgets(viewId), 200);
     };
 });
+
+/**
+ * Render the widgets this file owns for a given view.
+ *
+ * These are not part of any page's own bootstrap script, so they must be driven
+ * both on navigation and for whichever view is already active when the page
+ * loads. Each renderer no-ops when its container is absent, so calling this for
+ * any view on any role is safe.
+ */
+function renderViewWidgets(viewId) {
+    try {
+        if (viewId === 'dashboard-view') {
+            renderActionRequired();
+            renderSyllabusTracker();
+            renderFacultySyllabusManager();
+        }
+        if (viewId === 'attendance-override-view') renderAdminAttendanceRequests();
+        if (viewId === 'mark-attendance-view')      renderFacultyAttendanceRequests();
+        if (viewId === 'resource-management-view')  renderAdminResourceBookings();
+    } catch (e) {
+        console.error('Widget render error for', viewId, e);
+    }
+}
