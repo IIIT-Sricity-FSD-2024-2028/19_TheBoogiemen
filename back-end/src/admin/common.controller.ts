@@ -1,7 +1,71 @@
-import { Controller, Get, Post, Body, Headers, Param, Put, Query, Patch, Delete, BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Headers, Param, Put, Query, Patch, Delete, Req, BadRequestException, ForbiddenException, NotFoundException, UsePipes, ValidationPipe } from '@nestjs/common';
+import { v4 as uuidv4 } from 'uuid';
 import { InMemoryDbService } from '../database/in-memory-db.service';
 import { Roles } from '../auth/roles.guard';
 import { ApiTags, ApiOperation, ApiResponse, ApiHeader, ApiBody } from '@nestjs/swagger';
+import {
+  ATTENDANCE_STATUS,
+  isAtRisk,
+  normalizeAttendanceStatus,
+  normalizeLeaveType,
+  riskReasons,
+  summariseAttendance,
+} from '../common/academic-rules';
+import { syncLeaveAttendance } from '../common/leave-attendance.sync';
+import {
+  CreateUserDto,
+  ResetUserPasswordDto,
+  UpdateUserDto,
+  UpdateUserRoleDto,
+  canAssignRole,
+  rolesAssignableBy,
+} from '../common/dto/user.dto';
+
+/**
+ * Rejects any body property not declared on the DTO instead of silently
+ * stripping it, so an attempt to smuggle `role`/`password`/`user_id` through a
+ * profile update fails loudly rather than appearing to succeed (audit C-04).
+ */
+const StrictBody = () => UsePipes(new ValidationPipe({
+  whitelist: true,
+  forbidNonWhitelisted: true,
+  transform: true,
+}));
+
+/**
+ * Fields that must never be settable through a general update route.
+ *
+ * The global ValidationPipe runs before any route-scoped pipe and silently
+ * strips unknown keys, so `forbidNonWhitelisted` alone never sees them and the
+ * caller gets a misleading 200. Checking the untouched `request.body` makes the
+ * refusal explicit and keeps the rule visible at the call site.
+ */
+const PROTECTED_USER_FIELDS = ['role', 'password', 'password_hash', 'user_id'];
+
+function rejectProtectedFields(rawBody: any, fields: string[] = PROTECTED_USER_FIELDS) {
+  const offending = fields.filter(f => rawBody && Object.prototype.hasOwnProperty.call(rawBody, f));
+  if (offending.length) {
+    throw new BadRequestException(
+      `The following fields cannot be changed here: ${offending.join(', ')}. ` +
+      `Use PATCH /users/:id/role or PATCH /users/:id/password.`,
+    );
+  }
+}
+
+/**
+ * Copy only the keys the caller actually supplied.
+ *
+ * A validated DTO instance carries every optional property as an own key with
+ * value `undefined`, so a plain `Object.assign` would erase stored values the
+ * request never mentioned.
+ */
+function pickDefined<T extends object>(source: T): Partial<T> {
+  const out: Partial<T> = {};
+  for (const [key, value] of Object.entries(source ?? {})) {
+    if (value !== undefined) out[key] = value;
+  }
+  return out;
+}
 
 @ApiTags('Admin/Reports')
 @Controller()
@@ -172,17 +236,48 @@ export class CommonController {
 
   @Post('attendance')
   @Roles('faculty')
-  @ApiOperation({ summary: 'Record bulk attendance for a course session' })
+  @ApiOperation({ summary: 'Record bulk attendance for a course session (idempotent per student/course/date)' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async recordAttendance(@Body() body: any) {
     const { course_id, date, records } = body;
     if (!course_id || !date || !records) throw new BadRequestException('course_id, date, and records required');
-    const newLogs = (records || []).map((r: any, idx: number) => {
-      const log = { log_id: `al${this.db.attendance_log.length + idx + 1}`, student_id: r.student_id, course_id, date, status: r.status };
-      this.db.attendance_log.push(log as any);
-      return log;
-    });
-    return { saved: newLogs.length, records: newLogs };
+
+    // M-01: re-submitting the same session updates the existing rows rather than
+    // appending duplicates. A double-click previously logged the same absence
+    // twice and permanently skewed the student's attendance percentage.
+    // H-07: identifiers are UUIDs — the old `al${length + idx + 1}` scheme both
+    // skipped values and re-minted ids that already existed.
+    const saved: any[] = [];
+    let created = 0;
+    let updated = 0;
+
+    for (const r of records || []) {
+      if (!r?.student_id) continue;
+      const status = normalizeAttendanceStatus(r.status);
+      const existing = this.db.attendance_log.find(
+        a => a.student_id === r.student_id && a.course_id === course_id && a.date === date,
+      );
+
+      if (existing) {
+        // Never silently discard an excused absence granted by approved leave.
+        if (normalizeAttendanceStatus(existing.status) === ATTENDANCE_STATUS.EXCUSED
+            && status === ATTENDANCE_STATUS.ABSENT) {
+          saved.push(existing);
+          continue;
+        }
+        existing.status = status;
+        updated++;
+        saved.push(existing);
+      } else {
+        const log = { log_id: uuidv4(), student_id: r.student_id, course_id, date, status };
+        this.db.attendance_log.push(log as any);
+        created++;
+        saved.push(log);
+      }
+    }
+
+    if (updated) this.db.persist();
+    return { saved: saved.length, created, updated, records: saved };
   }
 
   // ── Discussions ───────────────────────────────────────────────────────────────
@@ -387,21 +482,45 @@ export class CommonController {
     const student = this.db.students.find(s => s.user_id === userId);
     const studentName = student ? `${student.first_name} ${student.last_name || ''}`.trim() : user?.username || 'Unknown';
     const id = `l${Date.now()}`;
-    const newLeave = { leave_id: id, student_id: userId, student_name: studentName, status: 'pending', applied_on: new Date().toISOString().split('T')[0], ...body };
+    const newLeave = {
+      leave_id: id,
+      student_id: userId,
+      student_name: studentName,
+      status: 'pending',
+      applied_on: new Date().toISOString().split('T')[0],
+      ...body,
+      // M-09: canonicalise on write. The student form posts lowercase ("medical")
+      // while seed data was capitalised ("Medical"), so exact-match filters
+      // downstream matched nothing. One vocabulary from here on.
+      leave_type: normalizeLeaveType(body.leave_type),
+    };
     this.db.leave_applications.push(newLeave as any);
     return { success: true, data: newLeave };
   }
 
   @Patch('leave/:id')
   @Roles('admin', 'head', 'superadmin')
-  @ApiOperation({ summary: 'Approve or reject a leave application' })
+  @ApiOperation({ summary: 'Approve or reject a leave application (syncs excused attendance)' })
   @ApiHeader({ name: 'role', description: 'Role: admin|head|superadmin' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async updateLeave(@Param('id') id: string, @Body() body: { status: string }) {
     const leave = this.db.leave_applications.find(l => l.leave_id === id);
     if (!leave) throw new NotFoundException('Leave application not found');
-    leave.status = body.status;
-    return { success: true, data: leave };
+
+    const status = String(body?.status ?? '').trim().toLowerCase();
+    if (!['pending', 'approved', 'rejected'].includes(status)) {
+      throw new BadRequestException('status must be one of: pending, approved, rejected');
+    }
+
+    leave.status = status;
+    this.db.persist();
+
+    // M-02: approved leave now writes EXCUSED sessions across the leave window so
+    // the student is not marked absent for time the institution authorised.
+    // Reverting the approval removes exactly what it added.
+    const attendance = syncLeaveAttendance(this.db, leave, status);
+
+    return { success: true, data: leave, attendance };
   }
 
   // ── Users ─────────────────────────────────────────────────────────────────────
@@ -420,32 +539,137 @@ export class CommonController {
 
   @Post('users')
   @Roles('admin', 'superadmin', 'head')
+  @StrictBody()
   @ApiOperation({ summary: 'Create a new system user' })
   @ApiHeader({ name: 'role', description: 'Role: admin|superadmin|head' })
-  @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async createUser(@Body() body: any) {
-    if (!body.email || !body.role) throw new BadRequestException('email and role are required');
+  @ApiBody({ type: CreateUserDto })
+  async createUser(@Body() body: CreateUserDto, @Headers('role') actorRole: string) {
+    // C-04: a privilege ceiling now applies. Previously any of admin/head/superadmin
+    // could create an account with any role, contradicting the documented rule that
+    // an Academic Head cannot create Academic Heads or Super Admins.
+    if (!canAssignRole(actorRole, body.role)) {
+      throw new ForbiddenException(
+        `Your role (${actorRole || 'unknown'}) may only create users with role: ${rolesAssignableBy(actorRole).join(', ') || 'none'}`,
+      );
+    }
     if (this.db.users.find(u => u.email === body.email)) throw new BadRequestException('Email already exists');
+
     const id = `u${Date.now()}`;
-    const newUser = { user_id: id, username: body.first_name || body.email.split('@')[0], password: body.password || 'password', ...body };
+    const firstName = body.first_name || body.username || 'New';
+    const newUser = {
+      user_id: id,
+      username: body.username || body.first_name || body.email.split('@')[0],
+      first_name: firstName,
+      last_name: body.last_name || '',
+      email: body.email,
+      phone: body.phone || '',
+      role: body.role,
+      password: body.password || 'password',
+    };
     this.db.users.push(newUser);
+
     if (body.role === 'student') {
-      this.db.students.push({ user_id: id, first_name: body.first_name || body.username || 'New', last_name: body.last_name || '', branch: 'CSE', batch: '2024-2028', cgpa: 7.0, section: 'A', email: body.email, join_date: new Date().toISOString().split('T')[0], dob: '2005-01-01', phone: body.phone || '' });
+      this.db.students.push({ user_id: id, first_name: firstName, last_name: body.last_name || '', branch: 'CSE', batch: '2024-2028', cgpa: 7.0, section: 'A', email: body.email, join_date: new Date().toISOString().split('T')[0], dob: '2005-01-01', phone: body.phone || '' });
     } else if (body.role === 'faculty') {
-      this.db.faculty.push({ user_id: id, first_name: body.first_name || body.username || 'New', last_name: body.last_name || '', designation: 'Assistant Professor', department_id: 'dept1', email: body.email, phone: body.phone || '' });
+      this.db.faculty.push({ user_id: id, first_name: firstName, last_name: body.last_name || '', designation: 'Assistant Professor', department_id: 'dept1', email: body.email, phone: body.phone || '' });
     }
     return { success: true, data: { ...newUser, password: undefined } };
   }
 
   @Put('users/:id')
   @Roles('admin', 'superadmin', 'head')
-  @ApiOperation({ summary: 'Update a user record' })
-  @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async updateUser(@Param('id') id: string, @Body() body: any) {
+  @StrictBody()
+  @ApiOperation({ summary: 'Update a user profile (role and password are not accepted here)' })
+  @ApiBody({ type: UpdateUserDto })
+  async updateUser(@Param('id') id: string, @Body() body: UpdateUserDto, @Req() req: any) {
+    // C-04: refuse privilege-bearing fields outright. The old
+    // `Object.assign(user, body)` let a caller escalate privileges, seize an
+    // account, or corrupt the primary key from this one endpoint.
+    rejectProtectedFields(req?.body);
+
     const user = this.db.users.find(u => u.user_id === id);
     if (!user) throw new NotFoundException('User not found');
-    Object.assign(user, body);
+
+    if (body.email && body.email !== user.email
+        && this.db.users.find(u => u.email === body.email && u.user_id !== id)) {
+      throw new BadRequestException('Email already in use by another account');
+    }
+
+    const changes = pickDefined(body);
+    Object.assign(user, changes);
+    this.db.persist();
+    this.syncProfileRecords(id, changes);
     return { success: true, data: { ...user, password: undefined } };
+  }
+
+  @Patch('users/:id/role')
+  @Roles('admin', 'superadmin', 'head')
+  @StrictBody()
+  @ApiOperation({ summary: 'Change a user role (subject to the caller privilege ceiling)' })
+  @ApiHeader({ name: 'role', description: 'Role: admin|superadmin|head' })
+  @ApiHeader({ name: 'user-id', description: 'Acting user ID' })
+  @ApiBody({ type: UpdateUserRoleDto })
+  async updateUserRole(
+    @Param('id') id: string,
+    @Body() body: UpdateUserRoleDto,
+    @Headers('role') actorRole: string,
+    @Headers('user-id') actorId: string,
+  ) {
+    const user = this.db.users.find(u => u.user_id === id);
+    if (!user) throw new NotFoundException('User not found');
+
+    if (actorId && actorId === id) {
+      throw new ForbiddenException('You cannot change your own role');
+    }
+    // The caller must be permitted to grant the new role AND to manage the role
+    // the account currently holds, so a head cannot demote or hijack a superadmin.
+    if (!canAssignRole(actorRole, body.role)) {
+      throw new ForbiddenException(
+        `Your role (${actorRole || 'unknown'}) may only assign: ${rolesAssignableBy(actorRole).join(', ') || 'none'}`,
+      );
+    }
+    if (!canAssignRole(actorRole, user.role)) {
+      throw new ForbiddenException(`Your role (${actorRole || 'unknown'}) may not modify a ${user.role} account`);
+    }
+
+    user.role = body.role;
+    this.db.persist();
+    return { success: true, data: { ...user, password: undefined } };
+  }
+
+  @Patch('users/:id/password')
+  @Roles('admin', 'superadmin')
+  @StrictBody()
+  @ApiOperation({ summary: 'Administrative password reset' })
+  @ApiHeader({ name: 'role', description: 'Role: admin|superadmin' })
+  @ApiBody({ type: ResetUserPasswordDto })
+  async resetUserPassword(
+    @Param('id') id: string,
+    @Body() body: ResetUserPasswordDto,
+    @Headers('role') actorRole: string,
+  ) {
+    const user = this.db.users.find(u => u.user_id === id);
+    if (!user) throw new NotFoundException('User not found');
+    if (!canAssignRole(actorRole, user.role)) {
+      throw new ForbiddenException(`Your role (${actorRole || 'unknown'}) may not reset a ${user.role} password`);
+    }
+    user.password = body.new_password;
+    this.db.persist();
+    return { success: true, message: 'Password reset successfully' };
+  }
+
+  /** Keep the denormalised student/faculty profile rows in step with the user record. */
+  private syncProfileRecords(userId: string, changes: Partial<UpdateUserDto>) {
+    const fields = ['first_name', 'last_name', 'email', 'phone'] as const;
+    let touched = false;
+    for (const collection of [this.db.students, this.db.faculty]) {
+      const profile = collection.find((p: any) => p.user_id === userId);
+      if (!profile) continue;
+      for (const f of fields) {
+        if (changes[f] !== undefined) { profile[f] = changes[f]; touched = true; }
+      }
+    }
+    if (touched) this.db.persist();
   }
 
   @Delete('users/:id')
@@ -485,14 +709,25 @@ export class CommonController {
   @Roles('admin', 'head', 'superadmin', 'faculty')
   @ApiOperation({ summary: 'Get at-risk students list' })
   async getAtRisk() {
+    // M-04: uses the shared isAtRisk() predicate. This endpoint previously used
+    // `cgpa < 6.5` while the faculty dashboard used `cgpa < 6`, so the same
+    // student appeared at-risk on one screen and healthy on the other.
+    // M-02: EXCUSED sessions count as attended via summariseAttendance().
     return this.db.students
-      .filter(s => s.cgpa < 6.5)
       .map(s => {
         const records = this.db.attendance_log.filter(a => a.student_id === s.user_id);
-        const present = records.filter(r => r.status === 'present').length;
-        const attendance_pct = records.length > 0 ? Math.round((present / records.length) * 100) : 65;
-        return { ...s, attendance_pct, is_at_risk: true };
-      });
+        const attendance = summariseAttendance(records);
+        // No attendance data means unknown, not a fabricated 65%.
+        const attendance_pct = attendance.total > 0 ? attendance.percentage : null;
+        return {
+          ...s,
+          attendance_pct,
+          excused_sessions: attendance.excused,
+          is_at_risk: isAtRisk({ cgpa: s.cgpa, attendancePct: attendance_pct }),
+          risk_reasons: riskReasons({ cgpa: s.cgpa, attendancePct: attendance_pct }),
+        };
+      })
+      .filter(s => s.is_at_risk);
   }
 
   // ── Resources ─────────────────────────────────────────────────────────────────
@@ -706,10 +941,26 @@ export class CommonController {
     const req = this.db.attendance_requests.find(r => r.request_id === id);
     if (!req) throw new NotFoundException('Attendance request not found');
     if (req.admin_status !== 'approved') throw new BadRequestException('Admin has not approved this request');
+    if (req.faculty_status === 'granted') throw new BadRequestException('This request has already been granted');
     req.faculty_status = 'granted';
-    // Add attendance log entry
-    const log = { log_id: `al${this.db.attendance_log.length + 1}`, student_id: req.student_id, course_id: req.course_id, date: req.date, status: 'present' };
-    this.db.attendance_log.push(log as any);
+
+    // H-07: UUID instead of `al${length + 1}`, which minted ids that already existed.
+    // M-01: correcting an existing record rather than appending a second one.
+    const existing = this.db.attendance_log.find(
+      a => a.student_id === req.student_id && a.course_id === req.course_id && a.date === req.date,
+    );
+    if (existing) {
+      existing.status = ATTENDANCE_STATUS.PRESENT;
+    } else {
+      this.db.attendance_log.push({
+        log_id: uuidv4(),
+        student_id: req.student_id,
+        course_id: req.course_id,
+        date: req.date,
+        status: ATTENDANCE_STATUS.PRESENT,
+      } as any);
+    }
+    this.db.persist();
     return { success: true, data: req };
   }
 
