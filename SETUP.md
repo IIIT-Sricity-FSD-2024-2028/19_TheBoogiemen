@@ -14,7 +14,37 @@ cd back-end
 npm install
 ```
 
-### Step 2: Start the Server
+### Step 2: Configure the environment  *(required — the server will not start without this)*
+
+Authentication uses signed JWTs, so the server needs a signing secret. It refuses
+to boot without one rather than falling back to a built-in default.
+
+```bash
+cd back-end
+cp .env.example .env          # Windows: copy .env.example .env
+```
+
+Then open `.env` and replace the `JWT_SECRET` placeholder with a real random value:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
+```
+
+`.env` is gitignored — never commit it.
+
+### Step 3: Prepare the seed data (first run only)
+
+Seeded passwords are stored as bcrypt hashes. Run the migration once to convert
+the shipped data file:
+
+```bash
+npm run migrate:passwords
+```
+
+The script is idempotent — running it again is harmless. The login credentials
+below are unchanged; only their stored form is.
+
+### Step 4: Start the Server
 ```bash
 npm run start
 ```
@@ -24,17 +54,15 @@ If `npm run start` doesn't work, try:
 npx nest start
 ```
 
-Or directly:
-```bash
-node node_modules/@nestjs/cli/bin/nest.js start
-```
-
-### Step 3: Open the Application
+### Step 5: Open the Application
 Open your browser and go to: **http://localhost:5001**
 
 ---
 
 ## Login Credentials
+
+Demo accounts only. These are seeded fixtures for local development — do not
+reuse them anywhere real, and never add a genuine account's password to this file.
 
 | Role        | Email                  | Password  |
 |-------------|------------------------|-----------|
@@ -43,6 +71,28 @@ Open your browser and go to: **http://localhost:5001**
 | Admin       | admin@example.com      | password  |
 | Head        | head@example.com       | Head@123 |
 | Super Admin | super@example.com      | Super@123 |
+
+> `admin@example.com` uses a password that does not meet the strength policy the
+> app now enforces on password *changes*. It still logs in, but cannot be reset
+> to the same value.
+
+## How authentication works
+
+1. `POST /api/auth/login` verifies the password against its bcrypt hash and
+   returns a signed JWT (2h lifetime by default).
+2. The browser stores the token and sends it as `Authorization: Bearer <token>`
+   on every request.
+3. The server derives both **identity** (`sub`) and **role** from the token's
+   verified claims. There are no `role` or `user-id` headers any more — sending
+   them has no effect.
+4. Requests without a valid token get `401`. A valid token without sufficient
+   privilege gets `403`.
+
+Only `POST /api/auth/login` and `POST /api/auth/signup` are reachable without a
+token. Self-registration creates **student** accounts only; faculty and staff
+accounts are created by an administrator.
+
+In Swagger (`/api/docs`), click **Authorize** and paste a token from login.
 
 ---
 

@@ -1,7 +1,6 @@
 import { Controller, Patch, Get, Body, Param, UseGuards, SetMetadata, Post, Put, Delete } from '@nestjs/common';
-import { ApiTags, ApiHeader, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
 import { UserService } from './user.user.service';
-import { RolesGuard } from '../../common/guards/roles.guard';
 import { EnvGuard } from '../../common/guards/env.guard';
 import { UpdateRoleInputDto } from './dto/update-role.input.dto';
 import { UpdateUserInputDto } from './dto/update-user.input.dto';
@@ -10,14 +9,12 @@ import { BaseResponseDto } from '../../common/dto/base-response.dto';
 import { MOCK_USERS, MOCK_STUDENTS, MOCK_FACULTY } from '../../common/types/mock-data';
 
 @ApiTags('User')
-@ApiHeader({ name: 'x-user-role', required: true })
-@UseGuards(RolesGuard)
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Patch(':id/role')
-  @SetMetadata('roles', ['academic_head'])
+  @SetMetadata('roles', ['head'])
   @ApiParam({ name: 'id', description: 'User ID' })
   @ApiBody({ type: UpdateRoleInputDto })
   @ApiResponse({ status: 200, type: UserOutputDto })
@@ -27,7 +24,7 @@ export class UserController {
   }
 
   @Get('mock-data')
-  @SetMetadata('roles', ['faculty', 'student', 'admin', 'academic_head'])
+  @SetMetadata('roles', ['faculty', 'student', 'admin', 'head', 'superadmin'])
   @UseGuards(EnvGuard)
   @ApiResponse({ status: 200, description: 'Fetch mock data for testing UUIDs' })
   getMockData() {
@@ -39,7 +36,7 @@ export class UserController {
   }
 
   @Get(':id')
-  @SetMetadata('roles', ['admin', 'academic_head'])
+  @SetMetadata('roles', ['admin', 'head', 'superadmin'])
   @ApiParam({ name: 'id', description: 'User ID' })
   @ApiResponse({ status: 200, type: UserOutputDto })
   async getUserById(@Param('id') id: string) {
@@ -48,7 +45,7 @@ export class UserController {
   }
 
   @Get()
-  @SetMetadata('roles', ['admin', 'academic_head'])
+  @SetMetadata('roles', ['admin', 'head', 'superadmin'])
   @ApiResponse({ status: 200, type: [UserOutputDto] })
   async getAllUsers() {
     const data = await this.userService.getAllUsers();
@@ -56,7 +53,7 @@ export class UserController {
   }
 
   @Post()
-  @SetMetadata('roles', ['admin'])
+  @SetMetadata('roles', ['admin', 'superadmin'])
   @ApiBody({ type: UpdateUserInputDto })
   @ApiResponse({ status: 201, type: UserOutputDto })
   async createUser(@Body() dto: UpdateUserInputDto) {
@@ -65,7 +62,7 @@ export class UserController {
   }
 
   @Put(':id')
-  @SetMetadata('roles', ['admin', 'academic_head'])
+  @SetMetadata('roles', ['admin', 'head', 'superadmin'])
   @ApiParam({ name: 'id', description: 'User ID' })
   @ApiBody({ type: UpdateUserInputDto })
   @ApiResponse({ status: 200, type: UserOutputDto })
@@ -75,7 +72,7 @@ export class UserController {
   }
 
   @Delete(':id')
-  @SetMetadata('roles', ['admin'])
+  @SetMetadata('roles', ['admin', 'superadmin'])
   @ApiParam({ name: 'id', description: 'User ID' })
   @ApiResponse({ status: 200, description: 'User deleted successfully' })
   async deleteUser(@Param('id') id: string) {

@@ -1,9 +1,13 @@
 /**
- * state.js — Real JWT-based Auth & API helper
- * Replaces the mock localStorage session system.
+ * state.js — JWT auth and API helper.
+ *
+ * Identity and role travel ONLY in the signed bearer token. The old `role` and
+ * `user-id` headers are gone: the server derives both from the token's verified
+ * claims, so sending them would achieve nothing and inviting them back would
+ * reintroduce the bypass they caused.
  */
 
-const API_BASE = 'http://localhost:5001/api';
+const API_BASE = '/api';
 
 window.Auth = {
 
@@ -15,15 +19,38 @@ window.Auth = {
     },
     getCurrentUser: () => window.Auth.getUser(), // alias for legacy calls
 
+    /**
+     * Read the `exp` claim without verifying the signature.
+     *
+     * This is a UX affordance only — it lets us sign out before firing a request
+     * we know will fail. The server is the sole authority on token validity.
+     */
+    getTokenExpiry: () => {
+        const token = window.Auth.getToken();
+        if (!token) return null;
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            return typeof payload.exp === 'number' ? payload.exp * 1000 : null;
+        } catch { return null; }
+    },
+
+    isTokenExpired: () => {
+        const expiresAt = window.Auth.getTokenExpiry();
+        return expiresAt !== null && Date.now() >= expiresAt;
+    },
+
     // ── API fetch with auth header ──────────────────────────────────────────
     apiFetch: async (endpoint, options = {}) => {
         const token = window.Auth.getToken();
-        const user = window.Auth.getUser();
         const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
         if (token) headers['Authorization'] = `Bearer ${token}`;
-        if (user) {
-            headers['role'] = user.role;
-            headers['user-id'] = user.user_id;
+
+        // Expired tokens are rejected locally so the user gets a clean sign-out
+        // rather than a failed action followed by a redirect.
+        if (token && window.Auth.isTokenExpired()) {
+            console.warn('[Auth] Token expired — signing out.');
+            window.Auth.logout();
+            return null;
         }
 
         const res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
@@ -39,8 +66,11 @@ window.Auth = {
             return null;
         }
 
+        // 403 = authenticated but not permitted. Must NOT sign the user out —
+        // being refused one action does not invalidate the session.
         if (res.status === 403) {
-            throw new Error('Access denied: insufficient permissions');
+            const body = await res.json().catch(() => ({}));
+            throw new Error(body.message || 'Access denied: insufficient permissions');
         }
 
         const data = await res.json().catch(() => ({}));
@@ -96,7 +126,15 @@ window.Auth = {
         window.location.href = 'login.html';
     },
 
-    // ── Route guard ─────────────────────────────────────────────────────────
+    /**
+     * Route guard — UX ONLY, NOT a security control.
+     *
+     * The role it checks comes from localStorage, which the user can edit. Editing
+     * it lets someone *render* a dashboard they are not entitled to, but every
+     * request that dashboard makes still carries their real token, so the server
+     * returns 403 and the page stays empty. Never rely on this to protect data:
+     * authorization lives in the backend guards.
+     */
     requireAuth: (allowedRoles = []) => {
         const user  = window.Auth.getUser();
         const token = window.Auth.getToken();
@@ -104,6 +142,11 @@ window.Auth = {
         if (!user || !token) {
             console.warn('⛔ Unauthorized — redirecting to login');
             window.location.href = 'login.html';
+            return null;
+        }
+        if (window.Auth.isTokenExpired()) {
+            console.warn('⛔ Session expired — redirecting to login');
+            window.Auth.logout();
             return null;
         }
         if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {

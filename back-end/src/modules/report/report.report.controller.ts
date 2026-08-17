@@ -1,7 +1,6 @@
 import { Controller, Post, Body, UseGuards, SetMetadata, Get, Param, Put, Patch, Delete } from '@nestjs/common';
-import { ApiTags, ApiHeader, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { ReportService } from './report.report.service';
-import { RolesGuard } from '../../common/guards/roles.guard';
 import { EnvGuard } from '../../common/guards/env.guard';
 import { GenerateProgressInputDto } from './dto/generate-progress.input.dto';
 import { ProgressReportOutputDto } from './dto/progress-report.output.dto';
@@ -9,8 +8,6 @@ import { BaseResponseDto } from '../../common/dto/base-response.dto';
 import { MOCK_STUDENTS, MOCK_SECTIONS } from '../../common/types/mock-data';
 
 @ApiTags('Report')
-@ApiHeader({ name: 'x-user-role', required: true })
-@UseGuards(RolesGuard)
 @Controller('reports')
 export class ReportController {
   constructor(private readonly reportService: ReportService) {}
@@ -25,7 +22,7 @@ export class ReportController {
   }
 
   @Get('mock-data')
-  @SetMetadata('roles', ['faculty', 'student', 'admin', 'academic_head'])
+  @SetMetadata('roles', ['faculty', 'student', 'admin', 'head', 'superadmin'])
   @UseGuards(EnvGuard)
   @ApiResponse({ status: 200, description: 'Fetch mock data for testing UUIDs' })
   getMockData() {
@@ -36,7 +33,7 @@ export class ReportController {
   }
 
   @Get()
-  @SetMetadata('roles', ['admin', 'faculty', 'student'])
+  @SetMetadata('roles', ['admin', 'faculty', 'student', 'superadmin'])
   @ApiResponse({ status: 200, description: 'Fetch all saved reports' })
   async getAllReports() {
     const data = await this.reportService.getAllReports();
@@ -44,7 +41,7 @@ export class ReportController {
   }
 
   @Get(':id')
-  @SetMetadata('roles', ['admin', 'faculty', 'student'])
+  @SetMetadata('roles', ['admin', 'faculty', 'student', 'superadmin'])
   @ApiResponse({ status: 200, description: 'Fetch saved report by ID' })
   async getReportById(@Param('id') id: string) {
     const data = await this.reportService.getReportById(id);
@@ -52,7 +49,7 @@ export class ReportController {
   }
 
   @Post()
-  @SetMetadata('roles', ['admin', 'faculty'])
+  @SetMetadata('roles', ['admin', 'faculty', 'superadmin'])
   @ApiResponse({ status: 201, description: 'Create saved report' })
   async createReport(@Body() dto: any) {
     const data = await this.reportService.createReport(dto);
@@ -60,7 +57,7 @@ export class ReportController {
   }
 
   @Put(':id')
-  @SetMetadata('roles', ['admin', 'faculty'])
+  @SetMetadata('roles', ['admin', 'faculty', 'superadmin'])
   @ApiResponse({ status: 200, description: 'Full update of report' })
   async updateReport(@Param('id') id: string, @Body() dto: any) {
     const data = await this.reportService.updateReport(id, dto);
@@ -68,7 +65,7 @@ export class ReportController {
   }
 
   @Patch(':id')
-  @SetMetadata('roles', ['admin', 'faculty'])
+  @SetMetadata('roles', ['admin', 'faculty', 'superadmin'])
   @ApiResponse({ status: 200, description: 'Partial update of report' })
   async patchReport(@Param('id') id: string, @Body() dto: any) {
     const data = await this.reportService.patchReport(id, dto);
@@ -76,7 +73,7 @@ export class ReportController {
   }
 
   @Delete(':id')
-  @SetMetadata('roles', ['admin', 'faculty'])
+  @SetMetadata('roles', ['admin', 'faculty', 'superadmin'])
   @ApiResponse({ status: 200, description: 'Delete report' })
   async deleteReport(@Param('id') id: string) {
     await this.reportService.deleteReport(id);

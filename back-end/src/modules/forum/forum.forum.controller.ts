@@ -1,7 +1,6 @@
 import { Controller, Post, Get, Body, Param, UseGuards, SetMetadata, Put, Patch, Delete } from '@nestjs/common';
-import { ApiTags, ApiHeader, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
 import { ForumService } from './forum.forum.service';
-import { RolesGuard } from '../../common/guards/roles.guard';
 import { EnvGuard } from '../../common/guards/env.guard';
 import { CreatePostInputDto } from './dto/create-post.input.dto';
 import { ReplyInputDto } from './dto/reply.input.dto';
@@ -12,8 +11,6 @@ import { SEED } from '../../common/types/seed-constants';
 import { MOCK_FORUM_POSTS, MOCK_FORUM_REPLIES, MOCK_TOPICS } from '../../common/types/mock-data';
 
 @ApiTags('Forum')
-@ApiHeader({ name: 'x-user-role', required: true })
-@UseGuards(RolesGuard)
 @Controller('forum')
 export class ForumController {
   constructor(private readonly forumService: ForumService) {}
@@ -52,7 +49,7 @@ export class ForumController {
   }
 
   @Get('mock-data')
-  @SetMetadata('roles', ['faculty', 'student', 'admin', 'academic_head'])
+  @SetMetadata('roles', ['faculty', 'student', 'admin', 'head', 'superadmin'])
   @UseGuards(EnvGuard)
   @ApiResponse({ status: 200, description: 'Fetch mock data for testing UUIDs' })
   getMockData() {
@@ -64,7 +61,7 @@ export class ForumController {
   }
 
   @Get()
-  @SetMetadata('roles', ['admin', 'faculty', 'student'])
+  @SetMetadata('roles', ['admin', 'faculty', 'student', 'superadmin'])
   @ApiResponse({ status: 200, description: 'Fetch all posts' })
   async getAllPosts() {
     const data = await this.forumService.getAllPosts();
@@ -72,7 +69,7 @@ export class ForumController {
   }
 
   @Get(':id')
-  @SetMetadata('roles', ['admin', 'faculty', 'student'])
+  @SetMetadata('roles', ['admin', 'faculty', 'student', 'superadmin'])
   @ApiResponse({ status: 200, description: 'Fetch post by ID' })
   async getPostById(@Param('id') id: string) {
     const data = await this.forumService.getPostById(id);
@@ -80,7 +77,7 @@ export class ForumController {
   }
 
   @Put(':id')
-  @SetMetadata('roles', ['admin', 'faculty', 'student'])
+  @SetMetadata('roles', ['admin', 'faculty', 'student', 'superadmin'])
   @ApiBody({ type: UpdatePostInputDto })
   @ApiResponse({ status: 200, description: 'Full update of post' })
   async updatePost(@Param('id') id: string, @Body() dto: UpdatePostInputDto) {
@@ -89,7 +86,7 @@ export class ForumController {
   }
 
   @Patch(':id')
-  @SetMetadata('roles', ['admin', 'faculty', 'student'])
+  @SetMetadata('roles', ['admin', 'faculty', 'student', 'superadmin'])
   @ApiBody({ type: UpdatePostInputDto })
   @ApiResponse({ status: 200, description: 'Partial update of post' })
   async patchPost(@Param('id') id: string, @Body() dto: UpdatePostInputDto) {
@@ -98,7 +95,7 @@ export class ForumController {
   }
 
   @Delete(':id')
-  @SetMetadata('roles', ['admin', 'faculty'])
+  @SetMetadata('roles', ['admin', 'faculty', 'superadmin'])
   @ApiResponse({ status: 200, description: 'Delete post' })
   async deletePost(@Param('id') id: string) {
     await this.forumService.deletePost(id);
@@ -106,7 +103,7 @@ export class ForumController {
   }
 
   @Delete(':postId/reply/:replyId')
-  @SetMetadata('roles', ['admin', 'faculty'])
+  @SetMetadata('roles', ['admin', 'faculty', 'superadmin'])
   @ApiResponse({ status: 200, description: 'Delete reply' })
   async deleteReply(@Param('replyId') replyId: string) {
     await this.forumService.deleteReply(replyId);

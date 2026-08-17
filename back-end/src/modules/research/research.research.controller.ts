@@ -1,7 +1,6 @@
 import { Controller, Post, Patch, Body, Param, UseGuards, SetMetadata, Req, Get, Put, Delete } from '@nestjs/common';
-import { ApiTags, ApiHeader, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
 import { ResearchService } from './research.research.service';
-import { RolesGuard } from '../../common/guards/roles.guard';
 import { EnvGuard } from '../../common/guards/env.guard';
 import { UploadMilestoneInputDto } from './dto/upload-milestone.input.dto';
 import { ReviewMilestoneInputDto } from './dto/review-milestone.input.dto';
@@ -12,8 +11,6 @@ import { SEED } from '../../common/types/seed-constants';
 import { MOCK_RESEARCH_PROJECTS } from '../../common/types/mock-data';
 
 @ApiTags('Research')
-@ApiHeader({ name: 'x-user-role', required: true })
-@UseGuards(RolesGuard)
 @Controller('research')
 export class ResearchController {
   constructor(private readonly researchService: ResearchService) {}
@@ -43,7 +40,7 @@ export class ResearchController {
   }
 
   @Get('mock-data')
-  @SetMetadata('roles', ['faculty', 'student', 'admin', 'academic_head'])
+  @SetMetadata('roles', ['faculty', 'student', 'admin', 'head', 'superadmin'])
   @UseGuards(EnvGuard)
   @ApiResponse({ status: 200, description: 'Fetch mock data for testing UUIDs' })
   getMockData() {
@@ -53,7 +50,7 @@ export class ResearchController {
   }
 
   @Get()
-  @SetMetadata('roles', ['admin', 'faculty', 'student', 'academic_head'])
+  @SetMetadata('roles', ['admin', 'faculty', 'student', 'head', 'superadmin'])
   @ApiResponse({ status: 200, description: 'Fetch all projects' })
   async getAllProjects() {
     const data = await this.researchService.getAllProjects();
@@ -61,7 +58,7 @@ export class ResearchController {
   }
 
   @Get(':id')
-  @SetMetadata('roles', ['admin', 'faculty', 'student', 'academic_head'])
+  @SetMetadata('roles', ['admin', 'faculty', 'student', 'head', 'superadmin'])
   @ApiResponse({ status: 200, description: 'Fetch project by ID' })
   async getProjectById(@Param('id') id: string) {
     const data = await this.researchService.getProjectById(id);
@@ -69,7 +66,7 @@ export class ResearchController {
   }
 
   @Put(':id')
-  @SetMetadata('roles', ['admin', 'faculty'])
+  @SetMetadata('roles', ['admin', 'faculty', 'superadmin'])
   @ApiBody({ type: UpdateProjectInputDto })
   @ApiResponse({ status: 200, description: 'Full update of project' })
   async updateProject(@Param('id') id: string, @Body() dto: UpdateProjectInputDto) {
@@ -78,7 +75,7 @@ export class ResearchController {
   }
 
   @Patch(':id')
-  @SetMetadata('roles', ['admin', 'faculty'])
+  @SetMetadata('roles', ['admin', 'faculty', 'superadmin'])
   @ApiBody({ type: UpdateProjectInputDto })
   @ApiResponse({ status: 200, description: 'Partial update of project' })
   async patchProject(@Param('id') id: string, @Body() dto: UpdateProjectInputDto) {
@@ -87,7 +84,7 @@ export class ResearchController {
   }
 
   @Delete(':id')
-  @SetMetadata('roles', ['admin', 'faculty'])
+  @SetMetadata('roles', ['admin', 'faculty', 'superadmin'])
   @ApiResponse({ status: 200, description: 'Delete project' })
   async deleteProject(@Param('id') id: string) {
     await this.researchService.deleteProject(id);
@@ -95,7 +92,7 @@ export class ResearchController {
   }
 
   @Delete('milestones/:id')
-  @SetMetadata('roles', ['admin', 'faculty', 'student'])
+  @SetMetadata('roles', ['admin', 'faculty', 'student', 'superadmin'])
   @ApiResponse({ status: 200, description: 'Delete milestone' })
   async deleteMilestone(@Param('id') id: string) {
     await this.researchService.deleteMilestone(id);

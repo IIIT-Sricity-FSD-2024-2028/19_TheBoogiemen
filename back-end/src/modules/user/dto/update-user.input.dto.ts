@@ -21,5 +21,5 @@ export class UpdateUserInputDto {
   @ApiPropertyOptional({ enum: UserRoleEnum })
   @IsOptional()
   @IsEnum(UserRoleEnum)
-  role?: 'student' | 'faculty' | 'admin' | 'academic_head';
+  role?: 'student' | 'faculty' | 'admin' | 'head';
 }

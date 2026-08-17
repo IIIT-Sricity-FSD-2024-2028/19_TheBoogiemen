@@ -11,14 +11,32 @@
 **Start the Backend Server:**
 ```bash
 cd back-end
+npm install
+cp .env.example .env          # then set a real JWT_SECRET — see SETUP.md
+npm run migrate:passwords     # first run only: hashes the seeded passwords
 npm run start
 ```
 
 Then open: **http://localhost:5001**
 
+> The server will not start without a valid `JWT_SECRET` in `back-end/.env`.
+> This is deliberate: a default signing key would let anyone mint an admin token.
+
 ---
 
-## 🔐 Enhanced Security & Authentication
+## 🔐 Authentication & Authorization
+
+Identity and role come from a **signed JWT**, verified on every request:
+
+- `POST /api/auth/login` checks the password against its bcrypt hash and returns a token (2h lifetime).
+- The browser sends it as `Authorization: Bearer <token>`.
+- The server reads identity (`sub`) and role from the token's verified claims.
+- Everything is **deny-by-default**: only login and signup work without a token.
+  No token → `401`. Valid token, wrong role → `403`.
+- Self-registration creates **student** accounts only. Faculty and staff are
+  provisioned by an administrator, subject to a role privilege ceiling.
+
+Passwords are stored as bcrypt hashes, never in plaintext.
 
 ### Password Requirements
 - **Minimum 8 characters**

@@ -1,7 +1,6 @@
 import { Controller, Get, Param, UseGuards, SetMetadata, Post, Put, Patch, Delete, Body } from '@nestjs/common';
-import { ApiTags, ApiHeader, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
 import { AttendanceService } from './attendance.attendance.service';
-import { RolesGuard } from '../../common/guards/roles.guard';
 import { EnvGuard } from '../../common/guards/env.guard';
 import { GetAttendanceInputDto } from './dto/get-attendance.input.dto';
 import { CreateAttendanceInputDto } from './dto/create-attendance.input.dto';
@@ -11,14 +10,12 @@ import { BaseResponseDto } from '../../common/dto/base-response.dto';
 import { MOCK_ATTENDANCE, MOCK_ENROLLMENTS, MOCK_SECTIONS } from '../../common/types/mock-data';
 
 @ApiTags('Attendance')
-@ApiHeader({ name: 'x-user-role', required: true })
-@UseGuards(RolesGuard)
 @Controller('attendance')
 export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
 
   @Get('student/:student_id/subject-wise')
-  @SetMetadata('roles', ['student', 'faculty', 'admin'])
+  @SetMetadata('roles', ['student', 'faculty', 'admin', 'superadmin'])
   @ApiParam({ name: 'student_id', description: 'Student ID' })
   @ApiResponse({ status: 200, type: [AttendanceOutputDto] })
   async getSubjectWiseAttendance(@Param() params: GetAttendanceInputDto) {
@@ -27,7 +24,7 @@ export class AttendanceController {
   }
 
   @Get('mock-data')
-  @SetMetadata('roles', ['faculty', 'student', 'admin', 'academic_head'])
+  @SetMetadata('roles', ['faculty', 'student', 'admin', 'head', 'superadmin'])
   @UseGuards(EnvGuard)
   @ApiResponse({ status: 200, description: 'Fetch mock data for testing UUIDs' })
   getMockData() {
@@ -39,7 +36,7 @@ export class AttendanceController {
   }
 
   @Get()
-  @SetMetadata('roles', ['admin', 'academic_head', 'faculty'])
+  @SetMetadata('roles', ['admin', 'head', 'faculty', 'superadmin'])
   @ApiResponse({ status: 200, description: 'Fetch all attendance logs' })
   async getAllLogs() {
     const data = await this.attendanceService.getAllLogs();
@@ -47,7 +44,7 @@ export class AttendanceController {
   }
 
   @Get(':id')
-  @SetMetadata('roles', ['admin', 'academic_head', 'faculty', 'student'])
+  @SetMetadata('roles', ['admin', 'head', 'faculty', 'student', 'superadmin'])
   @ApiResponse({ status: 200, description: 'Fetch attendance log by ID' })
   async getLogById(@Param('id') id: string) {
     const data = await this.attendanceService.getLogById(id);
@@ -55,7 +52,7 @@ export class AttendanceController {
   }
 
   @Post()
-  @SetMetadata('roles', ['admin', 'faculty'])
+  @SetMetadata('roles', ['admin', 'faculty', 'superadmin'])
   @ApiBody({ type: CreateAttendanceInputDto })
   @ApiResponse({ status: 201, description: 'Create attendance log' })
   async createLog(@Body() dto: CreateAttendanceInputDto) {
@@ -64,7 +61,7 @@ export class AttendanceController {
   }
 
   @Put(':id')
-  @SetMetadata('roles', ['admin', 'faculty'])
+  @SetMetadata('roles', ['admin', 'faculty', 'superadmin'])
   @ApiBody({ type: UpdateAttendanceInputDto })
   @ApiResponse({ status: 200, description: 'Full update of attendance log' })
   async updateLog(@Param('id') id: string, @Body() dto: UpdateAttendanceInputDto) {
@@ -73,7 +70,7 @@ export class AttendanceController {
   }
 
   @Patch(':id')
-  @SetMetadata('roles', ['admin', 'faculty'])
+  @SetMetadata('roles', ['admin', 'faculty', 'superadmin'])
   @ApiBody({ type: UpdateAttendanceInputDto })
   @ApiResponse({ status: 200, description: 'Partial update of attendance log' })
   async patchLog(@Param('id') id: string, @Body() dto: UpdateAttendanceInputDto) {
@@ -82,7 +79,7 @@ export class AttendanceController {
   }
 
   @Delete(':id')
-  @SetMetadata('roles', ['admin', 'faculty'])
+  @SetMetadata('roles', ['admin', 'faculty', 'superadmin'])
   @ApiResponse({ status: 200, description: 'Delete attendance log' })
   async deleteLog(@Param('id') id: string) {
     await this.attendanceService.deleteLog(id);

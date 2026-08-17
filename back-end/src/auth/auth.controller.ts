@@ -1,17 +1,24 @@
-import { Controller, Post, Body, Headers, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { Controller, Post, Body, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { AuthService } from './auth.service';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiHeader } from '@nestjs/swagger';
+import { PasswordService } from './password.service';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { LoginDto, SignupDto, ChangePasswordDto } from '../common/dto/app.dto';
 import { InMemoryDbService } from '../database/in-memory-db.service';
+import { Public } from './public.decorator';
+import { CurrentUserId } from '../common/decorators/current-user.decorator';
 
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService, private db: InMemoryDbService) {}
+  constructor(
+    private authService: AuthService,
+    private db: InMemoryDbService,
+    private passwordService: PasswordService,
+  ) {}
 
   @Post('login')
-  
+  @Public()
   @ApiOperation({ summary: 'User login with email and password' })
   @ApiBody({ type: LoginDto, description: 'Login credentials' })
   @ApiResponse({ status: 200, description: 'Login successful - returns token and user info' })
@@ -41,7 +48,8 @@ export class AuthController {
   }
 
   @Post('signup')
-  @ApiOperation({ summary: 'User self-registration (Student or Faculty)' })
+  @Public()
+  @ApiOperation({ summary: 'Student self-registration' })
   @ApiBody({ type: SignupDto })
   @ApiResponse({ status: 201, description: 'Registration successful' })
   @ApiResponse({ status: 400, description: 'Invalid input or email already exists' })
@@ -57,9 +65,14 @@ export class AuthController {
         throw new BadRequestException('Email already registered');
       }
 
-      // Validate role
-      if (!['student', 'faculty'].includes(body.role)) {
-        throw new BadRequestException('Role must be student or faculty');
+      // Self-registration is limited to students. Faculty accounts confer the
+      // ability to mark attendance and enter grades for real students, so they
+      // must be provisioned by an administrator through POST /users, where the
+      // role privilege ceiling applies.
+      if (body.role !== 'student') {
+        throw new BadRequestException(
+          'Only student accounts can self-register. Faculty and staff accounts are created by an administrator.',
+        );
       }
 
       // Build user record
@@ -70,7 +83,7 @@ export class AuthController {
         username,
         first_name: body.first_name || username.split(' ')[0] || 'User',
         last_name:  body.last_name  || username.split(' ').slice(1).join(' ') || '',
-        password: body.password,
+        password_hash: await this.passwordService.hash(body.password),
         email: body.email,
         role: body.role
       };
@@ -100,18 +113,9 @@ export class AuthController {
           status:     'active',
           section:    body.section || 'A'
         });
-      } else if (newUser.role === 'faculty') {
-        const deptMap: Record<string, string> = { ECE: 'dept2', CSE: 'dept1', MATH: 'dept1', PHY: 'dept1' };
-        this.db.faculty.push({
-          user_id:       id,
-          first_name:    newUser.first_name,
-          last_name:     newUser.last_name,
-          designation:   body.designation || 'Assistant Professor',
-          department_id: (body.department && deptMap[body.department]) || 'dept1',
-          email:         body.email,
-          phone:         ''
-        });
       }
+      // No faculty branch: self-registration is student-only (see the role check
+      // above). Faculty records are created by POST /users.
 
       return { success: true, message: 'Registration successful. You can now login.', user_id: id };
     } catch (error) {
@@ -121,17 +125,17 @@ export class AuthController {
   }
 
   @Post('change-password')
-  @ApiOperation({ summary: 'Change user password' })
-  @ApiHeader({ name: 'user-id', description: 'User ID of logged-in user' })
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Change your own password' })
   @ApiBody({ type: ChangePasswordDto })
   @ApiResponse({ status: 200, description: 'Password changed successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input or current password incorrect' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async changePassword(@Body() body: ChangePasswordDto, @Headers('user-id') userId: string) {
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  async changePassword(@Body() body: ChangePasswordDto, @CurrentUserId() userId: string) {
     try {
-      if (!userId) {
-        throw new UnauthorizedException('User ID required');
-      }
+      // The subject comes from the verified token, so a caller can only ever
+      // change their own password. Previously this took a `user-id` header,
+      // which meant anyone could target any account.
       if (!body.current_password || !body.new_password) {
         throw new BadRequestException('Current and new passwords are required');
       }

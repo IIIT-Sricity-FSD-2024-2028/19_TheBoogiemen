@@ -1,8 +1,10 @@
-import { Controller, Get, Post, Body, Headers, Param, Put, Query, Patch, Delete, Req, BadRequestException, ForbiddenException, NotFoundException, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Query, Patch, Delete, Req, BadRequestException, ForbiddenException, NotFoundException, UsePipes, ValidationPipe } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { InMemoryDbService } from '../database/in-memory-db.service';
 import { Roles } from '../auth/roles.guard';
-import { ApiTags, ApiOperation, ApiResponse, ApiHeader, ApiBody } from '@nestjs/swagger';
+import { CurrentUserId, CurrentUserRole } from '../common/decorators/current-user.decorator';
+import { PasswordService } from '../auth/password.service';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import {
   ATTENDANCE_STATUS,
   isAtRisk,
@@ -67,10 +69,26 @@ function pickDefined<T extends object>(source: T): Partial<T> {
   return out;
 }
 
+/**
+ * Strip credential material before a user record leaves the server.
+ *
+ * The previous `{ ...u, password: undefined }` only covered the legacy plaintext
+ * field; now that credentials live in `password_hash`, that spread would have
+ * shipped the bcrypt digest to every caller of GET /users. Deleting the keys
+ * outright is safer than relying on JSON.stringify dropping `undefined`.
+ */
+function sanitizeUser<T extends Record<string, any>>(user: T): Partial<T> {
+  const { password, password_hash, ...safe } = user ?? {};
+  return safe as Partial<T>;
+}
+
 @ApiTags('Admin/Reports')
 @Controller()
 export class CommonController {
-  constructor(private db: InMemoryDbService) {}
+  constructor(
+    private db: InMemoryDbService,
+    private passwordService: PasswordService,
+  ) {}
 
   // ── Courses ──────────────────────────────────────────────────────────────────
 
@@ -82,10 +100,8 @@ export class CommonController {
   @Post('courses')
   @Roles('faculty', 'head', 'admin', 'superadmin')
   @ApiOperation({ summary: 'Create a new course' })
-  @ApiHeader({ name: 'role', description: 'Role: faculty|head|admin|superadmin' })
-  @ApiHeader({ name: 'user-id', description: 'Creator user ID' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async createCourse(@Body() body: any, @Headers('user-id') userId: string) {
+  async createCourse(@Body() body: any, @CurrentUserId() userId: string) {
     if (!body.course_name || !body.course_code) throw new BadRequestException('course_name and course_code are required');
     if (this.db.courses.find(c => c.course_code === body.course_code)) throw new BadRequestException('Course code already exists');
     const faculty = this.db.faculty.find(f => f.user_id === userId);
@@ -116,9 +132,7 @@ export class CommonController {
   @Get('timetable/faculty')
   @Roles('faculty')
   @ApiOperation({ summary: 'Get timetable grid for the logged-in faculty' })
-  @ApiHeader({ name: 'role', description: 'Must be: faculty' })
-  @ApiHeader({ name: 'user-id', description: 'Faculty user ID' })
-  async getFacultyTimetable(@Headers('user-id') userId: string) {
+  async getFacultyTimetable(@CurrentUserId() userId: string) {
     const facultyCourseIds = this.db.courses.filter(c => c.faculty_id === userId).map(c => c.course_id);
     const slots = this.db.timetable.filter(t => facultyCourseIds.includes(t.course_id));
     const grid = slots.reduce((acc: any, curr) => {
@@ -148,10 +162,8 @@ export class CommonController {
   @Post('assessments')
   @Roles('faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Create a new assessment' })
-  @ApiHeader({ name: 'role', description: 'Role: faculty|admin|head|superadmin' })
-  @ApiHeader({ name: 'user-id', description: 'Faculty user ID' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async createAssessment(@Body() body: any, @Headers('user-id') userId: string) {
+  async createAssessment(@Body() body: any, @CurrentUserId() userId: string) {
     const id = `a${Date.now()}`;
     const newAssessment = { assessment_id: id, faculty_id: userId, weightage: body.weightage || 10, ...body };
     this.db.assessments.push(newAssessment as any);
@@ -190,7 +202,7 @@ export class CommonController {
 
   @Get('submissions')
   @ApiOperation({ summary: 'Get submissions — own for student, all for faculty' })
-  async getSubmissions(@Headers('user-id') userId: string, @Headers('role') role: string) {
+  async getSubmissions(@CurrentUserId() userId: string, @CurrentUserRole() role: string) {
     if (role === 'student') return this.db.submissions.filter(s => s.student_id === userId);
     return this.db.submissions;
   }
@@ -198,7 +210,7 @@ export class CommonController {
   @Post('submissions')
   @ApiOperation({ summary: 'Student submits work for an online assessment' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async createSubmission(@Body() body: any, @Headers('user-id') userId: string) {
+  async createSubmission(@Body() body: any, @CurrentUserId() userId: string) {
     if (!body.assessment_id) throw new BadRequestException('assessment_id required');
     // Upsert — allow re-submission
     const existing = this.db.submissions.find(s => s.student_id === userId && s.assessment_id === body.assessment_id);
@@ -225,7 +237,6 @@ export class CommonController {
   @Get('attendance/today/:courseId')
   @Roles('faculty')
   @ApiOperation({ summary: 'Get enrolled students for today attendance' })
-  @ApiHeader({ name: 'role', description: 'Must be: faculty' })
   async getTodayAttendance(@Param('courseId') courseId: string) {
     const enrollment = this.db.enrollment.filter(e => e.course_id === courseId);
     const students = this.db.students
@@ -302,9 +313,8 @@ export class CommonController {
 
   @Post('discussions')
   @ApiOperation({ summary: 'Create a new discussion post' })
-  @ApiHeader({ name: 'user-id', description: 'Author user ID' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async createDiscussion(@Body() body: any, @Headers('user-id') userId: string) {
+  async createDiscussion(@Body() body: any, @CurrentUserId() userId: string) {
     const user = this.db.users.find(u => u.user_id === userId);
     const student = this.db.students.find(s => s.user_id === userId);
     const faculty = this.db.faculty.find(f => f.user_id === userId);
@@ -319,9 +329,8 @@ export class CommonController {
 
   @Post('discussions/:postId/replies')
   @ApiOperation({ summary: 'Reply to a discussion post' })
-  @ApiHeader({ name: 'user-id', description: 'Replier user ID' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async createReply(@Param('postId') postId: string, @Body() body: any, @Headers('user-id') userId: string) {
+  async createReply(@Param('postId') postId: string, @Body() body: any, @CurrentUserId() userId: string) {
     const user = this.db.users.find(u => u.user_id === userId);
     const student = this.db.students.find(s => s.user_id === userId);
     const faculty = this.db.faculty.find(f => f.user_id === userId);
@@ -341,9 +350,7 @@ export class CommonController {
 
   @Get('research')
   @ApiOperation({ summary: 'Get research projects filtered by role' })
-  @ApiHeader({ name: 'user-id', description: 'User ID' })
-  @ApiHeader({ name: 'role', description: 'User role' })
-  async getResearch(@Headers('user-id') userId: string, @Headers('role') role: string) {
+  async getResearch(@CurrentUserId() userId: string, @CurrentUserRole() role: string) {
     const enrich = (p: any) => {
       const sup = this.db.faculty.find(f => f.user_id === p.supervisor_id);
       const stuList = (p.students || []).map((s: any) => {
@@ -385,10 +392,8 @@ export class CommonController {
   @Post('research')
   @Roles('faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Create a new research/BTP project and assign to a student' })
-  @ApiHeader({ name: 'role', description: 'Role: faculty|admin|head|superadmin' })
-  @ApiHeader({ name: 'user-id', description: 'Faculty user ID (supervisor)' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async createResearch(@Body() body: any, @Headers('user-id') userId: string) {
+  async createResearch(@Body() body: any, @CurrentUserId() userId: string) {
     if (!body.student_id || !body.title) throw new BadRequestException('student_id and title are required');
     const student = this.db.students.find(s => s.user_id === body.student_id);
     if (!student) throw new NotFoundException('Student not found');
@@ -424,7 +429,6 @@ export class CommonController {
   @Post('events')
   @Roles('admin', 'superadmin', 'head', 'faculty')
   @ApiOperation({ summary: 'Create a new institutional event' })
-  @ApiHeader({ name: 'role', description: 'Role: admin|superadmin|head|faculty' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async createEvent(@Body() body: any) {
     if (!body.event_name || !body.date || !body.venue) throw new BadRequestException('event_name, date, and venue are required');
@@ -437,7 +441,6 @@ export class CommonController {
   @Put('events/:id')
   @Roles('admin', 'superadmin', 'head', 'faculty')
   @ApiOperation({ summary: 'Update an existing event' })
-  @ApiHeader({ name: 'role', description: 'Role: admin|superadmin|head|faculty' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async updateEvent(@Param('id') id: string, @Body() body: any) {
     const event = this.db.events.find(e => e.event_id === id);
@@ -460,9 +463,7 @@ export class CommonController {
 
   @Get('leave')
   @ApiOperation({ summary: 'Get leave applications — own for student, all for admin/faculty' })
-  @ApiHeader({ name: 'user-id', description: 'User ID' })
-  @ApiHeader({ name: 'role', description: 'User role' })
-  async getLeaves(@Headers('user-id') userId: string, @Headers('role') role: string) {
+  async getLeaves(@CurrentUserId() userId: string, @CurrentUserRole() role: string) {
     if (role === 'student') return this.db.leave_applications.filter(l => l.student_id === userId);
     // Faculty see ALL student leaves (for approval)
     return this.db.leave_applications;
@@ -471,10 +472,8 @@ export class CommonController {
   @Post('leave')
   @Roles('student', 'faculty')
   @ApiOperation({ summary: 'Submit a new leave application' })
-  @ApiHeader({ name: 'role', description: 'Role: student|faculty' })
-  @ApiHeader({ name: 'user-id', description: 'Applicant user ID' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async applyLeave(@Body() body: any, @Headers('user-id') userId: string) {
+  async applyLeave(@Body() body: any, @CurrentUserId() userId: string) {
     if (!body.leave_type || !body.start_date || !body.end_date || !body.reason) {
       throw new BadRequestException('leave_type, start_date, end_date, and reason are required');
     }
@@ -501,7 +500,6 @@ export class CommonController {
   @Patch('leave/:id')
   @Roles('admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Approve or reject a leave application (syncs excused attendance)' })
-  @ApiHeader({ name: 'role', description: 'Role: admin|head|superadmin' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async updateLeave(@Param('id') id: string, @Body() body: { status: string }) {
     const leave = this.db.leave_applications.find(l => l.leave_id === id);
@@ -528,22 +526,19 @@ export class CommonController {
   @Get('users')
   @Roles('admin', 'superadmin', 'head')
   @ApiOperation({ summary: 'Get all system users' })
-  @ApiHeader({ name: 'role', description: 'Role: admin|superadmin|head' })
-  async getUsers() { return this.db.users.map(u => ({ ...u, password: undefined })); }
+  async getUsers() { return this.db.users.map(sanitizeUser); }
 
   @Get('admin/users')
   @Roles('admin', 'head', 'superadmin', 'faculty')
   @ApiOperation({ summary: 'Get all users for admin management panel' })
-  @ApiHeader({ name: 'role', description: 'Role: admin|head|superadmin|faculty' })
-  async getAllUsers() { return this.db.users.map(u => ({ ...u, password: undefined })); }
+  async getAllUsers() { return this.db.users.map(sanitizeUser); }
 
   @Post('users')
   @Roles('admin', 'superadmin', 'head')
   @StrictBody()
   @ApiOperation({ summary: 'Create a new system user' })
-  @ApiHeader({ name: 'role', description: 'Role: admin|superadmin|head' })
   @ApiBody({ type: CreateUserDto })
-  async createUser(@Body() body: CreateUserDto, @Headers('role') actorRole: string) {
+  async createUser(@Body() body: CreateUserDto, @CurrentUserRole() actorRole: string) {
     // C-04: a privilege ceiling now applies. Previously any of admin/head/superadmin
     // could create an account with any role, contradicting the documented rule that
     // an Academic Head cannot create Academic Heads or Super Admins.
@@ -553,6 +548,9 @@ export class CommonController {
       );
     }
     if (this.db.users.find(u => u.email === body.email)) throw new BadRequestException('Email already exists');
+    if (!body.password) {
+      throw new BadRequestException('An initial password is required when creating a user');
+    }
 
     const id = `u${Date.now()}`;
     const firstName = body.first_name || body.username || 'New';
@@ -564,7 +562,10 @@ export class CommonController {
       email: body.email,
       phone: body.phone || '',
       role: body.role,
-      password: body.password || 'password',
+      // Hashed, never stored in the clear. The previous default of the literal
+      // string 'password' meant any account created without one shipped with a
+      // known credential.
+      password_hash: await this.passwordService.hash(body.password),
     };
     this.db.users.push(newUser);
 
@@ -573,7 +574,7 @@ export class CommonController {
     } else if (body.role === 'faculty') {
       this.db.faculty.push({ user_id: id, first_name: firstName, last_name: body.last_name || '', designation: 'Assistant Professor', department_id: 'dept1', email: body.email, phone: body.phone || '' });
     }
-    return { success: true, data: { ...newUser, password: undefined } };
+    return { success: true, data: sanitizeUser(newUser) };
   }
 
   @Put('users/:id')
@@ -599,21 +600,19 @@ export class CommonController {
     Object.assign(user, changes);
     this.db.persist();
     this.syncProfileRecords(id, changes);
-    return { success: true, data: { ...user, password: undefined } };
+    return { success: true, data: sanitizeUser(user) };
   }
 
   @Patch('users/:id/role')
   @Roles('admin', 'superadmin', 'head')
   @StrictBody()
   @ApiOperation({ summary: 'Change a user role (subject to the caller privilege ceiling)' })
-  @ApiHeader({ name: 'role', description: 'Role: admin|superadmin|head' })
-  @ApiHeader({ name: 'user-id', description: 'Acting user ID' })
   @ApiBody({ type: UpdateUserRoleDto })
   async updateUserRole(
     @Param('id') id: string,
     @Body() body: UpdateUserRoleDto,
-    @Headers('role') actorRole: string,
-    @Headers('user-id') actorId: string,
+    @CurrentUserRole() actorRole: string,
+    @CurrentUserId() actorId: string,
   ) {
     const user = this.db.users.find(u => u.user_id === id);
     if (!user) throw new NotFoundException('User not found');
@@ -634,26 +633,26 @@ export class CommonController {
 
     user.role = body.role;
     this.db.persist();
-    return { success: true, data: { ...user, password: undefined } };
+    return { success: true, data: sanitizeUser(user) };
   }
 
   @Patch('users/:id/password')
   @Roles('admin', 'superadmin')
   @StrictBody()
   @ApiOperation({ summary: 'Administrative password reset' })
-  @ApiHeader({ name: 'role', description: 'Role: admin|superadmin' })
   @ApiBody({ type: ResetUserPasswordDto })
   async resetUserPassword(
     @Param('id') id: string,
     @Body() body: ResetUserPasswordDto,
-    @Headers('role') actorRole: string,
+    @CurrentUserRole() actorRole: string,
   ) {
     const user = this.db.users.find(u => u.user_id === id);
     if (!user) throw new NotFoundException('User not found');
     if (!canAssignRole(actorRole, user.role)) {
       throw new ForbiddenException(`Your role (${actorRole || 'unknown'}) may not reset a ${user.role} password`);
     }
-    user.password = body.new_password;
+    user.password_hash = await this.passwordService.hash(body.new_password);
+    delete user.password; // drop any legacy plaintext field left on the record
     this.db.persist();
     return { success: true, message: 'Password reset successfully' };
   }
@@ -687,7 +686,6 @@ export class CommonController {
   @Get('reports/overview')
   @Roles('admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Get high-level institutional overview metrics' })
-  @ApiHeader({ name: 'role', description: 'Role: admin|head|superadmin' })
   async getOverview() {
     const totalFees = this.db.fees.reduce((s, f) => s + f.amount, 0);
     const paidFees = this.db.fees.filter(f => f.status === 'paid').reduce((s, f) => s + f.amount, 0);
@@ -763,7 +761,6 @@ export class CommonController {
   @Get('fees')
   @Roles('admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Get all fee records with compliance summary' })
-  @ApiHeader({ name: 'role', description: 'Role: admin|head|superadmin' })
   async getFees() {
     return {
       fees: this.db.fees,
@@ -791,7 +788,6 @@ export class CommonController {
   @Post('fees')
   @Roles('admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Add a new fee record for a student' })
-  @ApiHeader({ name: 'role', description: 'Role: admin|head|superadmin' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async createFee(@Body() body: any) {
     if (!body.student_id || !body.fee_type || !body.amount || !body.due_date) {
@@ -819,7 +815,6 @@ export class CommonController {
   @Post('enrollment')
   @Roles('faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Enroll a student in a course (faculty/admin action)' })
-  @ApiHeader({ name: 'role', description: 'Role: faculty|admin|head|superadmin' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async enrollStudentByCourse(@Body() body: any) {
     const { student_id, course_id } = body;
@@ -841,7 +836,6 @@ export class CommonController {
   @Post('meetings')
   @Roles('faculty', 'admin', 'head')
   @ApiOperation({ summary: 'Schedule a meeting with a student' })
-  @ApiHeader({ name: 'role', description: 'Role: faculty|admin|head' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async scheduleMeeting(@Body() body: any) {
     return { success: true, message: 'Meeting scheduled successfully', meeting: { meeting_id: `mt${Date.now()}`, ...body, created_at: new Date().toISOString() } };
@@ -864,9 +858,8 @@ export class CommonController {
   @Patch('syllabus-progress')
   @Roles('faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Update syllabus completion for a course+section' })
-  @ApiHeader({ name: 'user-id', description: 'Faculty user ID' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async updateSyllabusProgress(@Body() body: any, @Headers('user-id') userId: string) {
+  async updateSyllabusProgress(@Body() body: any, @CurrentUserId() userId: string) {
     if (!body.course_id || !body.section || body.progress === undefined) throw new BadRequestException('course_id, section, and progress required');
     const existing = this.db.syllabus_progress.find(s => s.course_id === body.course_id && s.section === body.section);
     if (existing) {
@@ -885,9 +878,8 @@ export class CommonController {
   @Post('attendance-request')
   @Roles('student')
   @ApiOperation({ summary: 'Student requests attendance correction' })
-  @ApiHeader({ name: 'user-id', description: 'Student user ID' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async createAttendanceRequest(@Body() body: any, @Headers('user-id') userId: string) {
+  async createAttendanceRequest(@Body() body: any, @CurrentUserId() userId: string) {
     if (!body.course_id || !body.date || !body.reason) throw new BadRequestException('course_id, date, and reason required');
     // Allow past and today dates (student requests attendance for a day they were absent)
     const today = new Date().toISOString().split('T')[0];
@@ -910,9 +902,7 @@ export class CommonController {
   @Get('attendance-requests')
   @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Get attendance requests' })
-  @ApiHeader({ name: 'user-id', description: 'User ID' })
-  @ApiHeader({ name: 'role', description: 'User role' })
-  async getAttendanceRequests(@Headers('user-id') userId: string, @Headers('role') role: string) {
+  async getAttendanceRequests(@CurrentUserId() userId: string, @CurrentUserRole() role: string) {
     if (role === 'student') return this.db.attendance_requests.filter(r => r.student_id === userId);
     if (role === 'faculty') {
       const facultyCourseIds = this.db.courses.filter(c => c.faculty_id === userId).map(c => c.course_id);
@@ -936,8 +926,7 @@ export class CommonController {
   @Patch('attendance-request/:id/mark')
   @Roles('faculty')
   @ApiOperation({ summary: 'Faculty marks attendance after admin approval' })
-  @ApiHeader({ name: 'user-id', description: 'Faculty user ID' })
-  async markAttendanceRequest(@Param('id') id: string, @Headers('user-id') userId: string) {
+  async markAttendanceRequest(@Param('id') id: string, @CurrentUserId() userId: string) {
     const req = this.db.attendance_requests.find(r => r.request_id === id);
     if (!req) throw new NotFoundException('Attendance request not found');
     if (req.admin_status !== 'approved') throw new BadRequestException('Admin has not approved this request');
@@ -969,9 +958,8 @@ export class CommonController {
   @Post('resource-booking')
   @Roles('faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Faculty requests a resource booking' })
-  @ApiHeader({ name: 'user-id', description: 'Requesting user ID' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async createResourceBooking(@Body() body: any, @Headers('user-id') userId: string) {
+  async createResourceBooking(@Body() body: any, @CurrentUserId() userId: string) {
     if (!body.resource_id || !body.date || !body.purpose) throw new BadRequestException('resource_id, date, and purpose required');
     const resource = this.db.resources.find(r => r.resource_id === body.resource_id);
     const faculty = this.db.faculty.find(f => f.user_id === userId);
@@ -992,9 +980,7 @@ export class CommonController {
   @Get('resource-bookings')
   @Roles('faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Get resource bookings' })
-  @ApiHeader({ name: 'user-id', description: 'User ID' })
-  @ApiHeader({ name: 'role', description: 'User role' })
-  async getResourceBookings(@Headers('user-id') userId: string, @Headers('role') role: string) {
+  async getResourceBookings(@CurrentUserId() userId: string, @CurrentUserRole() role: string) {
     if (role === 'faculty') return this.db.resource_bookings.filter(b => b.requested_by === userId);
     return this.db.resource_bookings;
   }
@@ -1015,8 +1001,7 @@ export class CommonController {
   @Get('student-timetable')
   @Roles('student')
   @ApiOperation({ summary: 'Get timetable filtered by student enrolled courses' })
-  @ApiHeader({ name: 'user-id', description: 'Student user ID' })
-  async getStudentTimetable(@Headers('user-id') userId: string) {
+  async getStudentTimetable(@CurrentUserId() userId: string) {
     const student = this.db.students.find(s => s.user_id === userId);
     const section = student?.section || 'A';
     const enrolledCourseIds = this.db.enrollment.filter(e => e.student_id === userId && e.status === 'active').map(e => e.course_id);

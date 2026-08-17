@@ -1,7 +1,6 @@
 import { Controller, Post, Patch, Body, Param, UseGuards, SetMetadata, Get, Put, Delete } from '@nestjs/common';
-import { ApiTags, ApiHeader, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
 import { LeaveService } from './leave.leave.service';
-import { RolesGuard } from '../../common/guards/roles.guard';
 import { EnvGuard } from '../../common/guards/env.guard';
 import { ApplyLeaveInputDto } from './dto/apply-leave.input.dto';
 import { ApproveLeaveInputDto } from './dto/approve-leave.input.dto';
@@ -12,8 +11,6 @@ import { SEED } from '../../common/types/seed-constants';
 import { MOCK_LEAVE_REQUESTS } from '../../common/types/mock-data';
 
 @ApiTags('Leave')
-@ApiHeader({ name: 'x-user-role', required: true })
-@UseGuards(RolesGuard)
 @Controller('leaves')
 export class LeaveController {
   constructor(private readonly leaveService: LeaveService) {}
@@ -28,7 +25,7 @@ export class LeaveController {
   }
 
   @Patch(':id/approve')
-  @SetMetadata('roles', ['admin'])
+  @SetMetadata('roles', ['admin', 'superadmin'])
   @ApiParam({ name: 'id', description: 'Leave ID' })
   @ApiBody({ type: ApproveLeaveInputDto })
   @ApiResponse({ status: 200, type: LeaveOutputDto })
@@ -40,7 +37,7 @@ export class LeaveController {
   }
 
   @Get('mock-data')
-  @SetMetadata('roles', ['faculty', 'student', 'admin', 'academic_head'])
+  @SetMetadata('roles', ['faculty', 'student', 'admin', 'head', 'superadmin'])
   @UseGuards(EnvGuard)
   @ApiResponse({ status: 200, description: 'Fetch mock data for testing UUIDs' })
   getMockData() {
@@ -50,7 +47,7 @@ export class LeaveController {
   }
 
   @Get()
-  @SetMetadata('roles', ['admin', 'academic_head', 'faculty'])
+  @SetMetadata('roles', ['admin', 'head', 'faculty', 'superadmin'])
   @ApiResponse({ status: 200, description: 'Fetch all leave requests' })
   async getAllLeaves() {
     const data = await this.leaveService.getAllLeaves();
@@ -58,7 +55,7 @@ export class LeaveController {
   }
 
   @Get(':id')
-  @SetMetadata('roles', ['admin', 'academic_head', 'faculty', 'student'])
+  @SetMetadata('roles', ['admin', 'head', 'faculty', 'student', 'superadmin'])
   @ApiResponse({ status: 200, description: 'Fetch leave request by ID' })
   async getLeaveById(@Param('id') id: string) {
     const data = await this.leaveService.getLeaveById(id);
@@ -66,7 +63,7 @@ export class LeaveController {
   }
 
   @Put(':id')
-  @SetMetadata('roles', ['admin'])
+  @SetMetadata('roles', ['admin', 'superadmin'])
   @ApiBody({ type: UpdateLeaveInputDto })
   @ApiResponse({ status: 200, description: 'Full update of leave request' })
   async updateLeave(@Param('id') id: string, @Body() dto: UpdateLeaveInputDto) {
@@ -75,7 +72,7 @@ export class LeaveController {
   }
 
   @Patch(':id')
-  @SetMetadata('roles', ['admin'])
+  @SetMetadata('roles', ['admin', 'superadmin'])
   @ApiBody({ type: UpdateLeaveInputDto })
   @ApiResponse({ status: 200, description: 'Partial update of leave request' })
   async patchLeave(@Param('id') id: string, @Body() dto: UpdateLeaveInputDto) {
@@ -84,7 +81,7 @@ export class LeaveController {
   }
 
   @Delete(':id')
-  @SetMetadata('roles', ['admin'])
+  @SetMetadata('roles', ['admin', 'superadmin'])
   @ApiResponse({ status: 200, description: 'Delete leave request' })
   async deleteLeave(@Param('id') id: string) {
     await this.leaveService.deleteLeave(id);

@@ -15,51 +15,51 @@
     {
       "user_id": "u1",
       "username": "student",
-      "password": "Student@123",
       "email": "student@example.com",
-      "role": "student"
+      "role": "student",
+      "password_hash": "$2b$12$JIMrssEhBipbIk6g/yiUM.TE2egkr203VXUXZZiIf4RVbl.qPRn46"
     },
     {
       "user_id": "u2",
       "username": "faculty",
-      "password": "Faculty@123",
       "email": "faculty@example.com",
-      "role": "faculty"
+      "role": "faculty",
+      "password_hash": "$2b$12$81Elh/Ru5pDpKKp6EdmpGObgWsPAT8tbJ1E6PNYB9AuB7OaWmI85G"
     },
     {
       "user_id": "u3",
       "username": "admin",
-      "password": "password",
       "email": "admin@example.com",
-      "role": "admin"
+      "role": "admin",
+      "password_hash": "$2b$12$obffwRD1a29Ho5PvugE/kuhARblGZugK7PO5scvegUXv0KQxuO2v."
     },
     {
       "user_id": "u4",
       "username": "head",
-      "password": "Head@123",
       "email": "head@example.com",
-      "role": "head"
+      "role": "head",
+      "password_hash": "$2b$12$CZx5Sy33X1haBNV..57Ws.hKe3oBcOZl/ZMvF8cRrv4FYrZAPll9m"
     },
     {
       "user_id": "u5",
       "username": "superadmin",
-      "password": "Super@123",
       "email": "super@example.com",
-      "role": "superadmin"
+      "role": "superadmin",
+      "password_hash": "$2b$12$/I4TCcbZl227InQ7VwXukOIMCEJgGOnj.OrJ5QIuvDdMvzxXrVur6"
     },
     {
       "user_id": "u6",
       "username": "student2",
-      "password": "Student@123",
       "email": "student2@example.com",
-      "role": "student"
+      "role": "student",
+      "password_hash": "$2b$12$8MaKKerJ8bB0uoFGz3mU.efNWSNH5ynuhJLYVt9MH0eBinWqdswqO"
     },
     {
       "user_id": "u7",
       "username": "faculty2",
-      "password": "Faculty@123",
       "email": "faculty2@example.com",
-      "role": "faculty"
+      "role": "faculty",
+      "password_hash": "$2b$12$qFLRiGff4WC2LAVfOPT5e./z1FSKW0ob.Ls8CfDLApYtYDyKEwZaO"
     }
   ],
   "students": [
