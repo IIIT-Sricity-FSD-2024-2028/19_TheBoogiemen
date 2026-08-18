@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
+import { LoggerModule } from 'nestjs-pino';
+import { buildLoggerConfig } from './config/logger.config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
@@ -26,6 +28,10 @@ import { OutcomeModule } from './modules/outcome/outcome.outcome.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    // Registered after ConfigModule so LOG_LEVEL from .env is already in
+    // process.env when the logger is built. buildLoggerConfig() is a function,
+    // not a constant, for exactly this reason — it reads env at call time.
+    LoggerModule.forRoot(buildLoggerConfig()),
     DatabaseModule,
     AuthModule,
     StudentsModule,

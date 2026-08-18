@@ -7,6 +7,7 @@ import { LoginDto, SignupDto, ChangePasswordDto } from '../common/dto/app.dto';
 import { InMemoryDbService } from '../database/in-memory-db.service';
 import { Public } from './public.decorator';
 import { CurrentUserId } from '../common/decorators/current-user.decorator';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -15,6 +16,7 @@ export class AuthController {
     private authService: AuthService,
     private db: InMemoryDbService,
     private passwordService: PasswordService,
+    @InjectPinoLogger(AuthController.name) private readonly logger: PinoLogger,
   ) {}
 
   @Post('login')
@@ -26,23 +28,25 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   async login(@Body() body: LoginDto) {
     try {
-      console.log(`[AUTH] Login attempt for email: ${body.email}`);
       if (!body.email || !body.password) {
-        console.log(`[AUTH] Login failed - missing email or password`);
+        this.logger.warn({ outcome: 'missing_credentials' }, 'Login rejected');
         throw new BadRequestException('Email and password are required');
       }
       const result = await this.authService.login(body.email, body.password);
-      if (!result) {
-        console.log(`[AUTH] Login failed - invalid credentials for email: ${body.email}`);
-        throw new UnauthorizedException('Invalid email or password');
-      }
-      console.log(`[AUTH] Login successful for email: ${body.email}, user_id: ${result.user.user_id}`);
+      this.logger.info(
+        { userId: result.user.user_id, role: result.user.role },
+        'Login successful',
+      );
       return { success: true, ...result };
     } catch (error) {
       if (error instanceof UnauthorizedException || error instanceof BadRequestException) {
+        // Deliberately no email: failed-login lines would otherwise accumulate a
+        // list of addresses an attacker probed. The request id is enough to
+        // correlate with the surrounding request log.
+        this.logger.warn({ outcome: 'invalid_credentials' }, 'Login failed');
         throw error;
       }
-      console.log(`[AUTH] Login failed for email: ${body.email} - ${error.message}`);
+      this.logger.error({ err: error }, 'Login failed unexpectedly');
       throw new UnauthorizedException('Login failed');
     }
   }
@@ -143,7 +147,7 @@ export class AuthController {
       // never returns a falsy result, so the old `if (!result)` branch was dead
       // and only served to mask the real reason from the user.
       await this.authService.changePassword(userId, body.current_password, body.new_password);
-      console.log(`[AUTH] Password changed for user_id: ${userId}`);
+      this.logger.info({ userId }, 'Password changed');
       return { success: true, message: 'Password changed successfully' };
     } catch (error) {
       if (error instanceof BadRequestException || error instanceof UnauthorizedException) {
