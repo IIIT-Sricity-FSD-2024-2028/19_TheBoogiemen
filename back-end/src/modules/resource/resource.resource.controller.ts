@@ -1,7 +1,6 @@
 import { Controller, Post, Body, UseGuards, SetMetadata, Get, Param, Put, Patch, Delete } from '@nestjs/common';
-import { ApiTags, ApiHeader, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { ResourceService } from './resource.resource.service';
-import { RolesGuard } from '../../common/guards/roles.guard';
 import { EnvGuard } from '../../common/guards/env.guard';
 import { ScheduleEventInputDto } from './dto/schedule-event.input.dto';
 import { CreateResourceInputDto } from './dto/create-resource.input.dto';
@@ -11,14 +10,12 @@ import { BaseResponseDto } from '../../common/dto/base-response.dto';
 import { MOCK_RESOURCES, MOCK_EVENTS } from '../../common/types/mock-data';
 
 @ApiTags('Resource')
-@ApiHeader({ name: 'x-user-role', required: true })
-@UseGuards(RolesGuard)
 @Controller('resources')
 export class ResourceController {
   constructor(private readonly resourceService: ResourceService) {}
 
   @Post('events')
-  @SetMetadata('roles', ['faculty', 'admin'])
+  @SetMetadata('roles', ['faculty', 'admin', 'superadmin'])
   @ApiBody({ type: ScheduleEventInputDto })
   @ApiResponse({ status: 201, type: EventOutputDto })
   async scheduleEvent(@Body() dto: ScheduleEventInputDto) {
@@ -27,7 +24,7 @@ export class ResourceController {
   }
 
   @Get('mock-data')
-  @SetMetadata('roles', ['faculty', 'student', 'admin', 'academic_head'])
+  @SetMetadata('roles', ['faculty', 'student', 'admin', 'head', 'superadmin'])
   @UseGuards(EnvGuard)
   @ApiResponse({ status: 200, description: 'Fetch mock data for testing UUIDs' })
   getMockData() {
@@ -38,7 +35,7 @@ export class ResourceController {
   }
 
   @Get()
-  @SetMetadata('roles', ['admin', 'faculty', 'student'])
+  @SetMetadata('roles', ['admin', 'faculty', 'student', 'superadmin'])
   @ApiResponse({ status: 200, description: 'Fetch all resources' })
   async getAllResources() {
     const data = await this.resourceService.getAllResources();
@@ -46,7 +43,7 @@ export class ResourceController {
   }
 
   @Get(':id')
-  @SetMetadata('roles', ['admin', 'faculty', 'student'])
+  @SetMetadata('roles', ['admin', 'faculty', 'student', 'superadmin'])
   @ApiResponse({ status: 200, description: 'Fetch resource by ID' })
   async getResourceById(@Param('id') id: string) {
     const data = await this.resourceService.getResourceById(id);
@@ -54,7 +51,7 @@ export class ResourceController {
   }
 
   @Post()
-  @SetMetadata('roles', ['admin'])
+  @SetMetadata('roles', ['admin', 'superadmin'])
   @ApiBody({ type: CreateResourceInputDto })
   @ApiResponse({ status: 201, description: 'Create resource' })
   async createResource(@Body() dto: CreateResourceInputDto) {
@@ -63,7 +60,7 @@ export class ResourceController {
   }
 
   @Put(':id')
-  @SetMetadata('roles', ['admin'])
+  @SetMetadata('roles', ['admin', 'superadmin'])
   @ApiBody({ type: UpdateResourceInputDto })
   @ApiResponse({ status: 200, description: 'Full update of resource' })
   async updateResource(@Param('id') id: string, @Body() dto: UpdateResourceInputDto) {
@@ -72,7 +69,7 @@ export class ResourceController {
   }
 
   @Patch(':id')
-  @SetMetadata('roles', ['admin'])
+  @SetMetadata('roles', ['admin', 'superadmin'])
   @ApiBody({ type: UpdateResourceInputDto })
   @ApiResponse({ status: 200, description: 'Partial update of resource' })
   async patchResource(@Param('id') id: string, @Body() dto: UpdateResourceInputDto) {
@@ -81,7 +78,7 @@ export class ResourceController {
   }
 
   @Delete(':id')
-  @SetMetadata('roles', ['admin'])
+  @SetMetadata('roles', ['admin', 'superadmin'])
   @ApiResponse({ status: 200, description: 'Delete resource' })
   async deleteResource(@Param('id') id: string) {
     await this.resourceService.deleteResource(id);
@@ -89,7 +86,7 @@ export class ResourceController {
   }
 
   @Get('events/all')
-  @SetMetadata('roles', ['admin', 'faculty', 'student'])
+  @SetMetadata('roles', ['admin', 'faculty', 'student', 'superadmin'])
   @ApiResponse({ status: 200, description: 'Fetch all events' })
   async getAllEvents() {
     const data = await this.resourceService.getAllEvents();
@@ -97,7 +94,7 @@ export class ResourceController {
   }
 
   @Get('events/:id')
-  @SetMetadata('roles', ['admin', 'faculty', 'student'])
+  @SetMetadata('roles', ['admin', 'faculty', 'student', 'superadmin'])
   @ApiResponse({ status: 200, description: 'Fetch event by ID' })
   async getEventById(@Param('id') id: string) {
     const data = await this.resourceService.getEventById(id);
@@ -105,7 +102,7 @@ export class ResourceController {
   }
 
   @Put('events/:id')
-  @SetMetadata('roles', ['admin', 'faculty'])
+  @SetMetadata('roles', ['admin', 'faculty', 'superadmin'])
   @ApiBody({ type: ScheduleEventInputDto })
   @ApiResponse({ status: 200, description: 'Update event' })
   async updateEvent(@Param('id') id: string, @Body() dto: ScheduleEventInputDto) {
@@ -114,7 +111,7 @@ export class ResourceController {
   }
 
   @Delete('events/:id')
-  @SetMetadata('roles', ['admin', 'faculty'])
+  @SetMetadata('roles', ['admin', 'faculty', 'superadmin'])
   @ApiResponse({ status: 200, description: 'Delete event' })
   async deleteEvent(@Param('id') id: string) {
     await this.resourceService.deleteEvent(id);

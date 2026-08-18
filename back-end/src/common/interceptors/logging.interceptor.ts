@@ -16,11 +16,14 @@ export class LoggingInterceptor implements NestInterceptor {
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest();
-    const { method, url, body, headers } = request;
+    const { method, url, body } = request;
     const now = Date.now();
 
-    const role = headers['role'] || 'anonymous';
-    const userId = headers['user-id'] || 'unknown';
+    // Read from the verified token, not from headers. `request.user` is populated
+    // by JwtAuthGuard; it is absent on @Public() routes and on rejected requests,
+    // which is exactly what "anonymous" should mean in the log.
+    const role = request.user?.role ?? 'anonymous';
+    const userId = request.user?.sub ?? 'unknown';
 
     // Status is captured from the response, or from the thrown error when the
     // handler failed — previously failures were never logged at all.

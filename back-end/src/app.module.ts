@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
 import { RolesGuard } from './auth/roles.guard';
+import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { AuthModule } from './auth/auth.module';
 import { StudentsModule } from './students/students.module';
 import { FacultyModule } from './faculty/faculty.module';
@@ -45,6 +46,13 @@ import { OutcomeModule } from './modules/outcome/outcome.outcome.module';
   controllers: [AppController],
   providers: [
     AppService,
+    // Order matters. JwtAuthGuard must run first: it verifies the token and
+    // populates request.user, which RolesGuard then reads. Nest applies
+    // APP_GUARD providers in registration order.
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
     {
       provide: APP_GUARD,
       useClass: RolesGuard,

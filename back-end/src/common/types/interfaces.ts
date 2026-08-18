@@ -1,10 +1,16 @@
 export interface USER {
   user_id: string;
   username?: string;
+  /** bcrypt digest. Plaintext passwords are never stored — see PasswordService. */
   password_hash?: string;
   email?: string;
   phone?: string;
-  role: 'student' | 'faculty' | 'admin' | 'academic_head';
+  /**
+   * One vocabulary across the whole codebase, matching the JWT `role` claim.
+   * The dormant modules/ layer previously used 'academic_head' for 'head', so a
+   * role granted in one layer was unrecognised by the other.
+   */
+  role: 'student' | 'faculty' | 'admin' | 'head' | 'superadmin';
   created_at?: string;
 }
 

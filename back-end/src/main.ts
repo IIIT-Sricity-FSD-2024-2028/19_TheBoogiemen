@@ -10,12 +10,14 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // 1. Enable CORS FIRST
-  // Added explicit support for your custom headers: 'role' and 'user-id'
+  // Identity and role now travel in a signed JWT via the Authorization header.
+  // The old 'role' and 'user-id' headers are gone — the server ignores them, and
+  // allowing them here would only invite clients to keep sending them.
   app.enableCors({
-    origin: true, 
+    origin: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
-    allowedHeaders: 'Content-Type, Accept, role, user-id, Authorization',
+    allowedHeaders: 'Content-Type, Accept, Authorization',
   });
 
   // 2. Global Interceptors (Logging)
@@ -45,13 +47,16 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('BarelyPassing API')
     .setDescription(
-      'Academic Progress & Outcome Tracking API. Headers required: "role" (student|faculty|admin|head|superadmin), "user-id" (e.g., u1).'
+      'Academic Progress & Outcome Tracking API.\n\n' +
+      'Authenticate with POST /api/auth/login, then click **Authorize** and paste the returned token. ' +
+      'All endpoints require a valid bearer token except login and signup.'
     )
-    .setVersion('1.0')
-    .addApiKey({ type: 'apiKey', in: 'header', name: 'role' }, 'role')
-    .addApiKey({ type: 'apiKey', in: 'header', name: 'user-id' }, 'user-id')
-    .addSecurityRequirements('role')
-    .addSecurityRequirements('user-id')
+    .setVersion('2.0')
+    .addBearerAuth(
+      { type: 'http', scheme: 'bearer', bearerFormat: 'JWT', in: 'header' },
+      'bearer',
+    )
+    .addSecurityRequirements('bearer')
     .build();
     
   const document = SwaggerModule.createDocument(app, config);

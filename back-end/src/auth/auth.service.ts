@@ -1,23 +1,54 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { InMemoryDbService } from '../database/in-memory-db.service';
+import { PasswordService } from './password.service';
+import { JwtPayload, Role, isRole } from './jwt-payload';
 
 @Injectable()
 export class AuthService {
-  constructor(private db: InMemoryDbService) {}
+  constructor(
+    private db: InMemoryDbService,
+    private jwtService: JwtService,
+    private passwordService: PasswordService,
+  ) {}
 
+  /**
+   * Verify credentials and issue a signed access token.
+   *
+   * Previously this compared plaintext (`u.password === password`) and returned
+   * the constant string 'mock-jwt-token', which nothing ever verified. The token
+   * returned here is signed with JWT_SECRET and checked on every later request.
+   */
   async login(email: string, password: string) {
-    const user = this.db.users.find((u) => u.email === email && u.password === password);
-    if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+    const user = this.db.users.find((u) => u.email === email);
+
+    // Verify even when the user is unknown, against a dummy digest, so that a
+    // wrong email and a wrong password take the same time to answer. Without
+    // this, response timing distinguishes registered from unregistered emails.
+    const storedHash = user?.password_hash ?? DUMMY_HASH;
+    const passwordValid = await this.passwordService.verify(password, storedHash);
+
+    if (!user || !passwordValid) {
+      // Deliberately identical for both cases — no user enumeration.
+      throw new UnauthorizedException('Invalid email or password');
     }
-    
+
+    if (!isRole(user.role)) {
+      throw new UnauthorizedException('Account has no valid role assigned. Contact an administrator.');
+    }
+
     const student = this.db.students.find((s) => s.user_id === user.user_id);
     const faculty = this.db.faculty.find((f) => f.user_id === user.user_id);
     const profile = student || faculty;
 
-    // Return a mock token and user object
+    const payload: JwtPayload = {
+      sub: user.user_id,
+      role: user.role as Role,
+      email: user.email,
+    };
+
     return {
-      token: 'mock-jwt-token',
+      token: await this.jwtService.signAsync(payload),
       user: {
         user_id: user.user_id,
         username: user.username,
@@ -32,30 +63,38 @@ export class AuthService {
   async changePassword(userId: string, current: string, newPass: string) {
     const user = this.db.users.find((u) => u.user_id === userId);
 
-    // A missing user means the session itself is no longer valid, so 401 (and the
-    // client-side logout it triggers) is the correct response here.
+    // A missing user means the token names someone who no longer exists, so the
+    // session itself is invalid — 401 and the client-side sign-out are correct.
     if (!user) {
       throw new UnauthorizedException('Session is no longer valid. Please sign in again.');
     }
 
-    // A wrong *current password* is a failure of the submitted form, not of the
-    // session. This used to throw 401, and the client treats any 401 as "session
-    // expired" and logs the user out — so mistyping the current password silently
-    // ended the session instead of showing an error. 400 keeps the user signed in.
-    if (user.password !== current) {
+    // A wrong current password is a failure of the submitted form, not of the
+    // session. 401 here would trigger the client's sign-out handler and silently
+    // end the session instead of showing an error, so this must stay a 400.
+    const currentValid = await this.passwordService.verify(current, user.password_hash);
+    if (!currentValid) {
       throw new BadRequestException('Current password is incorrect');
     }
 
-    if (newPass === current) {
+    if (current === newPass) {
       throw new BadRequestException('New password must be different from your current password');
     }
 
-    user.password = newPass;
+    user.password_hash = await this.passwordService.hash(newPass);
+    delete user.password; // drop any legacy plaintext field left on the record
 
     // Mutating an element in place does not trip the store's array proxy, so
-    // without this the new password lived only in memory and reverted on restart.
+    // without this the new password would live only in memory.
     this.db.persist();
 
     return { success: true };
   }
 }
+
+/**
+ * A real bcrypt digest of a value nobody knows, used to equalise login timing
+ * when the email does not exist. Comparing against this costs the same as a
+ * genuine check.
+ */
+const DUMMY_HASH = '$2b$12$C6UzMDM.H6dfI/f/IKcEe.6DxIxU7hqYQ8Q0Uu4pQPQ7WEXZ8lCPu';

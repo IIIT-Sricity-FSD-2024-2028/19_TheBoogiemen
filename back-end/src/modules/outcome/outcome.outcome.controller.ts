@@ -1,7 +1,6 @@
 import { Controller, Post, Get, Body, Param, UseGuards, SetMetadata, Put, Patch, Delete } from '@nestjs/common';
-import { ApiTags, ApiHeader, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
 import { OutcomeService } from './outcome.outcome.service';
-import { RolesGuard } from '../../common/guards/roles.guard';
 import { EnvGuard } from '../../common/guards/env.guard';
 import { MapOutcomeInputDto } from './dto/map-outcome.input.dto';
 import { UpdateOutcomeInputDto } from './dto/update-outcome.input.dto';
@@ -10,8 +9,6 @@ import { BaseResponseDto } from '../../common/dto/base-response.dto';
 import { MOCK_OUTCOMES, MOCK_STUDENT_OUTCOMES } from '../../common/types/mock-data';
 
 @ApiTags('Outcome')
-@ApiHeader({ name: 'x-user-role', required: true })
-@UseGuards(RolesGuard)
 @Controller('outcomes')
 export class OutcomeController {
   constructor(private readonly outcomeService: OutcomeService) {}
@@ -35,7 +32,7 @@ export class OutcomeController {
   }
 
   @Get('mock-data')
-  @SetMetadata('roles', ['faculty', 'student', 'admin', 'academic_head'])
+  @SetMetadata('roles', ['faculty', 'student', 'admin', 'head', 'superadmin'])
   @UseGuards(EnvGuard)
   @ApiResponse({ status: 200, description: 'Fetch mock data for testing UUIDs' })
   getMockData() {
@@ -46,7 +43,7 @@ export class OutcomeController {
   }
 
   @Get()
-  @SetMetadata('roles', ['admin', 'faculty', 'student'])
+  @SetMetadata('roles', ['admin', 'faculty', 'student', 'superadmin'])
   @ApiResponse({ status: 200, description: 'Fetch all outcomes' })
   async getAllOutcomes() {
     const data = await this.outcomeService.getAllOutcomes();
@@ -54,7 +51,7 @@ export class OutcomeController {
   }
 
   @Get(':id')
-  @SetMetadata('roles', ['admin', 'faculty', 'student'])
+  @SetMetadata('roles', ['admin', 'faculty', 'student', 'superadmin'])
   @ApiResponse({ status: 200, description: 'Fetch outcome by ID' })
   async getOutcomeById(@Param('id') id: string) {
     const data = await this.outcomeService.getOutcomeById(id);
@@ -62,7 +59,7 @@ export class OutcomeController {
   }
 
   @Post()
-  @SetMetadata('roles', ['admin', 'academic_head'])
+  @SetMetadata('roles', ['admin', 'head', 'superadmin'])
   @ApiResponse({ status: 201, description: 'Create outcome' })
   async createOutcome(@Body() dto: any) {
     const data = await this.outcomeService.createOutcome(dto);
@@ -70,7 +67,7 @@ export class OutcomeController {
   }
 
   @Put(':id')
-  @SetMetadata('roles', ['admin', 'academic_head'])
+  @SetMetadata('roles', ['admin', 'head', 'superadmin'])
   @ApiBody({ type: UpdateOutcomeInputDto })
   @ApiResponse({ status: 200, description: 'Full update of outcome' })
   async updateOutcome(@Param('id') id: string, @Body() dto: UpdateOutcomeInputDto) {
@@ -79,7 +76,7 @@ export class OutcomeController {
   }
 
   @Patch(':id')
-  @SetMetadata('roles', ['admin', 'academic_head'])
+  @SetMetadata('roles', ['admin', 'head', 'superadmin'])
   @ApiBody({ type: UpdateOutcomeInputDto })
   @ApiResponse({ status: 200, description: 'Partial update of outcome' })
   async patchOutcome(@Param('id') id: string, @Body() dto: UpdateOutcomeInputDto) {
@@ -88,7 +85,7 @@ export class OutcomeController {
   }
 
   @Delete(':id')
-  @SetMetadata('roles', ['admin', 'academic_head'])
+  @SetMetadata('roles', ['admin', 'head', 'superadmin'])
   @ApiResponse({ status: 200, description: 'Delete outcome' })
   async deleteOutcome(@Param('id') id: string) {
     await this.outcomeService.deleteOutcome(id);

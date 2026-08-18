@@ -1,7 +1,6 @@
 import { Controller, Post, Patch, Body, UseGuards, SetMetadata, Get, Param, Put, Delete } from '@nestjs/common';
-import { ApiTags, ApiHeader, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { AssessmentService } from './assessment.assessment.service';
-import { RolesGuard } from '../../common/guards/roles.guard';
 import { EnvGuard } from '../../common/guards/env.guard';
 import { CreateAssessmentInputDto } from './dto/create-assessment.input.dto';
 import { UpdateAssessmentInputDto } from './dto/update-assessment.input.dto';
@@ -13,8 +12,6 @@ import { SEED } from '../../common/types/seed-constants';
 import { MOCK_ASSESSMENTS, MOCK_COURSES, MOCK_MARKS } from '../../common/types/mock-data';
 
 @ApiTags('Assessment')
-@ApiHeader({ name: 'x-user-role', required: true })
-@UseGuards(RolesGuard)
 @Controller()
 export class AssessmentController {
   constructor(private readonly assessmentService: AssessmentService) {}
@@ -50,7 +47,7 @@ export class AssessmentController {
   }
 
   @Get('mock-data')
-  @SetMetadata('roles', ['faculty', 'student', 'admin', 'academic_head'])
+  @SetMetadata('roles', ['faculty', 'student', 'admin', 'head', 'superadmin'])
   @UseGuards(EnvGuard)
   @ApiResponse({ status: 200, description: 'Fetch mock data for testing UUIDs' })
   getMockData() {
@@ -62,7 +59,7 @@ export class AssessmentController {
   }
 
   @Get('assessments')
-  @SetMetadata('roles', ['admin', 'faculty', 'student'])
+  @SetMetadata('roles', ['admin', 'faculty', 'student', 'superadmin'])
   @ApiResponse({ status: 200, description: 'Fetch all assessments' })
   async getAllAssessments() {
     const data = await this.assessmentService.getAllAssessments();
@@ -70,7 +67,7 @@ export class AssessmentController {
   }
 
   @Get('assessments/:id')
-  @SetMetadata('roles', ['admin', 'faculty', 'student'])
+  @SetMetadata('roles', ['admin', 'faculty', 'student', 'superadmin'])
   @ApiResponse({ status: 200, description: 'Fetch assessment by ID' })
   async getAssessmentById(@Param('id') id: string) {
     const data = await this.assessmentService.getAssessmentById(id);
@@ -78,7 +75,7 @@ export class AssessmentController {
   }
 
   @Put('assessments/:id')
-  @SetMetadata('roles', ['admin', 'faculty'])
+  @SetMetadata('roles', ['admin', 'faculty', 'superadmin'])
   @ApiBody({ type: UpdateAssessmentInputDto })
   @ApiResponse({ status: 200, description: 'Full update of assessment' })
   async updateAssessment(@Param('id') id: string, @Body() dto: UpdateAssessmentInputDto) {
@@ -87,7 +84,7 @@ export class AssessmentController {
   }
 
   @Patch('assessments/:id')
-  @SetMetadata('roles', ['admin', 'faculty'])
+  @SetMetadata('roles', ['admin', 'faculty', 'superadmin'])
   @ApiBody({ type: UpdateAssessmentInputDto })
   @ApiResponse({ status: 200, description: 'Partial update of assessment' })
   async patchAssessment(@Param('id') id: string, @Body() dto: UpdateAssessmentInputDto) {
@@ -96,7 +93,7 @@ export class AssessmentController {
   }
 
   @Delete('assessments/:id')
-  @SetMetadata('roles', ['admin', 'faculty'])
+  @SetMetadata('roles', ['admin', 'faculty', 'superadmin'])
   @ApiResponse({ status: 200, description: 'Delete assessment' })
   async deleteAssessment(@Param('id') id: string) {
     await this.assessmentService.deleteAssessment(id);
