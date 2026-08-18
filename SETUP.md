@@ -76,6 +76,40 @@ reuse them anywhere real, and never add a genuine account's password to this fil
 > app now enforces on password *changes*. It still logs in, but cannot be reset
 > to the same value.
 
+## Logging
+
+The backend logs structured JSON through [Pino](https://getpino.io). One line per
+request, plus application events.
+
+| Variable | Default | Notes |
+|---|---|---|
+| `LOG_LEVEL` | `debug` in dev, `info` in production | `trace`/`debug`/`info`/`warn`/`error`/`fatal` |
+
+- **Development** output is colourised and human-readable (via `pino-pretty`).
+- **Production** (`NODE_ENV=production`) emits raw JSON — one object per line —
+  ready to pipe into any log collector. `pino-pretty` is a devDependency and is
+  never loaded in production.
+
+To read production-format logs locally:
+
+```bash
+node dist/src/main.js | npx pino-pretty
+```
+
+Every request carries a `reqId`, echoed to the client as the `X-Request-Id`
+response header — so a user reporting a problem can quote an id you can grep for.
+Authenticated requests also carry `userId` and `role`, taken from the verified
+JWT claims.
+
+Credentials are redacted before anything is written: the `Authorization` header,
+cookies, and any `password` / `current_password` / `new_password` /
+`password_hash` field. Response bodies are never logged, because the login
+response contains a token.
+
+Static asset requests are not logged — only paths under `/api`.
+
+---
+
 ## How authentication works
 
 1. `POST /api/auth/login` verifies the password against its bcrypt hash and

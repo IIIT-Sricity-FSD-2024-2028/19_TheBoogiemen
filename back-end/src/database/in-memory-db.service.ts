@@ -1,4 +1,5 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -28,6 +29,10 @@ export class InMemoryDbService implements OnModuleInit {
   public syllabus_progress = this.createProxyArray([]);
   public attendance_requests = this.createProxyArray([]);
   public resource_bookings = this.createProxyArray([]);
+
+  constructor(
+    @InjectPinoLogger(InMemoryDbService.name) private readonly logger: PinoLogger,
+  ) {}
 
   onModuleInit() {
     this.loadData();
@@ -71,14 +76,20 @@ export class InMemoryDbService implements OnModuleInit {
         }
         
         this.isLoaded = true;
-        console.log(`[Database] Loaded mock data from ${this.dataPath}`);
+        this.logger.info(
+          { path: this.dataPath, collections: Object.keys(data).length },
+          'Loaded seed data',
+        );
       } else {
         this.isLoaded = true;
-        console.warn(`[Database] Mock data file not found at ${this.dataPath}. Starting with empty data.`);
+        this.logger.warn(
+          { path: this.dataPath },
+          'Seed data file not found — starting with empty collections',
+        );
       }
     } catch (error) {
       this.isLoaded = true;
-      console.error('[Database] Error loading mock data:', error);
+      this.logger.error({ err: error, path: this.dataPath }, 'Failed to load seed data');
     }
   }
 
@@ -110,7 +121,9 @@ export class InMemoryDbService implements OnModuleInit {
 
       fs.writeFileSync(this.dataPath, JSON.stringify(dataToSave, null, 2), 'utf8');
     } catch (error) {
-      console.error('[Database] Error persisting mock data:', error);
+      // Persistence failures are silent data loss — this must be an error, not a
+      // warning, and will matter more once this is a real database.
+      this.logger.error({ err: error, path: this.dataPath }, 'Failed to persist data');
     }
   }
 }
