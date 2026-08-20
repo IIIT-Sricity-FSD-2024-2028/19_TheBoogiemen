@@ -76,6 +76,74 @@ reuse them anywhere real, and never add a genuine account's password to this fil
 > app now enforces on password *changes*. It still logs in, but cannot be reset
 > to the same value.
 
+## Database
+
+The backend can run against either the JSON file or PostgreSQL, selected by
+`DATA_STORE`. It defaults to `memory`, so the app still runs with no database.
+
+| Variable | Required when | Notes |
+|---|---|---|
+| `DATA_STORE` | always | `memory` (data/mock-db.json) or `postgres` |
+| `DATABASE_URL` | `DATA_STORE=postgres` | Contains the password — treat it like `JWT_SECRET` |
+| `PGSSLROOTCERT` | any non-local database | Path to Aiven's `ca.pem` |
+| `DB_POOL_MAX` | optional | Default 5. See the connection budget below |
+
+### Local development with Docker
+
+```bash
+docker run -d --name bp-pg \
+  -e POSTGRES_PASSWORD=devpass \
+  -e POSTGRES_USER=bpuser \
+  -e POSTGRES_DB=barelypassing_dev \
+  -p 55432:5432 postgres:16-alpine
+```
+
+```bash
+# back-end/.env
+DATA_STORE=postgres
+DATABASE_URL=postgres://bpuser:devpass@localhost:55432/barelypassing_dev
+```
+
+```bash
+npm run db:seed        # create the schema and import data/mock-db.json
+npm run db:reset       # same, but truncate first
+npm run db:migrate     # schema only, no data
+```
+
+`db:seed` is idempotent — re-running will not duplicate rows. The schema is also
+applied automatically at startup, so a fresh environment is usable immediately.
+
+### Connecting to Aiven
+
+1. Download `ca.pem` from the service overview page into `back-end/certs/`.
+2. Set both variables:
+
+```bash
+DATABASE_URL=postgres://avnadmin:<password>@<service>.aivencloud.com:<port>/barelypassing_dev?sslmode=verify-full
+PGSSLROOTCERT=./certs/ca.pem
+```
+
+The server refuses to start against a remote database without a CA certificate.
+Do not work around this by disabling certificate verification — that leaves the
+connection encrypted but unauthenticated, so anything able to intercept the route
+can impersonate the database and collect every credential the app sends.
+
+### Connection budget
+
+Aiven's free tier allows **20 connections in total** and has no PgBouncer, so
+every connection is a real backend process shared across the whole team. The
+pool defaults to 5 per application instance. Budget it deliberately — for
+example 5 deployed, 5 spare instance, 5 developers, 5 headroom for migrations
+and `psql`. Exceeding it produces `too many clients already`, which looks like an
+application bug rather than a capacity limit.
+
+The free tier also allows only **one service per type per organisation**, so
+separate environments live as separate *databases* inside the single service
+(`barelypassing_dev`, `barelypassing_prod`), each with its own role. `defaultdb`
+is for administration only.
+
+---
+
 ## Logging
 
 The backend logs structured JSON through [Pino](https://getpino.io). One line per

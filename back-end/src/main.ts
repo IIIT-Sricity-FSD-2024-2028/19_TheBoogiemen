@@ -1,3 +1,14 @@
+// Load .env FIRST, before any module is imported.
+//
+// Nest's ConfigModule populates process.env during module *instantiation*, but
+// module decorators are evaluated at import time — earlier. Anything that reads
+// process.env to decide module shape (DATA_STORE selecting the store, LOG_LEVEL
+// selecting the logger level) would otherwise see undefined and silently fall
+// back to its default, which is the worst kind of misconfiguration: no error,
+// just the wrong behaviour.
+import * as dotenv from 'dotenv';
+dotenv.config({ quiet: true });
+
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
