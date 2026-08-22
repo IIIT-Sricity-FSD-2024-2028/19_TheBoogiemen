@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { InMemoryDbService } from '../database/in-memory-db.service';
 import { PasswordService } from './password.service';
 import { JwtPayload, Role, isRole } from './jwt-payload';
+import { ErrorCode, errorBody } from '../common/errors/error-codes';
 
 @Injectable()
 export class AuthService {
@@ -30,11 +31,15 @@ export class AuthService {
 
     if (!user || !passwordValid) {
       // Deliberately identical for both cases — no user enumeration.
-      throw new UnauthorizedException('Invalid email or password');
+      throw new UnauthorizedException(
+        errorBody(ErrorCode.INVALID_CREDENTIALS, 'Invalid email or password'),
+      );
     }
 
     if (!isRole(user.role)) {
-      throw new UnauthorizedException('Account has no valid role assigned. Contact an administrator.');
+      throw new UnauthorizedException(
+        errorBody(ErrorCode.MISCONFIGURATION, 'Account has no valid role assigned. Contact an administrator.'),
+      );
     }
 
     const student = this.db.students.find((s) => s.user_id === user.user_id);
@@ -66,7 +71,9 @@ export class AuthService {
     // A missing user means the token names someone who no longer exists, so the
     // session itself is invalid — 401 and the client-side sign-out are correct.
     if (!user) {
-      throw new UnauthorizedException('Session is no longer valid. Please sign in again.');
+      throw new UnauthorizedException(
+        errorBody(ErrorCode.TOKEN_INVALID, 'Session is no longer valid. Please sign in again.'),
+      );
     }
 
     // A wrong current password is a failure of the submitted form, not of the
@@ -74,11 +81,15 @@ export class AuthService {
     // end the session instead of showing an error, so this must stay a 400.
     const currentValid = await this.passwordService.verify(current, user.password_hash);
     if (!currentValid) {
-      throw new BadRequestException('Current password is incorrect');
+      throw new BadRequestException(
+        errorBody(ErrorCode.INVALID_CREDENTIALS, 'Current password is incorrect'),
+      );
     }
 
     if (current === newPass) {
-      throw new BadRequestException('New password must be different from your current password');
+      throw new BadRequestException(
+        errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'New password must be different from your current password'),
+      );
     }
 
     user.password_hash = await this.passwordService.hash(newPass);

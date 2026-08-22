@@ -3,6 +3,7 @@ import { StudentsService } from './students.service';
 import { Roles } from '../auth/roles.guard';
 import { CurrentUserId } from '../common/decorators/current-user.decorator';
 import { ApiTags, ApiOperation, ApiResponse , ApiBody} from '@nestjs/swagger';
+import { ErrorCode, errorBody } from '../common/errors/error-codes';
 
 @ApiTags('Students')
 @Controller('students')
@@ -66,7 +67,9 @@ export class StudentsController {
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async enroll(@Body() body: any, @CurrentUserId() userId: string) {
     const courseId = body.course_id || body.courseId;
-    if (!courseId) throw new BadRequestException('course_id is required');
+    if (!courseId) throw new BadRequestException(
+      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'course_id is required'),
+    );
     return this.studentsService.enroll(userId, courseId);
   }
 }

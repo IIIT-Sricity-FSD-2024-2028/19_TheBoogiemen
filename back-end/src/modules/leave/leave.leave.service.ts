@@ -4,6 +4,7 @@ import { NotificationService } from '../../common/services/notification.service'
 import { ApplyLeaveInputDto } from './dto/apply-leave.input.dto';
 import { LeaveOutputDto } from './dto/leave.output.dto';
 import { v4 as uuidv4 } from 'uuid';
+import { ErrorCode, errorBody } from '../../common/errors/error-codes';
 
 @Injectable()
 export class LeaveService {
@@ -27,7 +28,9 @@ export class LeaveService {
 
   async approveLeave(leaveId: string, adminId: string): Promise<LeaveOutputDto> {
     const leave = await this.leaveRepo.getLeave(leaveId);
-    if (!leave) throw new NotFoundException('Leave request not found');
+    if (!leave) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Leave request not found'),
+    );
 
     const enrollments = this.leaveRepo.enrollments.filter(e => e.student_id === leave.student_id);
     const enrolIds = enrollments.map(e => e.enrollment_id);
@@ -59,13 +62,17 @@ export class LeaveService {
 
   async getLeaveById(id: string) {
     const leave = await this.leaveRepo.getLeave(id);
-    if (!leave) throw new NotFoundException('Leave request not found');
+    if (!leave) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Leave request not found'),
+    );
     return leave;
   }
 
   async updateLeave(id: string, dto: any) {
     const leave = await this.leaveRepo.getLeave(id);
-    if (!leave) throw new NotFoundException('Leave request not found');
+    if (!leave) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Leave request not found'),
+    );
     
     return this.leaveRepo.update(id, {
       student_id: dto.student_id || leave.student_id,
@@ -79,14 +86,18 @@ export class LeaveService {
 
   async patchLeave(id: string, dto: any) {
     const leave = await this.leaveRepo.getLeave(id);
-    if (!leave) throw new NotFoundException('Leave request not found');
+    if (!leave) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Leave request not found'),
+    );
     
     return this.leaveRepo.update(id, dto);
   }
 
   async deleteLeave(id: string) {
     const leave = await this.leaveRepo.getLeave(id);
-    if (!leave) throw new NotFoundException('Leave request not found');
+    if (!leave) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Leave request not found'),
+    );
     
     await this.leaveRepo.delete(id);
   }

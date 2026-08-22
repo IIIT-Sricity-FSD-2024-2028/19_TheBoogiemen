@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InMemoryDbService } from '../database/in-memory-db.service';
 import { ATTENDANCE_STATUS, normalizeAttendanceStatus, summariseAttendance } from '../common/academic-rules';
+import { ErrorCode, errorBody } from '../common/errors/error-codes';
 
 @Injectable()
 export class StudentsService {
@@ -8,7 +9,9 @@ export class StudentsService {
 
   async getProfile(userId: string) {
     const student = this.db.students.find((s) => s.user_id === userId);
-    if (!student) throw new NotFoundException('Student not found');
+    if (!student) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Student not found'),
+    );
     return student;
   }
 
@@ -95,12 +98,16 @@ export class StudentsService {
       e => e.student_id === studentId && e.course_id === courseId
     );
     if (existing) {
-      throw new BadRequestException('Already enrolled in this course');
+      throw new BadRequestException(
+      errorBody(ErrorCode.DUPLICATE_RESOURCE, 'Already enrolled in this course'),
+    );
     }
 
     // Verify course exists
     const course = this.db.courses.find(c => c.course_id === courseId);
-    if (!course) throw new NotFoundException('Course not found');
+    if (!course) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Course not found'),
+    );
 
     const id = `e${Date.now()}`;
     const student = this.db.students.find(s => s.user_id === studentId);

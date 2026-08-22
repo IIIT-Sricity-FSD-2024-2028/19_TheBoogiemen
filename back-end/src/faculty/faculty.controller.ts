@@ -3,6 +3,7 @@ import { FacultyService } from './faculty.service';
 import { Roles } from '../auth/roles.guard';
 import { CurrentUserId } from '../common/decorators/current-user.decorator';
 import { ApiTags, ApiOperation, ApiResponse , ApiBody} from '@nestjs/swagger';
+import { ErrorCode, errorBody } from '../common/errors/error-codes';
 
 @ApiTags('Faculty')
 @Controller('faculty')
@@ -71,7 +72,9 @@ export class FacultyController {
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async recordAttendance(@Body() body: any) {
     if (!body.course_id || !body.date || !body.records) {
-      throw new BadRequestException('course_id, date, and records are required');
+      throw new BadRequestException(
+      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'course_id, date, and records are required'),
+    );
     }
     return this.facultyService.recordAttendance(body);
   }

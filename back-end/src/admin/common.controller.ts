@@ -4,6 +4,7 @@ import { InMemoryDbService } from '../database/in-memory-db.service';
 import { Roles } from '../auth/roles.guard';
 import { CurrentUserId, CurrentUserRole } from '../common/decorators/current-user.decorator';
 import { PasswordService } from '../auth/password.service';
+import { ErrorCode, errorBody } from '../common/errors/error-codes';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import {
   ATTENDANCE_STATUS,
@@ -48,8 +49,12 @@ function rejectProtectedFields(rawBody: any, fields: string[] = PROTECTED_USER_F
   const offending = fields.filter(f => rawBody && Object.prototype.hasOwnProperty.call(rawBody, f));
   if (offending.length) {
     throw new BadRequestException(
-      `The following fields cannot be changed here: ${offending.join(', ')}. ` +
-      `Use PATCH /users/:id/role or PATCH /users/:id/password.`,
+      errorBody(
+        ErrorCode.IMMUTABLE_FIELD,
+        `The following fields cannot be changed here: ${offending.join(', ')}. ` +
+        `Use PATCH /users/:id/role or PATCH /users/:id/password.`,
+        { fields: offending },
+      ),
     );
   }
 }
@@ -102,8 +107,12 @@ export class CommonController {
   @ApiOperation({ summary: 'Create a new course' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async createCourse(@Body() body: any, @CurrentUserId() userId: string) {
-    if (!body.course_name || !body.course_code) throw new BadRequestException('course_name and course_code are required');
-    if (this.db.courses.find(c => c.course_code === body.course_code)) throw new BadRequestException('Course code already exists');
+    if (!body.course_name || !body.course_code) throw new BadRequestException(
+      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'course_name and course_code are required'),
+    );
+    if (this.db.courses.find(c => c.course_code === body.course_code)) throw new BadRequestException(
+      errorBody(ErrorCode.DUPLICATE_RESOURCE, 'Course code already exists'),
+    );
     const faculty = this.db.faculty.find(f => f.user_id === userId);
     const facultyName = faculty ? `${faculty.first_name} ${faculty.last_name}`.trim() : 'Faculty';
     const newCourse = { course_id: `c${Date.now()}`, faculty_id: body.faculty_id || userId, faculty_name: facultyName, ...body };
@@ -188,10 +197,14 @@ export class CommonController {
   @ApiOperation({ summary: 'Record marks for a student (locked once entered)' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async recordMarks(@Body() body: any) {
-    if (!body.student_id || !body.assessment_id) throw new BadRequestException('student_id and assessment_id required');
+    if (!body.student_id || !body.assessment_id) throw new BadRequestException(
+      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'student_id and assessment_id required'),
+    );
     // Marks lock: reject if already entered
     const existing = this.db.marks_entry.find(m => m.student_id === body.student_id && m.assessment_id === body.assessment_id);
-    if (existing) throw new BadRequestException('Marks already entered and locked for this student. Cannot update.');
+    if (existing) throw new BadRequestException(
+      errorBody(ErrorCode.DUPLICATE_RESOURCE, 'Marks already entered and locked for this student. Cannot update.'),
+    );
     const id = `m${Date.now()}`;
     const entry = { entry_id: id, ...body };
     this.db.marks_entry.push(entry as any);
@@ -211,7 +224,9 @@ export class CommonController {
   @ApiOperation({ summary: 'Student submits work for an online assessment' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async createSubmission(@Body() body: any, @CurrentUserId() userId: string) {
-    if (!body.assessment_id) throw new BadRequestException('assessment_id required');
+    if (!body.assessment_id) throw new BadRequestException(
+      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'assessment_id required'),
+    );
     // Upsert — allow re-submission
     const existing = this.db.submissions.find(s => s.student_id === userId && s.assessment_id === body.assessment_id);
     if (existing) {
@@ -251,7 +266,9 @@ export class CommonController {
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async recordAttendance(@Body() body: any) {
     const { course_id, date, records } = body;
-    if (!course_id || !date || !records) throw new BadRequestException('course_id, date, and records required');
+    if (!course_id || !date || !records) throw new BadRequestException(
+      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'course_id, date, and records required'),
+    );
 
     // M-01: re-submitting the same session updates the existing rows rather than
     // appending duplicates. A double-click previously logged the same absence
@@ -306,7 +323,9 @@ export class CommonController {
   @ApiOperation({ summary: 'Get a single discussion post with all replies' })
   async getDiscussionDetail(@Param('postId') postId: string) {
     const post = this.db.discussion_posts.find(p => p.post_id === postId);
-    if (!post) throw new NotFoundException('Post not found');
+    if (!post) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Post not found'),
+    );
     const replies = this.db.discussion_replies.filter(r => r.post_id === postId);
     return { ...post, replies };
   }
@@ -338,7 +357,9 @@ export class CommonController {
       : faculty ? `${faculty.first_name} ${faculty.last_name || ''}`.trim()
       : user?.username || 'Anonymous';
     const post = this.db.discussion_posts.find(p => p.post_id === postId);
-    if (!post) throw new NotFoundException('Post not found');
+    if (!post) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Post not found'),
+    );
     const id = `r${Date.now()}`;
     const newReply = { reply_id: id, post_id: postId, author_id: userId, author_name: authorName, author_role: user?.role, content: body.content, created_at: new Date().toISOString() };
     this.db.discussion_replies.push(newReply as any);
@@ -370,7 +391,9 @@ export class CommonController {
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async updateResearchStatus(@Param('id') id: string, @Body() body: { status: string }) {
     const project = this.db.research_projects.find(p => p.project_id === id);
-    if (!project) throw new NotFoundException('Project not found');
+    if (!project) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Project not found'),
+    );
     project.status = body.status;
     return project;
   }
@@ -381,7 +404,9 @@ export class CommonController {
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async updateResearchProgress(@Param('id') id: string, @Body() body: any) {
     const project = this.db.research_projects.find(p => p.project_id === id);
-    if (!project) throw new NotFoundException('Project not found');
+    if (!project) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Project not found'),
+    );
     // Only update progress if explicitly provided (don't zero it out)
     if (body.progress !== undefined && body.progress !== null) project.progress = Number(body.progress);
     if (body.submission_notes !== undefined) (project as any).submission_notes = body.submission_notes;
@@ -394,9 +419,13 @@ export class CommonController {
   @ApiOperation({ summary: 'Create a new research/BTP project and assign to a student' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async createResearch(@Body() body: any, @CurrentUserId() userId: string) {
-    if (!body.student_id || !body.title) throw new BadRequestException('student_id and title are required');
+    if (!body.student_id || !body.title) throw new BadRequestException(
+      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'student_id and title are required'),
+    );
     const student = this.db.students.find(s => s.user_id === body.student_id);
-    if (!student) throw new NotFoundException('Student not found');
+    if (!student) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Student not found'),
+    );
     const faculty = this.db.faculty.find(f => f.user_id === userId);
     const supervisorName = faculty ? `${faculty.first_name} ${faculty.last_name}`.trim() : 'Faculty';
     const studentName = `${student.first_name} ${student.last_name || ''}`.trim();
@@ -431,7 +460,9 @@ export class CommonController {
   @ApiOperation({ summary: 'Create a new institutional event' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async createEvent(@Body() body: any) {
-    if (!body.event_name || !body.date || !body.venue) throw new BadRequestException('event_name, date, and venue are required');
+    if (!body.event_name || !body.date || !body.venue) throw new BadRequestException(
+      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'event_name, date, and venue are required'),
+    );
     const id = `ev${Date.now()}`;
     const newEvent = { event_id: id, ...body };
     this.db.events.push(newEvent as any);
@@ -444,7 +475,9 @@ export class CommonController {
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async updateEvent(@Param('id') id: string, @Body() body: any) {
     const event = this.db.events.find(e => e.event_id === id);
-    if (!event) throw new NotFoundException('Event not found');
+    if (!event) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Event not found'),
+    );
     Object.assign(event, body);
     return { success: true, data: event };
   }
@@ -454,7 +487,9 @@ export class CommonController {
   @ApiOperation({ summary: 'Delete an event' })
   async deleteEvent(@Param('id') id: string) {
     const index = this.db.events.findIndex(e => e.event_id === id);
-    if (index === -1) throw new NotFoundException('Event not found');
+    if (index === -1) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Event not found'),
+    );
     this.db.events.splice(index, 1);
     return { success: true, message: 'Event deleted' };
   }
@@ -475,7 +510,9 @@ export class CommonController {
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async applyLeave(@Body() body: any, @CurrentUserId() userId: string) {
     if (!body.leave_type || !body.start_date || !body.end_date || !body.reason) {
-      throw new BadRequestException('leave_type, start_date, end_date, and reason are required');
+      throw new BadRequestException(
+      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'leave_type, start_date, end_date, and reason are required'),
+    );
     }
     const user = this.db.users.find(u => u.user_id === userId);
     const student = this.db.students.find(s => s.user_id === userId);
@@ -503,11 +540,15 @@ export class CommonController {
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async updateLeave(@Param('id') id: string, @Body() body: { status: string }) {
     const leave = this.db.leave_applications.find(l => l.leave_id === id);
-    if (!leave) throw new NotFoundException('Leave application not found');
+    if (!leave) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Leave application not found'),
+    );
 
     const status = String(body?.status ?? '').trim().toLowerCase();
     if (!['pending', 'approved', 'rejected'].includes(status)) {
-      throw new BadRequestException('status must be one of: pending, approved, rejected');
+      throw new BadRequestException(
+      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'status must be one of: pending, approved, rejected'),
+    );
     }
 
     leave.status = status;
@@ -544,12 +585,20 @@ export class CommonController {
     // an Academic Head cannot create Academic Heads or Super Admins.
     if (!canAssignRole(actorRole, body.role)) {
       throw new ForbiddenException(
-        `Your role (${actorRole || 'unknown'}) may only create users with role: ${rolesAssignableBy(actorRole).join(', ') || 'none'}`,
+        errorBody(
+          ErrorCode.PRIVILEGE_CEILING,
+          `Your role (${actorRole || 'unknown'}) may only create users with role: ${rolesAssignableBy(actorRole).join(', ') || 'none'}`,
+          { actorRole, assignable: rolesAssignableBy(actorRole) },
+        ),
       );
     }
-    if (this.db.users.find(u => u.email === body.email)) throw new BadRequestException('Email already exists');
+    if (this.db.users.find(u => u.email === body.email)) throw new BadRequestException(
+      errorBody(ErrorCode.DUPLICATE_RESOURCE, 'Email already exists'),
+    );
     if (!body.password) {
-      throw new BadRequestException('An initial password is required when creating a user');
+      throw new BadRequestException(
+      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'An initial password is required when creating a user'),
+    );
     }
 
     const id = `u${Date.now()}`;
@@ -589,11 +638,15 @@ export class CommonController {
     rejectProtectedFields(req?.body);
 
     const user = this.db.users.find(u => u.user_id === id);
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'User not found'),
+    );
 
     if (body.email && body.email !== user.email
         && this.db.users.find(u => u.email === body.email && u.user_id !== id)) {
-      throw new BadRequestException('Email already in use by another account');
+      throw new BadRequestException(
+      errorBody(ErrorCode.DUPLICATE_RESOURCE, 'Email already in use by another account'),
+    );
     }
 
     const changes = pickDefined(body);
@@ -615,20 +668,34 @@ export class CommonController {
     @CurrentUserId() actorId: string,
   ) {
     const user = this.db.users.find(u => u.user_id === id);
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'User not found'),
+    );
 
     if (actorId && actorId === id) {
-      throw new ForbiddenException('You cannot change your own role');
+      throw new ForbiddenException(
+        errorBody(ErrorCode.PRIVILEGE_CEILING, 'You cannot change your own role'),
+      );
     }
     // The caller must be permitted to grant the new role AND to manage the role
     // the account currently holds, so a head cannot demote or hijack a superadmin.
     if (!canAssignRole(actorRole, body.role)) {
       throw new ForbiddenException(
-        `Your role (${actorRole || 'unknown'}) may only assign: ${rolesAssignableBy(actorRole).join(', ') || 'none'}`,
+        errorBody(
+          ErrorCode.PRIVILEGE_CEILING,
+          `Your role (${actorRole || 'unknown'}) may only assign: ${rolesAssignableBy(actorRole).join(', ') || 'none'}`,
+          { actorRole, assignable: rolesAssignableBy(actorRole) },
+        ),
       );
     }
     if (!canAssignRole(actorRole, user.role)) {
-      throw new ForbiddenException(`Your role (${actorRole || 'unknown'}) may not modify a ${user.role} account`);
+      throw new ForbiddenException(
+        errorBody(
+          ErrorCode.PRIVILEGE_CEILING,
+          `Your role (${actorRole || 'unknown'}) may not modify a ${user.role} account`,
+          { actorRole, targetRole: user.role },
+        ),
+      );
     }
 
     user.role = body.role;
@@ -647,9 +714,17 @@ export class CommonController {
     @CurrentUserRole() actorRole: string,
   ) {
     const user = this.db.users.find(u => u.user_id === id);
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'User not found'),
+    );
     if (!canAssignRole(actorRole, user.role)) {
-      throw new ForbiddenException(`Your role (${actorRole || 'unknown'}) may not reset a ${user.role} password`);
+      throw new ForbiddenException(
+        errorBody(
+          ErrorCode.PRIVILEGE_CEILING,
+          `Your role (${actorRole || 'unknown'}) may not reset a ${user.role} password`,
+          { actorRole, targetRole: user.role },
+        ),
+      );
     }
     user.password_hash = await this.passwordService.hash(body.new_password);
     delete user.password; // drop any legacy plaintext field left on the record
@@ -676,7 +751,9 @@ export class CommonController {
   @ApiOperation({ summary: 'Delete a user' })
   async deleteUser(@Param('id') id: string) {
     const index = this.db.users.findIndex(u => u.user_id === id);
-    if (index === -1) throw new NotFoundException('User not found');
+    if (index === -1) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'User not found'),
+    );
     this.db.users.splice(index, 1);
     return { success: true, message: 'User deleted' };
   }
@@ -751,7 +828,9 @@ export class CommonController {
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async updateResource(@Param('id') id: string, @Body() body: any) {
     const res = this.db.resources.find(r => r.resource_id === id);
-    if (!res) throw new NotFoundException('Resource not found');
+    if (!res) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Resource not found'),
+    );
     Object.assign(res, body);
     return { success: true, data: res };
   }
@@ -779,7 +858,9 @@ export class CommonController {
   @ApiOperation({ summary: 'Mark a fee record as paid' })
   async payFee(@Param('id') id: string) {
     const fee = this.db.fees.find(f => f.fee_id === id);
-    if (!fee) throw new NotFoundException('Fee record not found');
+    if (!fee) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Fee record not found'),
+    );
     fee.status = 'paid';
     (fee as any).paid_date = new Date().toLocaleDateString();
     return { success: true, data: fee };
@@ -791,7 +872,9 @@ export class CommonController {
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async createFee(@Body() body: any) {
     if (!body.student_id || !body.fee_type || !body.amount || !body.due_date) {
-      throw new BadRequestException('student_id, fee_type, amount, and due_date are required');
+      throw new BadRequestException(
+      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'student_id, fee_type, amount, and due_date are required'),
+    );
     }
     const id = `f${Date.now()}`;
     const newFee = { fee_id: id, status: 'pending', ...body, amount: Number(body.amount) };
@@ -805,7 +888,9 @@ export class CommonController {
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async updateFee(@Param('id') id: string, @Body() body: any) {
     const fee = this.db.fees.find(f => f.fee_id === id);
-    if (!fee) throw new NotFoundException('Fee record not found');
+    if (!fee) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Fee record not found'),
+    );
     Object.assign(fee, { ...body, amount: Number(body.amount || fee.amount) });
     return { success: true, data: fee };
   }
@@ -818,13 +903,21 @@ export class CommonController {
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async enrollStudentByCourse(@Body() body: any) {
     const { student_id, course_id } = body;
-    if (!student_id || !course_id) throw new BadRequestException('student_id and course_id are required');
+    if (!student_id || !course_id) throw new BadRequestException(
+      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'student_id and course_id are required'),
+    );
     const student = this.db.students.find(s => s.user_id === student_id);
-    if (!student) throw new NotFoundException('Student not found');
+    if (!student) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Student not found'),
+    );
     const course = this.db.courses.find(c => c.course_id === course_id);
-    if (!course) throw new NotFoundException('Course not found');
+    if (!course) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Course not found'),
+    );
     const existing = this.db.enrollment.find(e => e.student_id === student_id && e.course_id === course_id);
-    if (existing) throw new BadRequestException('Student is already enrolled in this course');
+    if (existing) throw new BadRequestException(
+      errorBody(ErrorCode.DUPLICATE_RESOURCE, 'Student is already enrolled in this course'),
+    );
     const id = `e${Date.now()}`;
     const newEnrollment = { enrollment_id: id, student_id, course_id, year_id: new Date().getFullYear().toString(), status: 'active', section: student.section || 'A' };
     this.db.enrollment.push(newEnrollment as any);
@@ -860,7 +953,9 @@ export class CommonController {
   @ApiOperation({ summary: 'Update syllabus completion for a course+section' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async updateSyllabusProgress(@Body() body: any, @CurrentUserId() userId: string) {
-    if (!body.course_id || !body.section || body.progress === undefined) throw new BadRequestException('course_id, section, and progress required');
+    if (!body.course_id || !body.section || body.progress === undefined) throw new BadRequestException(
+      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'course_id, section, and progress required'),
+    );
     const existing = this.db.syllabus_progress.find(s => s.course_id === body.course_id && s.section === body.section);
     if (existing) {
       existing.progress = Math.min(100, Math.max(0, Number(body.progress)));
@@ -880,10 +975,14 @@ export class CommonController {
   @ApiOperation({ summary: 'Student requests attendance correction' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async createAttendanceRequest(@Body() body: any, @CurrentUserId() userId: string) {
-    if (!body.course_id || !body.date || !body.reason) throw new BadRequestException('course_id, date, and reason required');
+    if (!body.course_id || !body.date || !body.reason) throw new BadRequestException(
+      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'course_id, date, and reason required'),
+    );
     // Allow past and today dates (student requests attendance for a day they were absent)
     const today = new Date().toISOString().split('T')[0];
-    if (body.date > today) throw new BadRequestException('Attendance requests cannot be made for future dates');
+    if (body.date > today) throw new BadRequestException(
+      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'Attendance requests cannot be made for future dates'),
+    );
     const student = this.db.students.find(s => s.user_id === userId);
     const course = this.db.courses.find(c => c.course_id === body.course_id);
     const id = `ar${Date.now()}`;
@@ -917,7 +1016,9 @@ export class CommonController {
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async updateAttendanceRequest(@Param('id') id: string, @Body() body: any) {
     const req = this.db.attendance_requests.find(r => r.request_id === id);
-    if (!req) throw new NotFoundException('Attendance request not found');
+    if (!req) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Attendance request not found'),
+    );
     req.admin_status = body.status || 'approved';
     req.admin_reason = body.admin_reason || '';
     return { success: true, data: req };
@@ -928,9 +1029,15 @@ export class CommonController {
   @ApiOperation({ summary: 'Faculty marks attendance after admin approval' })
   async markAttendanceRequest(@Param('id') id: string, @CurrentUserId() userId: string) {
     const req = this.db.attendance_requests.find(r => r.request_id === id);
-    if (!req) throw new NotFoundException('Attendance request not found');
-    if (req.admin_status !== 'approved') throw new BadRequestException('Admin has not approved this request');
-    if (req.faculty_status === 'granted') throw new BadRequestException('This request has already been granted');
+    if (!req) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Attendance request not found'),
+    );
+    if (req.admin_status !== 'approved') throw new BadRequestException(
+      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'Admin has not approved this request'),
+    );
+    if (req.faculty_status === 'granted') throw new BadRequestException(
+      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'This request has already been granted'),
+    );
     req.faculty_status = 'granted';
 
     // H-07: UUID instead of `al${length + 1}`, which minted ids that already existed.
@@ -960,7 +1067,9 @@ export class CommonController {
   @ApiOperation({ summary: 'Faculty requests a resource booking' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async createResourceBooking(@Body() body: any, @CurrentUserId() userId: string) {
-    if (!body.resource_id || !body.date || !body.purpose) throw new BadRequestException('resource_id, date, and purpose required');
+    if (!body.resource_id || !body.date || !body.purpose) throw new BadRequestException(
+      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'resource_id, date, and purpose required'),
+    );
     const resource = this.db.resources.find(r => r.resource_id === body.resource_id);
     const faculty = this.db.faculty.find(f => f.user_id === userId);
     const id = `rb${Date.now()}`;
@@ -991,7 +1100,9 @@ export class CommonController {
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async updateResourceBooking(@Param('id') id: string, @Body() body: any) {
     const booking = this.db.resource_bookings.find(b => b.booking_id === id);
-    if (!booking) throw new NotFoundException('Booking not found');
+    if (!booking) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Booking not found'),
+    );
     booking.status = body.status || 'approved';
     return { success: true, data: booking };
   }
