@@ -17,6 +17,8 @@ import { AppModule } from './app.module';
 import * as path from 'path';
 import * as express from 'express';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
+import { VALIDATION_PIPE_OPTIONS } from './common/errors/validation.factory';
+import { registerProcessHandlers } from './common/errors/process-handlers';
 
 async function bootstrap() {
   // bufferLogs holds Nest's own startup output until the Pino logger is
@@ -47,14 +49,18 @@ async function bootstrap() {
   // response, which is what the interceptor this replaces used to do.
   app.useGlobalFilters(new AllExceptionsFilter(logger));
 
+  // Errors raised outside a request never reach the filter — see the policy
+  // note in process-handlers.ts.
+  registerProcessHandlers(app, logger);
+
+  // Runs onModuleDestroy hooks (closing the database pool) on SIGTERM/SIGINT.
+  app.enableShutdownHooks();
+
   // 4. Global Validation
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      transform: true,
-      transformOptions: { enableImplicitConversion: true }
-    })
-  );
+  // forbidNonWhitelisted is on globally now. It previously applied to four
+  // routes only, so everywhere else an unknown body key was silently dropped
+  // and the caller got a 200 back having changed nothing.
+  app.useGlobalPipes(new ValidationPipe(VALIDATION_PIPE_OPTIONS));
 
   // 5. Serve Static Files (Windows & Mac Compatible)
   // This resolves the 'front-end' folder relative to your current project location

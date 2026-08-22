@@ -2,6 +2,7 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { v4 as uuidv4 } from 'uuid';
 import { InMemoryDbService } from '../database/in-memory-db.service';
 import { syncLeaveAttendance } from '../common/leave-attendance.sync';
+import { ErrorCode, errorBody } from '../common/errors/error-codes';
 
 @Injectable()
 export class AdminService {
@@ -13,11 +14,15 @@ export class AdminService {
 
   async updateLeaveStatus(leaveId: string, status: string) {
     const leave = this.db.leave_applications.find((l) => l.leave_id === leaveId);
-    if (!leave) throw new NotFoundException('Leave application not found');
+    if (!leave) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Leave application not found'),
+    );
 
     const normalized = String(status ?? '').trim().toLowerCase();
     if (!['pending', 'approved', 'rejected'].includes(normalized)) {
-      throw new BadRequestException('status must be one of: pending, approved, rejected');
+      throw new BadRequestException(
+      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'status must be one of: pending, approved, rejected'),
+    );
     }
 
     leave.status = normalized;

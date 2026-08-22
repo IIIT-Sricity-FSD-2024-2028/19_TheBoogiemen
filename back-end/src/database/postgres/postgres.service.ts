@@ -13,6 +13,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { buildPoolConfig, describeConnection } from '../../config/database.config';
 import { applyPgTypeParsers } from './pg-types';
+import { isPgError, mapDatabaseError } from '../../common/errors/database-error.mapper';
 
 @Injectable()
 export class PostgresService implements OnModuleInit, OnModuleDestroy {
@@ -71,9 +72,22 @@ export class PostgresService implements OnModuleInit, OnModuleDestroy {
       return result.rows;
     } catch (err) {
       // Log the statement but never the parameters: they carry credentials,
-      // password hashes and personal data.
-      this.logger.error({ err, sql: text.slice(0, 500) }, 'Query failed');
-      throw err;
+      // password hashes and personal data. The driver's own detail (constraint,
+      // table, column) is recorded here and deliberately not returned.
+      this.logger.error(
+        {
+          err,
+          sql: text.slice(0, 500),
+          ...(isPgError(err)
+            ? { sqlstate: err.code, constraint: err.constraint, table: err.table }
+            : {}),
+        },
+        'Query failed',
+      );
+      // Translate SQLSTATE into the matching Nest exception, so a unique
+      // violation surfaces as 409 rather than an opaque 500 that leaks the
+      // constraint name to the caller.
+      throw mapDatabaseError(err) ?? err;
     }
   }
 

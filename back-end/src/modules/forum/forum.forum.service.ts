@@ -5,6 +5,7 @@ import { ReplyInputDto } from './dto/reply.input.dto';
 import { PostOutputDto } from './dto/post.output.dto';
 import { v4 as uuidv4 } from 'uuid';
 import { FORUM_REPLY } from '../../common/types/interfaces';
+import { ErrorCode, errorBody } from '../../common/errors/error-codes';
 
 @Injectable()
 export class ForumService {
@@ -12,7 +13,9 @@ export class ForumService {
 
   async createPost(userId: string, dto: CreatePostInputDto): Promise<PostOutputDto> {
     const topic = await this.forumRepo.findTopic(dto.topic_id);
-    if (!topic) throw new NotFoundException('Topic not found');
+    if (!topic) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Topic not found'),
+    );
 
     const post = await this.forumRepo.createPost({
       id: uuidv4(),
@@ -28,7 +31,9 @@ export class ForumService {
 
   async replyToPost(userId: string, dto: ReplyInputDto): Promise<FORUM_REPLY> {
     const post = await this.forumRepo.findPost(dto.post_id);
-    if (!post) throw new NotFoundException('Post not found');
+    if (!post) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Post not found'),
+    );
 
     const reply = await this.forumRepo.createReply({
       id: uuidv4(),
@@ -59,13 +64,17 @@ export class ForumService {
 
   async getPostById(id: string) {
     const post = await this.forumRepo.findPost(id);
-    if (!post) throw new NotFoundException('Post not found');
+    if (!post) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Post not found'),
+    );
     return post;
   }
 
   async updatePost(id: string, dto: any) {
     const post = await this.forumRepo.findPost(id);
-    if (!post) throw new NotFoundException('Post not found');
+    if (!post) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Post not found'),
+    );
     
     return this.forumRepo.updatePost(id, {
       content: dto.content || post.content
@@ -74,14 +83,18 @@ export class ForumService {
 
   async patchPost(id: string, dto: any) {
     const post = await this.forumRepo.findPost(id);
-    if (!post) throw new NotFoundException('Post not found');
+    if (!post) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Post not found'),
+    );
     
     return this.forumRepo.updatePost(id, dto);
   }
 
   async deletePost(id: string) {
     const post = await this.forumRepo.findPost(id);
-    if (!post) throw new NotFoundException('Post not found');
+    if (!post) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Post not found'),
+    );
     
     await this.forumRepo.deletePost(id);
   }

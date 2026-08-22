@@ -16,6 +16,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { IS_PUBLIC_KEY } from './public.decorator';
+import { ErrorCode, errorBody } from '../common/errors/error-codes';
 import { JwtPayload, isRole } from './jwt-payload';
 
 @Injectable()
@@ -40,7 +41,9 @@ export class JwtAuthGuard implements CanActivate {
     const token = this.extractBearerToken(request);
 
     if (!token) {
-      throw new UnauthorizedException('Authentication required');
+      throw new UnauthorizedException(
+        errorBody(ErrorCode.AUTHENTICATION_REQUIRED, 'Authentication required'),
+      );
     }
 
     let payload: JwtPayload;
@@ -61,7 +64,9 @@ export class JwtAuthGuard implements CanActivate {
     // downstream code treats `sub` and `role` as guaranteed.
     if (!payload?.sub || !isRole(payload.role)) {
       this.logger.warn(`Token verified but payload malformed on ${request.method} ${request.url}`);
-      throw new UnauthorizedException('Invalid authentication token');
+      throw new UnauthorizedException(
+        errorBody(ErrorCode.TOKEN_INVALID, 'Invalid authentication token'),
+      );
     }
 
     request.user = payload;

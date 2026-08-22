@@ -13,6 +13,7 @@ import { Injectable, CanActivate, ExecutionContext, SetMetadata, ForbiddenExcept
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from './public.decorator';
 import { Role } from './jwt-payload';
+import { ErrorCode, errorBody } from '../common/errors/error-codes';
 
 export const ROLES_KEY = 'roles';
 
@@ -45,14 +46,20 @@ export class RolesGuard implements CanActivate {
 
     if (!role) {
       // Should be unreachable: JwtAuthGuard rejects unauthenticated requests first.
-      throw new ForbiddenException('No authenticated role on request');
+      throw new ForbiddenException(
+        errorBody(ErrorCode.AUTHENTICATION_REQUIRED, 'No authenticated role on request'),
+      );
     }
 
     if (!requiredRoles.includes(role)) {
       // 403, not 401 — the caller is authenticated, just not permitted. The
       // frontend relies on this distinction: 401 signs you out, 403 does not.
       throw new ForbiddenException(
-        `Requires one of: ${requiredRoles.join(', ')}. Your role is '${role}'.`,
+        errorBody(
+          ErrorCode.INSUFFICIENT_ROLE,
+          `Requires one of: ${requiredRoles.join(', ')}. Your role is '${role}'.`,
+          { requiredRoles, actualRole: role },
+        ),
       );
     }
 

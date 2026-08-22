@@ -8,6 +8,7 @@ import { InMemoryDbService } from '../database/in-memory-db.service';
 import { Public } from './public.decorator';
 import { CurrentUserId } from '../common/decorators/current-user.decorator';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
+import { ErrorCode, errorBody } from '../common/errors/error-codes';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -30,7 +31,9 @@ export class AuthController {
     try {
       if (!body.email || !body.password) {
         this.logger.warn({ outcome: 'missing_credentials' }, 'Login rejected');
-        throw new BadRequestException('Email and password are required');
+        throw new BadRequestException(
+      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'Email and password are required'),
+    );
       }
       const result = await this.authService.login(body.email, body.password);
       this.logger.info(
@@ -47,7 +50,9 @@ export class AuthController {
         throw error;
       }
       this.logger.error({ err: error }, 'Login failed unexpectedly');
-      throw new UnauthorizedException('Login failed');
+      throw new UnauthorizedException(
+      errorBody(ErrorCode.AUTHENTICATION_REQUIRED, 'Login failed'),
+    );
     }
   }
 
@@ -61,12 +66,16 @@ export class AuthController {
     try {
       // Validate input
       if (!body.email || !body.password || !body.role) {
-        throw new BadRequestException('Email, password, and role are required');
+        throw new BadRequestException(
+      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'Email, password, and role are required'),
+    );
       }
 
       // Check if email already exists
       if (this.db.users.find(u => u.email === body.email)) {
-        throw new BadRequestException('Email already registered');
+        throw new BadRequestException(
+      errorBody(ErrorCode.DUPLICATE_RESOURCE, 'Email already registered'),
+    );
       }
 
       // Self-registration is limited to students. Faculty accounts confer the
@@ -75,7 +84,10 @@ export class AuthController {
       // role privilege ceiling applies.
       if (body.role !== 'student') {
         throw new BadRequestException(
-          'Only student accounts can self-register. Faculty and staff accounts are created by an administrator.',
+          errorBody(
+            ErrorCode.BUSINESS_RULE_VIOLATION,
+            'Only student accounts can self-register. Faculty and staff accounts are created by an administrator.',
+          ),
         );
       }
 
@@ -124,7 +136,9 @@ export class AuthController {
       return { success: true, message: 'Registration successful. You can now login.', user_id: id };
     } catch (error) {
       if (error instanceof BadRequestException) throw error;
-      throw new BadRequestException(`Registration failed: ${error.message}`);
+      throw new BadRequestException(
+      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, `Registration failed: ${error.message}`),
+    );
     }
   }
 
@@ -141,7 +155,9 @@ export class AuthController {
       // change their own password. Previously this took a `user-id` header,
       // which meant anyone could target any account.
       if (!body.current_password || !body.new_password) {
-        throw new BadRequestException('Current and new passwords are required');
+        throw new BadRequestException(
+      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'Current and new passwords are required'),
+    );
       }
       // changePassword throws a specific BadRequest/Unauthorized on failure; it
       // never returns a falsy result, so the old `if (!result)` branch was dead
@@ -153,7 +169,9 @@ export class AuthController {
       if (error instanceof BadRequestException || error instanceof UnauthorizedException) {
         throw error;
       }
-      throw new BadRequestException(`Password change failed: ${error.message}`);
+      throw new BadRequestException(
+      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, `Password change failed: ${error.message}`),
+    );
     }
   }
 }

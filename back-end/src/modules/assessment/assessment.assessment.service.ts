@@ -8,6 +8,7 @@ import { SyllabusUpdateInputDto } from './dto/syllabus-update.input.dto';
 import { AssessmentOutputDto, MarksEntryOutputDto } from './dto/assessment.output.dto';
 import { OutcomeService } from '../outcome/outcome.outcome.service';
 import { v4 as uuidv4 } from 'uuid';
+import { ErrorCode, errorBody } from '../../common/errors/error-codes';
 
 @Injectable()
 export class AssessmentService {
@@ -21,7 +22,9 @@ export class AssessmentService {
 
   async createAssessment(facultyId: string, dto: CreateAssessmentInputDto): Promise<AssessmentOutputDto> {
     const course = await this.assessmentRepo.findCourseById(dto.course_id);
-    if (!course) throw new NotFoundException('Course not found');
+    if (!course) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Course not found'),
+    );
 
     const assessment = await this.assessmentRepo.create({
       assessment_id: uuidv4(),
@@ -40,12 +43,18 @@ export class AssessmentService {
 
   async submitAndGrade(facultyId: string, dto: GradeInputDto): Promise<MarksEntryOutputDto> {
     const entry = await this.marksRepo.findOneById(dto.entry_id);
-    if (!entry) throw new NotFoundException('Marks entry not found');
+    if (!entry) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Marks entry not found'),
+    );
 
     const assessment = await this.assessmentRepo.findOneById(entry.assessment_id);
-    if (!assessment) throw new NotFoundException('Assessment not found');
+    if (!assessment) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Assessment not found'),
+    );
 
-    if (dto.marks > assessment.max_marks) throw new BadRequestException('Marks exceed max marks');
+    if (dto.marks > assessment.max_marks) throw new BadRequestException(
+      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'Marks exceed max marks'),
+    );
 
     entry.marks = dto.marks;
     entry.status = 'GRADED';
@@ -57,7 +66,9 @@ export class AssessmentService {
 
   async updateSyllabus(facultyId: string, dto: SyllabusUpdateInputDto) {
     const course = await this.assessmentRepo.findCourseById(dto.course_id);
-    if (!course) throw new NotFoundException('Course not found');
+    if (!course) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Course not found'),
+    );
 
     course.syllabus.push(dto.topic);
     course.completed_topics++;
@@ -79,13 +90,17 @@ export class AssessmentService {
 
   async getAssessmentById(id: string) {
     const assessment = await this.assessmentRepo.findOneById(id);
-    if (!assessment) throw new NotFoundException('Assessment not found');
+    if (!assessment) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Assessment not found'),
+    );
     return assessment;
   }
 
   async updateAssessment(id: string, dto: any) {
     const assessment = await this.assessmentRepo.findOneById(id);
-    if (!assessment) throw new NotFoundException('Assessment not found');
+    if (!assessment) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Assessment not found'),
+    );
     
     return this.assessmentRepo.update(id, {
       course_id: dto.course_id || assessment.course_id,
@@ -98,14 +113,18 @@ export class AssessmentService {
 
   async patchAssessment(id: string, dto: any) {
     const assessment = await this.assessmentRepo.findOneById(id);
-    if (!assessment) throw new NotFoundException('Assessment not found');
+    if (!assessment) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Assessment not found'),
+    );
     
     return this.assessmentRepo.update(id, dto);
   }
 
   async deleteAssessment(id: string) {
     const assessment = await this.assessmentRepo.findOneById(id);
-    if (!assessment) throw new NotFoundException('Assessment not found');
+    if (!assessment) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Assessment not found'),
+    );
     
     await this.assessmentRepo.delete(id);
   }

@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { UserRepository } from './user.user.repository';
 import { UpdateRoleInputDto } from './dto/update-role.input.dto';
 import { UserOutputDto } from './dto/user.output.dto';
+import { ErrorCode, errorBody } from '../../common/errors/error-codes';
 
 @Injectable()
 export class UserService {
@@ -11,14 +12,20 @@ export class UserService {
 
   async updateUserRole(userId: string, dto: UpdateRoleInputDto): Promise<UserOutputDto> {
     const user = await this.userRepo.findOneById(userId);
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'User not found'),
+    );
 
     if (user.role === 'admin' && dto.role !== 'admin') {
-      throw new ForbiddenException('Cannot downgrade an admin');
+      throw new ForbiddenException(
+      errorBody(ErrorCode.INSUFFICIENT_ROLE, 'Cannot downgrade an admin'),
+    );
     }
 
     const updated = await this.userRepo.update(userId, { role: dto.role });
-    if (!updated) throw new NotFoundException('User not found');
+    if (!updated) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'User not found'),
+    );
 
     return {
       id: updated.user_id,
@@ -30,7 +37,9 @@ export class UserService {
 
   async getUserById(userId: string): Promise<UserOutputDto> {
     const user = await this.userRepo.findOneById(userId);
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'User not found'),
+    );
 
     return {
       id: user.user_id,
@@ -69,14 +78,20 @@ export class UserService {
 
   async updateUser(userId: string, dto: any): Promise<UserOutputDto> {
     const user = await this.userRepo.findOneById(userId);
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'User not found'),
+    );
 
     if (user.role === 'admin' && dto.role && dto.role !== 'admin') {
-      throw new ForbiddenException('Cannot downgrade an admin');
+      throw new ForbiddenException(
+      errorBody(ErrorCode.INSUFFICIENT_ROLE, 'Cannot downgrade an admin'),
+    );
     }
 
     const updated = await this.userRepo.update(userId, dto);
-    if (!updated) throw new NotFoundException('User not found');
+    if (!updated) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'User not found'),
+    );
 
     return {
       id: updated.user_id,
@@ -88,8 +103,12 @@ export class UserService {
 
   async deleteUser(userId: string): Promise<void> {
     const user = await this.userRepo.findOneById(userId);
-    if (!user) throw new NotFoundException('User not found');
-    if (user.role === 'admin') throw new ForbiddenException('Cannot delete an admin');
+    if (!user) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'User not found'),
+    );
+    if (user.role === 'admin') throw new ForbiddenException(
+      errorBody(ErrorCode.INSUFFICIENT_ROLE, 'Cannot delete an admin'),
+    );
     
     await this.userRepo.delete(userId);
   }

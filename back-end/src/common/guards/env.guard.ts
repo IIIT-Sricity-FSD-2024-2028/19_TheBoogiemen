@@ -1,5 +1,6 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { ErrorCode, errorBody } from '../errors/error-codes';
 
 @Injectable()
 export class EnvGuard implements CanActivate {
@@ -15,7 +16,9 @@ export class EnvGuard implements CanActivate {
     
     if (nodeEnv === 'production') {
       this.logger.warn('Mock-data endpoint blocked: NODE_ENV is production');
-      throw new ForbiddenException('Mock data endpoints are disabled in production');
+      throw new ForbiddenException(
+        errorBody(ErrorCode.ENVIRONMENT_RESTRICTED, 'Mock data endpoints are disabled in production'),
+      );
     }
     return true;
   }
