@@ -42,7 +42,16 @@ window.Auth = {
     // ── API fetch with auth header ──────────────────────────────────────────
     apiFetch: async (endpoint, options = {}) => {
         const token = window.Auth.getToken();
-        const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+
+        // A FormData body must NOT carry an explicit Content-Type: the browser
+        // sets it itself and appends the multipart boundary, which we cannot
+        // know. Forcing application/json here makes the server unable to parse
+        // the upload at all.
+        const isMultipart = options.body instanceof FormData;
+        const headers = {
+            ...(isMultipart ? {} : { 'Content-Type': 'application/json' }),
+            ...(options.headers || {}),
+        };
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
         // Expired tokens are rejected locally so the user gets a clean sign-out
@@ -81,6 +90,39 @@ window.Auth = {
         }
         return data;
     },
+
+    /**
+     * Upload one document and get back a file_id to attach to a form payload.
+     *
+     * Shared by every form with an attachment (leave, attendance request,
+     * research milestone, assessment submission) so the size and type rules
+     * are stated once. The server enforces them regardless.
+     */
+    uploadFile: async (file, context) => {
+        if (!file) return null;
+        if (file.size > window.Auth.MAX_UPLOAD_BYTES) {
+            const mb = (window.Auth.MAX_UPLOAD_BYTES / 1024 / 1024).toFixed(0);
+            throw new Error(`File must be under ${mb}MB`);
+        }
+        const form = new FormData();
+        form.append('file', file);
+        const res = await window.Auth.apiFetch(
+            `/uploads?context=${encodeURIComponent(context)}`,
+            { method: 'POST', body: form },
+        );
+        return res && res.data ? res.data : null;
+    },
+
+    /** Kept in step with UPLOAD_MAX_BYTES on the server. */
+    MAX_UPLOAD_BYTES: 5 * 1024 * 1024,
+
+    /**
+     * Download link for an uploaded document.
+     *
+     * The route is authenticated and ownership-checked, so this cannot be a
+     * plain <a href> — fetch it with apiFetch and open the resulting blob.
+     */
+    fileUrl: (fileId) => `${API_BASE}/uploads/${encodeURIComponent(fileId)}`,
 
     // ── Login ───────────────────────────────────────────────────────────────
     login: async (email, password) => {

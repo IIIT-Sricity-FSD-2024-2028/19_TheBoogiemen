@@ -232,6 +232,7 @@ export class CommonController {
     if (existing) {
       existing.submitted_at = new Date().toISOString();
       existing.notes = body.notes || existing.notes;
+      if (body.file_id !== undefined) existing.file_id = body.file_id;
       existing.status = 'submitted';
       return { success: true, data: existing };
     }
@@ -240,6 +241,8 @@ export class CommonController {
       student_id:     userId,
       assessment_id:  body.assessment_id,
       notes:          body.notes || '',
+      // Set when the student attached a document via POST /uploads.
+      file_id:        body.file_id ?? null,
       submitted_at:   new Date().toISOString(),
       status:         'submitted',
     };
@@ -411,6 +414,21 @@ export class CommonController {
     if (body.progress !== undefined && body.progress !== null) project.progress = Number(body.progress);
     if (body.submission_notes !== undefined) (project as any).submission_notes = body.submission_notes;
     if (body.faculty_feedback !== undefined) (project as any).faculty_feedback = body.faculty_feedback;
+
+    // research_projects.uploads already exists as an array in the schema, so a
+    // milestone document is appended rather than overwriting the previous one.
+    if (body.file_id) {
+      const uploads = ((project as any).uploads ??= []);
+      if (!uploads.some((u: any) => u?.file_id === body.file_id)) {
+        uploads.push({
+          file_id: body.file_id,
+          original_name: body.file_name ?? null,
+          uploaded_at: new Date().toISOString(),
+        });
+      }
+    }
+
+    this.db.persist();
     return project;
   }
 
@@ -991,6 +1009,8 @@ export class CommonController {
       student_name: student ? `${student.first_name} ${student.last_name || ''}`.trim() : userId,
       course_id: body.course_id, course_code: course?.course_code || body.course_id,
       date: body.date, reason: body.reason,
+      // The supporting document (medical certificate etc.) this request rests on.
+      file_id: body.file_id ?? null,
       admin_status: 'pending', faculty_status: 'pending',
       created_at: new Date().toISOString(),
     };

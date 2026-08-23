@@ -12,6 +12,7 @@ import { AuthModule } from './auth/auth.module';
 import { StudentsModule } from './students/students.module';
 import { FacultyModule } from './faculty/faculty.module';
 import { AdminModule } from './admin/admin.module';
+import { UploadsModule } from './uploads/uploads.module';
 
 // Pranjal's modular backend (Workflow-based)
 import { FeeModule } from './modules/fee/fee.fee.module';
@@ -37,6 +38,7 @@ import { OutcomeModule } from './modules/outcome/outcome.outcome.module';
     StudentsModule,
     FacultyModule,
     AdminModule,
+    UploadsModule,
     // Pranjal's workflow modules
     FeeModule,
     ReportModule,

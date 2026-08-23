@@ -20,3 +20,6 @@ npm-debug.log*
 # Env
 .env
 .env.local
+
+# Uploaded documents (bytes live on disk, metadata in the store)
+back-end/uploads/

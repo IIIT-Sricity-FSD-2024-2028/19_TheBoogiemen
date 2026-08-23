@@ -295,7 +295,7 @@ window.renderStudentLeave = async function() {
             const statusColors = { approved:'#dcfce7,#166534', pending:'#fef9c3,#713f12', rejected:'#fef2f2,#991b1b' };
             const [bg,fg] = (statusColors[l.status]||'#f1f5f9,#475569').split(',');
             return `<div style="padding:14px 16px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;">
-                <div><div style="font-weight:600;font-size:14px;">${l.leave_type||l.type||'Leave'}</div><div style="font-size:12px;color:#64748b;margin-top:2px;">${l.start_date||l.from_date||''} → ${l.end_date||l.to_date||''}</div><div style="font-size:12px;color:#94a3b8;margin-top:2px;">${l.reason||''}</div></div>
+                <div><div style="font-weight:600;font-size:14px;">${l.leave_type||l.type||'Leave'}</div><div style="font-size:12px;color:#64748b;margin-top:2px;">${l.start_date||l.from_date||''} → ${l.end_date||l.to_date||''}</div><div style="font-size:12px;color:#94a3b8;margin-top:2px;">${l.reason||''}</div>${l.file_id ? `<button type="button" onclick="downloadDocument('${l.file_id}')" style="margin-top:6px;padding:4px 10px;font-size:11px;font-weight:700;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:6px;cursor:pointer;">📎 View document</button>` : ''}</div>
                 <span style="padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;background:${bg};color:${fg};">${l.status}</span>
             </div>`;
         }).join('');
@@ -444,11 +444,16 @@ async function submitLeaveApplication() {
     // Handle optional file attachment
     const fileInput = document.getElementById('leaveFileInput');
     const file = fileInput?.files?.[0];
-    if (file && file.size > 5 * 1024 * 1024) { showToast('File must be under 5MB', 'warning'); return; }
-    const fullReason = file ? `${reason} [Attached: ${file.name}]` : reason;
     try {
-        await api('/leave', { method:'POST', body: JSON.stringify({ leave_type, start_date, end_date, reason: fullReason }) });
-        showToast(file ? `Leave application submitted with ${file.name}! ✅` : 'Leave application submitted!', 'success');
+        // Upload first: the leave record stores a file_id, not the filename.
+        // Previously only the name was concatenated into the reason and the
+        // bytes were discarded, so nothing was ever actually attached.
+        const uploaded = file ? await window.Auth.uploadFile(file, 'leave') : null;
+        await api('/leave', { method:'POST', body: JSON.stringify({
+            leave_type, start_date, end_date, reason,
+            file_id: uploaded?.file_id ?? null,
+        }) });
+        showToast(uploaded ? `Leave application submitted with ${uploaded.original_name}! ✅` : 'Leave application submitted!', 'success');
         closeModal('leaveModal');
         // Reset upload zone
         if (fileInput) fileInput.value = '';
@@ -510,10 +515,13 @@ async function submitResearchProgress() {
         valid = false;
     }
     if (!valid) { showToast('Please fill all required fields.', 'warning'); return; }
-    if (file.size > 10 * 1024 * 1024) { showToast('File must be under 10MB', 'warning'); return; }
-    const submission_notes = `${notes} [File: ${file.name}]`;
     try {
-        await api(`/research/${id}/progress`, { method:'PATCH', body: JSON.stringify({ submission_notes }) });
+        const uploaded = await window.Auth.uploadFile(file, 'research_milestone');
+        await api(`/research/${id}/progress`, { method:'PATCH', body: JSON.stringify({
+            submission_notes: notes,
+            file_id: uploaded?.file_id ?? null,
+            file_name: uploaded?.original_name ?? null,
+        }) });
         // Notify ALL faculty that a student submitted work
         const user = window.Auth?.getUser?.();
         const studentName = user ? `${user.first_name||''} ${user.last_name||''}`.trim() : 'A student';
@@ -1049,11 +1057,14 @@ window.openMarksModal = async function(assessmentId, maxMarks, name, examMode) {
             students.map(s => {
                 const sub = submissions.find(x => x.student_id === s.user_id && x.assessment_id === assessmentId);
                 const submitted = !!sub;
-                // Extract file name from notes if present
+                // Attachments are real files now, so this reads file_id rather
+                // than scraping an "[Attached: name]" marker out of the notes.
+                // The badge downloads through the authenticated, ownership-checked
+                // route — a plain href would 401.
                 let fileTag = '';
-                if (submitted && sub.notes) {
-                    const fm = sub.notes.match(/\[Attached:\s*([^\]]+)\]/);
-                    if (fm) fileTag = `<span style="font-size:10px;background:#f0fdf4;color:#16a34a;padding:2px 7px;border-radius:10px;font-weight:700;margin-left:6px;">📎 ${fm[1].trim()}</span>`;
+                if (submitted && sub.file_id) {
+                    fileTag = `<button type="button" onclick="downloadDocument('${sub.file_id}')" title="Download submission"
+                        style="font-size:10px;background:#f0fdf4;color:#16a34a;padding:2px 7px;border-radius:10px;font-weight:700;margin-left:6px;border:1px solid #bbf7d0;cursor:pointer;">📎 Download</button>`;
                 }
                 return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f1f5f9;">
                     <div>
@@ -1138,14 +1149,14 @@ window.submitOnlineWork = async function() {
     const notes = document.getElementById('submissionNotes')?.value.trim();
     const fileInput = document.getElementById('submissionFileInput');
     if (!notes || notes.length < 5) { showToast('Please describe your submission (min 5 characters)', 'warning'); return; }
-    let fileInfo = '';
-    if (fileInput && fileInput.files && fileInput.files[0]) {
-        const file = fileInput.files[0];
-        if (file.size > 15 * 1024 * 1024) { showToast('File must be under 15MB', 'warning'); return; }
-        fileInfo = ` [Attached: ${file.name} (${(file.size/1024).toFixed(1)}KB)]`;
-    }
+    const file = fileInput?.files?.[0] ?? null;
     try {
-        await api('/submissions', { method:'POST', body: JSON.stringify({ assessment_id: assessmentId, notes: notes + fileInfo }) });
+        const uploaded = file ? await window.Auth.uploadFile(file, 'assessment_submission') : null;
+        await api('/submissions', { method:'POST', body: JSON.stringify({
+            assessment_id: assessmentId,
+            notes,
+            file_id: uploaded?.file_id ?? null,
+        }) });
         showToast('Work submitted successfully! Faculty can now grade you. ✅', 'success');
         closeModal('submitWorkModal');
         renderPendingSubmissions();
@@ -1237,11 +1248,13 @@ window.submitFacultyLeave = async function() {
     // Handle optional file attachment
     const fileInput = document.getElementById('fLeaveFileInput');
     const file = fileInput?.files?.[0];
-    if (file && file.size > 5 * 1024 * 1024) { showToast('File must be under 5MB', 'warning'); return; }
-    const fullReason = file ? `${reason} [Attached: ${file.name}]` : reason;
     try {
-        await api('/leave', { method:'POST', body: JSON.stringify({ leave_type, start_date, end_date, reason: fullReason }) });
-        showToast(file ? `Leave applied with ${file.name}! ✅` : 'Leave applied!', 'success');
+        const uploaded = file ? await window.Auth.uploadFile(file, 'leave') : null;
+        await api('/leave', { method:'POST', body: JSON.stringify({
+            leave_type, start_date, end_date, reason,
+            file_id: uploaded?.file_id ?? null,
+        }) });
+        showToast(uploaded ? `Leave applied with ${uploaded.original_name}! ✅` : 'Leave applied!', 'success');
         closeModal('fLeaveModal');
         // Reset upload zone
         if (fileInput) fileInput.value = '';
@@ -1849,7 +1862,7 @@ window.renderLeaveManagement = async function() {
         if (!leaves.length) { el.innerHTML = '<p style="text-align:center;color:#64748b;">No leaves.</p>'; return; }
         el.innerHTML = leaves.map(l => `
             <div style="padding:12px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;">
-                <div><div style="font-weight:600;">${l.student_name||l.student_id}</div><div style="font-size:12px;color:#64748b;">${l.leave_type} • ${l.start_date} to ${l.end_date}</div><div style="font-size:12px;margin-top:4px;">${l.reason}</div></div>
+                <div><div style="font-weight:600;">${l.student_name||l.student_id}</div><div style="font-size:12px;color:#64748b;">${l.leave_type} • ${l.start_date} to ${l.end_date}</div><div style="font-size:12px;margin-top:4px;">${l.reason}</div>${l.file_id ? `<button type="button" onclick="downloadDocument('${l.file_id}')" style="margin-top:6px;padding:4px 10px;font-size:11px;font-weight:700;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:6px;cursor:pointer;">📎 View document</button>` : ''}</div>
                 <div>
                     ${l.status === 'pending' ? `
                     <button onclick="updateLeave('${l.leave_id}', 'approved', '${l.student_id||l.user_id||''}', '${(l.student_name||l.user_name||'').replace(/'/g,'')}')"
@@ -2333,7 +2346,7 @@ window.renderFacultyResearchEnhanced = async function() {
                         </div>
                     </div>
                     ${p.submission_notes
-                        ? `<div style="padding:10px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;font-size:12px;color:#15803d;margin-bottom:10px;"><strong>📤 Student Work Submitted:</strong><br>${p.submission_notes}</div>`
+                        ? `<div style="padding:10px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;font-size:12px;color:#15803d;margin-bottom:10px;"><strong>📤 Student Work Submitted:</strong><br>${p.submission_notes}${(p.uploads && p.uploads.length) ? `<br><button type="button" onclick="downloadDocument('${p.uploads[p.uploads.length-1].file_id}')" style="margin-top:8px;padding:4px 10px;font-size:11px;font-weight:700;background:#fff;color:#15803d;border:1px solid #bbf7d0;border-radius:6px;cursor:pointer;">📎 Download ${p.uploads[p.uploads.length-1].original_name || 'document'}</button>` : ''}</div>`
                         : `<div style="padding:10px 12px;background:#fef9c3;border:1px solid #fde68a;border-radius:8px;font-size:12px;color:#92400e;margin-bottom:10px;">⏳ Awaiting student work submission</div>`
                     }
                     <button class="fac-btp-update-btn" data-id="${p.project_id}" data-progress="${p.progress||0}" data-title="${(p.title||'').replace(/"/g,'&quot;')}" data-student="${p.student_id||''}" style="padding:8px 16px;background:#0f172a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;">✏ Update Progress / Feedback</button>
@@ -2573,12 +2586,13 @@ window.submitAttendanceRequest = async function() {
     if (!date)                  { showToast('Please select a date', 'warning'); return; }
     if (!reason || reason.length < 10) { showToast('Reason must be at least 10 characters', 'warning'); return; }
     if (!file)                  { showToast('Please attach a supporting document (e.g. medical certificate)', 'warning'); return; }
-    if (file.size > 5 * 1024 * 1024) { showToast('File must be under 5MB', 'warning'); return; }
-
-    const fileNote = ` [Document: ${file.name}]`;
     try {
-        await api('/attendance-request', { method:'POST', body: JSON.stringify({ course_id, date, reason: reason + fileNote }) });
-        window.Notifications?.broadcast('admin', 'Student', `📝 Attendance request from a student for ${date}. Document attached: ${file.name}. Please review.`, 'alert');
+        const uploaded = await window.Auth.uploadFile(file, 'attendance_request');
+        await api('/attendance-request', { method:'POST', body: JSON.stringify({
+            course_id, date, reason,
+            file_id: uploaded?.file_id ?? null,
+        }) });
+        window.Notifications?.broadcast('admin', 'Student', `📝 Attendance request from a student for ${date}. Document attached: ${uploaded?.original_name}. Please review.`, 'alert');
         showToast('Attendance request submitted with document! Admin will review.', 'success');
         closeModal('attendanceRequestModal');
     } catch(e) { showToast('Failed: ' + e.message, 'error'); }
@@ -2594,7 +2608,7 @@ window.renderAdminAttendanceRequests = async function() {
         el.innerHTML = reqs.map(r => {
             const sc = r.admin_status === 'approved' ? {bg:'#dcfce7',c:'#166534',lbl:'Approved'} : r.admin_status === 'rejected' ? {bg:'#fef2f2',c:'#991b1b',lbl:'Rejected'} : {bg:'#fef9c3',c:'#92400e',lbl:'Pending'};
             return `<div style="padding:12px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-                <div><div style="font-weight:600;">${r.student_name} <span style="color:#64748b;font-size:12px;">(${r.course_code})</span></div><div style="font-size:12px;color:#64748b;">Date: ${r.date} · Reason: ${r.reason}</div></div>
+                <div><div style="font-weight:600;">${r.student_name} <span style="color:#64748b;font-size:12px;">(${r.course_code})</span></div><div style="font-size:12px;color:#64748b;">Date: ${r.date} · Reason: ${r.reason}</div>${r.file_id ? `<button type="button" onclick="downloadDocument('${r.file_id}')" style="margin-top:6px;padding:4px 10px;font-size:11px;font-weight:700;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:6px;cursor:pointer;">📎 View document</button>` : ''}</div>
                 <div style="display:flex;gap:6px;align-items:center;">
                     <span style="padding:4px 10px;border-radius:12px;font-size:11px;font-weight:700;background:${sc.bg};color:${sc.c};">${sc.lbl}</span>
                     ${r.admin_status === 'pending' ? `<button onclick="approveAttReq('${r.request_id}','${r.student_id}','approved')" style="padding:5px 12px;background:#16a34a;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;">✓ Approve</button><button onclick="approveAttReq('${r.request_id}','${r.student_id}','rejected')" style="padding:5px 12px;background:#ef4444;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;">✕ Reject</button>` : ''}
@@ -2627,7 +2641,7 @@ window.renderFacultyAttendanceRequests = async function() {
             const rejected = r.admin_status === 'rejected';
             const granted = r.faculty_status === 'granted';
             return `<div style="padding:12px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-                <div><div style="font-weight:600;">${r.student_name} <span style="color:#64748b;font-size:12px;">(${r.course_code})</span></div><div style="font-size:12px;color:#64748b;">Date: ${r.date} · ${r.reason}</div></div>
+                <div><div style="font-weight:600;">${r.student_name} <span style="color:#64748b;font-size:12px;">(${r.course_code})</span></div><div style="font-size:12px;color:#64748b;">Date: ${r.date} · ${r.reason}</div>${r.file_id ? `<button type="button" onclick="downloadDocument('${r.file_id}')" style="margin-top:6px;padding:4px 10px;font-size:11px;font-weight:700;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:6px;cursor:pointer;">📎 View document</button>` : ''}</div>
                 <div>${granted ? '<span style="padding:4px 10px;background:#dcfce7;color:#166534;border-radius:12px;font-size:11px;font-weight:700;">✓ Granted</span>' : rejected ? '<span style="padding:4px 10px;background:#fef2f2;color:#991b1b;border-radius:12px;font-size:11px;font-weight:700;">❌ Admin Rejected</span>' : canGrant ? `<button onclick="grantAttReq('${r.request_id}','${r.student_id}')" style="padding:6px 14px;background:#16a34a;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700;">✓ Grant Attendance</button>` : '<span style="padding:4px 10px;background:#fef9c3;color:#92400e;border-radius:12px;font-size:11px;font-weight:700;">⏳ Awaiting Admin</span>'}</div></div>`;
         }).join('');
     } catch(e) { el.innerHTML = `<p style="color:#ef4444">Failed: ${e.message}</p>`; }
@@ -2741,7 +2755,10 @@ window.renderActionRequired = async function() {
         } else if (role === 'faculty') {
             const [attReqs, research] = await Promise.all([api('/attendance-requests').catch(()=>[]), api('/research').catch(()=>[])]);
             const canGrant = attReqs.filter(r => r.admin_status === 'approved' && r.faculty_status !== 'granted').length;
-            const pendBTP = research.filter(p => p.status === 'active' && (p.submission_notes||'').includes('[File:')).length;
+            // Counts projects with an uploaded milestone document. Previously
+            // this searched submission_notes for a "[File:" marker, which no
+            // longer exists now that uploads are real.
+            const pendBTP = research.filter(p => p.status === 'active' && (p.uploads || []).length > 0).length;
             if (canGrant) items.push({ icon: '✅', text: `${canGrant} attendance request(s) to grant`, view: 'mark-attendance-view' });
             if (pendBTP) items.push({ icon: '📤', text: `${pendBTP} BTP submission(s) to review`, view: 'research-projects-view' });
         } else if (role === 'student') {
@@ -2945,3 +2962,43 @@ function renderViewWidgets(viewId) {
         console.error('Widget render error for', viewId, e);
     }
 }
+
+// ── Document download ────────────────────────────────────────────────────────
+/**
+ * Fetch an uploaded document and hand it to the browser.
+ *
+ * The download route requires a bearer token and checks ownership, so a plain
+ * <a href="/api/uploads/..."> would come back 401. Fetching it with the token
+ * and opening the resulting blob is the only way to reach it from the page.
+ */
+window.downloadDocument = async function(fileId, suggestedName) {
+    if (!fileId) { showToast('No document attached', 'warning'); return; }
+    try {
+        const res = await fetch(window.Auth.fileUrl(fileId), {
+            headers: { Authorization: `Bearer ${window.Auth.getToken()}` },
+        });
+        if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            throw new Error(body.message || `Download failed (HTTP ${res.status})`);
+        }
+
+        // Prefer the filename the server put in Content-Disposition; it is the
+        // sanitised original name.
+        const disposition = res.headers.get('Content-Disposition') || '';
+        const match = disposition.match(/filename="([^"]+)"/);
+        const filename = match ? match[1] : (suggestedName || 'document');
+
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        // Revoking immediately can cancel the download in some browsers.
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+    } catch (e) {
+        showToast('Failed to download: ' + e.message, 'error');
+    }
+};
