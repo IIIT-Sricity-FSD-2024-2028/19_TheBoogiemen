@@ -412,12 +412,13 @@ export class CommonController {
     if (!body.email || !body.role) throw new BadRequestException('email and role are required');
     if (this.db.users.find(u => u.email === body.email)) throw new BadRequestException('Email already exists');
     const id = `u${Date.now()}`;
-    const newUser = { user_id: id, username: body.first_name || body.email.split('@')[0], password: body.password || 'password', ...body };
+    const tenantId = body.tenant_id || body.tenantId || 't1';
+    const newUser = { user_id: id, tenant_id: tenantId, username: body.first_name || body.email.split('@')[0], password: body.password || 'password', ...body };
     this.db.users.push(newUser);
     if (body.role === 'student') {
-      this.db.students.push({ user_id: id, first_name: body.first_name || body.username || 'New', last_name: body.last_name || '', branch: 'CSE', batch: '2024-2028', cgpa: 7.0, section: 'A', email: body.email, join_date: new Date().toISOString().split('T')[0], dob: '2005-01-01', phone: body.phone || '' });
+      this.db.students.push({ user_id: id, tenant_id: tenantId, first_name: body.first_name || body.username || 'New', last_name: body.last_name || '', branch: 'CSE', batch: '2024-2028', cgpa: 7.0, section: 'A', email: body.email, join_date: new Date().toISOString().split('T')[0], dob: '2005-01-01', phone: body.phone || '' });
     } else if (body.role === 'faculty') {
-      this.db.faculty.push({ user_id: id, first_name: body.first_name || body.username || 'New', last_name: body.last_name || '', designation: 'Assistant Professor', department_id: 'dept1', email: body.email, phone: body.phone || '' });
+      this.db.faculty.push({ user_id: id, tenant_id: tenantId, first_name: body.first_name || body.username || 'New', last_name: body.last_name || '', designation: 'Assistant Professor', department_id: 'dept1', email: body.email, phone: body.phone || '' });
     }
     return { success: true, data: { ...newUser, password: undefined } };
   }
@@ -508,9 +509,9 @@ export class CommonController {
   // ── Fees ──────────────────────────────────────────────────────────────────────
 
   @Get('fees')
-  @Roles('admin', 'head', 'superadmin')
+  @Roles('admin', 'head', 'superadmin', 'FINANCE_ADMIN')
   @ApiOperation({ summary: 'Get all fee records with compliance summary' })
-  @ApiHeader({ name: 'role', description: 'Role: admin|head|superadmin' })
+  @ApiHeader({ name: 'role', description: 'Role: admin|head|superadmin|FINANCE_ADMIN' })
   async getFees() {
     return {
       fees: this.db.fees,
@@ -525,7 +526,7 @@ export class CommonController {
   }
 
   @Patch('fees/:id/pay')
-  @Roles('admin', 'head', 'superadmin')
+  @Roles('admin', 'head', 'superadmin', 'FINANCE_ADMIN')
   @ApiOperation({ summary: 'Mark a fee record as paid' })
   async payFee(@Param('id') id: string) {
     const fee = this.db.fees.find(f => f.fee_id === id);
@@ -536,9 +537,9 @@ export class CommonController {
   }
 
   @Post('fees')
-  @Roles('admin', 'head', 'superadmin')
+  @Roles('admin', 'head', 'superadmin', 'FINANCE_ADMIN')
   @ApiOperation({ summary: 'Add a new fee record for a student' })
-  @ApiHeader({ name: 'role', description: 'Role: admin|head|superadmin' })
+  @ApiHeader({ name: 'role', description: 'Role: admin|head|superadmin|FINANCE_ADMIN' })
   async createFee(@Body() body: any) {
     if (!body.student_id || !body.fee_type || !body.amount || !body.due_date) {
       throw new BadRequestException('student_id, fee_type, amount, and due_date are required');
@@ -550,7 +551,7 @@ export class CommonController {
   }
 
   @Put('fees/:id')
-  @Roles('admin', 'head', 'superadmin')
+  @Roles('admin', 'head', 'superadmin', 'FINANCE_ADMIN')
   @ApiOperation({ summary: 'Update an existing fee record' })
   async updateFee(@Param('id') id: string, @Body() body: any) {
     const fee = this.db.fees.find(f => f.fee_id === id);

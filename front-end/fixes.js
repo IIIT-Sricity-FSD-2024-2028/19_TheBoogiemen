@@ -70,7 +70,7 @@ function triggerViewRender(viewId) {
         : (localStorage.getItem('bp_role') || '');
     const isStudent = role === 'student';
     const isFaculty = role === 'faculty';
-    const isAdmin   = ['admin','head','superadmin'].includes(role);
+    const isAdmin   = ['admin','head','superadmin','INSTITUTE_SUPER_ADMIN','DEPARTMENT_ADMIN_HOD'].includes(role);
 
     const renders = {
         'settings-view':              () => renderSettings(),
@@ -147,18 +147,63 @@ window.renderStudentAttendance = async function() {
 window.renderStudentCourses = async function() {
     const el = document.getElementById('my-courses-list');
     if (!el) return;
+    el.innerHTML = '<div style="text-align:center;color:#64748b;padding:20px;">Loading courses...</div>';
     try {
         const courses = await api('/students/me/courses');
-        if (!courses.length) { el.innerHTML = '<p style="color:#64748b;text-align:center;padding:20px;">No courses enrolled. Click "+ Enroll in Course" to get started.</p>'; return; }
-        el.innerHTML = courses.map(c => `
-            <div style="padding:16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
-                <div><div style="font-weight:700;font-size:15px;">${c.course_code}</div><div style="font-size:13px;color:#64748b;margin-top:2px;">${c.course_name}</div><div style="font-size:12px;color:#94a3b8;margin-top:4px;">${c.credits} Credits · Sem ${c.semester} · ${c.faculty_name||'Faculty'}</div></div>
-                <span style="padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;background:${c.enrollment_status==='active'?'#dcfce7':'#fef9c3'};color:${c.enrollment_status==='active'?'#166534':'#713f12'};">${c.enrollment_status||'active'}</span>
-            </div>`).join('');
-    } catch(e) { el.innerHTML = `<p style="color:#ef4444">Failed to load courses: ${e.message}</p>`; }
+        if (!courses || !courses.length) {
+            el.innerHTML = '<p style="color:#64748b;text-align:center;padding:20px;">No courses enrolled.</p>';
+            return;
+        }
+        el.innerHTML = courses.map(c => {
+            const marksPct  = c.marks_percentage !== null && c.marks_percentage !== undefined ? c.marks_percentage : null;
+            const attPct    = c.attendance_pct  !== null && c.attendance_pct  !== undefined ? c.attendance_pct  : null;
+            const syllPct   = c.syllabus_progress !== null && c.syllabus_progress !== undefined ? c.syllabus_progress : null;
+            const marksColor = marksPct !== null ? (marksPct >= 75 ? '#16a34a' : marksPct >= 50 ? '#f59e0b' : '#ef4444') : '#94a3b8';
+            const attColor   = attPct  !== null ? (attPct  >= 75 ? '#16a34a' : attPct  >= 50 ? '#f59e0b' : '#ef4444') : '#94a3b8';
+            const syllColor  = syllPct !== null ? '#6366f1' : '#94a3b8';
+            const modulesHtml = (c.modules || []).map(m => `
+                <div style="margin-bottom:8px;">
+                    <div style="display:flex;justify-content:space-between;font-size:12px;color:#475569;margin-bottom:3px;">
+                        <span>${m.name}</span>
+                        <span style="font-weight:700;color:${m.progress===100?'#16a34a':'#6366f1'};">${m.progress}%</span>
+                    </div>
+                    <div style="height:5px;background:#e2e8f0;border-radius:4px;overflow:hidden;">
+                        <div style="height:100%;background:${m.progress===100?'#16a34a':'#6366f1'};width:${m.progress}%;border-radius:4px;transition:width .5s;"></div>
+                    </div>
+                </div>`).join('');
+            return `
+            <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.05);margin-bottom:2px;transition:box-shadow .2s;" onmouseover="this.style.boxShadow='0 4px 16px rgba(99,102,241,.12)'" onmouseout="this.style.boxShadow='0 1px 4px rgba(0,0,0,.05)'">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+                    <div>
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                            <span style="font-size:11px;font-weight:700;background:#eff6ff;color:#2563eb;padding:3px 8px;border-radius:6px;">${c.course_code}</span>
+                            <span style="font-size:10px;color:#94a3b8;font-weight:600;">${c.credits} Credits &middot; Sem ${c.semester}</span>
+                        </div>
+                        <div style="font-weight:700;font-size:15px;color:#0f172a;">${c.course_name}</div>
+                        <div style="font-size:12px;color:#64748b;margin-top:2px;">&#128105;&#8205;&#127979; ${c.faculty_name||'Faculty'} &middot; Section ${c.section||'A'}</div>
+                    </div>
+                    <span style="padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;background:${c.enrollment_status==='active'?'#dcfce7':'#fef9c3'};color:${c.enrollment_status==='active'?'#166534':'#713f12'};">${(c.enrollment_status||'active').toUpperCase()}</span>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+                    <div style="text-align:center;padding:10px 8px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;">
+                        <div style="font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Attendance</div>
+                        <div style="font-size:20px;font-weight:800;color:${attColor};">${attPct!==null?attPct+'%':'&#8212;'}</div>
+                        <div style="font-size:10px;color:${attPct!==null&&attPct<75?'#ef4444':'#94a3b8'};font-weight:${attPct!==null&&attPct<75?'700':'400'};margin-top:2px;">${attPct!==null&&attPct<75?'&#9888; Below 75%':'&nbsp;'}</div>
+                    </div>
+                    <div style="text-align:center;padding:10px 8px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;">
+                        <div style="font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Syllabus</div>
+                        <div style="font-size:20px;font-weight:800;color:${syllColor};">${syllPct!==null?syllPct+'%':'&#8212;'}</div>
+                        <div style="font-size:10px;color:#94a3b8;margin-top:2px;">covered</div>
+                    </div>
+                </div>
+                ${c.modules&&c.modules.length?`<div style="border-top:1px solid #f1f5f9;padding-top:12px;"><div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">&#128218; Module Coverage</div>${modulesHtml}</div>`:''}
+            </div>`;
+        }).join('');
+    } catch(e) {
+        el.innerHTML = `<p style="color:#ef4444;padding:16px;">Failed to load courses: ${e.message}</p>`;
+    }
 };
 
-// ── Student: Timetable ───────────────────────────────────────────────────────
 window.renderStudentTimetable = async function() {
     const el = document.getElementById('timetable-grid');
     if (!el) return;
@@ -1725,24 +1770,76 @@ window.submitEditFee = async function(){
 };
 
 
-// ── Admin: Users ─────────────────────────────────────────────────────────────
-window.renderUsersTable = async function() {
+// Role Weight Helper for Level-Based Authorization
+function getRoleLevelWeight(role) {
+    if (!role) return 0;
+    if (role.startsWith('PLATFORM_')) return 100; // Level 0: SaaS Owner & Support
+    if (role === 'INSTITUTE_SUPER_ADMIN' || role === 'superadmin' || role === 'admin') return 80; // Level 1: Director
+    if (role === 'DEPARTMENT_ADMIN_HOD' || role === 'head') return 60; // Level 2: HOD
+    if (role === 'faculty') return 40; // Level 3: Faculty
+    return 20; // Level 4: Student / Parent
+}
+
+// ── Admin: Users (Level-Based Authorization & Role Filters) ────────────────
+let currentActiveRoleFilter = 'all';
+
+window.renderUsersTable = async function(roleFilter = currentActiveRoleFilter) {
+    currentActiveRoleFilter = roleFilter;
     const el = document.getElementById('usersTable');
     if (!el) return;
+    const currentUser = window.Auth?.getUser?.();
+    const myWeight = getRoleLevelWeight(currentUser?.role);
+
     try {
-        const users = await api('/admin/users');
-        el.innerHTML = `<table class="crud-table">
+        let users = await api('/admin/users');
+        // Hide SaaS Level 0 users from campus accounts entirely
+        if (myWeight < 100) {
+            users = users.filter(u => getRoleLevelWeight(u.role) < 100);
+        }
+
+        // Filter users by selected role category
+        if (roleFilter === 'hod') {
+            users = users.filter(u => u.role === 'DEPARTMENT_ADMIN_HOD' || u.role === 'head');
+        } else if (roleFilter === 'faculty') {
+            users = users.filter(u => u.role === 'faculty' || u.role === 'FACULTY_MENTOR');
+        } else if (roleFilter === 'student') {
+            users = users.filter(u => u.role === 'student' || u.role === 'STUDENT');
+        }
+
+        const tabsHtml = `
+            <div style="display:flex;gap:8px;margin-bottom:16px;border-bottom:1px solid #e2e8f0;padding-bottom:12px;">
+                <button onclick="renderUsersTable('all')" style="padding:6px 14px;border-radius:20px;border:none;font-size:13px;font-weight:600;cursor:pointer;background:${roleFilter === 'all' ? '#0f172a' : '#f1f5f9'};color:${roleFilter === 'all' ? '#ffffff' : '#64748b'};">👥 All Users</button>
+                <button onclick="renderUsersTable('hod')" style="padding:6px 14px;border-radius:20px;border:none;font-size:13px;font-weight:600;cursor:pointer;background:${roleFilter === 'hod' ? '#0f172a' : '#f1f5f9'};color:${roleFilter === 'hod' ? '#ffffff' : '#64748b'};">👑 HODs</button>
+                <button onclick="renderUsersTable('faculty')" style="padding:6px 14px;border-radius:20px;border:none;font-size:13px;font-weight:600;cursor:pointer;background:${roleFilter === 'faculty' ? '#0f172a' : '#f1f5f9'};color:${roleFilter === 'faculty' ? '#ffffff' : '#64748b'};">👨‍🏫 Faculty</button>
+                <button onclick="renderUsersTable('student')" style="padding:6px 14px;border-radius:20px;border:none;font-size:13px;font-weight:600;cursor:pointer;background:${roleFilter === 'student' ? '#0f172a' : '#f1f5f9'};color:${roleFilter === 'student' ? '#ffffff' : '#64748b'};">🎓 Students</button>
+            </div>
+        `;
+
+        if (users.length === 0) {
+            el.innerHTML = tabsHtml + `<div style="text-align:center;padding:32px;color:#64748b;">No users found in this role category.</div>`;
+            return;
+        }
+
+        el.innerHTML = tabsHtml + `<table class="crud-table">
             <thead><tr><th>Username</th><th>Email</th><th>Role</th><th style="text-align:right">Actions</th></tr></thead>
-            <tbody>${users.map(u => `
+            <tbody>${users.map(u => {
+                const targetWeight = getRoleLevelWeight(u.role);
+                const canModify = myWeight > targetWeight;
+                return `
                 <tr>
                     <td>${u.username}</td>
                     <td>${u.email}</td>
                     <td><span style="font-size:11px;padding:3px 8px;background:#e2e8f0;border-radius:4px;text-transform:uppercase;">${u.role}</span></td>
                     <td style="text-align:right;">
-                        <button onclick='openEditUser(${JSON.stringify(u).replace(/'/g, "&apos;")})' style="padding:4px 8px;margin-right:4px;background:#e2e8f0;border:none;border-radius:4px;cursor:pointer;">Edit</button>
-                        <button onclick="deleteUser('${u.user_id}')" style="padding:4px 8px;background:#fef2f2;color:#ef4444;border:none;border-radius:4px;cursor:pointer;">Delete</button>
+                        ${canModify ? `
+                            <button onclick='openEditUser(${JSON.stringify(u).replace(/'/g, "&apos;")})' style="padding:4px 8px;margin-right:4px;background:#e2e8f0;border:none;border-radius:4px;cursor:pointer;">Edit</button>
+                            <button onclick="deleteUser('${u.user_id}', '${u.role}')" style="padding:4px 8px;background:#fef2f2;color:#ef4444;border:none;border-radius:4px;cursor:pointer;">Delete</button>
+                        ` : `
+                            <span style="font-size:11px;color:#94a3b8;padding:4px 8px;background:#f1f5f9;border-radius:4px;border:1px solid #e2e8f0;" title="You cannot modify users at or above your role level">🔒 Protected</span>
+                        `}
                     </td>
-                </tr>`).join('')}
+                </tr>`;
+            }).join('')}
             </tbody></table>`;
     } catch(e) { el.innerHTML = `<p style="color:#ef4444">Failed: ${e.message}</p>`; }
 };
@@ -1759,13 +1856,22 @@ window.submitAddUser = async function() {
     if (!/[0-9]/.test(password))              { showToast('Password must contain at least 1 number', 'warning'); return; }
     if (!/[^A-Za-z0-9]/.test(password))       { showToast('Password must contain at least 1 special character', 'warning'); return; }
     if (!role)                    { showToast('Please select a role', 'warning'); return; }
+
+    const currentUser = window.Auth?.getUser?.();
+    const myWeight = getRoleLevelWeight(currentUser?.role);
+    const targetWeight = getRoleLevelWeight(role);
+
+    if (myWeight <= targetWeight) {
+        showToast(`⛔ Permission Denied: You cannot create a user with role level equal to or higher than your own (${currentUser?.role}).`, 'error');
+        return;
+    }
+
     try {
         await api('/users', { method:'POST', body: JSON.stringify({ first_name, email, password, role }) });
         showToast('User created! They can now log in.', 'success');
         closeModal('addUserModal');
         document.getElementById('addUserForm')?.reset();
         renderUsersTable();
-        // Welcome notification to the new user (find their id from users list)
         setTimeout(async () => {
             try {
                 const users = await api('/admin/users');
@@ -1777,6 +1883,15 @@ window.submitAddUser = async function() {
 };
 
 window.openEditUser = function(u) {
+    const currentUser = window.Auth?.getUser?.();
+    const myWeight = getRoleLevelWeight(currentUser?.role);
+    const targetWeight = getRoleLevelWeight(u.role);
+
+    if (myWeight <= targetWeight) {
+        showToast(`⛔ Permission Denied: You cannot edit a user with equal or higher role level (${u.role}).`, 'error');
+        return;
+    }
+
     document.getElementById('editUserId').value = u.user_id;
     document.getElementById('editUserName').value = u.username;
     document.getElementById('editUserEmail').value = u.email;
@@ -1789,6 +1904,16 @@ window.submitEditUser = async function() {
     const username = document.getElementById('editUserName').value;
     const email = document.getElementById('editUserEmail').value;
     const role = document.getElementById('editUserRole').value;
+
+    const currentUser = window.Auth?.getUser?.();
+    const myWeight = getRoleLevelWeight(currentUser?.role);
+    const targetWeight = getRoleLevelWeight(role);
+
+    if (myWeight <= targetWeight) {
+        showToast(`⛔ Permission Denied: Cannot assign a role level equal to or higher than your own (${role}).`, 'error');
+        return;
+    }
+
     try {
         await api(`/users/${id}`, { method:'PUT', body: JSON.stringify({ username, email, role }) });
         showToast('User updated!', 'success');
@@ -1797,7 +1922,16 @@ window.submitEditUser = async function() {
     } catch(e) { showToast('Failed: ' + e.message, 'error'); }
 };
 
-window.deleteUser = async function(id) {
+window.deleteUser = async function(id, role) {
+    const currentUser = window.Auth?.getUser?.();
+    const myWeight = getRoleLevelWeight(currentUser?.role);
+    const targetWeight = getRoleLevelWeight(role);
+
+    if (myWeight <= targetWeight) {
+        showToast(`⛔ Permission Denied: You cannot delete a user at or above your role level (${role}).`, 'error');
+        return;
+    }
+
     if (!confirm('Are you sure you want to delete this user?')) return;
     try {
         await api(`/users/${id}`, { method:'DELETE' });
@@ -1890,8 +2024,19 @@ window.Notifications = (function() {
     }
     function getBC() {
         try {
-            const all = JSON.parse(localStorage.getItem(BKEY) || '[]');
+            let all = JSON.parse(localStorage.getItem(BKEY) || '[]');
             const now = Date.now();
+            if (!all || all.length === 0) {
+                const dayMs = 24 * 60 * 60 * 1000;
+                all = [
+                    { id: now - 1 * dayMs, forRole: 'all', from: 'Academic Dean', message: '📢 Mid-term Exam schedule has been released on the campus portal.', type: 'info', time: 'Yesterday', timestamp: now - 1 * dayMs },
+                    { id: now - 5 * dayMs, forRole: 'all', from: 'Super Admin', message: '🎉 Campus Annual Hackathon registration is now open!', type: 'event', time: '5 days ago', timestamp: now - 5 * dayMs },
+                    { id: now - 12 * dayMs, forRole: 'student', from: 'Finance Cell', message: '💳 Spring 2026 Semester Fee payment deadline approaching.', type: 'fee', time: '12 days ago', timestamp: now - 12 * dayMs },
+                    { id: now - 20 * dayMs, forRole: 'all', from: 'IT Helpdesk', message: '💡 Campus WiFi & LMS maintenance scheduled for Sunday.', type: 'info', time: '20 days ago', timestamp: now - 20 * dayMs },
+                    { id: now - 28 * dayMs, forRole: 'all', from: 'Registrar', message: '📜 Welcome to BarelyPassing Academic Platform! Semester initialized.', type: 'info', time: '28 days ago', timestamp: now - 28 * dayMs },
+                ];
+                localStorage.setItem(BKEY, JSON.stringify(all));
+            }
             return all.filter(b => !b.timestamp || (now - b.timestamp) < THIRTY_DAYS);
         } catch { return []; }
     }
@@ -1899,13 +2044,17 @@ window.Notifications = (function() {
     function saveBC(b)  { localStorage.setItem(BKEY, JSON.stringify(b)); }
     function forUser(uid) { return getAll().filter(n => n.to === uid); }
 
+    function getRoleBC(role) {
+        return getBC().filter(b => b.forRole === 'all' || b.forRole === role);
+    }
+
     function getUnreadBC(role) {
         const readKey = `bp_bc_read_${role}`;
         const readIds = JSON.parse(localStorage.getItem(readKey) || '[]');
-        return getBC().filter(b => (b.forRole === 'all' || b.forRole === role) && !readIds.includes(b.id));
+        return getRoleBC(role).filter(b => !readIds.includes(b.id));
     }
     function markBCRead(role) {
-        const ids = getBC().filter(b => b.forRole === 'all' || b.forRole === role).map(b => b.id);
+        const ids = getRoleBC(role).map(b => b.id);
         localStorage.setItem(`bp_bc_read_${role}`, JSON.stringify(ids));
     }
 
@@ -1916,7 +2065,7 @@ window.Notifications = (function() {
         const ts  = Date.now();
         const timeLabel = new Date().toLocaleString('en-IN', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
         all.unshift({ id: ts, to: toUserId, from: fromName, message, type, read: false, time: timeLabel, timestamp: ts });
-        save(all.slice(0, 200));
+        save(all.slice(0, 500));
         updateBell();
     }
 
@@ -1968,37 +2117,64 @@ window.Notifications = (function() {
         const panel = document.getElementById('notif-panel');
         if (!panel) return;
         if (panel.style.display === 'block') { panel.style.display = 'none'; return; }
-        const bcItems = getUnreadBC(user.role).map(b => ({ ...b, isBroadcast: true }));
-        const personal = forUser(user.user_id);
+
+        const unreadBcIds = JSON.parse(localStorage.getItem(`bp_bc_read_${user.role}`) || '[]');
+        const bcItems = getRoleBC(user.role).map(b => ({
+            ...b,
+            isBroadcast: true,
+            isNew: !unreadBcIds.includes(b.id)
+        }));
+
+        const personal = forUser(user.user_id).map(n => ({
+            ...n,
+            isNew: !n.read
+        }));
+
+        // Combine and sort by timestamp (newest first)
+        const notifs = [...personal, ...bcItems].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+        // Mark as read after building the list so unread status is cleared for bell, but items STAY in panel!
         markRead(user.user_id);
         markBCRead(user.role);
         updateBell();
-        const notifs = [...bcItems, ...personal];
+
         panel.style.display = 'block';
         const totalCount = notifs.length;
+        const newCount = notifs.filter(n => n.isNew).length;
+
         panel.innerHTML = `
-            <div style="padding:14px 16px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;z-index:1;">
-                <div style="font-size:14px;font-weight:700;color:#0f172a;">🔔 Notifications ${totalCount > 0 ? `<span style="font-size:11px;background:#6366f1;color:#fff;padding:2px 7px;border-radius:10px;margin-left:4px;">${totalCount}</span>` : ''}</div>
-                <button onclick="window.Notifications.clearAll()" style="font-size:11px;color:#6366f1;background:none;border:none;cursor:pointer;font-weight:600;">Clear all</button>
+            <div style="padding:14px 16px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;z-index:10;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                <div>
+                    <div style="font-size:14px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:6px;">
+                        🔔 Notifications Log (Last 30 Days)
+                        ${newCount > 0 ? `<span style="font-size:10px;background:#6366f1;color:#fff;padding:2px 8px;border-radius:12px;font-weight:700;">${newCount} NEW</span>` : ''}
+                    </div>
+                    <div style="font-size:10px;color:#64748b;margin-top:2px;">Automated 30-day retention active</div>
+                </div>
+                <button onclick="window.Notifications.clearAll()" style="font-size:11px;color:#ef4444;background:#fef2f2;border:1px solid #fecaca;padding:4px 10px;border-radius:8px;cursor:pointer;font-weight:600;transition:all 0.15s;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'">Clear all</button>
             </div>
+            <div style="max-height:420px;overflow-y:auto;">
             ${notifs.length === 0
-                ? `<div style="padding:40px 16px;text-align:center;"><div style="font-size:40px;margin-bottom:8px;">🎉</div><div style="font-size:14px;font-weight:600;color:#0f172a;">You're all caught up!</div><div style="font-size:12px;color:#94a3b8;margin-top:4px;">No new notifications</div></div>`
+                ? `<div style="padding:40px 16px;text-align:center;"><div style="font-size:40px;margin-bottom:8px;">🎉</div><div style="font-size:14px;font-weight:600;color:#0f172a;">No notifications in past 30 days</div></div>`
                 : notifs.map(n => {
                     const m = getMeta(n.type);
                     const navView = n.viewId || m.viewId || 'dashboard-view';
-                    return `<div onclick="window.switchView('${navView}'); document.getElementById('notif-panel').style.display='none';" style="padding:12px 16px;border-bottom:1px solid #f8fafc;display:flex;gap:12px;align-items:flex-start;background:${n.isBroadcast ? '#fafafa' : '#fff'};cursor:pointer;transition:background .15s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='${n.isBroadcast ? '#fafafa' : '#fff'}'">
+                    return `<div onclick="window.switchView?.('${navView}'); document.getElementById('notif-panel').style.display='none';" style="padding:12px 16px;border-bottom:1px solid #f8fafc;display:flex;gap:12px;align-items:flex-start;background:${n.isNew ? '#f0f9ff' : n.isBroadcast ? '#fafafa' : '#fff'};cursor:pointer;position:relative;transition:background .15s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='${n.isNew ? '#f0f9ff' : n.isBroadcast ? '#fafafa' : '#fff'}'">
+                        ${n.isNew ? `<div style="position:absolute;top:14px;left:6px;width:6px;height:6px;border-radius:50%;background:#0284c7;"></div>` : ''}
                         <div style="width:36px;height:36px;border-radius:10px;background:${m.bg};border:1px solid ${m.border};display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">${m.icon}</div>
                         <div style="flex:1;min-width:0;">
-                            <div style="font-size:13px;font-weight:600;color:#0f172a;line-height:1.4;">${n.message}</div>
+                            <div style="font-size:13px;font-weight:${n.isNew ? '700' : '600'};color:#0f172a;line-height:1.4;">${n.message}</div>
                             <div style="display:flex;gap:8px;align-items:center;margin-top:4px;flex-wrap:wrap;">
                                 <span style="font-size:10px;padding:2px 7px;border-radius:10px;background:${m.bg};color:${m.color};font-weight:700;">${m.label}</span>
                                 <span style="font-size:11px;color:#94a3b8;">${n.from} &middot; ${n.time}</span>
                                 ${n.isBroadcast ? '<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:#eff6ff;color:#1d4ed8;font-weight:600;">Broadcast</span>' : ''}
+                                ${n.isNew ? '<span style="font-size:10px;padding:2px 6px;border-radius:6px;background:#0284c7;color:#fff;font-weight:700;">NEW</span>' : ''}
                             </div>
                         </div>
                     </div>`;
                 }).join('')
-            }`;
+            }
+            </div>`;
     }
 
     function clearAll() {
@@ -2006,12 +2182,13 @@ window.Notifications = (function() {
         if (!user) return;
         save([]);
         const readKey = `bp_bc_read_${user.role}`;
-        const ids = getBC().filter(b => b.forRole === 'all' || b.forRole === user.role).map(b => b.id);
+        const ids = getRoleBC(user.role).map(b => b.id);
         localStorage.setItem(readKey, JSON.stringify(ids));
         updateBell();
         const panel = document.getElementById('notif-panel');
-        if (panel) panel.innerHTML = `<div style="padding:40px 16px;text-align:center;"><div style="font-size:40px;">&#x1F389;</div><div style="font-size:14px;font-weight:600;color:#0f172a;margin-top:8px;">All cleared!</div></div>`;
+        if (panel) panel.innerHTML = `<div style="padding:40px 16px;text-align:center;"><div style="font-size:36px;">🧹</div><div style="font-size:14px;font-weight:600;color:#0f172a;margin-top:8px;">Notifications log cleared.</div><div style="font-size:11px;color:#94a3b8;margin-top:4px;">New incoming updates will appear here and persist for 30 days.</div></div>`;
     }
+
 
     function injectBell() {
         const header = document.getElementById('top-header-bar') || document.querySelector('.top-header-bar');

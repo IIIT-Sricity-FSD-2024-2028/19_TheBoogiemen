@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BarelyPassing — SaaS Platform Administration</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:          #f8fafc;
+            --sidebar-bg:  linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            --surface:     #ffffff;
+            --surface2:    #f1f5f9;
+            --border:      #e2e8f0;
+            --border-dark: rgba(255,255,255,0.12);
+            --primary:     #4f46e5;
+            --primary2:    #6366f1;
+            --text:        #0f172a;
+            --text-light:  #f8fafc;
+            --muted:       #64748b;
+            --dim:         #94a3b8;
+            --green:       #10b981;
+            --amber:       #f59e0b;
+            --red:         #ef4444;
+            --shadow:      0 4px 6px -1px rgba(15,23,42,0.06), 0 2px 4px -1px rgba(15,23,42,0.04);
+            --shadow-lg:   0 20px 25px -5px rgba(15,23,42,0.1), 0 10px 10px -5px rgba(15,23,42,0.04);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+        }
+
+        /* ── Sidebar (Navy Blue Theme) ── */
+        .sidebar {
+            width: 260px; min-height: 100vh;
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--border-dark);
+            display: flex; flex-direction: column;
+            position: fixed; top: 0; left: 0; bottom: 0;
+            z-index: 100; overflow-y: auto;
+        }
+
+        .sidebar-brand {
+            padding: 24px 20px;
+            border-bottom: 1px solid var(--border-dark);
+            display: flex; align-items: center; gap: 12px;
+        }
+        .sidebar-brand-icon {
+            width: 38px; height: 38px; border-radius: 10px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(99,102,241,0.4);
+        }
+        .sidebar-brand h1 { font-size: 16px; font-weight: 700; color: #ffffff; }
+        .sidebar-brand span {
+            display: block; font-size: 10px; color: #94a3b8;
+            font-weight: 500; letter-spacing: 0.5px;
+        }
+
+        .sidebar-section-label {
+            font-size: 10px; font-weight: 600; color: #64748b;
+            letter-spacing: 1.2px; text-transform: uppercase;
+            padding: 20px 20px 8px;
+        }
+
+        .nav-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 16px; margin: 2px 12px;
+            border-radius: 8px; cursor: pointer;
+            color: #94a3b8; font-size: 13.5px; font-weight: 500;
+            transition: all 0.15s; text-decoration: none;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.08); color: #ffffff; }
+        .nav-item.active {
+            background: linear-gradient(90deg, rgba(99,102,241,0.25) 0%, rgba(99,102,241,0.05) 100%);
+            color: #ffffff;
+            border-left: 3px solid #6366f1;
+        }
+        .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+        .sidebar-footer {
+            margin-top: auto; padding: 16px;
+            border-top: 1px solid var(--border-dark);
+        }
+        .user-pill {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 12px; border-radius: 10px;
+            background: rgba(255,255,255,0.06);
+        }
+        .user-avatar {
+            width: 34px; height: 34px; border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 700; color: white; flex-shrink: 0;
+        }
+        .user-info p { font-size: 13px; font-weight: 600; color: #ffffff; }
+        .user-info span { font-size: 11px; color: #94a3b8; }
+        .logout-btn {
+            margin-left: auto; background: none; border: none;
+            color: #94a3b8; cursor: pointer; padding: 6px;
+            border-radius: 6px; display: flex; align-items: center;
+            transition: all 0.2s;
+        }
+        .logout-btn:hover { color: #f87171; background: rgba(239,68,68,0.15); }
+
+        /* ── Main content ── */
+        .main { margin-left: 260px; flex: 1; padding: 32px; }
+
+        .page { display: none; }
+        .page.active { display: block; }
+
+        .page-header { margin-bottom: 28px; display: flex; align-items: center; justify-content: space-between; }
+        .page-header h2 { font-size: 24px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
+        .page-header p { font-size: 14px; color: var(--muted); margin-top: 4px; }
+
+        /* ── Cards & Grid ── */
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+
+        .stat-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 14px; padding: 20px; box-shadow: var(--shadow);
+        }
+        .stat-label { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+        .stat-value { font-size: 28px; font-weight: 800; color: var(--text); }
+        .stat-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+        .stat-trend { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; margin-top: 6px; }
+        .trend-up { color: var(--green); }
+        .trend-down { color: var(--red); }
+
+        .card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 16px; padding: 24px; box-shadow: var(--shadow);
+            margin-bottom: 24px;
+        }
+        .card-title {
+            font-size: 16px; font-weight: 700; color: var(--text);
+            margin-bottom: 16px; display: flex; align-items: center;
+            justify-content: space-between;
+        }
+
+        /* ── Table ── */
+        table { width: 100%; border-collapse: collapse; }
+        thead th {
+            font-size: 11px; font-weight: 700; color: var(--muted);
+            text-transform: uppercase; letter-spacing: 0.8px;
+            padding: 12px 14px; text-align: left;
+            background: var(--surface2); border-bottom: 1px solid var(--border);
+        }
+        tbody td { padding: 14px; font-size: 13.5px; color: var(--text); border-bottom: 1px solid var(--border); }
+        tbody tr:hover td { background: rgba(241,245,249,0.7); }
+        tbody tr:last-child td { border-bottom: none; }
+
+        /* ── Badges ── */
+        .badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
+        }
+        .badge-green  { background: #d1fae5; color: #047857; }
+        .badge-amber  { background: #fef3c7; color: #b45309; }
+        .badge-red    { background: #fee2e2; color: #b91c1c; }
+        .badge-blue   { background: #e0e7ff; color: #4338ca; }
+
+        /* ── Buttons ── */
+        .btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 8px 16px; border-radius: 8px; font-size: 13px;
+            font-weight: 600; cursor: pointer; border: none; font-family: inherit;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary2));
+            color: white; box-shadow: 0 2px 8px rgba(79,70,229,0.25);
+        }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(79,70,229,0.35); }
+        .btn-ghost {
+            background: var(--surface2); color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .btn-ghost:hover { background: #e2e8f0; }
+
+        /* ── Modal ── */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(15,23,42,0.6);
+            backdrop-filter: blur(4px); display: none;
+            align-items: center; justify-content: center; z-index: 1000;
+            padding: 20px;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: #ffffff; border-radius: 18px; width: 100%; max-width: 520px;
+            padding: 32px; box-shadow: var(--shadow-lg); border: 1px solid var(--border);
+            animation: modalFade 0.25s ease-out;
+        }
+        @keyframes modalFade { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+        .modal-title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+        .modal-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%; padding: 10px 14px; background: #ffffff;
+            border: 1.5px solid var(--border); border-radius: 8px;
+            font-size: 14px; font-family: inherit; outline: none;
+        }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+        }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+
+        /* ── Toast ── */
+        #toast {
+            position: fixed; bottom: 24px; right: 24px;
+            background: #0f172a; color: #ffffff; padding: 14px 20px; border-radius: 12px;
+            font-size: 14px; z-index: 9999; box-shadow: var(--shadow-lg);
+            transform: translateY(100px); opacity: 0; transition: all 0.3s ease;
+        }
+        #toast.show { transform: translateY(0); opacity: 1; }
+
+        @media (max-width: 1100px) { .grid-4 { grid-template-columns: repeat(2,1fr); } }
+    </style>
+</head>
+<body>
+
+<!-- Sidebar (Navy Blue) -->
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+        </div>
+        <div>
+            <h1>BarelyPassing</h1>
+            <span>SaaS Platform Control</span>
+        </div>
+    </div>
+
+    <div class="sidebar-section-label">Overview</div>
+    <a class="nav-item active" data-nav="dashboard" onclick="showPage('dashboard', this)" href="#">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Dashboard
+    </a>
+    <a class="nav-item" data-nav="institutions" onclick="showPage('institutions', this)" href="#">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        Institutions
+    </a>
+    <a class="nav-item" data-nav="subscriptions" onclick="showPage('subscriptions', this)" href="#">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+        Subscriptions
+    </a>
+
+    <div class="sidebar-section-label">Support &amp; Inquiries</div>
+    <a class="nav-item" data-nav="support" onclick="showPage('support', this)" href="#">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        Support Tickets <span id="ticket-badge" class="badge badge-amber" style="margin-left:auto;display:none;">0</span>
+    </a>
+    <a class="nav-item" data-nav="onboarding-list" onclick="showPage('onboarding-list', this)" href="#">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg>
+        Onboarding Leads
+    </a>
+
+    <div class="sidebar-section-label">Monitoring</div>
+    <a class="nav-item" data-nav="activity" onclick="showPage('activity', this)" href="#">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+        Live Activity Logs
+    </a>
+    <a class="nav-item" data-nav="platform-users" onclick="showPage('platform-users', this)" href="#">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        Support Team Users
+    </a>
+
+    <div class="sidebar-footer">
+        <div class="user-pill">
+            <div class="user-avatar" id="saas-avatar">SA</div>
+            <div class="user-info">
+                <p id="saas-user-name">SaaS Admin</p>
+                <span id="saas-user-role">Level 0 · Platform</span>
+            </div>
+            <button class="logout-btn" onclick="window.Auth.logout()" title="Logout to SaaS Login">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            </button>
+        </div>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<main class="main">
+
+    <!-- Dashboard Page -->
+    <div id="page-dashboard" class="page active">
+        <div id="role-banner" style="margin-bottom:16px;"></div>
+        <div class="page-header">
+            <div>
+                <h2>Platform Dashboard</h2>
+                <p>Live metrics across all onboarded institutions and active support queues.</p>
+            </div>
+            <button class="btn btn-primary" onclick="showPage('onboarding-list', document.querySelector('.nav-item:nth-child(6)'))">+ Review Onboarding Requests</button>
+        </div>
+
+        <div class="grid-4">
+            <div class="stat-card">
+                <div class="stat-label">Active Institutions</div>
+                <div class="stat-value">12</div>
+                <div class="stat-trend trend-up">↑ 2 this month</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Active Subscriptions</div>
+                <div class="stat-value">10</div>
+                <div class="stat-sub">2 in trial period</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Interlinked Tickets</div>
+                <div class="stat-value" id="dash-ticket-count">3</div>
+                <div class="stat-sub">Director ↔ SaaS synced</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Pending Onboarding</div>
+                <div class="stat-value" id="dash-onboarding-count">2</div>
+                <div class="stat-trend trend-up">Needs review</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">
+                Recent Interlinked Support Tickets
+                <button class="btn btn-ghost" onclick="showPage('support', document.querySelector('.nav-item:nth-child(5)'))">Manage Tickets</button>
+            </div>
+            <div id="dash-tickets-preview"></div>
+        </div>
+    </div>
+
+    <!-- Institutions Page -->
+    <div id="page-institutions" class="page">
+        <div class="page-header">
+            <div>
+                <h2>Subscribed Institutions</h2>
+                <p>All active institution tenants on the BarelyPassing platform.</p>
+            </div>
+        </div>
+        <div class="card">
+            <table>
+                <thead>
+                    <tr><th>Tenant ID</th><th>Institution Name</th><th>Plan</th><th>Director Email</th><th>Users</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code style="background:#e2e8f0;padding:2px 6px;border-radius:4px;">t1</code></td><td><strong>IIIT Sricity</strong></td><td><span class="badge badge-blue">Professional</span></td><td>director@iiits.in</td><td>1,240</td><td><span class="badge badge-green">Active</span></td></tr>
+                    <tr><td><code style="background:#e2e8f0;padding:2px 6px;border-radius:4px;">t2</code></td><td><strong>IIT Madras</strong></td><td><span class="badge badge-blue">Enterprise</span></td><td>director@iitm.ac.in</td><td>3,100</td><td><span class="badge badge-green">Active</span></td></tr>
+                    <tr><td><code style="background:#e2e8f0;padding:2px 6px;border-radius:4px;">t3</code></td><td><strong>VIT Vellore</strong></td><td><span class="badge badge-amber">Trial</span></td><td>admin@vit.ac.in</td><td>480</td><td><span class="badge badge-amber">Trial</span></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Subscriptions Page -->
+    <div id="page-subscriptions" class="page">
+        <div class="page-header">
+            <div>
+                <h2>Subscription Billing &amp; Tokens</h2>
+                <p>Plan contracts and renewal status for all institutional clients.</p>
+            </div>
+        </div>
+        <div class="grid-3">
+            <div class="stat-card"><div class="stat-label">Annual Contract Value</div><div class="stat-value">₹8,40,000</div><div class="stat-sub">ARR across active tenants</div></div>
+            <div class="stat-card"><div class="stat-label">Active Plans</div><div class="stat-value">10</div><div class="stat-sub">8 Annual · 2 Trial</div></div>
+            <div class="stat-card"><div class="stat-label">SLA Compliance</div><div class="stat-value" style="color:var(--green);">99.9%</div><div class="stat-sub">Guaranteed uptime</div></div>
+        </div>
+    </div>
+
+    <!-- Support Tickets Page -->
+    <div id="page-support" class="page">
+        <div class="page-header">
+            <div>
+                <h2>Interlinked Director &amp; Campus Support Tickets</h2>
+                <p>Support requests submitted directly by Institute Directors and Administrators.</p>
+            </div>
+        </div>
+        <div class="card">
+            <table>
+                <thead>
+                    <tr><th>Ticket ID</th><th>Institution</th><th>Director / Contact</th><th>Subject</th><th>Priority</th><th>Status</th><th>Actions</th></tr>
+                </thead>
+                <tbody id="support-tickets-tbody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Onboarding Requests Page -->
+    <div id="page-onboarding-list" class="page">
+        <div class="page-header">
+            <div>
+                <h2>Institutional Onboarding Leads</h2>
+                <p>Requests submitted via the public onboarding page.</p>
+            </div>
+        </div>
+        <div class="card">
+            <table>
+                <thead>
+                    <tr><th>Institution</th><th>Contact Person</th><th>Email / Role</th><th>Plan Interest</th><th>Submitted</th><th>Action</th></tr>
+                </thead>
+                <tbody id="onboarding-tbody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Live Activity Logs Page -->
+    <div id="page-activity" class="page">
+        <div class="page-header">
+            <div>
+                <h2>Live Cross-Tenant Activity Logs</h2>
+                <p>Real-time audit log of user connections and system events across all institute portals.</p>
+            </div>
+            <button class="btn btn-ghost" onclick="renderActivityLogs()">🔄 Refresh Audit Stream</button>
+        </div>
+        <div class="card">
+            <table>
+                <thead>
+                    <tr><th>Timestamp</th><th>User</th><th>Tenant</th><th>Action Performed</th><th>Client IP</th></tr>
+                </thead>
+                <tbody id="activity-tbody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Support Team Users Page -->
+    <div id="page-platform-users" class="page">
+        <div class="page-header">
+            <div>
+                <h2>SaaS Support Team Personnel</h2>
+                <p>Seeded accounts authorized to log into saas-login.html to support institutions.</p>
+            </div>
+        </div>
+        <div class="card">
+            <table>
+                <thead>
+                    <tr><th>Name</th><th>Email Username</th><th>Role / Tier</th><th>Access Rights</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><strong>SaaS Global Admin</strong></td><td><code>saasadmin@platform.com</code></td><td><span class="badge badge-blue">PLATFORM_SUPER_ADMIN</span></td><td>Full Platform Owner Access</td></tr>
+                    <tr><td><strong>Platform Sales Lead</strong></td><td><code>sales@platform.com</code></td><td><span class="badge badge-green">PLATFORM_SALES_SUPPORT</span></td><td>Subscriptions &amp; Onboarding Management</td></tr>
+                    <tr><td><strong>Tech Support Lead</strong></td><td><code>techsupport@platform.com</code></td><td><span class="badge badge-amber">PLATFORM_TECH_SUPPORT</span></td><td>Ticket Response &amp; System Health</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</main>
+
+<!-- B2B Invoice Generation Modal -->
+<div class="modal-overlay" id="b2bInvoiceModal">
+    <div class="modal">
+        <h3 class="modal-title" id="invoiceModalTitle">Generate B2B Subscription Invoice</h3>
+        <p class="modal-sub">Configure license pricing and dispatch payment link to Director.</p>
+        <div class="form-group">
+            <label>Annual License Price (₹ INR)</label>
+            <input type="number" id="invoiceAmount" value="85000" min="10000">
+        </div>
+        <div class="form-group">
+            <label>Selected Tier</label>
+            <select id="invoicePlan">
+                <option value="Professional Tier">Professional Tier (Up to 2,000 Students)</option>
+                <option value="Enterprise Tier">Enterprise Tier (Unlimited Campus Access)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Payment Due Terms</label>
+            <select id="invoiceTerms">
+                <option value="Net 15 Days">Net 15 Days</option>
+                <option value="Immediate Checkout">Immediate Checkout (Online)</option>
+            </select>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeModal('b2bInvoiceModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="dispatchB2BInvoice()">⚡ Dispatch B2B Invoice &amp; Payment Link</button>
+        </div>
+    </div>
+</div>
+
+<!-- B2B Checkout Gateway Simulation Modal -->
+<div class="modal-overlay" id="b2bCheckoutModal">
+    <div class="modal" style="max-width:560px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <span class="badge badge-green">💳 BarelyPassing B2B Checkout</span>
+            <span style="font-size:12px;color:var(--muted);" id="checkoutInvoiceId">INV-2026-8802</span>
+        </div>
+        <h3 class="modal-title" id="checkoutInstName">Amrita University</h3>
+        <p class="modal-sub" id="checkoutSubText">Official B2B Subscription Payment Portal</p>
+        <div style="background:#f8fafc;padding:16px;border-radius:12px;border:1px solid #e2e8f0;margin-bottom:20px;line-height:1.7;">
+            <div style="display:flex;justify-content:space-between;font-size:13px;"><span>Plan Tier:</span><strong id="checkoutPlanName">Professional Tier</strong></div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;"><span>Annual Base Fee:</span><span id="checkoutBaseFee">₹85,000</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;"><span>GST (18%):</span><span id="checkoutTax">₹15,300</span></div>
+            <hr style="margin:8px 0;border:none;border-top:1px solid #cbd5e1;">
+            <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:800;color:#0f172a;"><span>Total Due:</span><span id="checkoutTotal" style="color:#10b981;">₹1,00,300</span></div>
+        </div>
+        <div class="form-group">
+            <label>Payment Method</label>
+            <select id="checkoutMethod">
+                <option value="UPI / QR Code">Instant UPI / QR Code</option>
+                <option value="Corporate Credit/Debit Card">Corporate Credit / Debit Card</option>
+                <option value="NEFT / RTGS Bank Transfer">NEFT / RTGS Bank Transfer</option>
+            </select>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeModal('b2bCheckoutModal')">Cancel</button>
+            <button class="btn btn-primary" style="background:linear-gradient(135deg,#059669,#10b981);" onclick="processB2BPayment()">✅ Complete Payment &amp; Provision Tenant</button>
+        </div>
+    </div>
+</div>
+
+<!-- Contact Onboarding Lead Modal -->
+<div class="modal-overlay" id="contactLeadModal">
+    <div class="modal">
+        <h3 class="modal-title" id="leadModalTitle">Contact Onboarding Lead</h3>
+        <p class="modal-sub" id="leadModalSub">Send customized response to institution representative.</p>
+        <div id="leadModalDetails" style="background:#f8fafc;padding:12px;border-radius:8px;font-size:13px;border:1px solid #e2e8f0;margin-bottom:16px;line-height:1.6;"></div>
+        <div class="form-group">
+            <label>Response Message</label>
+            <textarea id="leadReplyMsg" rows="5" placeholder="Enter message…"></textarea>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeModal('contactLeadModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="submitLeadReply()">Send Email Response</button>
+        </div>
+    </div>
+</div>
+
+<!-- Support Ticket Response Modal -->
+<div class="modal-overlay" id="ticketReplyModal">
+    <div class="modal">
+        <h3 class="modal-title" id="ticketModalTitle">Respond to Support Ticket</h3>
+        <p class="modal-sub" id="ticketModalSub">Replying will notify the Institute Director in real-time.</p>
+        <div id="ticketModalConversation" style="max-height:160px;overflow-y:auto;background:#f8fafc;padding:12px;border-radius:8px;font-size:13px;border:1px solid #e2e8f0;margin-bottom:16px;line-height:1.5;"></div>
+        <div class="form-group">
+            <label>Your Response</label>
+            <textarea id="ticketReplyText" rows="3" placeholder="Enter solution details for the Director…"></textarea>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeModal('ticketReplyModal')">Cancel</button>
+            <button class="btn btn-ghost" style="color:var(--green);border-color:var(--green);" onclick="resolveCurrentTicket()">Mark Resolved</button>
+            <button class="btn btn-primary" onclick="submitTicketReply()">Send Reply to Director</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="state.js"></script>
+<script>
+let currentActiveLeadId = null;
+let currentActiveTicketId = null;
+
+function initSaaS() {
+    const user = window.Auth.requireAuth(['PLATFORM_SUPER_ADMIN', 'PLATFORM_SALES_SUPPORT', 'PLATFORM_TECH_SUPPORT']);
+    if (!user) return;
+
+    const name = user.first_name || user.name || user.username || 'SaaS Support Agent';
+    const nameEl = document.getElementById('saas-user-name');
+    const avatarEl = document.getElementById('saas-avatar');
+    const roleEl = document.getElementById('saas-user-role');
+    if (nameEl) nameEl.textContent = name;
+    if (avatarEl) avatarEl.textContent = (name.charAt(0) || 'S').toUpperCase();
+    if (roleEl) roleEl.textContent = (user.role || '').replace('PLATFORM_', '').replace(/_/g, ' ');
+
+    configureSaaSRolePermissions(user.role);
+    renderAllViews();
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initSaaS);
+} else {
+    initSaaS();
+}
+
+function configureSaaSRolePermissions(role) {
+    const navItems = document.querySelectorAll('.nav-item[data-nav]');
+    const roleBanner = document.getElementById('role-banner');
+
+    if (role === 'PLATFORM_SALES_SUPPORT') {
+        if (roleBanner) roleBanner.innerHTML = `<span class="badge badge-green">💼 Sales &amp; Growth View</span> &nbsp;<span style="font-size:12px;color:var(--muted);">Tailored for Sales Lead — Billing, Subscriptions &amp; Onboarding Leads</span>`;
+        navItems.forEach(item => {
+            const page = item.getAttribute('data-nav');
+            if (['support', 'activity', 'platform-users'].includes(page)) {
+                item.style.display = 'none';
+            } else {
+                item.style.display = 'flex';
+            }
+        });
+    } else if (role === 'PLATFORM_TECH_SUPPORT') {
+        if (roleBanner) roleBanner.innerHTML = `<span class="badge badge-amber">🛠 Technical Support View</span> &nbsp;<span style="font-size:12px;color:var(--muted);">Tailored for Tech Support — Ticket Resolution, Audit Streams &amp; System Health</span>`;
+        navItems.forEach(item => {
+            const page = item.getAttribute('data-nav');
+            if (['subscriptions', 'onboarding-list'].includes(page)) {
+                item.style.display = 'none';
+            } else {
+                item.style.display = 'flex';
+            }
+        });
+    } else {
+        // PLATFORM_SUPER_ADMIN
+        if (roleBanner) roleBanner.innerHTML = `<span class="badge badge-blue">⚡ Global Owner View</span> &nbsp;<span style="font-size:12px;color:var(--muted);">Full SaaS Owner Control — All System Functions Active</span>`;
+        navItems.forEach(item => item.style.display = 'flex');
+    }
+}
+
+function showPage(id, el) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    const target = document.getElementById('page-' + id);
+    if (target) target.classList.add('active');
+    const navEl = (el && el.classList && el.classList.contains('nav-item')) ? el : document.querySelector(`.nav-item[data-nav="${id}"]`);
+    if (navEl) navEl.classList.add('active');
+    renderAllViews();
+}
+
+function renderAllViews() {
+    renderSupportTickets();
+    renderOnboardingLeads();
+    renderActivityLogs();
+}
+
+function renderSupportTickets() {
+    const tickets = window.SaaSStore ? window.SaaSStore.getTickets() : [];
+    const tbody = document.getElementById('support-tickets-tbody');
+    const preview = document.getElementById('dash-tickets-preview');
+    const badge = document.getElementById('ticket-badge');
+
+    const openCount = tickets.filter(t => t.status !== 'Resolved').length;
+    if (badge) {
+        badge.textContent = openCount;
+        badge.style.display = openCount > 0 ? 'inline-flex' : 'none';
+    }
+    const countEl = document.getElementById('dash-ticket-count');
+    if (countEl) countEl.textContent = tickets.length;
+
+    if (tbody) {
+        tbody.innerHTML = tickets.map(t => `
+            <tr>
+                <td><code>${t.id}</code></td>
+                <td><strong>${t.institution}</strong></td>
+                <td>${t.contactEmail}</td>
+                <td>${t.subject}</td>
+                <td><span class="badge ${t.priority === 'High' ? 'badge-red' : 'badge-amber'}">${t.priority}</span></td>
+                <td><span class="badge ${t.status === 'Resolved' ? 'badge-green' : (t.status === 'In Progress' ? 'badge-amber' : 'badge-blue')}">${t.status}</span></td>
+                <td>
+                    <button class="btn btn-primary" style="padding:4px 10px;font-size:12px;" onclick="openTicketModal('${t.id}')">Respond</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    if (preview) {
+        preview.innerHTML = `
+            <table>
+                <thead><tr><th>Ticket ID</th><th>Institution</th><th>Subject</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody>
+                    ${tickets.slice(0, 3).map(t => `
+                        <tr>
+                            <td><code>${t.id}</code></td>
+                            <td>${t.institution}</td>
+                            <td>${t.subject}</td>
+                            <td><span class="badge ${t.status === 'Resolved' ? 'badge-green' : 'badge-amber'}">${t.status}</span></td>
+                            <td><button class="btn btn-ghost" style="padding:3px 8px;font-size:11px;" onclick="showPage('support', document.querySelector('.nav-item:nth-child(5)'))">View</button></td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    }
+}
+
+function renderOnboardingLeads() {
+    const leads = window.SaaSStore ? window.SaaSStore.getOnboardingRequests() : [];
+    const tbody = document.getElementById('onboarding-tbody');
+    const countEl = document.getElementById('dash-onboarding-count');
+    if (countEl) countEl.textContent = leads.length;
+
+    if (tbody) {
+        tbody.innerHTML = leads.map(l => `
+            <tr>
+                <td><strong>${l.institution}</strong></td>
+                <td>${l.name}</td>
+                <td>${l.email}<br><span style="font-size:11px;color:var(--muted);">${l.role || ''}</span></td>
+                <td><span class="badge ${l.status === 'Paid' ? 'badge-green' : 'badge-blue'}">${l.plan || 'Professional'} (${l.status || 'Pending'})</span></td>
+                <td>${l.submitted}</td>
+                <td>
+                    <button class="btn btn-ghost" style="padding:4px 10px;font-size:12px;margin-right:4px;" onclick="openContactLeadModal('${l.id}')">Contact Lead</button>
+                    <button class="btn btn-primary" style="padding:4px 10px;font-size:12px;background:linear-gradient(135deg,#059669,#10b981);" onclick="openB2BInvoiceModal('${l.id}')">⚡ Invoice &amp; Pay Link</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+}
+
+function openB2BInvoiceModal(leadId) {
+    currentActiveLeadId = leadId;
+    const leads = window.SaaSStore.getOnboardingRequests();
+    const l = leads.find(x => x.id === leadId);
+    if (!l) return;
+
+    document.getElementById('invoiceModalTitle').textContent = `Generate B2B Invoice for ${l.institution}`;
+    openModal('b2bInvoiceModal');
+}
+
+function dispatchB2BInvoice() {
+    const leads = window.SaaSStore.getOnboardingRequests();
+    const l = leads.find(x => x.id === currentActiveLeadId);
+    if (!l) return;
+
+    const baseAmount = parseInt(document.getElementById('invoiceAmount').value || '85000', 10);
+    const plan = document.getElementById('invoicePlan').value;
+    const tax = Math.round(baseAmount * 0.18);
+    const total = baseAmount + tax;
+
+    closeModal('b2bInvoiceModal');
+
+    // Populate checkout modal
+    document.getElementById('checkoutInvoiceId').textContent = 'INV-2026-' + Math.floor(1000 + Math.random() * 9000);
+    document.getElementById('checkoutInstName').textContent = l.institution;
+    document.getElementById('checkoutSubText').textContent = `Recipient: ${l.name} (${l.email})`;
+    document.getElementById('checkoutPlanName').textContent = plan;
+    document.getElementById('checkoutBaseFee').textContent = '₹' + baseAmount.toLocaleString('en-IN');
+    document.getElementById('checkoutTax').textContent = '₹' + tax.toLocaleString('en-IN');
+    document.getElementById('checkoutTotal').textContent = '₹' + total.toLocaleString('en-IN');
+
+    openModal('b2bCheckoutModal');
+}
+
+function processB2BPayment() {
+    const leads = window.SaaSStore.getOnboardingRequests();
+    const l = leads.find(x => x.id === currentActiveLeadId);
+    const method = document.getElementById('checkoutMethod').value;
+
+    if (l) {
+        l.status = 'Paid';
+        window.SaaSStore.saveOnboardingRequests(leads);
+    }
+
+    const tenantCode = 't_' + (l ? l.institution.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 10) : 'newinst');
+    const directorEmail = l ? l.email : 'director@institution.edu';
+
+    window.SaaSStore.logActivity(`B2B Payment Successful via ${method} for ${l ? l.institution : 'New Tenant'}. Tenant "${tenantCode}" Provisioned!`);
+
+    closeModal('b2bCheckoutModal');
+    showToast(`✅ Payment Successful! Tenant "${tenantCode}" activated & login credentials dispatched to ${directorEmail}.`, 'success');
+    renderOnboardingLeads();
+}
+
+function renderActivityLogs() {
+    const logs = window.SaaSStore ? window.SaaSStore.getActivityLogs() : [];
+    const tbody = document.getElementById('activity-tbody');
+    if (tbody) {
+        tbody.innerHTML = logs.map(log => `
+            <tr>
+                <td><code style="font-size:12px;color:var(--muted);">${log.time}</code></td>
+                <td><strong>${log.user}</strong></td>
+                <td><span class="badge badge-blue">${log.tenant}</span></td>
+                <td>${log.action}</td>
+                <td><code style="font-size:11px;">${log.ip}</code></td>
+            </tr>
+        `).join('');
+    }
+}
+
+function openContactLeadModal(leadId) {
+    currentActiveLeadId = leadId;
+    const leads = window.SaaSStore.getOnboardingRequests();
+    const l = leads.find(x => x.id === leadId);
+    if (!l) return;
+
+    document.getElementById('leadModalTitle').textContent = `Contact ${l.institution}`;
+    document.getElementById('leadModalSub').textContent = `Primary Contact: ${l.name} (${l.email})`;
+    document.getElementById('leadModalDetails').innerHTML = `
+        <strong>Institution:</strong> ${l.institution}<br>
+        <strong>Plan Requested:</strong> ${l.plan || 'Professional'}<br>
+        <strong>Est. Size:</strong> ${l.size || 'N/A'}<br>
+        <strong>Message:</strong> ${l.message || 'No additional note.'}
+    `;
+    document.getElementById('leadReplyMsg').value = `Dear ${l.name},\n\nThank you for choosing BarelyPassing for ${l.institution}. We have configured your demonstration tenant workspace on our platform.\n\nBest regards,\nSaaS Support Team`;
+    openModal('contactLeadModal');
+}
+
+function submitLeadReply() {
+    const msg = document.getElementById('leadReplyMsg').value.trim();
+    if (!msg) { showToast('Please enter a response message', 'error'); return; }
+
+    window.SaaSStore.logActivity(`Contacted Onboarding Lead (ID: ${currentActiveLeadId})`);
+    showToast('✅ Response sent successfully to Lead email!', 'success');
+    closeModal('contactLeadModal');
+}
+
+function openTicketModal(ticketId) {
+    currentActiveTicketId = ticketId;
+    const tickets = window.SaaSStore.getTickets();
+    const t = tickets.find(x => x.id === ticketId);
+    if (!t) return;
+
+    document.getElementById('ticketModalTitle').textContent = `Ticket ${t.id} — ${t.institution}`;
+    document.getElementById('ticketModalSub').textContent = `Subject: ${t.subject} (${t.contactEmail})`;
+    
+    let convHtml = `<strong>Director Message:</strong> ${t.message}`;
+    if (t.replies && t.replies.length > 0) {
+        convHtml += `<hr style="margin:8px 0;border:none;border-top:1px solid #e2e8f0;">` +
+            t.replies.map(r => `<div><strong>${r.from}:</strong> ${r.text} <span style="font-size:11px;color:#94a3b8;">(${r.at})</span></div>`).join('');
+    }
+    document.getElementById('ticketModalConversation').innerHTML = convHtml;
+    document.getElementById('ticketReplyText').value = '';
+    openModal('ticketReplyModal');
+}
+
+function submitTicketReply() {
+    const text = document.getElementById('ticketReplyText').value.trim();
+    if (!text) { showToast('Please enter reply text', 'error'); return; }
+
+    const user = window.Auth.getUser();
+    const sender = user ? (user.name || user.username || 'SaaS Support') : 'SaaS Support';
+    window.SaaSStore.replyTicket(currentActiveTicketId, text, sender);
+    showToast(`✅ Reply sent to Director! Ticket ${currentActiveTicketId} updated.`, 'success');
+    closeModal('ticketReplyModal');
+    renderSupportTickets();
+}
+
+function resolveCurrentTicket() {
+    const user = window.Auth.getUser();
+    const sender = user ? (user.name || user.username || 'SaaS Support') : 'SaaS Support';
+    window.SaaSStore.resolveTicket(currentActiveTicketId, sender);
+    showToast(`✅ Ticket ${currentActiveTicketId} marked as Resolved.`, 'success');
+    closeModal('ticketReplyModal');
+    renderSupportTickets();
+}
+
+function openModal(id) { document.getElementById(id).classList.add('active'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+function showToast(msg, type) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'show';
+    if (type === 'error') t.style.background = '#ef4444';
+    else if (type === 'success') t.style.background = '#10b981';
+    setTimeout(() => { t.className = ''; t.style.background = '#0f172a'; }, 4000);
+}
+</script>
+</body>
+</html>

@@ -4,26 +4,22 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiHeader } from '@nestjs/
 import { LoginDto, SignupDto, ChangePasswordDto } from '../common/dto/app.dto';
 import { InMemoryDbService } from '../database/in-memory-db.service';
 
-@ApiTags('Authentication')
+@ApiTags('Authentication & Token Management')
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService, private db: InMemoryDbService) {}
 
   @Post('login')
-  @ApiOperation({ summary: 'User login with email and password' })
-  @ApiBody({ type: LoginDto, description: 'Login credentials' })
-  @ApiResponse({ status: 200, description: 'Login successful - returns token and user info' })
-  @ApiResponse({ status: 400, description: 'Invalid email or password format' })
+  @ApiOperation({ summary: 'User login with email, password & tenant context' })
+  @ApiBody({ type: LoginDto, description: 'Login credentials and optional tenant_code' })
+  @ApiResponse({ status: 200, description: 'Login successful - returns JWT access token, refresh token, tenant details & user info' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
-  async login(@Body() body: LoginDto) {
+  async login(@Body() body: any) {
     try {
       if (!body.email || !body.password) {
         throw new BadRequestException('Email and password are required');
       }
-      const result = await this.authService.login(body.email, body.password);
-      if (!result) {
-        throw new UnauthorizedException('Invalid email or password');
-      }
+      const result = await this.authService.login(body.email, body.password, body.tenant_code || body.tenantId);
       return { success: true, ...result };
     } catch (error) {
       if (error instanceof UnauthorizedException || error instanceof BadRequestException) {
@@ -33,36 +29,34 @@ export class AuthController {
     }
   }
 
+  @Post('refresh')
+  @ApiOperation({ summary: 'Refresh JWT Access Token using a valid Refresh Token' })
+  @ApiBody({ schema: { type: 'object', properties: { refreshToken: { type: 'string' } } } })
+  async refreshToken(@Body() body: { refreshToken: string }) {
+    return this.authService.refreshToken(body.refreshToken);
+  }
+
   @Post('signup')
-  @ApiOperation({ summary: 'User self-registration (Student or Faculty)' })
+  @ApiOperation({ summary: 'User self-registration within a subscribed institute' })
   @ApiBody({ type: SignupDto })
-  @ApiResponse({ status: 201, description: 'Registration successful' })
-  @ApiResponse({ status: 400, description: 'Invalid input or email already exists' })
-  async signup(@Body() body: SignupDto) {
+  async signup(@Body() body: any) {
     try {
-      // Validate input
       if (!body.email || !body.password || !body.role) {
         throw new BadRequestException('Email, password, and role are required');
       }
 
-      // Check if email already exists
-      if (this.db.users.find(u => u.email === body.email)) {
+      if (this.db.users.find(u => u.email.toLowerCase() === body.email.toLowerCase())) {
         throw new BadRequestException('Email already registered');
       }
 
-      // Validate role
-      if (!['student', 'faculty'].includes(body.role)) {
-        throw new BadRequestException('Role must be student or faculty');
-      }
-
-      // Build user record
+      const tenantId = body.tenant_id || body.tenantId || 't1';
       const username = body.username || `${body.first_name || ''} ${body.last_name || ''}`.trim() || body.email.split('@')[0];
       const id = `u${Date.now()}`;
       const newUser = {
         user_id: id,
+        tenant_id: tenantId,
         username,
-        first_name: body.first_name || username.split(' ')[0] || 'User',
-        last_name:  body.last_name  || username.split(' ').slice(1).join(' ') || '',
+        name: username,
         password: body.password,
         email: body.email,
         role: body.role
@@ -73,39 +67,32 @@ export class AuthController {
       if (newUser.role === 'student') {
         this.db.students.push({
           user_id: id,
-          first_name: newUser.first_name,
-          last_name:  newUser.last_name,
-          branch:     body.branch    || 'CSE',
-          batch:      body.batch     || '2024-2028',
-          cgpa:       7.0,
-          section:    body.section   || 'A',
-          email:      body.email,
-          join_date:  new Date().toISOString().split('T')[0],
-          dob:        '2005-01-01',
-          phone:      ''
-        });
-        this.db.enrollment.push({
-          enrollment_id: `e${this.db.enrollment.length + 1}`,
-          student_id: id,
-          course_id:  'c1',
-          year_id:    'y1',
-          status:     'active',
-          section:    body.section || 'A'
+          tenant_id: tenantId,
+          first_name: body.first_name || username,
+          last_name: body.last_name || '',
+          branch: body.branch || 'CS',
+          batch: body.batch || '2024-2028',
+          cgpa: 7.5,
+          section: body.section || 'A',
+          email: body.email,
+          join_date: new Date().toISOString().split('T')[0],
+          dob: '2005-01-01',
+          phone: ''
         });
       } else if (newUser.role === 'faculty') {
-        const deptMap: Record<string, string> = { ECE: 'dept2', CSE: 'dept1', MATH: 'dept1', PHY: 'dept1' };
         this.db.faculty.push({
-          user_id:       id,
-          first_name:    newUser.first_name,
-          last_name:     newUser.last_name,
-          designation:   body.designation || 'Assistant Professor',
-          department_id: (body.department && deptMap[body.department]) || 'dept1',
-          email:         body.email,
-          phone:         ''
+          user_id: id,
+          tenant_id: tenantId,
+          first_name: body.first_name || username,
+          last_name: body.last_name || '',
+          designation: body.designation || 'Assistant Professor',
+          department_id: 'dept1',
+          email: body.email,
+          phone: ''
         });
       }
 
-      return { success: true, message: 'Registration successful. You can now login.', user_id: id };
+      return { success: true, message: 'Registration successful. You can now log in.', user_id: id };
     } catch (error) {
       if (error instanceof BadRequestException) throw error;
       throw new BadRequestException(`Registration failed: ${error.message}`);
@@ -115,28 +102,10 @@ export class AuthController {
   @Post('change-password')
   @ApiOperation({ summary: 'Change user password' })
   @ApiHeader({ name: 'user-id', description: 'User ID of logged-in user' })
-  @ApiBody({ type: ChangePasswordDto })
-  @ApiResponse({ status: 200, description: 'Password changed successfully' })
-  @ApiResponse({ status: 400, description: 'Invalid input or current password incorrect' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async changePassword(@Body() body: ChangePasswordDto, @Headers('user-id') userId: string) {
-    try {
-      if (!userId) {
-        throw new UnauthorizedException('User ID required');
-      }
-      if (!body.current_password || !body.new_password) {
-        throw new BadRequestException('Current and new passwords are required');
-      }
-      const result = await this.authService.changePassword(userId, body.current_password, body.new_password);
-      if (!result) {
-        throw new BadRequestException('Current password is incorrect or user not found');
-      }
-      return { success: true, message: 'Password changed successfully' };
-    } catch (error) {
-      if (error instanceof BadRequestException || error instanceof UnauthorizedException) {
-        throw error;
-      }
-      throw new BadRequestException(`Password change failed: ${error.message}`);
+    if (!userId) {
+      throw new UnauthorizedException('User ID required');
     }
+    return this.authService.changePassword(userId, body.current_password, body.new_password);
   }
 }

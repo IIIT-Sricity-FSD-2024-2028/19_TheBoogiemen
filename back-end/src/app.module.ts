@@ -10,7 +10,10 @@ import { StudentsModule } from './students/students.module';
 import { FacultyModule } from './faculty/faculty.module';
 import { AdminModule } from './admin/admin.module';
 
-// Pranjal's modular backend (Workflow-based)
+// B2B SaaS Platform Module
+import { PlatformModule } from './platform/platform.module';
+
+// Workflow Modules
 import { FeeModule } from './modules/fee/fee.fee.module';
 import { ReportModule } from './modules/report/report.report.module';
 import { UserModule } from './modules/user/user.user.module';
@@ -27,10 +30,11 @@ import { OutcomeModule } from './modules/outcome/outcome.outcome.module';
     ConfigModule.forRoot({ isGlobal: true }),
     DatabaseModule,
     AuthModule,
+    PlatformModule,
     StudentsModule,
     FacultyModule,
     AdminModule,
-    // Pranjal's workflow modules
+    // Workflow modules
     FeeModule,
     ReportModule,
     UserModule,

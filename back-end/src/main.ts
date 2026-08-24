@@ -26,11 +26,10 @@ async function bootstrap() {
   app.useGlobalInterceptors(new LoggingInterceptor());
   logger.log('✅ Step 3/8: Logging interceptor registered — all HTTP requests will be logged');
 
-  // ── Step 4: Static File Serving ──
   const frontendPath = '/Users/gayathridevi/Documents/FFSD/front-end';
   logger.log(`📂 Step 4/8: Serving static frontend files from: ${frontendPath}`);
-  app.use(express.static(frontendPath));
-  logger.log('✅ Step 4/8: Static file middleware configured');
+  app.use(express.static(frontendPath, { index: 'login.html' }));
+  logger.log('✅ Step 4/8: Static file middleware configured (default: login.html)');
 
   // ── Step 5: Global API Prefix ──
   logger.log('🏷️  Step 5/8: Setting global API prefix → /api');

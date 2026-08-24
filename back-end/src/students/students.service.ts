@@ -49,7 +49,37 @@ export class StudentsService {
     const enrollment = this.db.enrollment.filter((e) => e.student_id === userId);
     return enrollment.map(e => {
       const course = this.db.courses.find(c => c.course_id === e.course_id);
-      return { ...course, enrollment_status: e.status, section: e.section };
+      if (!course) return null;
+
+      // Marks for this course
+      const courseAssessments = this.db.assessments.filter(a => a.course_id === e.course_id);
+      const studentMarks = this.db.marks_entry.filter(m =>
+        m.student_id === userId && courseAssessments.some(a => a.assessment_id === m.assessment_id)
+      );
+      const totalObtained = studentMarks.reduce((sum, m) => sum + (m.marks_obtained || 0), 0);
+      const totalMax = studentMarks.reduce((sum, m) => sum + (m.max_marks || 0), 0);
+      const marks_percentage = totalMax > 0 ? Math.round((totalObtained / totalMax) * 100) : null;
+
+      // Attendance for this course
+      const attLogs = this.db.attendance_log.filter(a => a.student_id === userId && a.course_id === e.course_id);
+      const present = attLogs.filter(a => a.status === 'present').length;
+      const attendance_pct = attLogs.length > 0 ? Math.round((present / attLogs.length) * 100) : null;
+
+      // Syllabus progress
+      const syllabus = this.db.syllabus_progress.find(sp => sp.course_id === e.course_id && sp.section === e.section);
+
+      return {
+        ...course,
+        enrollment_status: e.status,
+        section: e.section,
+        marks_percentage,
+        attendance_pct,
+        syllabus_progress: syllabus?.progress ?? null,
+        modules: syllabus?.modules ?? [],
+        assessments_count: courseAssessments.length,
+        marks_obtained: totalObtained,
+        marks_max: totalMax,
+      };
     }).filter(Boolean);
   }
 
@@ -64,18 +94,59 @@ export class StudentsService {
   }
 
   async getFees(userId: string) {
-    return this.db.fees.filter(f => f.student_id === userId);
+    return this.db.fee_records.filter(f => f.student_id === userId);
+  }
+
+  async getLeaves(userId: string) {
+    return this.db.leave_applications.filter(l => l.student_id === userId);
+  }
+
+  async applyLeave(userId: string, body: any) {
+    const newLeave = {
+      leave_id: `l${Date.now()}`,
+      tenant_id: 't1',
+      student_id: userId,
+      student_name: 'Unknown',
+      leave_type: body.leave_type || 'General',
+      start_date: body.start_date,
+      end_date: body.end_date,
+      reason: body.reason,
+      status: 'pending',
+      applied_on: new Date().toISOString().split('T')[0]
+    };
+    this.db.leave_applications.push(newLeave);
+    return newLeave;
+  }
+
+  async getProjects(userId: string) {
+    return this.db.research_projects.filter(p => p.student_id === userId);
   }
 
   async getTimetable(userId: string) {
     const student = this.db.students.find(s => s.user_id === userId);
     const section = student?.section || 'A';
-    const slots = this.db.timetable.filter(t => t.section === section);
+
+    // Filter timetable to student's section and enrolled courses
+    const enrolled = this.db.enrollment.filter(e => e.student_id === userId).map(e => e.course_id);
+    const slots = this.db.timetable.filter(t =>
+      t.section === section && enrolled.includes(t.course_id)
+    );
+
     const grid = slots.reduce((acc: any, curr) => {
       if (!acc[curr.day]) acc[curr.day] = {};
-      acc[curr.day][curr.time] = curr;
+      // Support multiple slots per time slot (array)
+      if (!acc[curr.day][curr.time]) {
+        acc[curr.day][curr.time] = curr;
+      } else {
+        // If already a slot, convert to array
+        if (!Array.isArray(acc[curr.day][curr.time])) {
+          acc[curr.day][curr.time] = [acc[curr.day][curr.time]];
+        }
+        acc[curr.day][curr.time].push(curr);
+      }
       return acc;
     }, {});
+
     return {
       grid,
       section,
@@ -101,6 +172,7 @@ export class StudentsService {
     const student = this.db.students.find(s => s.user_id === studentId);
     const newEnrollment = {
       enrollment_id: id,
+      tenant_id: student?.tenant_id || 't1',
       student_id: studentId,
       course_id: courseId,
       year_id: '2025',

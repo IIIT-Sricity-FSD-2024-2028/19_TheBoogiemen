@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance Portal - BarelyPassing</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f1f5f9; display: flex; min-height: 100vh; }
+        .sidebar { width: 240px; min-height: 100vh; background: linear-gradient(180deg, #0f172a 0%, #1e1b4b 100%); display: flex; flex-direction: column; position: fixed; left: 0; top: 0; bottom: 0; z-index: 100; }
+        .sidebar-brand { padding: 22px 20px 16px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .sidebar-brand h2 { color: #fff; font-size: 16px; font-weight: 800; }
+        .sidebar-brand p { color: rgba(255,255,255,0.4); font-size: 10px; margin-top: 2px; text-transform: uppercase; letter-spacing: 1px; }
+        .sidebar-user { padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; gap: 10px; }
+        .user-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg,#10b981,#059669); display: flex; align-items: center; justify-content: center; font-weight: 800; color: #fff; font-size: 14px; flex-shrink: 0; }
+        .user-info h3 { color: #fff; font-size: 13px; font-weight: 700; }
+        .user-info p { color: rgba(255,255,255,0.4); font-size: 11px; margin-top: 1px; }
+        .sidebar-nav { flex: 1; padding: 12px 10px; overflow-y: auto; }
+        .nav-section-label { font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 1.5px; padding: 8px 10px 4px; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; color: rgba(255,255,255,0.65); font-size: 13px; font-weight: 500; cursor: pointer; text-decoration: none; border: none; background: none; width: 100%; text-align: left; transition: all 0.15s; }
+        .nav-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+        .nav-item.active { background: rgba(16,185,129,0.2); color: #10b981; font-weight: 700; }
+        .sidebar-footer { padding: 12px 10px; border-top: 1px solid rgba(255,255,255,0.08); }
+        .main-content { margin-left: 240px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+        .top-header { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 0 28px; height: 60px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; }
+        .top-header h1 { font-size: 18px; font-weight: 800; color: #0f172a; }
+        .header-right { display: flex; align-items: center; gap: 12px; }
+        .badge-role { background: #dcfce7; color: #166534; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; }
+        .content-area { padding: 28px; flex: 1; }
+        .view-section { display: none; }
+        .view-section.active { display: block; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 24px; }
+        .kpi-card { background: #fff; border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+        .kpi-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px; color: #64748b; margin-bottom: 8px; }
+        .kpi-value { font-size: 28px; font-weight: 800; color: #0f172a; margin-bottom: 4px; }
+        .kpi-sub { font-size: 12px; color: #94a3b8; }
+        .kpi-card.green .kpi-value { color: #16a34a; }
+        .kpi-card.red .kpi-value { color: #ef4444; }
+        .kpi-card.amber .kpi-value { color: #d97706; }
+        .section-card { background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,.05); overflow: hidden; margin-bottom: 24px; }
+        .section-header { padding: 16px 20px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+        .section-title { font-size: 15px; font-weight: 700; color: #0f172a; }
+        .section-body { padding: 20px; }
+        .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .data-table th { background: #f8fafc; color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; padding: 10px 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        .data-table td { padding: 12px; border-bottom: 1px solid #f1f5f9; color: #374151; vertical-align: middle; }
+        .data-table tr:hover td { background: #f8fafc; }
+        .data-table tr:last-child td { border-bottom: none; }
+        .badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+        .badge-paid { background: #dcfce7; color: #166534; }
+        .badge-pending { background: #fef9c3; color: #713f12; }
+        .badge-overdue { background: #fee2e2; color: #991b1b; }
+        .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all .15s; }
+        .btn-primary { background: #0f172a; color: #fff; }
+        .btn-primary:hover { background: #1e293b; }
+        .btn-success { background: #16a34a; color: #fff; }
+        .btn-success:hover { background: #15803d; }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+        .btn-ghost { background: #f1f5f9; color: #374151; }
+        .btn-ghost:hover { background: #e2e8f0; }
+        .btn-danger { background: #fee2e2; color: #991b1b; }
+        .filter-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .search-input { padding: 8px 14px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 13px; width: 220px; outline: none; }
+        .search-input:focus { border-color: #0f172a; }
+        .filter-select { padding: 8px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 13px; background: #fff; outline: none; }
+        .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.55); z-index: 999; align-items: center; justify-content: center; }
+        .modal-backdrop.open { display: flex; }
+        .modal-window { background: #fff; border-radius: 16px; width: 100%; max-width: 480px; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+        .modal-header { padding: 20px 24px 16px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; }
+        .modal-header h3 { font-size: 16px; font-weight: 800; color: #0f172a; }
+        .modal-close { background: none; border: none; cursor: pointer; color: #94a3b8; padding: 4px; border-radius: 6px; }
+        .modal-close:hover { background: #f1f5f9; color: #374151; }
+        .modal-body { padding: 20px 24px; }
+        .modal-footer { padding: 16px 24px; border-top: 1px solid #f1f5f9; display: flex; justify-content: flex-end; gap: 10px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 6px; }
+        .form-group input, .form-group select { width: 100%; padding: 9px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 13px; outline: none; background: #fff; }
+        .form-group input:focus, .form-group select:focus { border-color: #0f172a; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .toast-container { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 8px; z-index: 9999; }
+        .toast { padding: 12px 18px; border-radius: 10px; font-size: 13px; font-weight: 600; color: #fff; box-shadow: 0 4px 20px rgba(0,0,0,.15); animation: toastIn .3s ease; }
+        .toast.success { background: #16a34a; }
+        .toast.error { background: #ef4444; }
+        .toast.info { background: #0f172a; }
+        @keyframes toastIn { from { opacity:0;transform:translateY(12px); } to { opacity:1;transform:translateY(0); } }
+        .progress-bar { height: 8px; background: #e2e8f0; border-radius: 99px; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 99px; transition: width .5s; }
+        .receipt-box { background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px; padding: 18px; font-size: 13px; line-height: 1.9; }
+        .receipt-row { display: flex; justify-content: space-between; }
+        .receipt-divider { border: none; border-top: 1px dashed #cbd5e1; margin: 10px 0; }
+        @media (max-width:900px) { .kpi-grid { grid-template-columns: repeat(2,1fr); } }
+    </style>
+</head>
+<body>
+
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <h2>💰 Finance Portal</h2>
+        <p>BarelyPassing · IIITS</p>
+    </div>
+    <div class="sidebar-user">
+        <div class="user-avatar" id="finAvatarEl">PL</div>
+        <div class="user-info">
+            <h3 id="finNameEl">Finance Officer</h3>
+            <p>Finance · Accounts Team</p>
+        </div>
+    </div>
+    <nav class="sidebar-nav">
+        <div class="nav-section-label">Overview</div>
+        <a href="#" class="nav-item active" onclick="switchFinView('dashboard-view',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <span>Dashboard</span>
+        </a>
+        <div class="nav-section-label">Fee Management</div>
+        <a href="#" class="nav-item" onclick="switchFinView('fee-records-view',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
+            <span>Fee Records</span>
+        </a>
+        <a href="#" class="nav-item" onclick="switchFinView('dues-view',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span>Student Dues</span>
+        </a>
+        <a href="#" class="nav-item" onclick="switchFinView('receipts-view',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+            <span>Payment Receipts</span>
+        </a>
+        <a href="#" class="nav-item" onclick="switchFinView('fee-structure-view',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+            <span>Fee Structures</span>
+        </a>
+        <div class="nav-section-label">Reports</div>
+        <a href="#" class="nav-item" onclick="switchFinView('compliance-view',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            <span>Compliance Report</span>
+        </a>
+    </nav>
+    <div class="sidebar-footer">
+        <button class="nav-item" onclick="finLogout()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+            <span>Logout</span>
+        </button>
+    </div>
+</aside>
+
+<div class="main-content">
+    <header class="top-header">
+        <h1 id="finPageTitle">Fee Dashboard</h1>
+        <div class="header-right">
+            <span class="badge-role">💰 Finance Officer</span>
+            <span style="font-size:12px;color:#64748b;" id="finDateBadge"></span>
+        </div>
+    </header>
+
+    <div class="content-area">
+
+        <!-- Dashboard -->
+        <div id="dashboard-view" class="view-section active">
+            <div class="kpi-grid">
+                <div class="kpi-card"><div class="kpi-label">Total Fee Records</div><div class="kpi-value" id="kpiTotal">—</div><div class="kpi-sub">All students</div></div>
+                <div class="kpi-card green"><div class="kpi-label">Collected</div><div class="kpi-value" id="kpiPaid">—</div><div class="kpi-sub">Paid this cycle</div></div>
+                <div class="kpi-card amber"><div class="kpi-label">Pending</div><div class="kpi-value" id="kpiPending">—</div><div class="kpi-sub">Awaiting payment</div></div>
+                <div class="kpi-card red"><div class="kpi-label">Overdue</div><div class="kpi-value" id="kpiOverdue">—</div><div class="kpi-sub">Requires follow-up</div></div>
+            </div>
+            <div class="section-card">
+                <div class="section-header">
+                    <span class="section-title">📊 Fee Compliance Rate</span>
+                    <span id="kpiComplianceText" style="font-size:20px;font-weight:800;color:#0f172a;">—</span>
+                </div>
+                <div class="section-body">
+                    <div class="progress-bar" style="height:16px;"><div class="progress-fill" id="kpiComplianceBar" style="width:0%;background:linear-gradient(90deg,#16a34a,#10b981);"></div></div>
+                    <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:12px;color:#94a3b8;"><span>0%</span><span>Target: 90%+</span><span>100%</span></div>
+                </div>
+            </div>
+            <div class="section-card">
+                <div class="section-header">
+                    <span class="section-title">⚠️ Recent Overdue Fees</span>
+                    <button class="btn btn-ghost btn-sm" onclick="switchFinView('dues-view',document.querySelector('[onclick*=dues-view]'))">View All Dues →</button>
+                </div>
+                <div class="section-body" id="dashOverdueList"><p style="color:#94a3b8;font-size:13px;">Loading...</p></div>
+            </div>
+        </div>
+
+        <!-- Fee Records -->
+        <div id="fee-records-view" class="view-section">
+            <div class="section-card">
+                <div class="section-header">
+                    <span class="section-title">📄 All Fee Records</span>
+                    <div class="filter-bar">
+                        <input type="text" class="search-input" id="feeSearchInput" placeholder="Search student / fee type..." oninput="filterFeeTable()">
+                        <select class="filter-select" id="feeStatusFilter" onchange="filterFeeTable()">
+                            <option value="all">All Statuses</option>
+                            <option value="paid">Paid</option>
+                            <option value="pending">Pending</option>
+                            <option value="overdue">Overdue</option>
+                        </select>
+                        <button class="btn btn-primary btn-sm" onclick="openAddFeeModal()">+ Add Fee</button>
+                    </div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="data-table">
+                        <thead><tr><th>Fee ID</th><th>Student ID</th><th>Fee Type</th><th>Amount</th><th>Due Date</th><th>Status</th><th>Actions</th></tr></thead>
+                        <tbody id="feeTableBody"><tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:30px;">Loading...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student Dues -->
+        <div id="dues-view" class="view-section">
+            <div class="section-card">
+                <div class="section-header">
+                    <span class="section-title">🔴 Student Dues (Pending &amp; Overdue)</span>
+                    <input type="text" class="search-input" id="duesSearch" placeholder="Search student..." oninput="filterDues()">
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="data-table">
+                        <thead><tr><th>Student ID</th><th>Fee Type</th><th>Amount</th><th>Due Date</th><th>Status</th><th>Days Overdue</th><th>Action</th></tr></thead>
+                        <tbody id="duesTableBody"><tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:30px;">Loading...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Receipts -->
+        <div id="receipts-view" class="view-section">
+            <div class="section-card">
+                <div class="section-header">
+                    <span class="section-title">🧾 Payment Receipts</span>
+                    <button class="btn btn-ghost btn-sm" onclick="exportReceipts()">⬇ Export CSV</button>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="data-table">
+                        <thead><tr><th>Receipt #</th><th>Student ID</th><th>Fee Type</th><th>Amount</th><th>Paid Date</th><th>Status</th><th>Receipt</th></tr></thead>
+                        <tbody id="receiptsTableBody"><tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:30px;">Loading...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fee Structures -->
+        <div id="fee-structure-view" class="view-section">
+            <div class="section-card">
+                <div class="section-header">
+                    <span class="section-title">🏛 Fee Structures</span>
+                    <button class="btn btn-primary btn-sm" onclick="openFinModal('addStructureModal')">+ Add Structure</button>
+                </div>
+                <div class="section-body" id="feeStructureList">Loading...</div>
+            </div>
+        </div>
+
+        <!-- Compliance -->
+        <div id="compliance-view" class="view-section">
+            <div class="kpi-grid">
+                <div class="kpi-card green"><div class="kpi-label">Compliance Rate</div><div class="kpi-value" id="compRate">—</div><div class="kpi-sub">Paid / Total</div></div>
+                <div class="kpi-card"><div class="kpi-label">Total Collected</div><div class="kpi-value" id="compCollected">—</div><div class="kpi-sub">Rupees</div></div>
+                <div class="kpi-card amber"><div class="kpi-label">Outstanding</div><div class="kpi-value" id="compOutstanding">—</div><div class="kpi-sub">Rupees</div></div>
+                <div class="kpi-card red"><div class="kpi-label">Overdue Amount</div><div class="kpi-value" id="compOverdueAmt">—</div><div class="kpi-sub">Rupees</div></div>
+            </div>
+            <div class="section-card">
+                <div class="section-header"><span class="section-title">📈 Fee Type Breakdown</span></div>
+                <div class="section-body" id="compBreakdown"><p style="color:#94a3b8;">Loading...</p></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Add Fee Modal -->
+<div class="modal-backdrop" id="addFeeModal">
+    <div class="modal-window">
+        <div class="modal-header"><h3>➕ Add Fee Record</h3><button class="modal-close" onclick="closeFinModal('addFeeModal')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+        <div class="modal-body">
+            <div class="form-group"><label>Student ID</label><input type="text" id="newFeeStudentId" placeholder="e.g. u1"></div>
+            <div class="form-row">
+                <div class="form-group"><label>Fee Type</label><select id="newFeeType"><option>Tuition Fee</option><option>Exam Fee</option><option>Library Fee</option><option>Hostel Fee</option><option>Transport Fee</option><option>Lab Fee</option><option>Miscellaneous</option></select></div>
+                <div class="form-group"><label>Amount (₹)</label><input type="number" id="newFeeAmount" placeholder="e.g. 50000"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Due Date</label><input type="date" id="newFeeDueDate"></div>
+                <div class="form-group"><label>Semester</label><select id="newFeeSemester"><option>Spring 2026</option><option>Fall 2026</option><option>Spring 2027</option></select></div>
+            </div>
+        </div>
+        <div class="modal-footer"><button class="btn btn-ghost" onclick="closeFinModal('addFeeModal')">Cancel</button><button class="btn btn-primary" onclick="submitAddFee()">Add Record</button></div>
+    </div>
+</div>
+
+<!-- Receipt Modal -->
+<div class="modal-backdrop" id="receiptModal">
+    <div class="modal-window">
+        <div class="modal-header"><h3>🧾 Payment Receipt</h3><button class="modal-close" onclick="closeFinModal('receiptModal')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+        <div class="modal-body" id="receiptModalBody"></div>
+        <div class="modal-footer"><button class="btn btn-ghost" onclick="closeFinModal('receiptModal')">Close</button><button class="btn btn-success" onclick="window.print()">🖨 Print</button></div>
+    </div>
+</div>
+
+<!-- Add Structure Modal -->
+<div class="modal-backdrop" id="addStructureModal">
+    <div class="modal-window">
+        <div class="modal-header"><h3>🏛 Add Fee Structure</h3><button class="modal-close" onclick="closeFinModal('addStructureModal')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+        <div class="modal-body">
+            <div class="form-row">
+                <div class="form-group"><label>Programme</label><select id="structProg"><option>B.Tech</option><option>M.Tech</option><option>Ph.D</option></select></div>
+                <div class="form-group"><label>Semester</label><select id="structSem"><option>Spring 2026</option><option>Fall 2026</option><option>Spring 2027</option></select></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Tuition Fee (₹)</label><input type="number" id="structTuition" placeholder="120000"></div>
+                <div class="form-group"><label>Exam Fee (₹)</label><input type="number" id="structExam" placeholder="2000"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Hostel Fee (₹)</label><input type="number" id="structHostel" placeholder="60000"></div>
+                <div class="form-group"><label>Miscellaneous (₹)</label><input type="number" id="structMisc" placeholder="5000"></div>
+            </div>
+        </div>
+        <div class="modal-footer"><button class="btn btn-ghost" onclick="closeFinModal('addStructureModal')">Cancel</button><button class="btn btn-primary" onclick="submitAddStructure()">Save Structure</button></div>
+    </div>
+</div>
+
+<div class="toast-container" id="finToastContainer"></div>
+
+<script src="state.js"></script>
+<script>
+(function(){
+    const user = JSON.parse(localStorage.getItem('bp_user') || 'null');
+    if (!user || user.role !== 'FINANCE_ADMIN') { localStorage.clear(); window.location.href = 'login.html'; return; }
+    const name = user.name || 'Finance Officer';
+    const initials = name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    document.getElementById('finNameEl').textContent = name;
+    document.getElementById('finAvatarEl').textContent = initials;
+    document.getElementById('finDateBadge').textContent = new Date().toLocaleDateString('en-IN',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+})();
+
+function finApi(path, opts={}) {
+    const user = JSON.parse(localStorage.getItem('bp_user')||'{}');
+    const token = localStorage.getItem('bp_token')||'';
+    const tenant = JSON.parse(localStorage.getItem('bp_tenant')||'{}');
+    return fetch('/api'+path, { ...opts, headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+token, 'role':'FINANCE_ADMIN', 'user-id':user.user_id||'', 'x-tenant-id':tenant.tenant_id||'t1', ...(opts.headers||{}) } }).then(r=>r.json());
+}
+
+function finToast(msg, type='success') {
+    const c=document.getElementById('finToastContainer');
+    const t=document.createElement('div'); t.className='toast '+type; t.textContent=msg;
+    c.appendChild(t); setTimeout(()=>t.remove(), 3500);
+}
+
+function finLogout() { localStorage.clear(); window.location.href='login.html'; }
+function openFinModal(id) { document.getElementById(id).classList.add('open'); }
+function closeFinModal(id) { document.getElementById(id).classList.remove('open'); }
+
+const PAGE_TITLES = { 'dashboard-view':'Fee Dashboard','fee-records-view':'Fee Records','dues-view':'Student Dues','receipts-view':'Payment Receipts','fee-structure-view':'Fee Structures','compliance-view':'Compliance Report' };
+
+function switchFinView(viewId, el) {
+    document.querySelectorAll('.view-section').forEach(v=>v.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    document.getElementById(viewId).classList.add('active');
+    if(el) el.classList.add('active');
+    document.getElementById('finPageTitle').textContent = PAGE_TITLES[viewId]||viewId;
+    if(viewId==='fee-records-view') loadFeeRecords();
+    if(viewId==='dues-view') loadDues();
+    if(viewId==='receipts-view') loadReceipts();
+    if(viewId==='compliance-view') loadComplianceReport();
+    if(viewId==='fee-structure-view') renderFeeStructures();
+}
+
+let _fees = [];
+
+async function loadFees() {
+    try { const d=await finApi('/fees'); _fees=d.fees||[]; return d; }
+    catch(e) { finToast('Failed to load fees: '+e.message,'error'); return {fees:[],summary:{}}; }
+}
+
+function statusBadge(s) {
+    return { paid:'<span class="badge badge-paid">Paid</span>', pending:'<span class="badge badge-pending">Pending</span>', overdue:'<span class="badge badge-overdue">Overdue</span>' }[s] || '<span class="badge">'+s+'</span>';
+}
+
+async function loadDashboard() {
+    const d = await loadFees();
+    const s = d.summary || {};
+    document.getElementById('kpiTotal').textContent   = s.total   ?? _fees.length;
+    document.getElementById('kpiPaid').textContent    = s.paid    ?? _fees.filter(f=>f.status==='paid').length;
+    document.getElementById('kpiPending').textContent = s.pending ?? _fees.filter(f=>f.status==='pending').length;
+    document.getElementById('kpiOverdue').textContent = s.overdue ?? _fees.filter(f=>f.status==='overdue').length;
+    const rate = s.compliance_rate || '0%';
+    document.getElementById('kpiComplianceText').textContent = rate;
+    document.getElementById('kpiComplianceBar').style.width = rate;
+    const overdue = _fees.filter(f=>f.status==='overdue').slice(0,5);
+    const listEl = document.getElementById('dashOverdueList');
+    if (!overdue.length) { listEl.innerHTML='<p style="color:#16a34a;font-size:13px;font-weight:600;">✅ No overdue fees — great compliance!</p>'; return; }
+    listEl.innerHTML='<table class="data-table"><thead><tr><th>Student ID</th><th>Fee Type</th><th>Amount</th><th>Due Date</th><th>Action</th></tr></thead><tbody>'+
+        overdue.map(f=>`<tr><td><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:12px;">${f.student_id}</code></td><td>${f.fee_type||'—'}</td><td style="font-weight:700;color:#ef4444;">₹${Number(f.amount||0).toLocaleString('en-IN')}</td><td>${f.due_date||'—'}</td><td><button class="btn btn-success btn-sm" onclick="markPaid('${f.fee_id}')">Mark Paid</button></td></tr>`).join('')+
+        '</tbody></table>';
+}
+
+function renderFeeTable(fees) {
+    const tbody=document.getElementById('feeTableBody');
+    if(!fees.length) { tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:30px;">No records found.</td></tr>'; return; }
+    tbody.innerHTML=fees.map(f=>`<tr>
+        <td><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:11px;">${f.fee_id}</code></td>
+        <td>${f.student_id||'—'}</td><td>${f.fee_type||'—'}</td>
+        <td style="font-weight:700;">₹${Number(f.amount||0).toLocaleString('en-IN')}</td>
+        <td>${f.due_date||'—'}</td><td>${statusBadge(f.status)}</td>
+        <td style="display:flex;gap:6px;">${f.status!=='paid'?`<button class="btn btn-success btn-sm" onclick="markPaid('${f.fee_id}')">Mark Paid</button>`:''}<button class="btn btn-ghost btn-sm" onclick="showReceipt('${f.fee_id}')">🧾</button></td>
+    </tr>`).join('');
+}
+
+async function loadFeeRecords() {
+    document.getElementById('feeTableBody').innerHTML='<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:20px;">Loading...</td></tr>';
+    await loadFees(); renderFeeTable(_fees);
+}
+
+function filterFeeTable() {
+    const q=document.getElementById('feeSearchInput').value.toLowerCase();
+    const st=document.getElementById('feeStatusFilter').value;
+    let f=_fees;
+    if(q) f=f.filter(x=>(x.student_id||'').toLowerCase().includes(q)||(x.fee_type||'').toLowerCase().includes(q));
+    if(st!=='all') f=f.filter(x=>x.status===st);
+    renderFeeTable(f);
+}
+
+async function markPaid(feeId) {
+    try {
+        await finApi('/fees/'+feeId+'/pay',{method:'PATCH'});
+        finToast('✅ Fee marked as paid!','success');
+        await loadFees(); renderFeeTable(_fees); filterDues(); loadDashboard();
+    } catch(e) { finToast('Error: '+e.message,'error'); }
+}
+
+async function loadDues() {
+    document.getElementById('duesTableBody').innerHTML='<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:20px;">Loading...</td></tr>';
+    await loadFees(); filterDues();
+}
+
+function filterDues() {
+    const q=(document.getElementById('duesSearch')?.value||'').toLowerCase();
+    const dues=_fees.filter(f=>f.status==='pending'||f.status==='overdue');
+    const filtered=q?dues.filter(f=>(f.student_id||'').toLowerCase().includes(q)||(f.fee_type||'').toLowerCase().includes(q)):dues;
+    const tbody=document.getElementById('duesTableBody');
+    if(!filtered.length) { tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:#16a34a;font-weight:600;padding:30px;">✅ No outstanding dues!</td></tr>'; return; }
+    const today=new Date();
+    tbody.innerHTML=filtered.map(f=>{
+        const due=f.due_date?new Date(f.due_date):null;
+        const days=due?Math.max(0,Math.floor((today-due)/86400000)):0;
+        return `<tr>
+            <td><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:11px;">${f.student_id}</code></td>
+            <td>${f.fee_type||'—'}</td>
+            <td style="font-weight:700;color:${f.status==='overdue'?'#ef4444':'#d97706'};">₹${Number(f.amount||0).toLocaleString('en-IN')}</td>
+            <td>${f.due_date||'—'}</td><td>${statusBadge(f.status)}</td>
+            <td style="font-weight:700;color:${days>0?'#ef4444':'#94a3b8'};">${days>0?days+' days':'—'}</td>
+            <td><button class="btn btn-success btn-sm" onclick="markPaid('${f.fee_id}')">Collect</button></td>
+        </tr>`;
+    }).join('');
+}
+
+async function loadReceipts() {
+    document.getElementById('receiptsTableBody').innerHTML='<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:20px;">Loading...</td></tr>';
+    await loadFees();
+    const paid=_fees.filter(f=>f.status==='paid');
+    const tbody=document.getElementById('receiptsTableBody');
+    if(!paid.length) { tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:30px;">No paid receipts yet.</td></tr>'; return; }
+    tbody.innerHTML=paid.map((f,i)=>`<tr>
+        <td><code style="background:#dcfce7;padding:2px 6px;border-radius:4px;font-size:11px;color:#166534;">RCP-${String(i+1).padStart(4,'0')}</code></td>
+        <td>${f.student_id||'—'}</td><td>${f.fee_type||'—'}</td>
+        <td style="font-weight:700;color:#16a34a;">₹${Number(f.amount||0).toLocaleString('en-IN')}</td>
+        <td>${f.paid_date||f.due_date||'—'}</td><td><span class="badge badge-paid">Paid</span></td>
+        <td><button class="btn btn-ghost btn-sm" onclick="showReceipt('${f.fee_id}')">🧾 View</button></td>
+    </tr>`).join('');
+}
+
+function showReceipt(feeId) {
+    const fee=_fees.find(f=>f.fee_id===feeId); if(!fee) return;
+    const idx=_fees.filter(f=>f.status==='paid').findIndex(f=>f.fee_id===feeId);
+    const rno=idx>=0?`RCP-${String(idx+1).padStart(4,'0')}`:'RCP-XXXX';
+    document.getElementById('receiptModalBody').innerHTML=`<div class="receipt-box">
+        <div style="text-align:center;margin-bottom:16px;">
+            <div style="font-size:22px;font-weight:800;color:#0f172a;">BarelyPassing</div>
+            <div style="font-size:12px;color:#64748b;">IIIT Sricity · Finance Department</div>
+            <div style="margin-top:8px;font-size:14px;font-weight:700;color:#16a34a;">PAYMENT RECEIPT</div>
+        </div>
+        <hr class="receipt-divider">
+        <div class="receipt-row"><span style="color:#64748b;">Receipt No.</span><span style="font-weight:700;">${rno}</span></div>
+        <div class="receipt-row"><span style="color:#64748b;">Fee ID</span><span style="font-family:monospace;font-size:12px;">${fee.fee_id}</span></div>
+        <div class="receipt-row"><span style="color:#64748b;">Student ID</span><span style="font-weight:700;">${fee.student_id}</span></div>
+        <div class="receipt-row"><span style="color:#64748b;">Fee Type</span><span>${fee.fee_type||'—'}</span></div>
+        <div class="receipt-row"><span style="color:#64748b;">Due Date</span><span>${fee.due_date||'—'}</span></div>
+        <div class="receipt-row"><span style="color:#64748b;">Paid On</span><span>${fee.paid_date||new Date().toLocaleDateString('en-IN')}</span></div>
+        <hr class="receipt-divider">
+        <div class="receipt-row" style="font-size:16px;font-weight:800;"><span>Total Paid</span><span style="color:#16a34a;">₹${Number(fee.amount||0).toLocaleString('en-IN')}</span></div>
+        <hr class="receipt-divider">
+        <div style="text-align:center;font-size:11px;color:#94a3b8;margin-top:8px;">Status: <strong style="color:#16a34a;">PAID ✓</strong> | Generated by Finance Portal</div>
+    </div>`;
+    openFinModal('receiptModal');
+}
+
+function exportReceipts() {
+    const paid=_fees.filter(f=>f.status==='paid');
+    const csv=['Receipt#,StudentID,FeeType,Amount,PaidDate',...paid.map((f,i)=>`RCP-${String(i+1).padStart(4,'0')},${f.student_id},${f.fee_type},${f.amount},${f.paid_date||f.due_date||''}`)].join('\n');
+    const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([csv],{type:'text/csv'})),download:'receipts.csv'});
+    a.click(); finToast('Exported!','info');
+}
+
+function openAddFeeModal() {
+    document.getElementById('newFeeDueDate').value=new Date(Date.now()+30*86400000).toISOString().split('T')[0];
+    openFinModal('addFeeModal');
+}
+
+async function submitAddFee() {
+    const sid=document.getElementById('newFeeStudentId').value.trim();
+    const ft=document.getElementById('newFeeType').value;
+    const amt=document.getElementById('newFeeAmount').value;
+    const due=document.getElementById('newFeeDueDate').value;
+    const sem=document.getElementById('newFeeSemester').value;
+    if(!sid||!amt||!due) { finToast('Fill all required fields.','error'); return; }
+    try {
+        await finApi('/fees',{method:'POST',body:JSON.stringify({student_id:sid,fee_type:ft,amount:Number(amt),due_date:due,semester:sem})});
+        finToast('Fee record added!','success'); closeFinModal('addFeeModal');
+        await loadFees(); renderFeeTable(_fees); loadDashboard();
+    } catch(e) { finToast('Error: '+e.message,'error'); }
+}
+
+let _structures=[
+    {id:'s1',prog:'B.Tech',sem:'Spring 2026',tuition:120000,exam:2000,hostel:60000,misc:5000},
+    {id:'s2',prog:'M.Tech',sem:'Spring 2026',tuition:80000,exam:1500,hostel:55000,misc:4000},
+    {id:'s3',prog:'Ph.D',  sem:'Spring 2026',tuition:30000,exam:1000,hostel:50000,misc:3000},
+];
+
+function renderFeeStructures() {
+    document.getElementById('feeStructureList').innerHTML='<table class="data-table"><thead><tr><th>Programme</th><th>Semester</th><th>Tuition</th><th>Exam</th><th>Hostel</th><th>Misc</th><th>Total</th><th>Action</th></tr></thead><tbody>'+
+        _structures.map(s=>`<tr><td style="font-weight:700;">${s.prog}</td><td>${s.sem}</td><td>₹${s.tuition.toLocaleString('en-IN')}</td><td>₹${s.exam.toLocaleString('en-IN')}</td><td>₹${s.hostel.toLocaleString('en-IN')}</td><td>₹${s.misc.toLocaleString('en-IN')}</td><td style="font-weight:800;color:#0f172a;">₹${(s.tuition+s.exam+s.hostel+s.misc).toLocaleString('en-IN')}</td><td><button class="btn btn-danger btn-sm" onclick="deleteStructure('${s.id}')">Remove</button></td></tr>`).join('')+
+        '</tbody></table>';
+}
+
+function submitAddStructure() {
+    _structures.push({ id:'s'+Date.now(), prog:document.getElementById('structProg').value, sem:document.getElementById('structSem').value, tuition:Number(document.getElementById('structTuition').value)||0, exam:Number(document.getElementById('structExam').value)||0, hostel:Number(document.getElementById('structHostel').value)||0, misc:Number(document.getElementById('structMisc').value)||0 });
+    closeFinModal('addStructureModal'); renderFeeStructures(); finToast('Fee structure added!','success');
+}
+
+function deleteStructure(id) { _structures=_structures.filter(s=>s.id!==id); renderFeeStructures(); finToast('Removed.','info'); }
+
+async function loadComplianceReport() {
+    await loadFees();
+    const paid=_fees.filter(f=>f.status==='paid');
+    const pending=_fees.filter(f=>f.status==='pending');
+    const overdue=_fees.filter(f=>f.status==='overdue');
+    const paidAmt=paid.reduce((s,f)=>s+Number(f.amount||0),0);
+    const pendAmt=pending.reduce((s,f)=>s+Number(f.amount||0),0);
+    const ovAmt=overdue.reduce((s,f)=>s+Number(f.amount||0),0);
+    const rate=_fees.length?Math.round((paid.length/_fees.length)*100):0;
+    document.getElementById('compRate').textContent=rate+'%';
+    document.getElementById('compCollected').textContent='₹'+paidAmt.toLocaleString('en-IN');
+    document.getElementById('compOutstanding').textContent='₹'+pendAmt.toLocaleString('en-IN');
+    document.getElementById('compOverdueAmt').textContent='₹'+ovAmt.toLocaleString('en-IN');
+    const types=[...(new Set(_fees.map(f=>f.fee_type||'Other')))];
+    document.getElementById('compBreakdown').innerHTML=types.length?types.map(type=>{
+        const tf=_fees.filter(f=>(f.fee_type||'Other')===type);
+        const tot=tf.reduce((s,f)=>s+Number(f.amount||0),0);
+        const tp=tf.filter(f=>f.status==='paid').reduce((s,f)=>s+Number(f.amount||0),0);
+        const pct=tot>0?Math.round((tp/tot)*100):0;
+        const col=pct>=80?'#16a34a':pct>=50?'#d97706':'#ef4444';
+        return `<div style="margin-bottom:16px;"><div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px;"><span style="font-weight:600;">${type}</span><span style="font-weight:800;color:${col};">${pct}% — ₹${tp.toLocaleString('en-IN')} / ₹${tot.toLocaleString('en-IN')}</span></div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${col};"></div></div></div>`;
+    }).join(''):'<p style="color:#94a3b8;">No data available.</p>';
+}
+
+loadDashboard();
+</script>
+</body>
+</html>

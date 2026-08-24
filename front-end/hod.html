@@ -442,8 +442,7 @@
 <script src="fixes.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    const allowedRoles = ['admin', 'head', 'superadmin'];
-    const user = window.Auth.requireAuth(allowedRoles);
+    const user = window.Auth.requireAuth(['head', 'DEPARTMENT_ADMIN_HOD']);
     if (!user) return;
     const name = (user.first_name || '') + ' ' + (user.last_name || user.username || '');
     const sn = document.getElementById('sidebar-user-name');

@@ -105,4 +105,52 @@ export class FacultyService {
         return { ...s, attendance_pct, is_at_risk: true };
       });
   }
+
+  async getLeaveRequests(facultyId: string) {
+    // Faculty sees leaves from students in their courses
+    const courseIds = this.db.courses.filter(c => c.faculty_id === facultyId).map(c => c.course_id);
+    const studentIds = this.db.enrollment
+      .filter(e => courseIds.includes(e.course_id))
+      .map(e => e.student_id);
+    const uniqueIds = [...new Set(studentIds)];
+    return this.db.leave_applications.filter(l => uniqueIds.includes(l.student_id));
+  }
+
+  async approveLeave(leaveId: string, facultyId: string, action: string) {
+    const leave = this.db.leave_applications.find(l => l.leave_id === leaveId);
+    if (!leave) return { error: 'Leave not found' };
+    leave.status = action === 'approve' ? 'approved' : 'rejected';
+    // If approved, mark attendance as excused for the leave period
+    if (action === 'approve') {
+      const start = new Date(leave.start_date);
+      const end = new Date(leave.end_date);
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const dateStr = d.toISOString().split('T')[0];
+        // Update existing absence or add excused entry
+        const existing = this.db.attendance_log.find(
+          a => a.student_id === leave.student_id && a.date === dateStr
+        );
+        if (existing) {
+          (existing as any).status = 'excused';
+        }
+      }
+    }
+    return leave;
+  }
+
+  async createAssessment(data: any) {
+    const newAssessment = {
+      assessment_id: `a${Date.now()}`,
+      tenant_id: data.tenant_id || 't1',
+      course_id: data.course_id,
+      name: data.name,
+      type: data.type || 'internal',
+      max_marks: data.max_marks || 50,
+      weightage: data.weightage || 20,
+      faculty_id: data.faculty_id,
+      date: data.date || new Date().toISOString().split('T')[0],
+    };
+    this.db.assessments.push(newAssessment as any);
+    return newAssessment;
+  }
 }

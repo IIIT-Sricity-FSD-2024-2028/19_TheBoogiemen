@@ -6,12 +6,10 @@ import { AppService } from './app.service';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
-
   @Get()
-  @HttpCode(200)
   serveRoot(@Res() res: Response) {
-    res.redirect('/login.html');
+    const frontendPath = '/Users/gayathridevi/Documents/FFSD/front-end';
+    res.sendFile(path.join(frontendPath, 'login.html'));
   }
 }
 

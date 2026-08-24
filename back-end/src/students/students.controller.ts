@@ -64,6 +64,39 @@ export class StudentsController {
     return this.studentsService.getFees(userId);
   }
 
+  @Get('me/leaves')
+  @Roles('student')
+  @ApiOperation({ summary: 'Get leave records for current student' })
+  @ApiHeader({ name: 'role', description: 'Must be: student' })
+  @ApiHeader({ name: 'user-id', description: 'User ID of the logged-in student' })
+  @ApiResponse({ status: 200, description: 'Student leave records' })
+  async getLeaves(@Headers('user-id') userId: string) {
+    if (!userId) throw new BadRequestException('user-id header required');
+    return this.studentsService.getLeaves(userId);
+  }
+
+  @Post('me/leaves')
+  @Roles('student')
+  @ApiOperation({ summary: 'Apply for leave' })
+  @ApiHeader({ name: 'role', description: 'Must be: student' })
+  @ApiHeader({ name: 'user-id', description: 'User ID of the logged-in student' })
+  @ApiResponse({ status: 201, description: 'Leave request submitted' })
+  async applyLeave(@Body() body: any, @Headers('user-id') userId: string) {
+    if (!userId) throw new BadRequestException('user-id header required');
+    return this.studentsService.applyLeave(userId, body);
+  }
+
+  @Get('me/projects')
+  @Roles('student')
+  @ApiOperation({ summary: 'Get BTP project records for current student' })
+  @ApiHeader({ name: 'role', description: 'Must be: student' })
+  @ApiHeader({ name: 'user-id', description: 'User ID of the logged-in student' })
+  @ApiResponse({ status: 200, description: 'Student projects' })
+  async getProjects(@Headers('user-id') userId: string) {
+    if (!userId) throw new BadRequestException('user-id header required');
+    return this.studentsService.getProjects(userId);
+  }
+
   @Get('me/timetable')
   @Roles('student')
   @ApiOperation({ summary: 'Get timetable for current student (based on their section)' })

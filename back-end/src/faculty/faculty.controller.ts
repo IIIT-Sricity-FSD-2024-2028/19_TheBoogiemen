@@ -101,4 +101,32 @@ export class FacultyController {
   async postMarks(@Body() body: any) {
     return this.facultyService.postMarks(body);
   }
+
+  @Get('me/leaves')
+  @Roles('faculty')
+  @ApiOperation({ summary: 'Get leave requests from students in faculty courses' })
+  @ApiHeader({ name: 'role', description: 'Must be: faculty' })
+  @ApiHeader({ name: 'user-id', description: 'User ID of the logged-in faculty' })
+  async getLeaveRequests(@Headers('user-id') userId: string) {
+    if (!userId) throw new BadRequestException('user-id header required');
+    return this.facultyService.getLeaveRequests(userId);
+  }
+
+  @Post('me/leaves/:leaveId/action')
+  @Roles('faculty')
+  @ApiOperation({ summary: 'Approve or reject a student leave request' })
+  @ApiHeader({ name: 'role', description: 'Must be: faculty' })
+  @ApiHeader({ name: 'user-id', description: 'User ID of the logged-in faculty' })
+  async leaveAction(@Param('leaveId') leaveId: string, @Body() body: any, @Headers('user-id') userId: string) {
+    return this.facultyService.approveLeave(leaveId, userId, body.action);
+  }
+
+  @Post('me/assessments')
+  @Roles('faculty')
+  @ApiOperation({ summary: 'Create a new assessment for a course' })
+  @ApiHeader({ name: 'role', description: 'Must be: faculty' })
+  @ApiHeader({ name: 'user-id', description: 'User ID of the logged-in faculty' })
+  async createAssessment(@Body() body: any, @Headers('user-id') userId: string) {
+    return this.facultyService.createAssessment({ ...body, faculty_id: userId });
+  }
 }

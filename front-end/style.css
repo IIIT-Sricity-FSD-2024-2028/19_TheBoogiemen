@@ -29,7 +29,7 @@
     margin-top: 6px;
     font-weight: 500;
 }
-input.error {
+input.error, select.error, textarea.error {
     border-color: var(--accent-danger) !important;
     background-color: #fef2f2 !important;
 }
