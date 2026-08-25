@@ -216,24 +216,33 @@ window.renderStudentTimetable = async function() {
 
 function renderTimetableGrid(data) {
     if (!data || !data.grid) return '<div style="text-align:center;padding:40px 20px;"><div style="font-size:48px;margin-bottom:16px;">📅</div><p style="color:#64748b;font-size:15px;font-weight:600;">No timetable data available</p><p style="color:#94a3b8;font-size:13px;margin-top:4px;">Your schedule will appear here once classes are assigned.</p></div>';
-    const days  = data.days  || ['MON','TUE','WED','THU','FRI'];
-    const times = data.times || ['09:00','10:00','11:00','12:00','13:00','14:00','15:00'];
-    const dayLabels = { MON:'Monday', TUE:'Tuesday', WED:'Wednesday', THU:'Thursday', FRI:'Friday' };
-    const dayShort  = { MON:'Mon', TUE:'Tue', WED:'Wed', THU:'Thu', FRI:'Fri' };
+    const days  = data.days  || ['MON','TUE','WED','THU','FRI','SAT'];
+    const times = data.times || ['08:45','09:45','11:00','12:00','14:00','15:00','16:15'];
+    const dayLabels = { MON:'Monday', TUE:'Tuesday', WED:'Wednesday', THU:'Thursday', FRI:'Friday', SAT:'Saturday' };
+    const dayShort  = { MON:'Mon', TUE:'Tue', WED:'Wed', THU:'Thu', FRI:'Fri', SAT:'Sat' };
     const dayColors = {
         MON: { bg:'#6366f1', light:'#eef2ff' },
         TUE: { bg:'#8b5cf6', light:'#f5f3ff' },
         WED: { bg:'#0ea5e9', light:'#f0f9ff' },
         THU: { bg:'#f59e0b', light:'#fffbeb' },
         FRI: { bg:'#10b981', light:'#ecfdf5' },
+        SAT: { bg:'#475569', light:'#f1f5f9' },
     };
     const typeColors = {
-        lab:      { bg:'linear-gradient(135deg, #fef3c7, #fde68a)', border:'#f59e0b', text:'#92400e', icon:'🔬' },
-        lecture:  { bg:'linear-gradient(135deg, #eff6ff, #dbeafe)', border:'#6366f1', text:'#1e40af', icon:'📖' },
-        tutorial: { bg:'linear-gradient(135deg, #f0fdf4, #dcfce7)', border:'#22c55e', text:'#166534', icon:'✏️' },
+        lab:       { bg:'linear-gradient(135deg, #fef3c7, #fde68a)', border:'#f59e0b', text:'#92400e', icon:'🔬' },
+        lecture:   { bg:'linear-gradient(135deg, #eff6ff, #dbeafe)', border:'#6366f1', text:'#1e40af', icon:'📖' },
+        tutorial:  { bg:'linear-gradient(135deg, #f0fdf4, #dcfce7)', border:'#22c55e', text:'#166534', icon:'✏️' },
+        mentoring: { bg:'linear-gradient(135deg, #fdf4ff, #fae8ff)', border:'#c026d3', text:'#86198f', icon:'🤝' },
     };
 
-    function formatTime(t) {
+    function formatTimeSlot(t) {
+        if (t === '08:45') return '08:45 - 09:45';
+        if (t === '09:45') return '09:45 - 10:45';
+        if (t === '11:00') return '11:00 - 12:00';
+        if (t === '12:00') return '12:00 - 01:00';
+        if (t === '14:00') return '02:00 - 03:00';
+        if (t === '15:00') return '03:00 - 04:00';
+        if (t === '16:15') return '04:15 - 05:30';
         const [h, m] = t.split(':').map(Number);
         const suffix = h >= 12 ? 'PM' : 'AM';
         const h12 = h > 12 ? h - 12 : h === 0 ? 12 : h;
@@ -245,38 +254,88 @@ function renderTimetableGrid(data) {
     days.forEach(d => { if (data.grid[d]) totalSlots += Object.keys(data.grid[d]).length; });
     if (totalSlots === 0) return '<div style="text-align:center;padding:40px 20px;"><div style="font-size:48px;margin-bottom:16px;">📭</div><p style="color:#64748b;font-size:15px;font-weight:600;">No classes scheduled this week</p></div>';
 
-    let html = `<div style="overflow-x:auto;border-radius:12px;border:1px solid #e2e8f0;">
-    <table style="width:100%;border-collapse:separate;border-spacing:0;font-size:13px;min-width:750px;background:#fff;">
+    let html = `
+    <!-- College Hours & Break Banner -->
+    <div style="background:linear-gradient(135deg, #0f172a, #1e293b);color:#fff;padding:12px 18px;border-radius:12px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:22px;">🏛</span>
+            <div>
+                <div style="font-weight:700;font-size:14px;">College Working Hours: 08:45 AM – 05:30 PM (Mon – Sat)</div>
+                <div style="font-size:11px;color:#94a3b8;">Includes scheduled Morning Tea Break (10:45 AM), Lunch Break (1:00 PM), and Evening Break (4:00 PM)</div>
+            </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:11px;">
+            <span style="background:#334155;padding:4px 10px;border-radius:20px;border:1px solid #475569;">☕ 10:45 Tea</span>
+            <span style="background:#334155;padding:4px 10px;border-radius:20px;border:1px solid #475569;">🍽 13:00 Lunch</span>
+            <span style="background:#334155;padding:4px 10px;border-radius:20px;border:1px solid #475569;">☕ 16:00 Break</span>
+        </div>
+    </div>
+
+    <div style="overflow-x:auto;border-radius:12px;border:1px solid #e2e8f0;">
+    <table style="width:100%;border-collapse:separate;border-spacing:0;font-size:13px;min-width:850px;background:#fff;">
     <thead><tr>
-        <th style="width:90px;padding:14px 12px;background:linear-gradient(135deg,#f8fafc,#f1f5f9);color:#475569;font-size:11px;font-weight:800;text-align:center;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid #e2e8f0;border-right:1px solid #e2e8f0;position:sticky;left:0;z-index:1;">
+        <th style="width:110px;padding:14px 12px;background:linear-gradient(135deg,#f8fafc,#f1f5f9);color:#475569;font-size:11px;font-weight:800;text-align:center;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid #e2e8f0;border-right:1px solid #e2e8f0;position:sticky;left:0;z-index:1;">
             <div style="display:flex;align-items:center;justify-content:center;gap:4px;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                Time
+                Time / Period
             </div>
         </th>
         ${days.map(d => {
             const dc = dayColors[d] || { bg:'#6366f1', light:'#eef2ff' };
             return `<th style="padding:14px 8px;background:${dc.bg};color:#fff;font-size:12px;font-weight:700;text-align:center;letter-spacing:0.5px;border-bottom:2px solid ${dc.bg};">
                 <div style="font-size:13px;font-weight:800;">${dayShort[d]||d}</div>
-                <div style="font-size:9px;opacity:0.8;margin-top:2px;font-weight:500;">${dayLabels[d]||d}</div>
+                <div style="font-size:9px;opacity:0.85;margin-top:2px;font-weight:500;">${dayLabels[d]||d}</div>
             </th>`;
         }).join('')}
     </tr></thead>
     <tbody>`;
 
     times.forEach((t, idx) => {
+        // Render break rows
+        if (t === '11:00') {
+            html += `<tr style="background:#fffbeb;border-top:1px dashed #fde68a;border-bottom:1px dashed #fde68a;">
+                <td style="padding:8px;font-size:11px;font-weight:800;color:#b45309;text-align:center;background:#fef3c7;position:sticky;left:0;z-index:1;border-right:1px solid #fde68a;">
+                    10:45 - 11:00
+                </td>
+                <td colspan="${days.length}" style="padding:8px 16px;text-align:center;font-size:11px;font-weight:700;color:#92400e;letter-spacing:1px;">
+                    ☕ MORNING TEA & REFRESHMENT BREAK (15 MINS)
+                </td>
+            </tr>`;
+        }
+        if (t === '14:00') {
+            html += `<tr style="background:#f0fdf4;border-top:1px dashed #bbf7d0;border-bottom:1px dashed #bbf7d0;">
+                <td style="padding:8px;font-size:11px;font-weight:800;color:#15803d;text-align:center;background:#dcfce7;position:sticky;left:0;z-index:1;border-right:1px solid #bbf7d0;">
+                    01:00 - 02:00
+                </td>
+                <td colspan="${days.length}" style="padding:8px 16px;text-align:center;font-size:11px;font-weight:700;color:#166534;letter-spacing:1px;">
+                    🍽️ LUNCH BREAK & CAMPUS RECESS (60 MINS)
+                </td>
+            </tr>`;
+        }
+        if (t === '16:15') {
+            html += `<tr style="background:#fdf4ff;border-top:1px dashed #f5d0fe;border-bottom:1px dashed #f5d0fe;">
+                <td style="padding:8px;font-size:11px;font-weight:800;color:#a21caf;text-align:center;background:#fae8ff;position:sticky;left:0;z-index:1;border-right:1px solid #f5d0fe;">
+                    04:00 - 04:15
+                </td>
+                <td colspan="${days.length}" style="padding:8px 16px;text-align:center;font-size:11px;font-weight:700;color:#86198f;letter-spacing:1px;">
+                    ☕ SHORT EVENING RECESS / TEA (15 MINS)
+                </td>
+            </tr>`;
+        }
+
         const isEvenRow = idx % 2 === 0;
         const rowBg = isEvenRow ? '#ffffff' : '#fafbfc';
         html += `<tr style="background:${rowBg};">
-            <td style="padding:10px 8px;font-size:12px;color:#475569;font-weight:700;text-align:center;vertical-align:middle;white-space:nowrap;border-right:1px solid #e2e8f0;background:${isEvenRow ? '#f8fafc' : '#f1f5f9'};position:sticky;left:0;z-index:1;">
-                <div style="font-size:13px;font-weight:800;color:#334155;">${formatTime(t)}</div>
+            <td style="padding:10px 8px;font-size:11px;color:#475569;font-weight:700;text-align:center;vertical-align:middle;white-space:nowrap;border-right:1px solid #e2e8f0;background:${isEvenRow ? '#f8fafc' : '#f1f5f9'};position:sticky;left:0;z-index:1;">
+                <div style="font-size:12px;font-weight:800;color:#334155;">${formatTimeSlot(t)}</div>
+                <div style="font-size:10px;color:#94a3b8;margin-top:2px;">Period ${idx + 1}</div>
             </td>`;
         days.forEach(d => {
             const cell = data.grid[d] && data.grid[d][t];
             if (!cell) {
                 html += `<td style="padding:6px;vertical-align:top;border-bottom:1px solid #f1f5f9;">
                     <div style="min-height:60px;border-radius:8px;background:#f8fafc;border:1px dashed #e2e8f0;display:flex;align-items:center;justify-content:center;">
-                        <span style="font-size:18px;opacity:0.15;">—</span>
+                        <span style="font-size:14px;color:#cbd5e1;">—</span>
                     </div>
                 </td>`;
                 return;
@@ -315,6 +374,9 @@ function renderTimetableGrid(data) {
         </span>
         <span style="display:flex;align-items:center;gap:5px;font-size:12px;color:#166534;font-weight:600;">
             <span style="width:12px;height:12px;border-radius:3px;background:#22c55e;display:inline-block;"></span>Tutorial
+        </span>
+        <span style="display:flex;align-items:center;gap:5px;font-size:12px;color:#86198f;font-weight:600;">
+            <span style="width:12px;height:12px;border-radius:3px;background:#c026d3;display:inline-block;"></span>Mentoring/BTP
         </span>
         <span style="margin-left:auto;font-size:11px;color:#94a3b8;font-weight:500;">${totalSlots} classes/week</span>
     </div>`;

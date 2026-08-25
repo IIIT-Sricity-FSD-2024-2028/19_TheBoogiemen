@@ -251,39 +251,72 @@ export class InMemoryDbService {
 
   public submissions: any[] = [];
   public timetable = [
-    // ── Monday ──────────────────────────────────────────────────────────
-    { slot_id: 'tt_mon_1', tenant_id: 't1', day: 'MON', time: '09:00', course_id: 'c1', course_code: 'CS201', course_name: 'Data Structures', room: '101', type: 'lecture', section: 'A', faculty_id: 'u2' },
-    { slot_id: 'tt_mon_2', tenant_id: 't1', day: 'MON', time: '10:00', course_id: 'c2', course_code: 'CS202', course_name: 'Database Systems', room: '102', type: 'lecture', section: 'A', faculty_id: 'u2' },
-    { slot_id: 'tt_mon_3', tenant_id: 't1', day: 'MON', time: '11:00', course_id: 'c5', course_code: 'CS401', course_name: 'Computer Networks', room: '103', type: 'lecture', section: 'A', faculty_id: 'u2' },
-    { slot_id: 'tt_mon_4', tenant_id: 't1', day: 'MON', time: '14:00', course_id: 'c7', course_code: 'CS403', course_name: 'Advanced DSA', room: 'Lab-1', type: 'lab', section: 'A', faculty_id: 'u2' },
+    // ── Monday (08:45 - 17:30) ──────────────────────────────────────────
+    { slot_id: 'tt_mon_1', tenant_id: 't1', day: 'MON', time: '08:45', course_id: 'c1', course_code: 'CS201', course_name: 'Data Structures', room: 'LH-101', type: 'lecture', section: 'A', faculty_id: 'u2' },
+    { slot_id: 'tt_mon_2', tenant_id: 't1', day: 'MON', time: '09:45', course_id: 'c2', course_code: 'CS202', course_name: 'Database Systems', room: 'LH-102', type: 'lecture', section: 'A', faculty_id: 'u2' },
+    // Morning Break: 10:45 - 11:00
+    { slot_id: 'tt_mon_3', tenant_id: 't1', day: 'MON', time: '11:00', course_id: 'c5', course_code: 'CS401', course_name: 'Computer Networks', room: 'LH-103', type: 'lecture', section: 'A', faculty_id: 'u2' },
+    { slot_id: 'tt_mon_4', tenant_id: 't1', day: 'MON', time: '12:00', course_id: 'c6', course_code: 'CS402', course_name: 'Operating Systems', room: 'LH-101', type: 'lecture', section: 'A', faculty_id: 'u7' },
+    // Lunch Break: 13:00 - 14:00
+    { slot_id: 'tt_mon_5', tenant_id: 't1', day: 'MON', time: '14:00', course_id: 'c7', course_code: 'CS403', course_name: 'Advanced DSA', room: 'Lab-1 (Software)', type: 'lab', section: 'A', faculty_id: 'u2' },
+    { slot_id: 'tt_mon_6', tenant_id: 't1', day: 'MON', time: '15:00', course_id: 'c7', course_code: 'CS403', course_name: 'Advanced DSA', room: 'Lab-1 (Software)', type: 'lab', section: 'A', faculty_id: 'u2' },
+    // Evening Break: 16:00 - 16:15
+    { slot_id: 'tt_mon_7', tenant_id: 't1', day: 'MON', time: '16:15', course_id: 'c8', course_code: 'CS404', course_name: 'AI & Machine Learning', room: 'LH-101', type: 'mentoring', section: 'A', faculty_id: 'u7' },
 
-    // ── Tuesday ──────────────────────────────────────────────────────────
-    { slot_id: 'tt_tue_1', tenant_id: 't1', day: 'TUE', time: '09:00', course_id: 'c2', course_code: 'CS202', course_name: 'Database Systems', room: '102', type: 'lecture', section: 'A', faculty_id: 'u2' },
-    { slot_id: 'tt_tue_2', tenant_id: 't1', day: 'TUE', time: '10:00', course_id: 'c7', course_code: 'CS403', course_name: 'Advanced DSA', room: '104', type: 'lecture', section: 'A', faculty_id: 'u2' },
-    { slot_id: 'tt_tue_3', tenant_id: 't1', day: 'TUE', time: '11:00', course_id: 'c1', course_code: 'CS201', course_name: 'Data Structures', room: '101', type: 'tutorial', section: 'A', faculty_id: 'u2' },
-    { slot_id: 'tt_tue_4', tenant_id: 't1', day: 'TUE', time: '14:00', course_id: 'c5', course_code: 'CS401', course_name: 'Computer Networks', room: 'Lab-2', type: 'lab', section: 'A', faculty_id: 'u2' },
+    // ── Tuesday (08:45 - 17:30) ─────────────────────────────────────────
+    { slot_id: 'tt_tue_1', tenant_id: 't1', day: 'TUE', time: '08:45', course_id: 'c2', course_code: 'CS202', course_name: 'Database Systems', room: 'LH-102', type: 'lecture', section: 'A', faculty_id: 'u2' },
+    { slot_id: 'tt_tue_2', tenant_id: 't1', day: 'TUE', time: '09:45', course_id: 'c7', course_code: 'CS403', course_name: 'Advanced DSA', room: 'LH-104', type: 'lecture', section: 'A', faculty_id: 'u2' },
+    // Morning Break: 10:45 - 11:00
+    { slot_id: 'tt_tue_3', tenant_id: 't1', day: 'TUE', time: '11:00', course_id: 'c1', course_code: 'CS201', course_name: 'Data Structures', room: 'LH-101', type: 'tutorial', section: 'A', faculty_id: 'u2' },
+    { slot_id: 'tt_tue_4', tenant_id: 't1', day: 'TUE', time: '12:00', course_id: 'c8', course_code: 'CS404', course_name: 'Artificial Intelligence', room: 'LH-101', type: 'lecture', section: 'A', faculty_id: 'u7' },
+    // Lunch Break: 13:00 - 14:00
+    { slot_id: 'tt_tue_5', tenant_id: 't1', day: 'TUE', time: '14:00', course_id: 'c5', course_code: 'CS401', course_name: 'Computer Networks', room: 'Lab-2 (Hardware)', type: 'lab', section: 'A', faculty_id: 'u2' },
+    { slot_id: 'tt_tue_6', tenant_id: 't1', day: 'TUE', time: '15:00', course_id: 'c5', course_code: 'CS401', course_name: 'Computer Networks', room: 'Lab-2 (Hardware)', type: 'lab', section: 'A', faculty_id: 'u2' },
+    // Evening Break: 16:00 - 16:15
+    { slot_id: 'tt_tue_7', tenant_id: 't1', day: 'TUE', time: '16:15', course_id: 'c1', course_code: 'CS201', course_name: 'Data Structures (Problem Solving)', room: 'LH-101', type: 'tutorial', section: 'A', faculty_id: 'u2' },
 
-    // ── Wednesday ────────────────────────────────────────────────────────
-    { slot_id: 'tt_wed_1', tenant_id: 't1', day: 'WED', time: '09:00', course_id: 'c5', course_code: 'CS401', course_name: 'Computer Networks', room: '103', type: 'lecture', section: 'A', faculty_id: 'u2' },
-    { slot_id: 'tt_wed_2', tenant_id: 't1', day: 'WED', time: '10:00', course_id: 'c1', course_code: 'CS201', course_name: 'Data Structures', room: '101', type: 'lecture', section: 'A', faculty_id: 'u2' },
-    { slot_id: 'tt_wed_3', tenant_id: 't1', day: 'WED', time: '14:00', course_id: 'c2', course_code: 'CS202', course_name: 'Database Systems', room: 'Lab-3', type: 'lab', section: 'A', faculty_id: 'u2' },
+    // ── Wednesday (08:45 - 17:30) ───────────────────────────────────────
+    { slot_id: 'tt_wed_1', tenant_id: 't1', day: 'WED', time: '08:45', course_id: 'c5', course_code: 'CS401', course_name: 'Computer Networks', room: 'LH-103', type: 'lecture', section: 'A', faculty_id: 'u2' },
+    { slot_id: 'tt_wed_2', tenant_id: 't1', day: 'WED', time: '09:45', course_id: 'c1', course_code: 'CS201', course_name: 'Data Structures', room: 'LH-101', type: 'lecture', section: 'A', faculty_id: 'u2' },
+    // Morning Break: 10:45 - 11:00
+    { slot_id: 'tt_wed_3', tenant_id: 't1', day: 'WED', time: '11:00', course_id: 'c4', course_code: 'CS302', course_name: 'Theory of Computation', room: 'LH-101', type: 'lecture', section: 'A', faculty_id: 'u7' },
+    { slot_id: 'tt_wed_4', tenant_id: 't1', day: 'WED', time: '12:00', course_id: 'c3', course_code: 'CS301', course_name: 'Algorithms', room: 'LH-102', type: 'lecture', section: 'A', faculty_id: 'u7' },
+    // Lunch Break: 13:00 - 14:00
+    { slot_id: 'tt_wed_5', tenant_id: 't1', day: 'WED', time: '14:00', course_id: 'c2', course_code: 'CS202', course_name: 'Database Systems', room: 'Lab-1 (Software)', type: 'lab', section: 'A', faculty_id: 'u2' },
+    { slot_id: 'tt_wed_6', tenant_id: 't1', day: 'WED', time: '15:00', course_id: 'c2', course_code: 'CS202', course_name: 'Database Systems', room: 'Lab-1 (Software)', type: 'lab', section: 'A', faculty_id: 'u2' },
+    // Evening Break: 16:00 - 16:15
+    { slot_id: 'tt_wed_7', tenant_id: 't1', day: 'WED', time: '16:15', course_id: 'c7', course_code: 'CS403', course_name: 'ADSA Remedial & Code Review', room: 'LH-104', type: 'mentoring', section: 'A', faculty_id: 'u2' },
 
-    // ── Thursday ─────────────────────────────────────────────────────────
-    { slot_id: 'tt_thu_1', tenant_id: 't1', day: 'THU', time: '09:00', course_id: 'c7', course_code: 'CS403', course_name: 'Advanced DSA', room: '104', type: 'lecture', section: 'A', faculty_id: 'u2' },
-    { slot_id: 'tt_thu_2', tenant_id: 't1', day: 'THU', time: '10:00', course_id: 'c5', course_code: 'CS401', course_name: 'Computer Networks', room: '103', type: 'tutorial', section: 'A', faculty_id: 'u2' },
-    { slot_id: 'tt_thu_3', tenant_id: 't1', day: 'THU', time: '11:00', course_id: 'c2', course_code: 'CS202', course_name: 'Database Systems', room: '102', type: 'lecture', section: 'A', faculty_id: 'u2' },
+    // ── Thursday (08:45 - 17:30) ────────────────────────────────────────
+    { slot_id: 'tt_thu_1', tenant_id: 't1', day: 'THU', time: '08:45', course_id: 'c7', course_code: 'CS403', course_name: 'Advanced DSA', room: 'LH-104', type: 'lecture', section: 'A', faculty_id: 'u2' },
+    { slot_id: 'tt_thu_2', tenant_id: 't1', day: 'THU', time: '09:45', course_id: 'c5', course_code: 'CS401', course_name: 'Computer Networks', room: 'LH-103', type: 'tutorial', section: 'A', faculty_id: 'u2' },
+    // Morning Break: 10:45 - 11:00
+    { slot_id: 'tt_thu_3', tenant_id: 't1', day: 'THU', time: '11:00', course_id: 'c2', course_code: 'CS202', course_name: 'Database Systems', room: 'LH-102', type: 'lecture', section: 'A', faculty_id: 'u2' },
+    { slot_id: 'tt_thu_4', tenant_id: 't1', day: 'THU', time: '12:00', course_id: 'c6', course_code: 'CS402', course_name: 'Operating Systems', room: 'LH-101', type: 'lecture', section: 'A', faculty_id: 'u7' },
+    // Lunch Break: 13:00 - 14:00
+    { slot_id: 'tt_thu_5', tenant_id: 't1', day: 'THU', time: '14:00', course_id: 'c8', course_code: 'CS404', course_name: 'AI Lab', room: 'Lab-1 (Software)', type: 'lab', section: 'A', faculty_id: 'u7' },
+    { slot_id: 'tt_thu_6', tenant_id: 't1', day: 'THU', time: '15:00', course_id: 'c8', course_code: 'CS404', course_name: 'AI Lab', room: 'Lab-1 (Software)', type: 'lab', section: 'A', faculty_id: 'u7' },
+    // Evening Break: 16:00 - 16:15
+    { slot_id: 'tt_thu_7', tenant_id: 't1', day: 'THU', time: '16:15', course_id: 'c5', course_code: 'CS401', course_name: 'Packet Tracing Tutorial', room: 'LH-103', type: 'tutorial', section: 'A', faculty_id: 'u2' },
 
-    // ── Friday ───────────────────────────────────────────────────────────
-    { slot_id: 'tt_fri_1', tenant_id: 't1', day: 'FRI', time: '09:00', course_id: 'c1', course_code: 'CS201', course_name: 'Data Structures', room: '101', type: 'lecture', section: 'A', faculty_id: 'u2' },
-    { slot_id: 'tt_fri_2', tenant_id: 't1', day: 'FRI', time: '10:00', course_id: 'c7', course_code: 'CS403', course_name: 'Advanced DSA', room: '104', type: 'tutorial', section: 'A', faculty_id: 'u2' },
-    { slot_id: 'tt_fri_3', tenant_id: 't1', day: 'FRI', time: '11:00', course_id: 'c5', course_code: 'CS401', course_name: 'Computer Networks', room: '103', type: 'lecture', section: 'A', faculty_id: 'u2' },
-    { slot_id: 'tt_fri_4', tenant_id: 't1', day: 'FRI', time: '14:00', course_id: 'c2', course_code: 'CS202', course_name: 'Database Systems', room: '102', type: 'tutorial', section: 'A', faculty_id: 'u2' },
+    // ── Friday (08:45 - 17:30) ──────────────────────────────────────────
+    { slot_id: 'tt_fri_1', tenant_id: 't1', day: 'FRI', time: '08:45', course_id: 'c1', course_code: 'CS201', course_name: 'Data Structures', room: 'LH-101', type: 'lecture', section: 'A', faculty_id: 'u2' },
+    { slot_id: 'tt_fri_2', tenant_id: 't1', day: 'FRI', time: '09:45', course_id: 'c7', course_code: 'CS403', course_name: 'Advanced DSA', room: 'LH-104', type: 'tutorial', section: 'A', faculty_id: 'u2' },
+    // Morning Break: 10:45 - 11:00
+    { slot_id: 'tt_fri_3', tenant_id: 't1', day: 'FRI', time: '11:00', course_id: 'c5', course_code: 'CS401', course_name: 'Computer Networks', room: 'LH-103', type: 'lecture', section: 'A', faculty_id: 'u2' },
+    { slot_id: 'tt_fri_4', tenant_id: 't1', day: 'FRI', time: '12:00', course_id: 'c3', course_code: 'CS301', course_name: 'Algorithms (DSA)', room: 'LH-102', type: 'lecture', section: 'A', faculty_id: 'u7' },
+    // Lunch Break: 13:00 - 14:00
+    { slot_id: 'tt_fri_5', tenant_id: 't1', day: 'FRI', time: '14:00', course_id: 'c2', course_code: 'CS202', course_name: 'Database Systems', room: 'LH-102', type: 'tutorial', section: 'A', faculty_id: 'u2' },
+    { slot_id: 'tt_fri_6', tenant_id: 't1', day: 'FRI', time: '15:00', course_id: 'c6', course_code: 'CS402', course_name: 'OS Thread Concurrency Lab', room: 'Lab-1 (Software)', type: 'lab', section: 'A', faculty_id: 'u7' },
+    // Evening Break: 16:00 - 16:15
+    { slot_id: 'tt_fri_7', tenant_id: 't1', day: 'FRI', time: '16:15', course_id: 'c2', course_code: 'CS202', course_name: 'Database Query Optimization Workshop', room: 'LH-102', type: 'mentoring', section: 'A', faculty_id: 'u2' },
 
-    // ── Faculty schedule (u2 teaches section A & B for various courses) ──
-    { slot_id: 'tt_fac_mon_1', tenant_id: 't1', day: 'MON', time: '09:00', course_id: 'c1', course_code: 'CS201', course_name: 'Data Structures', room: '101', type: 'lecture', section: 'B', faculty_id: 'u2' },
-    { slot_id: 'tt_fac_tue_1', tenant_id: 't1', day: 'TUE', time: '11:00', course_id: 'c2', course_code: 'CS202', course_name: 'Database Systems', room: '102', type: 'lecture', section: 'B', faculty_id: 'u2' },
-    { slot_id: 'tt_fac_wed_1', tenant_id: 't1', day: 'WED', time: '11:00', course_id: 'c5', course_code: 'CS401', course_name: 'Computer Networks', room: '103', type: 'lecture', section: 'B', faculty_id: 'u2' },
-    { slot_id: 'tt_fac_thu_1', tenant_id: 't1', day: 'THU', time: '13:00', course_id: 'c7', course_code: 'CS403', course_name: 'Advanced DSA', room: '104', type: 'lecture', section: 'B', faculty_id: 'u2' },
+    // ── Saturday (08:45 - 13:00 / Electives, BTP & Mentoring) ───────────
+    { slot_id: 'tt_sat_1', tenant_id: 't1', day: 'SAT', time: '08:45', course_id: 'c1', course_code: 'CS201', course_name: 'Competitive Programming Clinic', room: 'LH-101', type: 'lab', section: 'A', faculty_id: 'u2' },
+    { slot_id: 'tt_sat_2', tenant_id: 't1', day: 'SAT', time: '09:45', course_id: 'c7', course_code: 'CS403', course_name: 'BTP & Research Mentoring', room: 'Lab-1 (Software)', type: 'mentoring', section: 'A', faculty_id: 'u2' },
+    // Morning Break: 10:45 - 11:00
+    { slot_id: 'tt_sat_3', tenant_id: 't1', day: 'SAT', time: '11:00', course_id: 'c8', course_code: 'CS404', course_name: 'AI Hackathon & Lab Projects', room: 'Lab-2 (Hardware)', type: 'lab', section: 'A', faculty_id: 'u7' },
+    { slot_id: 'tt_sat_4', tenant_id: 't1', day: 'SAT', time: '12:00', course_id: 'c5', course_code: 'CS401', course_name: 'Industry Seminar & Guest Lecture', room: 'LH-103', type: 'lecture', section: 'A', faculty_id: 'u2' },
   ];
 
   public syllabus_progress = [
