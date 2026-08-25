@@ -24,16 +24,26 @@ export class TimetableService {
   ) {}
 
   // College Timing: 08:45 AM - 05:30 PM (Monday - Saturday)
-  // Academic slots with dedicated morning tea break and afternoon lunch break
+  // Period structure:
+  //   08:45 - 09:45  → Period 1
+  //   09:45 - 10:45  → Period 2
+  //   [BREAK] 10:45 - 11:00 (Tea break)
+  //   11:00 - 12:00  → Period 3
+  //   12:00 - 13:00  → Period 4
+  //   [LUNCH] 13:00 - 14:15 (Lunch break 75 min)
+  //   14:15 - 15:15  → Period 5
+  //   15:15 - 16:15  → Period 6
+  //   [BREAK] 16:15 - 16:30 (Short evening break)
+  //   16:30 - 17:30  → Period 7
   private days: ('MON' | 'TUE' | 'WED' | 'THU' | 'FRI' | 'SAT')[] = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
   private times: string[] = [
-    '08:45', // Period 1: 08:45 - 09:45
-    '09:45', // Period 2: 09:45 - 10:45
-    '11:00', // Period 3: 11:00 - 12:00 (After 10:45-11:00 Morning Tea Break)
-    '12:00', // Period 4: 12:00 - 13:00
-    '14:00', // Period 5: 14:00 - 15:00 (After 13:00-14:00 Lunch Break)
-    '15:00', // Period 6: 15:00 - 16:00
-    '16:15', // Period 7: 16:15 - 17:30 (After 16:00-16:15 Evening Break)
+    '08:45', // Period 1
+    '09:45', // Period 2
+    '11:00', // Period 3 (after 10:45 tea break)
+    '12:00', // Period 4
+    '14:15', // Period 5 (after 13:00-14:15 lunch)
+    '15:15', // Period 6
+    '16:30', // Period 7 (after 16:15 break)
   ];
   private rooms = ['LH-101', 'LH-102', 'LH-201', 'Lab-1 (Software)', 'Lab-2 (Hardware)'];
 

@@ -50,6 +50,10 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
             <span>Leave Requests</span>
         </a>
+        <a href="#" class="nav-item" style="color:#6366f1;" onclick="openHodSupportModal()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span>Contact SaaS</span>
+        </a>
     </nav>
     <div class="sidebar-footer">
         <a href="#" class="nav-item" onclick="switchView('settings-view',this)">
@@ -437,6 +441,36 @@
     </div>
 </div>
 
+<!-- HOD SaaS Support Ticket Modal -->
+<div id="hodSupportModal" class="modal-backdrop">
+    <div class="modal">
+        <div class="modal-header"><h2>💬 Contact SaaS Support Platform</h2><button class="close-modal" onclick="closeModal('hodSupportModal')">&times;</button></div>
+        <div class="modal-body">
+            <p style="font-size:13px;color:#64748b;margin-bottom:16px;">Have a department technical issue or need system customizations? Submit a direct ticket to our central SaaS Platform support team.</p>
+            <div class="form-group">
+                <label>Issue Subject</label>
+                <input type="text" id="hodSupportSubject" placeholder="e.g., Request for Department Course Slot Configuration">
+            </div>
+            <div class="form-group">
+                <label>Priority Level</label>
+                <select id="hodSupportPriority">
+                    <option value="Low">🟢 Low — General Inquiry</option>
+                    <option value="Medium" selected>🟡 Medium — Operational Support</option>
+                    <option value="High">🔴 High — Urgent Issue</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Detailed Message</label>
+                <textarea id="hodSupportMsg" rows="4" placeholder="Describe your department inquiry or request in detail..."></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="closeModal('hodSupportModal')">Cancel</button>
+            <button class="btn-submit" onclick="submitHodSupportTicket()" style="background:#6366f1;color:#fff;">Submit Ticket to SaaS</button>
+        </div>
+    </div>
+</div>
+
 <script src="state.js"></script>
 <script src="script.js"></script>
 <script src="fixes.js"></script>
@@ -460,6 +494,39 @@ document.addEventListener('DOMContentLoaded', () => {
         window.renderAttendanceOverride && window.renderAttendanceOverride(),
     ]);
 });
+
+window.openHodSupportModal = function() {
+    openModal('hodSupportModal');
+};
+
+window.submitHodSupportTicket = function() {
+    const subject = document.getElementById('hodSupportSubject')?.value.trim();
+    const msg = document.getElementById('hodSupportMsg')?.value.trim();
+    const priority = document.getElementById('hodSupportPriority')?.value || 'Medium';
+
+    if (!subject || !msg) {
+        showToast('Please fill in both subject and message', 'warning');
+        return;
+    }
+
+    const user = window.Auth?.getUser?.();
+    if (window.SaaSStore && window.SaaSStore.addTicket) {
+        const ticket = window.SaaSStore.addTicket({
+            institution: 'IIIT Sricity',
+            tenantId: user?.tenant_id || 't1',
+            contactEmail: user?.email || 'head@iiits.in',
+            subject: subject,
+            priority: priority,
+            message: msg
+        });
+        showToast(`✅ Ticket ${ticket.id} submitted directly to SaaS Support!`, 'success');
+        closeModal('hodSupportModal');
+        document.getElementById('hodSupportSubject').value = '';
+        document.getElementById('hodSupportMsg').value = '';
+    } else {
+        showToast('Support store not available', 'error');
+    }
+};
 
 </script>
 </body>

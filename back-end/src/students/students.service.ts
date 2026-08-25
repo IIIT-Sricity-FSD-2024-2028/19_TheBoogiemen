@@ -150,8 +150,8 @@ export class StudentsService {
     return {
       grid,
       section,
-      days: ['MON', 'TUE', 'WED', 'THU', 'FRI'],
-      times: ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00'],
+      days: ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'],
+      times: ['08:45', '09:45', '11:00', '12:00', '14:15', '15:15', '16:30'],
     };
   }
 

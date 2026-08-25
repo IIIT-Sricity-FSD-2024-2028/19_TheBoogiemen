@@ -27,11 +27,11 @@ export class FacultyService {
     return {
       grid,
       days: ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'],
-      times: ['08:45', '09:45', '11:00', '12:00', '14:00', '15:00', '16:15'],
+      times: ['08:45', '09:45', '11:00', '12:00', '14:15', '15:15', '16:30'],
       breaks: [
         { label: 'Morning Tea Break', time: '10:45 - 11:00', after: '09:45' },
-        { label: 'Lunch Break', time: '13:00 - 14:00', after: '12:00' },
-        { label: 'Evening Short Break', time: '16:00 - 16:15', after: '15:00' },
+        { label: 'Lunch Break', time: '13:00 - 14:15', after: '12:00' },
+        { label: 'Evening Short Break', time: '16:15 - 16:30', after: '15:15' },
       ],
       college_hours: '08:45 AM - 05:30 PM',
     };

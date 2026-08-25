@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get Started — Institutional Onboarding | BarelyPassing</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-card: #ffffff;
+            --border: #e2e8f0;
+            --p: #4f46e5;
+            --p-light: #6366f1;
+            --navy: #0f172a;
+            --text: #0f172a;
+            --muted: #64748b;
+            --green: #059669;
+        }
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+        
+        /* Nav */
+        nav {
+            background: #0f172a;
+            padding: 16px 48px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+        .nav-logo {
+            width: 36px; height: 36px; border-radius: 10px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .nav-brand h1 { font-size: 17px; font-weight: 700; color: #ffffff; }
+        .nav-links a { color: #94a3b8; font-size: 14px; text-decoration: none; margin-left: 20px; transition: color 0.2s; }
+        .nav-links a:hover { color: #ffffff; }
+
+        /* Container */
+        .page-container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 24px;
+            flex: 1;
+            width: 100%;
+        }
+
+        /* Progress Steps */
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 36px;
+        }
+        .step-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #94a3b8;
+        }
+        .step-item.active { color: #4f46e5; }
+        .step-item.done { color: #059669; }
+        .step-circle {
+            width: 28px; height: 28px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            background: #e2e8f0; color: #64748b; font-size: 12px; font-weight: 800;
+        }
+        .step-item.active .step-circle { background: #4f46e5; color: #fff; box-shadow: 0 0 0 4px rgba(79,70,229,0.15); }
+        .step-item.done .step-circle { background: #059669; color: #fff; }
+        .step-line { width: 40px; height: 2px; background: #e2e8f0; }
+
+        /* Main Grid */
+        .signup-grid {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            gap: 32px;
+            align-items: start;
+        }
+
+        /* Card */
+        .form-card {
+            background: #ffffff;
+            border-radius: 18px;
+            border: 1px solid #e2e8f0;
+            padding: 36px;
+            box-shadow: 0 4px 20px rgba(15,23,42,0.06);
+        }
+        .form-card h2 { font-size: 22px; font-weight: 800; color: #0f172a; margin-bottom: 6px; }
+        .form-card p { font-size: 14px; color: #64748b; margin-bottom: 24px; }
+
+        /* Form Inputs */
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 11px 14px;
+            background: #fff; border: 1.5px solid #cbd5e1;
+            border-radius: 9px; font-size: 14px; color: #0f172a;
+            font-family: inherit; outline: none; transition: border-color 0.2s;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79,70,229,0.12);
+        }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+        /* Plan Selector in Signup */
+        .plan-select-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .plan-option {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 14px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #f8fafc;
+        }
+        .plan-option:hover { border-color: #94a3b8; }
+        .plan-option.selected {
+            border-color: #4f46e5;
+            background: #eef2ff;
+            box-shadow: 0 2px 10px rgba(79,70,229,0.15);
+        }
+        .plan-option .name { font-size: 13px; font-weight: 700; color: #0f172a; }
+        .plan-option .price { font-size: 12px; font-weight: 600; color: #4f46e5; margin-top: 2px; }
+
+        /* Buttons */
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #0f172a, #1e1b4b);
+            color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 14px rgba(15,23,42,0.2);
+        }
+        .btn-submit:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(15,23,42,0.3); }
+
+        /* Summary Sidebar */
+        .summary-card {
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            border-radius: 18px;
+            padding: 32px;
+            color: #fff;
+            box-shadow: 0 8px 30px rgba(15,23,42,0.25);
+        }
+        .summary-card h3 { font-size: 17px; font-weight: 800; margin-bottom: 12px; }
+        .summary-features { list-style: none; margin: 20px 0; }
+        .summary-features li { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #cbd5e1; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .summary-features li span { color: #10b981; font-weight: 800; }
+        
+        .trust-badge {
+            margin-top: 20px;
+            padding: 14px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            font-size: 12px;
+            color: #94a3b8;
+            line-height: 1.6;
+        }
+
+        /* Success screen */
+        .success-box {
+            display: none;
+            text-align: center;
+            padding: 48px 24px;
+        }
+        .success-icon { font-size: 54px; margin-bottom: 16px; }
+        .success-box h2 { font-size: 24px; font-weight: 800; color: #0f172a; margin-bottom: 8px; }
+        .success-box p { font-size: 15px; color: #475569; max-width: 500px; margin: 0 auto 24px; }
+        
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 24px; right: 24px;
+            background: #0f172a; color: #fff;
+            padding: 12px 20px; border-radius: 10px;
+            font-size: 14px; font-weight: 600;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            z-index: 9999; display: none;
+        }
+        .toast.show { display: block; }
+        .toast.success { background: #059669; }
+        .toast.error { background: #ef4444; }
+
+        @media (max-width: 860px) {
+            .signup-grid { grid-template-columns: 1fr; }
+            nav { padding: 16px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+    <a class="nav-brand" href="onboarding.html">
+        <div class="nav-logo">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+        </div>
+        <h1>BarelyPassing</h1>
+    </a>
+    <div class="nav-links">
+        <a href="onboarding.html">← Back to Overview</a>
+        <a href="login.html">Sign In</a>
+    </div>
+</nav>
+
+<div class="page-container">
+
+    <!-- Progress indicator -->
+    <div class="step-indicator">
+        <div class="step-item active" id="step1-ind">
+            <div class="step-circle">1</div>
+            <span>Institution Info</span>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-item" id="step2-ind">
+            <div class="step-circle">2</div>
+            <span>Plan &amp; Scope</span>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-item" id="step3-ind">
+            <div class="step-circle">3</div>
+            <span>Activation</span>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="signup-grid" id="mainSignupArea">
+        
+        <!-- Form Card -->
+        <div class="form-card">
+            <h2>Register Your Institution</h2>
+            <p>Set up your multi-tenant academic outcome workspace in under 2 minutes.</p>
+
+            <form id="instOnboardingForm" onsubmit="handleInstitutionalSignup(event)">
+                
+                <!-- Plan Choice -->
+                <div class="form-group">
+                    <label>Selected Tier</label>
+                    <div class="plan-select-grid">
+                        <div class="plan-option" id="opt-starter" onclick="selectSignupPlan('Starter', '₹99,000 / year', 'Up to 500 Students')">
+                            <div class="name">Starter</div>
+                            <div class="price">₹99,000/yr</div>
+                        </div>
+                        <div class="plan-option selected" id="opt-professional" onclick="selectSignupPlan('Professional', '₹2,40,000 / year', 'Up to 2,000 Students')">
+                            <div class="name">Professional</div>
+                            <div class="price">₹2,40,000/yr</div>
+                        </div>
+                        <div class="plan-option" id="opt-enterprise" onclick="selectSignupPlan('Enterprise', 'Custom Pricing', 'Unlimited Students')">
+                            <div class="name">Enterprise</div>
+                            <div class="price">Custom</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Institution Name *</label>
+                        <input type="text" id="reg-inst-name" placeholder="e.g., NIT Warangal" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Tenant Code / Prefix *</label>
+                        <input type="text" id="reg-inst-code" placeholder="e.g., NITW" style="text-transform:uppercase;" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Primary Administrator Name *</label>
+                        <input type="text" id="reg-admin-name" placeholder="Dr. Rajesh Kumar" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Administrator Role</label>
+                        <select id="reg-admin-role">
+                            <option value="Director / Vice Chancellor">Director / Vice Chancellor</option>
+                            <option value="Dean of Academics">Dean of Academics</option>
+                            <option value="Head of IT / ERP Lead">Head of IT / ERP Lead</option>
+                            <option value="Department HOD">Department HOD</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Official Institutional Email *</label>
+                        <input type="email" id="reg-email" placeholder="director@institution.ac.in" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Phone / Contact Number *</label>
+                        <input type="tel" id="reg-phone" placeholder="+91 98765 43210" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Approximate Student Strength</label>
+                        <select id="reg-students">
+                            <option value="< 500">Under 500 students</option>
+                            <option value="500 - 2,000" selected>500 – 2,000 students</option>
+                            <option value="2,000 - 5,000">2,000 – 5,000 students</option>
+                            <option value="5,000+">5,000+ students</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Estimated Go-Live Date</label>
+                        <input type="date" id="reg-golive" value="2026-09-01">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Specific Modules Needed</label>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;font-size:13px;">
+                        <label style="display:flex;align-items:center;gap:6px;text-transform:none;font-weight:500;"><input type="checkbox" checked> Outcome &amp; CO/PO Tracking</label>
+                        <label style="display:flex;align-items:center;gap:6px;text-transform:none;font-weight:500;"><input type="checkbox" checked> Clash-Free Timetable Engine</label>
+                        <label style="display:flex;align-items:center;gap:6px;text-transform:none;font-weight:500;"><input type="checkbox" checked> Finance &amp; Student Dues Portal</label>
+                        <label style="display:flex;align-items:center;gap:6px;text-transform:none;font-weight:500;"><input type="checkbox" checked> Research &amp; BTP Milestone System</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Additional Notes or ERP Integration Requirements</label>
+                    <textarea id="reg-notes" rows="2" placeholder="Any custom requirements or data migration needs..."></textarea>
+                </div>
+
+                <button type="submit" class="btn-submit" id="submitRegBtn">Complete Institutional Onboarding →</button>
+            </form>
+        </div>
+
+        <!-- Summary & Assurance Sidebar -->
+        <div class="summary-card">
+            <div style="font-size:11px;font-weight:700;color:#818cf8;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Plan Overview</div>
+            <h3 id="summaryPlanName">Professional Plan</h3>
+            <div style="font-size:26px;font-weight:800;color:#fff;margin-bottom:4px;" id="summaryPlanPrice">₹2,40,000 <span style="font-size:13px;font-weight:500;color:#94a3b8;">/ year</span></div>
+            <p style="font-size:13px;color:#94a3b8;" id="summaryPlanScope">Up to 2,000 Students · Unlimited Faculty &amp; HODs</p>
+
+            <ul class="summary-features">
+                <li><span>✓</span> Full L1–L4 Dual-Tier Role Hierarchy</li>
+                <li><span>✓</span> Automated Timetable Generation Engine</li>
+                <li><span>✓</span> Real-Time Attendance &amp; Shortage Alerts</li>
+                <li><span>✓</span> Finance Department &amp; Fee Receipts</li>
+                <li><span>✓</span> 5-Tier Middleware Security Architecture</li>
+                <li><span>✓</span> Dedicated Onboarding Specialist</li>
+            </ul>
+
+            <div class="trust-badge">
+                🔒 <strong>Enterprise Compliance:</strong> Includes automated rate limiting, router-level multi-tenant context isolation, disk audit logs, and OWASP security headers.
+            </div>
+
+            <div style="margin-top:20px;text-align:center;font-size:12px;color:#64748b;">
+                Questions? Email <a href="mailto:sales@platform.com" style="color:#818cf8;text-decoration:none;">sales@platform.com</a>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Success Confirmation View -->
+    <div class="form-card success-box" id="successArea">
+        <div class="success-icon">🎉</div>
+        <h2>Onboarding Request Received!</h2>
+        <p id="successMessage">Your institution has been provisioned in our onboarding queue. Our platform deployment lead will contact you within 1 business day.</p>
+        
+        <div style="background:#f1f5f9;border-radius:12px;padding:20px;max-width:460px;margin:0 auto 24px;text-align:left;font-size:13px;line-height:1.8;">
+            <div><strong>Institution:</strong> <span id="confInst">—</span></div>
+            <div><strong>Tenant Code:</strong> <span id="confCode" style="font-family:monospace;font-weight:700;color:#4f46e5;">—</span></div>
+            <div><strong>Admin Contact:</strong> <span id="confAdmin">—</span></div>
+            <div><strong>Plan Tier:</strong> <span id="confPlan" style="font-weight:700;color:#059669;">—</span></div>
+            <div><strong>Status:</strong> <span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:10px;font-weight:700;font-size:11px;">PROVISIONED IN QUEUE</span></div>
+        </div>
+
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+            <a href="onboarding.html" style="padding:12px 24px;background:#0f172a;color:#fff;border-radius:8px;font-weight:700;text-decoration:none;font-size:14px;">Return to Main Page</a>
+            <a href="login.html" style="padding:12px 24px;background:#e2e8f0;color:#0f172a;border-radius:8px;font-weight:700;text-decoration:none;font-size:14px;">Explore Live Demo Portals</a>
+        </div>
+    </div>
+
+</div>
+
+<div class="toast" id="signupToast"></div>
+
+<script src="state.js"></script>
+<script>
+let selectedPlan = 'Professional';
+
+// Read query params for preset plan
+document.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    const planParam = params.get('plan');
+    if (planParam) {
+        if (planParam.toLowerCase().includes('starter')) selectSignupPlan('Starter', '₹99,000 / year', 'Up to 500 Students');
+        else if (planParam.toLowerCase().includes('enterprise')) selectSignupPlan('Enterprise', 'Custom Pricing', 'Unlimited Students');
+        else selectSignupPlan('Professional', '₹2,40,000 / year', 'Up to 2,000 Students');
+    }
+});
+
+function selectSignupPlan(name, price, scope) {
+    selectedPlan = name;
+    document.querySelectorAll('.plan-option').forEach(el => el.classList.remove('selected'));
+    const target = document.getElementById('opt-' + name.toLowerCase());
+    if (target) target.classList.add('selected');
+
+    document.getElementById('summaryPlanName').textContent = name + ' Plan';
+    document.getElementById('summaryPlanPrice').innerHTML = price.includes('/') ? price.split('/')[0] + `<span style="font-size:13px;font-weight:500;color:#94a3b8;">/ year</span>` : price;
+    document.getElementById('summaryPlanScope').textContent = scope + ' · Unlimited Faculty & HODs';
+}
+
+function showToast(msg, type = 'success') {
+    const t = document.getElementById('signupToast');
+    t.textContent = msg;
+    t.className = 'toast show ' + type;
+    setTimeout(() => { t.className = 'toast'; }, 3500);
+}
+
+function handleInstitutionalSignup(e) {
+    e.preventDefault();
+    const instName = document.getElementById('reg-inst-name').value.trim();
+    const instCode = document.getElementById('reg-inst-code').value.trim().toUpperCase();
+    const adminName = document.getElementById('reg-admin-name').value.trim();
+    const email = document.getElementById('reg-email').value.trim();
+    const phone = document.getElementById('reg-phone').value.trim();
+    const role = document.getElementById('reg-admin-role').value;
+    const students = document.getElementById('reg-students').value;
+    const notes = document.getElementById('reg-notes').value.trim();
+
+    if (!instName || !instCode || !adminName || !email) {
+        showToast('Please fill in all mandatory fields.', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('submitRegBtn');
+    btn.disabled = true;
+    btn.textContent = 'Provisioning Workspace...';
+
+    // Store in SaaS store if available
+    if (window.SaaSStore && window.SaaSStore.addLead) {
+        window.SaaSStore.addLead({
+            name: adminName,
+            institution: instName,
+            email: email,
+            phone: phone,
+            plan: selectedPlan,
+            students: students,
+            notes: notes || `Tenant Code: ${instCode}, Role: ${role}`
+        });
+    }
+
+    setTimeout(() => {
+        // Switch to success view
+        document.getElementById('mainSignupArea').style.display = 'none';
+        document.getElementById('step1-ind').className = 'step-item done';
+        document.getElementById('step2-ind').className = 'step-item done';
+        document.getElementById('step3-ind').className = 'step-item active';
+
+        document.getElementById('confInst').textContent = instName;
+        document.getElementById('confCode').textContent = instCode;
+        document.getElementById('confAdmin').textContent = `${adminName} (${email})`;
+        document.getElementById('confPlan').textContent = `${selectedPlan} Plan`;
+
+        document.getElementById('successArea').style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 800);
+}
+</script>
+
+</body>
+</html>

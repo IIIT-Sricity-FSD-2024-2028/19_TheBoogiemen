@@ -217,7 +217,7 @@ window.renderStudentTimetable = async function() {
 function renderTimetableGrid(data) {
     if (!data || !data.grid) return '<div style="text-align:center;padding:40px 20px;"><div style="font-size:48px;margin-bottom:16px;">📅</div><p style="color:#64748b;font-size:15px;font-weight:600;">No timetable data available</p><p style="color:#94a3b8;font-size:13px;margin-top:4px;">Your schedule will appear here once classes are assigned.</p></div>';
     const days  = data.days  || ['MON','TUE','WED','THU','FRI','SAT'];
-    const times = data.times || ['08:45','09:45','11:00','12:00','14:00','15:00','16:15'];
+    const times = data.times || ['08:45','09:45','11:00','12:00','14:15','15:15','16:30'];
     const dayLabels = { MON:'Monday', TUE:'Tuesday', WED:'Wednesday', THU:'Thursday', FRI:'Friday', SAT:'Saturday' };
     const dayShort  = { MON:'Mon', TUE:'Tue', WED:'Wed', THU:'Thu', FRI:'Fri', SAT:'Sat' };
     const dayColors = {
@@ -240,9 +240,9 @@ function renderTimetableGrid(data) {
         if (t === '09:45') return '09:45 - 10:45';
         if (t === '11:00') return '11:00 - 12:00';
         if (t === '12:00') return '12:00 - 01:00';
-        if (t === '14:00') return '02:00 - 03:00';
-        if (t === '15:00') return '03:00 - 04:00';
-        if (t === '16:15') return '04:15 - 05:30';
+        if (t === '14:15') return '02:15 - 03:15';
+        if (t === '15:15') return '03:15 - 04:15';
+        if (t === '16:30') return '04:30 - 05:30';
         const [h, m] = t.split(':').map(Number);
         const suffix = h >= 12 ? 'PM' : 'AM';
         const h12 = h > 12 ? h - 12 : h === 0 ? 12 : h;
@@ -255,19 +255,18 @@ function renderTimetableGrid(data) {
     if (totalSlots === 0) return '<div style="text-align:center;padding:40px 20px;"><div style="font-size:48px;margin-bottom:16px;">📭</div><p style="color:#64748b;font-size:15px;font-weight:600;">No classes scheduled this week</p></div>';
 
     let html = `
-    <!-- College Hours & Break Banner -->
-    <div style="background:linear-gradient(135deg, #0f172a, #1e293b);color:#fff;padding:12px 18px;border-radius:12px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+    <!-- Timetable Generation System Header Bar -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;padding:12px 18px;background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;">
         <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:22px;">🏛</span>
+            <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;">📅</div>
             <div>
-                <div style="font-weight:700;font-size:14px;">College Working Hours: 08:45 AM – 05:30 PM (Mon – Sat)</div>
-                <div style="font-size:11px;color:#94a3b8;">Includes scheduled Morning Tea Break (10:45 AM), Lunch Break (1:00 PM), and Evening Break (4:00 PM)</div>
+                <div style="font-weight:800;font-size:15px;color:#0f172a;letter-spacing:-0.2px;">Timetable Generation System</div>
+                <div style="font-size:11px;color:#64748b;">Automated conflict-free academic schedule (Mon – Sat, 08:45 AM – 05:30 PM)</div>
             </div>
         </div>
-        <div style="display:flex;align-items:center;gap:8px;font-size:11px;">
-            <span style="background:#334155;padding:4px 10px;border-radius:20px;border:1px solid #475569;">☕ 10:45 Tea</span>
-            <span style="background:#334155;padding:4px 10px;border-radius:20px;border:1px solid #475569;">🍽 13:00 Lunch</span>
-            <span style="background:#334155;padding:4px 10px;border-radius:20px;border:1px solid #475569;">☕ 16:00 Break</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:11px;font-weight:700;background:#ecfdf5;color:#059669;padding:4px 10px;border-radius:20px;border:1px solid #a7f3d0;">✓ Clash-Free Auto Generated</span>
+            <span style="font-size:11px;font-weight:700;background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:20px;border:1px solid #bfdbfe;">Active Semester</span>
         </div>
     </div>
 
@@ -302,23 +301,23 @@ function renderTimetableGrid(data) {
                 </td>
             </tr>`;
         }
-        if (t === '14:00') {
+        if (t === '14:15') {
             html += `<tr style="background:#f0fdf4;border-top:1px dashed #bbf7d0;border-bottom:1px dashed #bbf7d0;">
                 <td style="padding:8px;font-size:11px;font-weight:800;color:#15803d;text-align:center;background:#dcfce7;position:sticky;left:0;z-index:1;border-right:1px solid #bbf7d0;">
-                    01:00 - 02:00
+                    01:00 - 02:15
                 </td>
                 <td colspan="${days.length}" style="padding:8px 16px;text-align:center;font-size:11px;font-weight:700;color:#166534;letter-spacing:1px;">
-                    🍽️ LUNCH BREAK & CAMPUS RECESS (60 MINS)
+                    🍽️ LUNCH BREAK & CAMPUS RECESS (75 MINS: 1:00 PM – 2:15 PM)
                 </td>
             </tr>`;
         }
-        if (t === '16:15') {
+        if (t === '16:30') {
             html += `<tr style="background:#fdf4ff;border-top:1px dashed #f5d0fe;border-bottom:1px dashed #f5d0fe;">
                 <td style="padding:8px;font-size:11px;font-weight:800;color:#a21caf;text-align:center;background:#fae8ff;position:sticky;left:0;z-index:1;border-right:1px solid #f5d0fe;">
-                    04:00 - 04:15
+                    04:15 - 04:30
                 </td>
                 <td colspan="${days.length}" style="padding:8px 16px;text-align:center;font-size:11px;font-weight:700;color:#86198f;letter-spacing:1px;">
-                    ☕ SHORT EVENING RECESS / TEA (15 MINS)
+                    ☕ SHORT EVENING RECESS / TEA (15 MINS: 4:15 PM – 4:30 PM)
                 </td>
             </tr>`;
         }
@@ -1858,6 +1857,17 @@ window.renderUsersTable = async function(roleFilter = currentActiveRoleFilter) {
         if (myWeight < 100) {
             users = users.filter(u => getRoleLevelWeight(u.role) < 100);
         }
+
+        // Deduplicate users by user_id and username
+        const seenIds = new Set();
+        users = (users || []).filter(u => {
+            if (!u || !u.user_id) return false;
+            const key = (u.username || u.user_id).toLowerCase();
+            if (seenIds.has(u.user_id) || seenIds.has(key)) return false;
+            seenIds.add(u.user_id);
+            seenIds.add(key);
+            return true;
+        });
 
         // Filter users by selected role category
         if (roleFilter === 'hod') {

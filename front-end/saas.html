@@ -603,7 +603,7 @@ function configureSaaSRolePermissions(role) {
         });
     } else {
         // PLATFORM_SUPER_ADMIN
-        if (roleBanner) roleBanner.innerHTML = `<span class="badge badge-blue">⚡ Global Owner View</span> &nbsp;<span style="font-size:12px;color:var(--muted);">Full SaaS Owner Control — All System Functions Active</span>`;
+        if (roleBanner) roleBanner.innerHTML = `<span class="badge badge-blue">⚡ Global Owner View</span>&nbsp;<span style="font-size:12px;color:var(--muted);">Platform Super Admin — All Modules & Tenants Accessible</span>`;
         navItems.forEach(item => item.style.display = 'flex');
     }
 }

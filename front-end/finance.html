@@ -209,12 +209,15 @@
         <div id="dues-view" class="view-section">
             <div class="section-card">
                 <div class="section-header">
-                    <span class="section-title">🔴 Student Dues (Pending &amp; Overdue)</span>
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <span class="section-title">🔴 Student Dues (Pending &amp; Overdue)</span>
+                        <button class="btn btn-primary btn-sm" onclick="broadcastDueReminders()" style="background:#4338ca;color:#fff;">📢 Broadcast Reminders to All</button>
+                    </div>
                     <input type="text" class="search-input" id="duesSearch" placeholder="Search student..." oninput="filterDues()">
                 </div>
                 <div style="overflow-x:auto;">
                     <table class="data-table">
-                        <thead><tr><th>Student ID</th><th>Fee Type</th><th>Amount</th><th>Due Date</th><th>Status</th><th>Days Overdue</th><th>Action</th></tr></thead>
+                        <thead><tr><th>Student ID</th><th>Fee Type</th><th>Amount</th><th>Due Date</th><th>Status</th><th>Days Overdue</th><th>Actions</th></tr></thead>
                         <tbody id="duesTableBody"><tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:30px;">Loading...</td></tr></tbody>
                     </table>
                 </div>
@@ -318,6 +321,8 @@
 <div class="toast-container" id="finToastContainer"></div>
 
 <script src="state.js"></script>
+<script src="script.js"></script>
+<script src="fixes.js"></script>
 <script>
 (function(){
     const user = JSON.parse(localStorage.getItem('bp_user') || 'null');
@@ -420,6 +425,10 @@ async function markPaid(feeId) {
     try {
         await finApi('/fees/'+feeId+'/pay',{method:'PATCH'});
         finToast('✅ Fee marked as paid!','success');
+        const f = _fees.find(x => x.fee_id === feeId);
+        if (f && f.student_id && window.Notifications?.send) {
+            window.Notifications.send(f.student_id, 'Finance Department', `💳 Payment Confirmed: Your fee payment of ₹${Number(f.amount||0).toLocaleString('en-IN')} for "${f.fee_type||'Fee'}" has been marked as PAID. Receipt is now available.`, 'info');
+        }
         await loadFees(); renderFeeTable(_fees); filterDues(); loadDashboard();
     } catch(e) { finToast('Error: '+e.message,'error'); }
 }
@@ -427,6 +436,49 @@ async function markPaid(feeId) {
 async function loadDues() {
     document.getElementById('duesTableBody').innerHTML='<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:20px;">Loading...</td></tr>';
     await loadFees(); filterDues();
+}
+
+function notifyStudentDue(studentId, feeType, amount, dueDate) {
+    if (window.Notifications && window.Notifications.send) {
+        window.Notifications.send(
+            studentId,
+            'Finance Department',
+            `⚠️ FEE DUE REMINDER: ₹${Number(amount).toLocaleString('en-IN')} for "${feeType}" is due by ${dueDate}. Please clear dues to prevent examination and registration holds.`,
+            'alert'
+        );
+        finToast(`🔔 Due reminder sent to student ${studentId}!`, 'success');
+    } else {
+        finToast(`Notification sent to ${studentId}`, 'success');
+    }
+}
+
+function broadcastDueReminders() {
+    const dues = _fees.filter(f => f.status === 'pending' || f.status === 'overdue');
+    if (!dues.length) {
+        finToast('No students with outstanding dues to notify.', 'info');
+        return;
+    }
+    let count = 0;
+    const notified = new Set();
+    dues.forEach(f => {
+        if (f.student_id && !notified.has(f.student_id)) {
+            notified.add(f.student_id);
+            if (window.Notifications?.send) {
+                window.Notifications.send(
+                    f.student_id,
+                    'Finance Department',
+                    `⚠️ OFFICIAL FEE NOTICE: You have pending institutional fee dues of ₹${Number(f.amount||0).toLocaleString('en-IN')} for ${f.fee_type||'Tuition/Hostel'}. Due date: ${f.due_date||'Immediate'}. Please clear at the finance portal.`,
+                    'alert'
+                );
+            }
+            count++;
+        }
+    });
+    // Also notify Director
+    if (window.Notifications?.broadcast) {
+        window.Notifications.broadcast('superadmin', 'Finance Department', `📊 Finance Report: Sent fee due reminder notices to ${count} students with outstanding balances.`, 'info');
+    }
+    finToast(`📢 Broadcast sent! Notified ${count} students with outstanding dues.`, 'success');
 }
 
 function filterDues() {
@@ -445,7 +497,10 @@ function filterDues() {
             <td style="font-weight:700;color:${f.status==='overdue'?'#ef4444':'#d97706'};">₹${Number(f.amount||0).toLocaleString('en-IN')}</td>
             <td>${f.due_date||'—'}</td><td>${statusBadge(f.status)}</td>
             <td style="font-weight:700;color:${days>0?'#ef4444':'#94a3b8'};">${days>0?days+' days':'—'}</td>
-            <td><button class="btn btn-success btn-sm" onclick="markPaid('${f.fee_id}')">Collect</button></td>
+            <td style="display:flex;gap:6px;">
+                <button class="btn btn-success btn-sm" onclick="markPaid('${f.fee_id}')">Collect</button>
+                <button class="btn btn-ghost btn-sm" style="color:#d97706;border:1px solid #fde68a;" onclick="notifyStudentDue('${f.student_id}','${f.fee_type||'Fee'}','${f.amount||0}','${f.due_date||''}')" title="Send due reminder notification to student">🔔 Remind</button>
+            </td>
         </tr>`;
     }).join('');
 }
@@ -512,6 +567,9 @@ async function submitAddFee() {
     try {
         await finApi('/fees',{method:'POST',body:JSON.stringify({student_id:sid,fee_type:ft,amount:Number(amt),due_date:due,semester:sem})});
         finToast('Fee record added!','success'); closeFinModal('addFeeModal');
+        if (window.Notifications?.send) {
+            window.Notifications.send(sid, 'Finance Department', `📢 New Fee Due: ₹${Number(amt).toLocaleString('en-IN')} for "${ft}". Due date: ${due}. Please clear dues via student portal.`, 'alert');
+        }
         await loadFees(); renderFeeTable(_fees); loadDashboard();
     } catch(e) { finToast('Error: '+e.message,'error'); }
 }
