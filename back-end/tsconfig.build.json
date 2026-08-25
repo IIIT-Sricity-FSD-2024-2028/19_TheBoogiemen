@@ -1,4 +1,16 @@
 {
   "extends": "./tsconfig.json",
-  "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
+  "exclude": [
+    "node_modules",
+    "test",
+    "dist",
+    "**/*spec.ts",
+    "scripts",
+    "src/database/postgres",
+    "src/config/database.config.ts",
+    "src/config/logger.config.ts",
+    "src/common/errors/process-handlers.ts",
+    "src/auth/password.service.ts",
+    "src/auth/jwt-auth.guard.ts"
+  ]
 }
