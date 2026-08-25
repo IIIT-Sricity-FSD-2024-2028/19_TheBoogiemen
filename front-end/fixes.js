@@ -2974,8 +2974,10 @@ function renderViewWidgets(viewId) {
 window.downloadDocument = async function(fileId, suggestedName) {
     if (!fileId) { showToast('No document attached', 'warning'); return; }
     try {
+        // The session cookie is httpOnly and cannot be attached by hand —
+        // `credentials` tells fetch to send it.
         const res = await fetch(window.Auth.fileUrl(fileId), {
-            headers: { Authorization: `Bearer ${window.Auth.getToken()}` },
+            credentials: 'same-origin',
         });
         if (!res.ok) {
             const body = await res.json().catch(() => ({}));

@@ -1,4 +1,5 @@
-import { Controller, Post, Body, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { Controller, Post, Body, Res, HttpCode, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { AuthService } from './auth.service';
 import { PasswordService } from './password.service';
@@ -7,6 +8,7 @@ import { LoginDto, SignupDto, ChangePasswordDto } from '../common/dto/app.dto';
 import { InMemoryDbService } from '../database/in-memory-db.service';
 import { Public } from './public.decorator';
 import { CurrentUserId } from '../common/decorators/current-user.decorator';
+import { setAuthCookie, clearAuthCookie, tokenTtlMs } from './auth-cookie';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { ErrorCode, errorBody } from '../common/errors/error-codes';
 
@@ -27,7 +29,7 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Login successful - returns token and user info' })
   @ApiResponse({ status: 400, description: 'Invalid email or password format' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
-  async login(@Body() body: LoginDto) {
+  async login(@Body() body: LoginDto, @Res({ passthrough: true }) res: Response) {
     try {
       if (!body.email || !body.password) {
         this.logger.warn({ outcome: 'missing_credentials' }, 'Login rejected');
@@ -36,11 +38,25 @@ export class AuthController {
     );
       }
       const result = await this.authService.login(body.email, body.password);
+
+      // The browser receives the token as an httpOnly cookie it cannot read.
+      const ttlMs = tokenTtlMs(result.token);
+      setAuthCookie(res, result.token, ttlMs);
+
       this.logger.info(
         { userId: result.user.user_id, role: result.user.role },
         'Login successful',
       );
-      return { success: true, ...result };
+      return {
+        success: true,
+        user: result.user,
+        // Replaces the client decoding the JWT for a proactive sign-out — it
+        // cannot read the cookie any more. A timestamp, not a credential.
+        expires_at: Date.now() + ttlMs,
+        // Still returned so Swagger's Authorize button and curl keep working.
+        // The frontend ignores this and relies on the cookie.
+        token: result.token,
+      };
     } catch (error) {
       if (error instanceof UnauthorizedException || error instanceof BadRequestException) {
         // Deliberately no email: failed-login lines would otherwise accumulate a
@@ -173,5 +189,15 @@ export class AuthController {
       errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, `Password change failed: ${error.message}`),
     );
     }
+  }
+
+  @Post('logout')
+  @Public()
+  @HttpCode(204)
+  @ApiOperation({ summary: 'Clear the session cookie' })
+  logout(@Res({ passthrough: true }) res: Response) {
+    // Public on purpose: clearing a cookie needs no proof of identity, and an
+    // already-expired session must still be able to sign out cleanly.
+    clearAuthCookie(res);
   }
 }

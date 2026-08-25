@@ -16,6 +16,7 @@ import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
 import * as path from 'path';
 import * as express from 'express';
+import cookieParser from 'cookie-parser';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { VALIDATION_PIPE_OPTIONS } from './common/errors/validation.factory';
 import { registerProcessHandlers } from './common/errors/process-handlers';
@@ -36,12 +37,30 @@ async function bootstrap() {
   // Identity and role travel in a signed JWT via the Authorization header.
   // The old 'role' and 'user-id' headers are gone — the server ignores them, and
   // allowing them here would only invite clients to keep sending them.
+  // CORS does not add security — it selectively *relaxes* the same-origin
+  // policy. `origin: true` reflected whatever Origin the caller sent, and with
+  // `credentials: true` that let any website make credentialed requests to this
+  // API and read the responses. That was survivable while auth was a header the
+  // browser never attached on its own; it is a live hole now that the session
+  // travels in a cookie the browser sends automatically.
+  //
+  // The frontend is served from this same origin, so cross-origin access is OFF
+  // unless CORS_ORIGIN explicitly names an allowed origin.
+  const corsOrigin = (process.env.CORS_ORIGIN ?? '')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+
   app.enableCors({
-    origin: true,
+    origin: corsOrigin.length ? corsOrigin : false,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
     allowedHeaders: 'Content-Type, Accept, Authorization',
   });
+
+  // Populates req.cookies, which JwtAuthGuard reads the session token from.
+  // Registered here rather than as module middleware so it runs before guards.
+  app.use(cookieParser());
 
   // 3. Structured error handling. HTTP request logging is handled by pino-http
   // (configured in logger.config.ts), which hooks the response lifecycle rather
