@@ -18,6 +18,7 @@ import { JwtService } from '@nestjs/jwt';
 import { IS_PUBLIC_KEY } from './public.decorator';
 import { ErrorCode, errorBody } from '../common/errors/error-codes';
 import { JwtPayload, isRole } from './jwt-payload';
+import { AUTH_COOKIE } from './auth-cookie';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -38,7 +39,7 @@ export class JwtAuthGuard implements CanActivate {
     if (isPublic) return true;
 
     const request = context.switchToHttp().getRequest();
-    const token = this.extractBearerToken(request);
+    const token = this.extractToken(request);
 
     if (!token) {
       throw new UnauthorizedException(
@@ -71,6 +72,20 @@ export class JwtAuthGuard implements CanActivate {
 
     request.user = payload;
     return true;
+  }
+
+  /**
+   * Session cookie first (browsers), Authorization header second (Swagger,
+   * curl, tests).
+   *
+   * Accepting both is not a weakness: the header path still requires a valid
+   * signed token, and XSS cannot read the httpOnly cookie to forge one — so it
+   * grants an attacker nothing they did not already have.
+   */
+  private extractToken(request: any): string | null {
+    const fromCookie = request?.cookies?.[AUTH_COOKIE];
+    if (typeof fromCookie === 'string' && fromCookie.trim()) return fromCookie.trim();
+    return this.extractBearerToken(request);
   }
 
   private extractBearerToken(request: any): string | null {

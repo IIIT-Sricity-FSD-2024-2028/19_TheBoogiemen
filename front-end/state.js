@@ -12,7 +12,13 @@ const API_BASE = '/api';
 window.Auth = {
 
     // ── Core storage ────────────────────────────────────────────────────────
-    getToken: () => localStorage.getItem('bp_token'),
+    /**
+     * The session lives in an httpOnly cookie the browser attaches by itself,
+     * so there is no token for JavaScript to read. Kept as a stub returning
+     * null: callers asking "am I signed in?" are answered by the cached
+     * profile, and confirmed by the server on the next request.
+     */
+    getToken: () => null,
     getUser:  () => {
         const u = localStorage.getItem('bp_user');
         return u ? JSON.parse(u) : null;
@@ -26,12 +32,12 @@ window.Auth = {
      * we know will fail. The server is the sole authority on token validity.
      */
     getTokenExpiry: () => {
-        const token = window.Auth.getToken();
-        if (!token) return null;
-        try {
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            return typeof payload.exp === 'number' ? payload.exp * 1000 : null;
-        } catch { return null; }
+        // Was decoded from the JWT; the cookie is unreadable now, so the server
+        // returns `expires_at` at login and it is cached beside the profile.
+        // A timestamp, not a credential.
+        const raw = localStorage.getItem('bp_expires_at');
+        const at = raw ? Number(raw) : NaN;
+        return Number.isFinite(at) ? at : null;
     },
 
     isTokenExpired: () => {
@@ -41,8 +47,6 @@ window.Auth = {
 
     // ── API fetch with auth header ──────────────────────────────────────────
     apiFetch: async (endpoint, options = {}) => {
-        const token = window.Auth.getToken();
-
         // A FormData body must NOT carry an explicit Content-Type: the browser
         // sets it itself and appends the multipart boundary, which we cannot
         // know. Forcing application/json here makes the server unable to parse
@@ -52,17 +56,21 @@ window.Auth = {
             ...(isMultipart ? {} : { 'Content-Type': 'application/json' }),
             ...(options.headers || {}),
         };
-        if (token) headers['Authorization'] = `Bearer ${token}`;
 
-        // Expired tokens are rejected locally so the user gets a clean sign-out
-        // rather than a failed action followed by a redirect.
-        if (token && window.Auth.isTokenExpired()) {
-            console.warn('[Auth] Token expired — signing out.');
-            window.Auth.logout();
+        // No Authorization header: the session cookie is httpOnly and the
+        // browser attaches it on its own.
+        if (window.Auth.isTokenExpired()) {
+            console.warn('[Auth] Session expired — signing out.');
+            await window.Auth.logout();
             return null;
         }
 
-        const res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
+        const res = await fetch(`${API_BASE}${endpoint}`, {
+            ...options,
+            headers,
+            // Without this, fetch omits cookies on cross-origin requests.
+            credentials: 'same-origin',
+        });
 
         // A 401 means the session is no longer valid, so we sign the user out.
         // Endpoints must NOT use 401 to report a bad value the user typed (e.g.
@@ -130,6 +138,8 @@ window.Auth = {
             const data = await fetch(`${API_BASE}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                // Required for the browser to store the Set-Cookie response.
+                credentials: 'same-origin',
                 body: JSON.stringify({ email, password })
             });
             if (!data.ok) {
@@ -137,9 +147,12 @@ window.Auth = {
                 const msg = Array.isArray(err.message) ? err.message.join(', ') : (err.message || err.error || 'Login failed');
                 throw new Error(msg);
             }
-            const { token, user } = await data.json();
-            localStorage.setItem('bp_token', token);
-            localStorage.setItem('bp_user',  JSON.stringify(user));
+            const { user, expires_at } = await data.json();
+            // The token is NOT stored: it arrived as an httpOnly cookie. Only the
+            // display profile and expiry are cached, and neither is a credential
+            // — the server re-derives identity from the cookie every request.
+            localStorage.setItem('bp_user', JSON.stringify(user));
+            if (expires_at) localStorage.setItem('bp_expires_at', String(expires_at));
 
             // Redirect based on role
             const role = user.role;
@@ -159,10 +172,21 @@ window.Auth = {
     },
 
     // ── Logout ──────────────────────────────────────────────────────────────
-    logout: () => {
-        localStorage.removeItem('bp_token');
+    logout: async () => {
+        // The cookie is httpOnly, so only the server can remove it. Skipping this
+        // would leave the browser holding a valid session after "signing out".
+        try {
+            await fetch(`${API_BASE}/auth/logout`, {
+                method: 'POST',
+                credentials: 'same-origin',
+            });
+        } catch {
+            // Server unreachable — still clear local state and redirect.
+        }
         localStorage.removeItem('bp_user');
-        // Also clear old mock data keys
+        localStorage.removeItem('bp_expires_at');
+        // Legacy keys from the localStorage-token era.
+        localStorage.removeItem('bp_token');
         localStorage.removeItem('currentUser');
         localStorage.removeItem('ffsd_db');
         window.location.href = 'login.html';
@@ -178,10 +202,9 @@ window.Auth = {
      * authorization lives in the backend guards.
      */
     requireAuth: (allowedRoles = []) => {
-        const user  = window.Auth.getUser();
-        const token = window.Auth.getToken();
+        const user = window.Auth.getUser();
 
-        if (!user || !token) {
+        if (!user) {
             console.warn('⛔ Unauthorized — redirecting to login');
             window.location.href = 'login.html';
             return null;
