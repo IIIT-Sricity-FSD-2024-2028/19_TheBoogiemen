@@ -284,10 +284,9 @@
         <h1>BarelyPassing</h1>
     </a>
     <div class="nav-links">
-        <a href="#features">Features</a>
-        <a href="#architecture">Middleware Architecture</a>
-        <a href="#roles">Role Hierarchy</a>
-        <a href="#pricing">Pricing</a>
+        <a href="#features">Platform Features</a>
+        <a href="#roles">Governance Roles</a>
+        <a href="#pricing">Pricing Plans</a>
         <a href="#faq">FAQ</a>
         <a href="login.html" style="color:#cbd5e1;">Sign In</a>
         <a class="nav-cta" href="onboarding-signup.html">Get Started →</a>
@@ -356,49 +355,6 @@
         </div>
     </div>
 </section>
-
-<!-- Middleware Security Showcase -->
-<div style="padding:0 24px;" id="architecture">
-    <div class="middleware-section">
-        <div style="text-align:center;">
-            <span style="font-size:11px;font-weight:800;color:#818cf8;text-transform:uppercase;letter-spacing:1.5px;">Backend Architecture</span>
-            <h2 style="font-size:32px;font-weight:900;margin-top:6px;">5-Tier Evaluation Middleware Stack</h2>
-            <p style="color:#94a3b8;font-size:14px;max-width:620px;margin:8px auto 0;">All requests pass through our enterprise middleware pipeline with disk-persisted log streams.</p>
-        </div>
-        <div class="mw-grid">
-            <div class="mw-card">
-                <div class="icon">📜</div>
-                <h4>1. Global HTTP Logger</h4>
-                <p>Intercepts every API request, tracks response duration in ms, and writes real-time traffic to <code>logs/access.log</code>.</p>
-            </div>
-            <div class="mw-card">
-                <div class="icon">🛡️</div>
-                <h4>2. OWASP Security Middleware</h4>
-                <p>Injects strict Content-Security-Policy, X-Frame-Options: DENY, HSTS, and multi-origin CORS verification headers.</p>
-            </div>
-            <div class="mw-card">
-                <div class="icon">⚡</div>
-                <h4>3. IP Rate Limiter</h4>
-                <p>Token-bucket rate limiter (120 req/min/IP) prevents API abuse and brute-force attempts on sensitive endpoints.</p>
-            </div>
-            <div class="mw-card">
-                <div class="icon">🏢</div>
-                <h4>4. Tenant Context Isolation</h4>
-                <p>Router-level middleware extracting <code>x-tenant-id</code> to enforce bulletproof multi-tenant database partitioning.</p>
-            </div>
-            <div class="mw-card">
-                <div class="icon">🔍</div>
-                <h4>5. Mutation Audit Logger</h4>
-                <p>Captures all POST, PATCH, and DELETE operations with user ID and payload diffs into <code>logs/audit.log</code>.</p>
-            </div>
-            <div class="mw-card">
-                <div class="icon">⚠️</div>
-                <h4>Global Error Filter</h4>
-                <p>Catches and sanitizes unhandled exceptions into structured JSON responses while logging stack traces to <code>logs/error.log</code>.</p>
-            </div>
-        </div>
-    </div>
-</div>
 
 <!-- Role Hierarchy -->
 <section id="roles">

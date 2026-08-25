@@ -242,8 +242,10 @@ export class InMemoryDbService {
   ];
 
   public fees = [
-    { fee_id: 'f1', tenant_id: 't1', student_id: 'u1', first_name: 'John', last_name: 'Doe', type: 'Semester Fee', amount: 150000, due_date: '2026-06-01', status: 'pending' },
-    { fee_id: 'f2', tenant_id: 't1', student_id: 'u6', first_name: 'Alice', last_name: 'Vance', type: 'Semester Fee', amount: 150000, due_date: '2026-06-01', status: 'overdue' },
+    { fee_id: 'f1', tenant_id: 't1', student_id: 'u1', first_name: 'John', last_name: 'Doe', fee_type: 'B.Tech Tuition Fee', type: 'B.Tech Tuition Fee', amount: 120000, due_date: '2026-06-01', status: 'pending' },
+    { fee_id: 'f2', tenant_id: 't1', student_id: 'u6', first_name: 'Alice', last_name: 'Vance', fee_type: 'Hostel & Mess Fee', type: 'Hostel & Mess Fee', amount: 60000, due_date: '2026-04-15', status: 'overdue' },
+    { fee_id: 'f3', tenant_id: 't1', student_id: 'u1', first_name: 'John', last_name: 'Doe', fee_type: 'End-Sem Examination Fee', type: 'End-Sem Examination Fee', amount: 2500, due_date: '2026-04-20', paid_date: '2026-04-18', status: 'paid' },
+    { fee_id: 'f4', tenant_id: 't1', student_id: 'u6', first_name: 'Alice', last_name: 'Vance', fee_type: 'Library & Lab Access Fee', type: 'Library & Lab Access Fee', amount: 5000, due_date: '2026-04-10', paid_date: '2026-04-08', status: 'paid' },
   ];
 
   public submissions: any[] = [];
