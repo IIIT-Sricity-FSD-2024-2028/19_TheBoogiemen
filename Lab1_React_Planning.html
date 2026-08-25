@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>FDFED M2026 - Lab 1: React Planning</title>
+<style>
+  @page {
+    size: A4;
+    margin: 18mm 14mm 18mm 14mm;
+    @bottom-right {
+      content: counter(page);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #1e293b;
+    line-height: 1.5;
+    font-size: 11pt;
+    margin: 0;
+    padding: 0;
+  }
+  .doc-title {
+    color: #0f172a;
+    font-size: 20pt;
+    font-weight: 800;
+    margin: 0 0 6px 0;
+    border-bottom: 2.5px solid #2563eb;
+    padding-bottom: 8px;
+    letter-spacing: -0.5px;
+  }
+  .doc-meta {
+    color: #475569;
+    font-size: 11pt;
+    font-weight: 600;
+    margin: 4px 0 6px 0;
+  }
+  .section-title {
+    color: #0f172a;
+    font-size: 14pt;
+    font-weight: 700;
+    margin: 22px 0 10px 0;
+    padding-bottom: 4px;
+    border-bottom: 1.5px solid #e2e8f0;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+  .sub-sub-title {
+    font-size: 12pt;
+    color: #1e293b;
+    margin: 14px 0 6px 0;
+    page-break-after: avoid;
+  }
+  .divider {
+    border: none;
+    border-top: 1px solid #e2e8f0;
+    margin: 16px 0;
+  }
+  p {
+    margin: 6px 0 8px 0;
+    color: #334155;
+    font-size: 10pt;
+  }
+  .table-container {
+    margin: 12px 0 16px 0;
+    page-break-inside: auto;
+    break-inside: auto;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9pt;
+    page-break-inside: auto;
+  }
+  tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  th {
+    background: #0f172a;
+    color: #ffffff;
+    font-weight: 700;
+    text-align: left;
+    padding: 7px 9px;
+    border: 1px solid #0f172a;
+    font-size: 8.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  td {
+    padding: 6px 8px;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+    vertical-align: top;
+    line-height: 1.35;
+  }
+  tr:nth-child(even) td {
+    background: #f8fafc;
+  }
+  code {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    background: #f1f5f9;
+    color: #0f172a;
+    padding: 1.5px 4px;
+    border-radius: 4px;
+    font-size: 8.5pt;
+    border: 1px solid #e2e8f0;
+  }
+  pre.code-block {
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 8.5pt;
+    line-height: 1.4;
+    overflow-x: auto;
+    margin: 10px 0 14px 0;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    font-family: "SFMono-Regular", Consolas, monospace;
+  }
+  pre.code-block code {
+    background: transparent;
+    color: #f8fafc;
+    padding: 0;
+    border: none;
+    font-size: inherit;
+  }
+  blockquote.callout {
+    background: #eff6ff;
+    border-left: 4px solid #2563eb;
+    margin: 10px 0;
+    padding: 8px 12px;
+    border-radius: 0 6px 6px 0;
+    color: #1e40af;
+    font-size: 9.5pt;
+  }
+  strong {
+    color: #0f172a;
+  }
+</style>
+</head>
+<body>
+<h1 class="doc-title">FDFED M2026 — Lab 1: Existing Application Analysis &amp; React Planning</h1>
+<h3 class="doc-meta">Project: BarelyPassing — Academic Progress &amp; Outcome Tracking System</h3>
+<h3 class="doc-meta">Team: The Boogiemen</h3>
+<hr class="divider"/>
+<h2 class="section-title">Task 0: Application Flow</h2>
+<h3 class="doc-meta">Overview</h3>
+<p><strong>BarelyPassing</strong> is a B2B multi-tenant SaaS platform for educational institutions. It provides academic monitoring, outcome tracking, attendance management, fee compliance, and support ticketing across a 5-level role hierarchy.</p>
+<h3 class="doc-meta">Entry Points</h3>
+<div class="table-container"><table>
+<thead><tr><th>Portal</th><th>Entry URL</th><th>Who Uses It</th></tr></thead>
+<tbody>
+<tr><td>Campus User Login</td><td><code>/login.html</code></td><td>Students, Faculty, HODs, Directors</td></tr>
+<tr><td>SaaS Support Login</td><td><code>/saas-login.html</code></td><td>SaaS Global Admin, Sales Lead, Tech Support</td></tr>
+<tr><td>Public Onboarding</td><td><code>/onboarding.html</code></td><td>New institution leads / prospects</td></tr>
+</tbody></table></div>
+
+<h3 class="doc-meta">Role-Based Dashboard Routing</h3>
+<pre class="code-block"><code class="">login.html
+   ↓
+  [Role Selected] → /api/auth/login (POST)
+   ↓
+  Role = student     → student.html
+  Role = faculty     → faculty.html
+  Role = head/HOD    → hod.html
+  Role = director    → director.html
+  Role = PLATFORM_*  → saas.html (via saas-login.html)</code></pre>
+<h3 class="doc-meta">Application Flow Diagram</h3>
+<pre class="code-block"><code class="">                      ┌─────────────────────────────────────────────────────────┐
+                      │               PUBLIC ENTRY POINTS                       │
+                      └────────────────────┬────────────────────────────────────┘
+                                           │
+           ┌───────────────────────────────┼────────────────────────────────────┐
+           │                               │                                    │
+    ┌──────▼──────┐                ┌───────▼──────┐                    ┌────────▼────────┐
+    │  login.html │                │ saas-login   │                    │ onboarding.html │
+    │ (Role-based)│                │    .html     │                    │ (Public inquiry)│
+    └──────┬──────┘                └───────┬──────┘                    └────────┬────────┘
+           │                               │                                    │
+    ┌──────▼──────────────────────┐ ┌──────▼────────┐               ┌──────────▼─────────┐
+    │  /api/auth/login (NestJS)   │ │   saas.html   │               │  SaaSStore (Local  │
+    │  B2B Multi-tenant Auth      │ │  SaaS Portal  │               │  Storage Onboard)  │
+    └──────┬──────────────────────┘ │  - Onboarding │               └────────────────────┘
+           │                        │  - Tickets    │
+           │                        │  - Activity   │
+    ┌──────▼──────────────────────────────────────────────────────┐
+    │                  ROLE-BASED DASHBOARD PAGES                  │
+    │                                                              │
+    │  student.html    faculty.html    hod.html    director.html   │
+    │                                                              │
+    │  [Profile]       [Dashboard]    [Dashboard] [Dashboard]      │
+    │  [Timetable]     [Timetable]    [Reports]   [Reports]        │
+    │  [Courses]       [Attendance]   [Courses]   [User Mgmt]      │
+    │  [Attendance]    [Students]     [Faculty]   [Fee Comp.]      │
+    │  [Leave]         [Assessment]   [User Mgmt] [Inst. Reports]  │
+    │  [Research]      [Research]     [Events]    [Saas Contact]   │
+    │  [Discussion]    [Resources]    [Settings]  [Settings]       │
+    │  [Settings]      [Leave]                                      │
+    │                  [Events]                                      │
+    │                  [Settings]                                   │
+    └───────────────────────────────────────────────────────────────┘
+           │
+    ┌──────▼──────────────────────┐
+    │  NestJS REST API (Port 5001) │
+    │  /api/*                      │
+    │  In-Memory DB (seed data)    │
+    └──────────────────────────────┘</code></pre>
+<h3 class="doc-meta">Key User Workflows</h3>
+<div class="table-container"><table>
+<thead><tr><th>Workflow</th><th>Actors Involved</th><th>Pages</th></tr></thead>
+<tbody>
+<tr><td>Student views attendance</td><td>Student</td><td><code>student.html</code> → <code>/api/students/me/attendance</code></td></tr>
+<tr><td>Faculty marks attendance</td><td>Faculty</td><td><code>faculty.html</code> → <code>/api/attendance</code></td></tr>
+<tr><td>Student applies for leave</td><td>Student</td><td><code>student.html</code> → <code>/api/leave</code></td></tr>
+<tr><td>HOD approves leave</td><td>HOD</td><td><code>hod.html</code> → <code>/api/leave/:id</code></td></tr>
+<tr><td>Faculty enters marks</td><td>Faculty</td><td><code>faculty.html</code> → <code>/api/marks</code></td></tr>
+<tr><td>Director views overview</td><td>Director</td><td><code>director.html</code> → <code>/api/reports/overview</code></td></tr>
+<tr><td>Institution onboards</td><td>Director</td><td><code>onboarding.html</code> → SaaSStore → <code>saas.html</code></td></tr>
+<tr><td>SaaS responds to ticket</td><td>SaaS Admin</td><td><code>saas.html</code> → SaaSStore → <code>director.html</code></td></tr>
+</tbody></table></div>
+
+<hr class="divider"/>
+<h2 class="section-title">Task 1: Repeated UI Elements</h2>
+<div class="table-container"><table>
+<thead><tr><th>UI Element</th><th>Pages / Location</th><th>How is it Repeated?</th><th>Why Could Reuse Be Useful?</th></tr></thead>
+<tbody>
+<tr><td><strong>Sidebar Navigation</strong></td><td><code>student.html</code>, <code>faculty.html</code>, <code>hod.html</code>, <code>director.html</code></td><td>Same sidebar structure (brand, user info, nav items, logout button) duplicated in all 4 HTML files</td><td>One change (e.g. styling, logout logic) must be made 4 times separately</td></tr>
+<tr><td><strong>Top Header Bar</strong></td><td><code>student.html</code>, <code>faculty.html</code>, <code>hod.html</code>, <code>director.html</code></td><td><code>&lt;div class=&quot;top-header-bar&quot;&gt;</code> with <code>#page-title</code>, semester badge, and semester number repeated on every page</td><td>Consistent header experience; changes only need to be in one place</td></tr>
+<tr><td><strong>Stats / KPI Cards</strong></td><td><code>student.html</code> (CGPA, Attendance), <code>faculty.html</code> (student count), <code>director.html</code> (reports overview), <code>hod.html</code></td><td>Cards showing a metric label and large value, styled identically with <code>stats-card</code> class</td><td>Single reusable <code>&lt;StatCard label=&quot;...&quot; value=&quot;...&quot; /&gt;</code> component</td></tr>
+<tr><td><strong>Data Tables (CRUD)</strong></td><td>User Management, Fee Compliance, Leave Management, Research Projects, Events, Resources across all 4 dashboards</td><td>Table with <code>&lt;thead&gt;&lt;tr&gt;&lt;th&gt;...&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;</code> built via <code>innerHTML</code> in fixes.js — same structure repeated 10+ times</td><td>A single <code>&lt;DataTable columns={...} rows={...} /&gt;</code> component handles all tables</td></tr>
+<tr><td><strong>Modals / Dialogs</strong></td><td>All pages: Edit User Modal, Add Course Modal, Leave Modal, Forgot Password Modal, Support Ticket Modal</td><td>Each modal has the same backdrop + window + header + body + footer structure repeated in HTML and toggled by <code>openModal(id)</code> / <code>closeModal(id)</code></td><td>A <code>&lt;Modal title=&quot;...&quot; isOpen={...} onClose={...}&gt;</code> component eliminates duplicated structure</td></tr>
+<tr><td><strong>Role Filter Pills / Tabs</strong></td><td>User Management (director, hod), SaaS onboarding leads</td><td>Inline <code>&lt;button&gt;</code> pills rendered dynamically using template literals</td><td>A <code>&lt;FilterTabs options={...} active={...} onChange={...} /&gt;</code> component</td></tr>
+<tr><td><strong>Toast / Snackbar Notifications</strong></td><td>All pages via <code>showToast()</code> in fixes.js</td><td><code>div</code> injected into DOM with identical CSS on every call across all pages</td><td>A <code>&lt;Toast /&gt;</code> React component using state/context replaces the manual DOM injection</td></tr>
+<tr><td><strong>Form Input Groups</strong></td><td>Login forms, Add User modal, Add Course modal, Leave Application form, Forgot Password modal</td><td><code>&lt;div class=&quot;input-group&quot;&gt;&lt;label&gt;...&lt;/label&gt;&lt;div class=&quot;input-icon-wrapper&quot;&gt;&lt;input&gt;&lt;/div&gt;&lt;div class=&quot;error-msg&quot;&gt;&lt;/div&gt;&lt;/div&gt;</code> copied in every form</td><td>A <code>&lt;FormInput label=&quot;...&quot; error=&quot;...&quot; type=&quot;...&quot;&gt;</code> component</td></tr>
+<tr><td><strong>Loading / Empty State</strong></td><td>All data-fetching sections (<code>el.innerHTML = &#x27;&lt;p&gt;Loading...&lt;/p&gt;&#x27;</code>)</td><td>Identical inline loading placeholder and error message strings written in every render function</td><td>A <code>&lt;LoadingSpinner /&gt;</code> and <code>&lt;EmptyState message=&quot;...&quot; /&gt;</code> component</td></tr>
+<tr><td><strong>Badge / Tag Pills</strong></td><td>Role badges in User Management, Status badges in Leave/Fee tables, Plan badges in Onboarding</td><td><code>&lt;span style=&quot;background:#e2e8f0;border-radius:4px;...&quot;&gt;ROLE&lt;/span&gt;</code> patterns repeated everywhere</td><td>A <code>&lt;Badge color=&quot;...&quot; label=&quot;...&quot; /&gt;</code> component</td></tr>
+</tbody></table></div>
+
+<blockquote class="callout"><strong>React Connection:</strong></blockquote>
+<blockquote class="callout">Each of these repeated elements is a natural React component. Instead of 4 copies of the sidebar HTML, one `&lt;Sidebar role={currentRole} /&gt;` component can conditionally render the correct nav items.</blockquote>
+<hr class="divider"/>
+<h2 class="section-title">Task 2: Dynamic Behaviour</h2>
+<div class="table-container"><table>
+<thead><tr><th>Page / Feature</th><th>User Action</th><th>What Changes?</th></tr></thead>
+<tbody>
+<tr><td><code>login.html</code></td><td>Clicks a role card (Student / Faculty / HOD / Director)</td><td>The login form title, subtitle, and email placeholder change; the selected role card gets the <code>.active</code> CSS class</td></tr>
+<tr><td><code>login.html</code></td><td>Submits the login form</td><td>Button text changes to &quot;Authenticating…&quot; and is disabled; on success, the page redirects to the role&#x27;s dashboard</td></tr>
+<tr><td><code>login.html</code></td><td>Clicks &quot;Forgot Password&quot;</td><td>A multi-step modal appears with 3 steps: email entry → OTP display → new password</td></tr>
+<tr><td><code>student.html</code></td><td>Clicks any sidebar nav item</td><td>The active view section (<code>div.view-section</code>) is shown; all others are hidden; page title in the header updates; data is fetched and rendered</td></tr>
+<tr><td><code>student.html</code></td><td>Loads Attendance view</td><td>Attendance percentage bars animate; a per-course breakdown table appears with colour-coded pass/fail indicators</td></tr>
+<tr><td><code>student.html</code></td><td>Loads Timetable view</td><td>A weekly grid is rendered with colour-coded day columns and class type icons (Lab 🔬 / Lecture 📖 / Tutorial ✏️)</td></tr>
+<tr><td><code>faculty.html</code></td><td>Clicks &quot;Mark Attendance&quot; for a course</td><td>A student list table appears; each row has Present/Absent toggle buttons</td></tr>
+<tr><td><code>faculty.html</code></td><td>Submits attendance</td><td>Records are sent to the API; a success toast appears; the button resets</td></tr>
+<tr><td><code>faculty.html</code></td><td>Clicks &quot;Enter Marks&quot;</td><td>A marks entry table appears per assessment with student rows; marks are locked once entered</td></tr>
+<tr><td><code>hod.html</code></td><td>Opens a leave application</td><td>The application row expands or a modal appears with Approve/Reject actions</td></tr>
+<tr><td><code>director.html</code></td><td>Clicks &quot;User Management&quot;</td><td>The user table loads with role filter tab pills (All / HODs / Faculty / Students); clicking a tab instantly filters the table</td></tr>
+<tr><td><code>director.html</code></td><td>Clicks &quot;Edit&quot; on a user</td><td>An Edit User modal opens pre-filled with that user&#x27;s data</td></tr>
+<tr><td><code>director.html</code></td><td>Opens &quot;Contact SaaS Support&quot;</td><td>A support ticket modal appears; on submit, a ticket is created in SaaSStore and a toast confirms</td></tr>
+<tr><td><code>saas.html</code></td><td>Clicks an Onboarding Lead row</td><td>&quot;Contact Lead&quot; and &quot;Invoice &amp; Pay Link&quot; buttons appear in the row</td></tr>
+<tr><td><code>saas.html</code></td><td>Clicks &quot;Invoice &amp; Pay Link&quot;</td><td>A B2B Invoice Modal opens; on confirm, a B2B Checkout Modal opens with total calculation (base + 18% GST)</td></tr>
+<tr><td><code>saas.html</code></td><td>Completes payment</td><td>Lead status updates to &quot;Paid&quot;; activity log records the event; success toast appears</td></tr>
+<tr><td>All dashboards</td><td>Logs out</td><td>All localStorage keys are cleared; page redirects to <code>login.html</code> or <code>saas-login.html</code> depending on role</td></tr>
+<tr><td>All dashboards</td><td>JWT token expires or is missing</td><td><code>requireAuth()</code> runs and shows an animated &quot;Access Denied&quot; screen with a 5-second countdown; all session data is cleared</td></tr>
+</tbody></table></div>
+
+<blockquote class="callout"><strong>React Connection:</strong></blockquote>
+<blockquote class="callout">All of these UI changes are currently driven by manual DOM manipulation. In React, each would be modelled as <strong>state</strong>: `activeView`, `selectedRole`, `isModalOpen`, `filterTab`, `users`, `tickets`, etc. When state changes, React re-renders the affected part of the UI automatically.</blockquote>
+<hr class="divider"/>
+<h2 class="section-title">Task 3: Existing JavaScript Analysis</h2>
+<div class="table-container"><table>
+<thead><tr><th>JavaScript</th><th>What Does It Do?</th><th>Page / Feature</th><th>What UI Does It Affect?</th></tr></thead>
+<tbody>
+<tr><td><code>document.getElementById(&#x27;usersTable&#x27;)</code></td><td>Finds the User Management table container</td><td>Director, HOD → User Management</td><td>Entire user list is rebuilt by setting <code>el.innerHTML = ...</code></td></tr>
+<tr><td><code>document.querySelectorAll(&#x27;.view-section&#x27;)</code></td><td>Selects all view panels</td><td>All dashboards (<code>switchView()</code>)</td><td>Hides all <code>.view-section</code> panels, then shows the clicked one</td></tr>
+<tr><td><code>document.querySelector(&#x27;.role-option[data-role=&quot;${role}&quot;]&#x27;)</code></td><td>Finds the selected role card on login</td><td><code>login.html</code> → <code>selectRole()</code></td><td>Adds/removes <code>.active</code> CSS class to highlight selected role</td></tr>
+<tr><td><code>addEventListener()</code> (DOMContentLoaded)</td><td>Waits for DOM to fully load before running auth check and rendering</td><td>All pages</td><td>Triggers <code>requireAuth()</code>, <code>renderDashboard()</code>, <code>renderStudentProfile()</code>, etc.</td></tr>
+<tr><td><code>el.innerHTML = ...</code> (template literals)</td><td>Builds entire table/card HTML as a string and injects it</td><td>Every render function in <code>fixes.js</code></td><td>Renders user tables, course cards, timetable grids, fee records, discussion posts</td></tr>
+<tr><td><code>el.innerHTML = &#x27;&lt;p&gt;Loading...&lt;/p&gt;&#x27;</code></td><td>Shows a loading placeholder before data arrives</td><td>All async render functions</td><td>Replaces section content temporarily while API call is in flight</td></tr>
+<tr><td><code>innerText</code> / <code>textContent</code></td><td>Updates page title, user name, badge text</td><td><code>switchView()</code>, sidebar user info</td><td>Updates <code>#page-title</code>, <code>#sidebar-user-name</code>, stat counters</td></tr>
+<tr><td><code>el.classList.add(&#x27;active&#x27;) / remove(&#x27;active&#x27;)</code></td><td>Highlights the selected sidebar nav item and active view section</td><td>All dashboards, <code>login.html</code></td><td>Sidebar item styling, view panel visibility</td></tr>
+<tr><td><code>style.display = &#x27;flex&#x27; / &#x27;none&#x27;</code></td><td>Shows and hides modals</td><td><code>openModal()</code> / <code>closeModal()</code> in <code>fixes.js</code></td><td>All modals (Edit User, Add Course, Leave modal, Forgot Password, SaaS ticket)</td></tr>
+<tr><td><code>document.createElement(&#x27;div&#x27;)</code></td><td>Creates toast notification elements dynamically</td><td><code>showToast()</code> in <code>fixes.js</code></td><td>Injects a success/error/warning snackbar into <code>document.body</code>, auto-removes after 3.5s</td></tr>
+<tr><td><code>localStorage.getItem/setItem</code></td><td>Reads and writes JWT token, user object, tenant, SaaS tickets, onboarding leads, activity logs</td><td><code>state.js</code> (Auth + SaaSStore)</td><td>Controls login state, role-based routing, inter-portal communication</td></tr>
+<tr><td><code>window.location.href = &#x27;...&#x27;</code></td><td>Hard-navigates to a different HTML page</td><td><code>state.js</code> login/logout, <code>requireAuth()</code></td><td>Causes a full page reload on every route change</td></tr>
+<tr><td><code>document.documentElement.style.cssText = ...</code></td><td>Completely replaces page body HTML for the &quot;Access Denied&quot; screen</td><td><code>state.js → _showAccessDenied()</code></td><td>Wipes out the entire DOM and replaces it with an error screen</td></tr>
+<tr><td><code>setTimeout(() =&gt; ..., 3500)</code></td><td>Delays toast removal and access-denied countdown</td><td><code>showToast()</code>, <code>_showAccessDenied()</code></td><td>Toast disappears; redirect countdown fires</td></tr>
+<tr><td><code>onmouseover</code> / <code>onmouseout</code> inline attributes</td><td>Adds hover effects to course cards and timetable slots</td><td><code>student.html</code> course cards, timetable grid</td><td><code>boxShadow</code> and <code>transform</code> style changes</td></tr>
+</tbody></table></div>
+
+<blockquote class="callout"><strong>React Connection:</strong></blockquote>
+<blockquote class="callout">In React, none of these manual DOM manipulations would be needed. `innerHTML` and template literals are replaced by <strong>JSX</strong>. `classList` changes become <strong>conditional class names</strong>. `style.display` toggling becomes <strong>conditional rendering</strong> (`isModalOpen &amp;&amp; &lt;Modal /&gt;`). `localStorage` reads are replaced by a <strong>global state store</strong> (Context API or Redux). Page navigation becomes <strong>React Router</strong> — no full-page reloads.</blockquote>
+<hr class="divider"/>
+<h2 class="section-title">Task 4: NestJS API Analysis</h2>
+<div class="table-container"><table>
+<thead><tr><th>Feature</th><th>HTTP Method</th><th>API Endpoint</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td><strong>Login</strong></td><td>POST</td><td><code>/api/auth/login</code></td><td>Authenticate user with email, password, and tenant_code; returns JWT and role-based redirect path</td></tr>
+<tr><td><strong>Student Profile</strong></td><td>GET</td><td><code>/api/students/me</code></td><td>Get the logged-in student&#x27;s profile (name, branch, CGPA, section)</td></tr>
+<tr><td><strong>Student Attendance</strong></td><td>GET</td><td><code>/api/students/me/attendance</code></td><td>Get overall and per-course attendance summary</td></tr>
+<tr><td><strong>Student Courses</strong></td><td>GET</td><td><code>/api/students/me/courses</code></td><td>Get enrolled courses with marks %, attendance %, and syllabus progress</td></tr>
+<tr><td><strong>Student Timetable</strong></td><td>GET</td><td><code>/api/student-timetable</code></td><td>Get weekly timetable filtered by enrolled courses only</td></tr>
+<tr><td><strong>All Courses</strong></td><td>GET</td><td><code>/api/courses</code></td><td>Get all available courses</td></tr>
+<tr><td><strong>Create Course</strong></td><td>POST</td><td><code>/api/courses</code></td><td>Faculty/Admin creates a new course</td></tr>
+<tr><td><strong>Timetable Grid</strong></td><td>GET</td><td><code>/api/timetable?section=A</code></td><td>Get timetable grid for a specific section</td></tr>
+<tr><td><strong>Faculty Timetable</strong></td><td>GET</td><td><code>/api/timetable/faculty</code></td><td>Get timetable for the logged-in faculty member</td></tr>
+<tr><td><strong>Assessments</strong></td><td>GET</td><td><code>/api/assessments?faculty_id=...</code></td><td>Get all assessments, optionally filtered by faculty</td></tr>
+<tr><td><strong>Create Assessment</strong></td><td>POST</td><td><code>/api/assessments</code></td><td>Faculty creates a new assessment with weightage</td></tr>
+<tr><td><strong>Get Marks</strong></td><td>GET</td><td><code>/api/marks?assessment_id=...</code></td><td>Get marks entries; locked once entered</td></tr>
+<tr><td><strong>Record Marks</strong></td><td>POST</td><td><code>/api/marks</code></td><td>Faculty records marks (locked, cannot overwrite)</td></tr>
+<tr><td><strong>Submissions</strong></td><td>GET</td><td><code>/api/submissions</code></td><td>Students see own; faculty see all</td></tr>
+<tr><td><strong>Create Submission</strong></td><td>POST</td><td><code>/api/submissions</code></td><td>Student submits work for an assessment (re-submission allowed)</td></tr>
+<tr><td><strong>Attendance Today</strong></td><td>GET</td><td><code>/api/attendance/today/:courseId</code></td><td>Get enrolled students for faculty to mark present/absent</td></tr>
+<tr><td><strong>Record Attendance</strong></td><td>POST</td><td><code>/api/attendance</code></td><td>Bulk record attendance for a course session</td></tr>
+<tr><td><strong>Discussions</strong></td><td>GET</td><td><code>/api/discussions</code></td><td>Get all discussion posts with reply counts</td></tr>
+<tr><td><strong>Discussion Detail</strong></td><td>GET</td><td><code>/api/discussions/:postId</code></td><td>Get one post with all replies</td></tr>
+<tr><td><strong>Create Post</strong></td><td>POST</td><td><code>/api/discussions</code></td><td>Any user creates a new discussion post</td></tr>
+<tr><td><strong>Reply to Post</strong></td><td>POST</td><td><code>/api/discussions/:postId/replies</code></td><td>Any user replies to a discussion</td></tr>
+<tr><td><strong>Research Projects</strong></td><td>GET</td><td><code>/api/research</code></td><td>Get projects (own for student/faculty, all for admin)</td></tr>
+<tr><td><strong>Update Research Status</strong></td><td>PATCH</td><td><code>/api/research/:id/status</code></td><td>Faculty updates project status</td></tr>
+<tr><td><strong>Update Research Progress</strong></td><td>PATCH</td><td><code>/api/research/:id/progress</code></td><td>Any member updates progress % or notes</td></tr>
+<tr><td><strong>Create Research</strong></td><td>POST</td><td><code>/api/research</code></td><td>Faculty creates a new BTP/research project</td></tr>
+<tr><td><strong>Events</strong></td><td>GET</td><td><code>/api/events</code></td><td>Get all scheduled institutional events</td></tr>
+<tr><td><strong>Create Event</strong></td><td>POST</td><td><code>/api/events</code></td><td>Admin/Faculty schedules a new event</td></tr>
+<tr><td><strong>Update Event</strong></td><td>PUT</td><td><code>/api/events/:id</code></td><td>Edit an event</td></tr>
+<tr><td><strong>Delete Event</strong></td><td>DELETE</td><td><code>/api/events/:id</code></td><td>Delete an event</td></tr>
+<tr><td><strong>Leave Applications</strong></td><td>GET</td><td><code>/api/leave</code></td><td>Students see own; admin/faculty see all</td></tr>
+<tr><td><strong>Apply Leave</strong></td><td>POST</td><td><code>/api/leave</code></td><td>Student submits leave application</td></tr>
+<tr><td><strong>Approve/Reject Leave</strong></td><td>PATCH</td><td><code>/api/leave/:id</code></td><td>HOD/Admin updates leave status</td></tr>
+<tr><td><strong>All Users</strong></td><td>GET</td><td><code>/api/admin/users</code></td><td>Admin panel user list</td></tr>
+<tr><td><strong>Create User</strong></td><td>POST</td><td><code>/api/users</code></td><td>Admin creates a new user (also creates student/faculty profile)</td></tr>
+<tr><td><strong>Update User</strong></td><td>PUT</td><td><code>/api/users/:id</code></td><td>Admin edits a user&#x27;s details or role</td></tr>
+<tr><td><strong>Delete User</strong></td><td>DELETE</td><td><code>/api/users/:id</code></td><td>Admin removes a user</td></tr>
+<tr><td><strong>Reports Overview</strong></td><td>GET</td><td><code>/api/reports/overview</code></td><td>KPI summary (total students, faculty, attendance %, fee compliance %)</td></tr>
+<tr><td><strong>At-Risk Students</strong></td><td>GET</td><td><code>/api/reports/at-risk</code></td><td>List of students with CGPA &lt; 6.5 and low attendance</td></tr>
+<tr><td><strong>Resources</strong></td><td>GET</td><td><code>/api/resources</code></td><td>Get all physical/lab resources</td></tr>
+<tr><td><strong>Create Resource</strong></td><td>POST</td><td><code>/api/resources</code></td><td>Admin adds a new resource</td></tr>
+<tr><td><strong>Update Resource</strong></td><td>PUT</td><td><code>/api/resources/:id</code></td><td>Update resource availability/status</td></tr>
+<tr><td><strong>Fee Records</strong></td><td>GET</td><td><code>/api/fees</code></td><td>Get all fee records with paid/pending/overdue summary</td></tr>
+<tr><td><strong>Mark Fee Paid</strong></td><td>PATCH</td><td><code>/api/fees/:id/pay</code></td><td>Admin marks a fee record as paid</td></tr>
+<tr><td><strong>Create Fee</strong></td><td>POST</td><td><code>/api/fees</code></td><td>Admin adds a new fee record for a student</td></tr>
+<tr><td><strong>Enrollment</strong></td><td>POST</td><td><code>/api/enrollment</code></td><td>Faculty/Admin enrolls a student in a course</td></tr>
+<tr><td><strong>Attendance Request</strong></td><td>POST</td><td><code>/api/attendance-request</code></td><td>Student requests attendance correction</td></tr>
+<tr><td><strong>Get Attendance Requests</strong></td><td>GET</td><td><code>/api/attendance-requests</code></td><td>Role-filtered list of correction requests</td></tr>
+<tr><td><strong>Admin Approve Attendance</strong></td><td>PATCH</td><td><code>/api/attendance-request/:id</code></td><td>HOD/Admin approves request</td></tr>
+<tr><td><strong>Faculty Grant Attendance</strong></td><td>PATCH</td><td><code>/api/attendance-request/:id/mark</code></td><td>Faculty records the corrected attendance</td></tr>
+<tr><td><strong>Resource Booking</strong></td><td>POST</td><td><code>/api/resource-booking</code></td><td>Faculty requests a resource booking</td></tr>
+<tr><td><strong>Get Bookings</strong></td><td>GET</td><td><code>/api/resource-bookings</code></td><td>Faculty sees own; admin sees all</td></tr>
+<tr><td><strong>Approve Booking</strong></td><td>PATCH</td><td><code>/api/resource-booking/:id</code></td><td>Admin approves/rejects resource booking</td></tr>
+<tr><td><strong>Syllabus Progress</strong></td><td>GET</td><td><code>/api/syllabus-progress</code></td><td>Get syllabus completion per course</td></tr>
+<tr><td><strong>Update Syllabus</strong></td><td>PATCH</td><td><code>/api/syllabus-progress</code></td><td>Faculty updates completion percentage</td></tr>
+</tbody></table></div>
+
+<h3 class="doc-meta">Architecture Diagram</h3>
+<pre class="code-block"><code class="">Frontend (HTML + Vanilla JS)         NestJS REST API (Port 5001)
+   ↓                                        ↓
+fetch(`/api/...`, { headers: {          Controller → Guard (role check)
+   Authorization: Bearer &lt;JWT&gt;,             ↓
+   role: &lt;user.role&gt;,                   Service/DB → InMemoryDbService
+   user-id: &lt;user.user_id&gt;,               (Seeded in-memory arrays)
+   x-tenant-id: &lt;tenant.tenant_id&gt;            ↓
+}})                                     JSON Response</code></pre>
+<blockquote class="callout"><strong>Note:</strong> The NestJS backend will <strong>not</strong> be rewritten. React will continue consuming the same REST endpoints. Only the frontend rendering layer changes.</blockquote>
+<hr class="divider"/>
+<h2 class="section-title">Task 5: Problems in the Existing Frontend</h2>
+<div class="table-container"><table>
+<thead><tr><th>#</th><th>Current Issue</th><th>Where Does It Occur?</th><th>Why Is It a Problem?</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><strong>Massive monolithic JavaScript file (<code>fixes.js</code> — 3,059 lines, 208 KB)</strong></td><td>All dashboard pages</td><td>The entire frontend logic for all roles (Student, Faculty, HOD, Director, SaaS) is crammed into one file. This makes it difficult to maintain, debug, or extend without risk of breaking unrelated features. Any change requires searching thousands of lines.</td></tr>
+<tr><td>2</td><td><strong>Full page reload on every navigation</strong></td><td><code>state.js → window.location.href = &#x27;...&#x27;</code> on every role redirect and logout</td><td>Every role switch, logout, or auth failure triggers a full browser reload. Users experience blank white flashes between pages. There is no concept of client-side routing; the browser discards all state on each navigation.</td></tr>
+<tr><td>3</td><td><strong>Entire HTML sections built as template literal strings inside <code>innerHTML</code></strong></td><td>Every render function in <code>fixes.js</code> (e.g. <code>renderStudentCourses</code>, <code>renderUsersTable</code>, <code>renderTimetableGrid</code>)</td><td>This approach bypasses the browser&#x27;s incremental DOM update model — it destroys and recreates the entire section on every render call. It also creates XSS vulnerability risks if user data isn&#x27;t sanitised before injection. There is no diffing; even unchanged parts are thrown away and recreated.</td></tr>
+<tr><td>4</td><td><strong>Sidebar, header, and layout HTML duplicated in every page file</strong></td><td><code>student.html</code>, <code>faculty.html</code>, <code>hod.html</code>, <code>director.html</code></td><td>The sidebar HTML (with brand, user avatar, nav items, settings, logout button) is copy-pasted across 4 files. A change to the sidebar structure (e.g. adding a new menu item or updating branding) requires editing 4 separate files. This inevitably leads to inconsistencies.</td></tr>
+<tr><td>5</td><td><strong>No client-side state management — all state lives in <code>localStorage</code> strings</strong></td><td><code>state.js</code> (SaaSStore, Auth)</td><td>Inter-portal communication between <code>director.html</code> and <code>saas.html</code> is done by reading and writing raw JSON strings into <code>localStorage</code>. There is no reactivity — a change in one tab does not update the other. Onboarding leads, support tickets, and activity logs are manually serialised/deserialised with no schema validation.</td></tr>
+<tr><td>6</td><td><strong>All form validation duplicated inline in every form handler</strong></td><td><code>login.html → handleLogin()</code>, <code>fixes.js → submitAddUser()</code>, <code>submitEditUser()</code></td><td>Validation logic (email regex, password strength checks) is copy-pasted in multiple places. A change to validation rules (e.g. adding a new password requirement) must be updated everywhere manually, and inconsistencies will appear.</td></tr>
+<tr><td>7</td><td><strong>No component encapsulation — UI and data logic are tightly entangled</strong></td><td>All of <code>fixes.js</code></td><td>Every render function fetches data from the API *and* builds the HTML *and* handles events. There is no separation between &quot;data fetching&quot;, &quot;presentation&quot;, and &quot;event handling&quot;. This makes unit testing impossible and code reuse very difficult.</td></tr>
+</tbody></table></div>
+
+<hr class="divider"/>
+<h2 class="section-title">React Conversion Opportunities</h2>
+<div class="table-container"><table>
+<thead><tr><th>Feature</th><th>Current State</th><th>React Improvement</th></tr></thead>
+<tbody>
+<tr><td>Sidebar</td><td>Duplicated HTML in 4 files</td><td>Single <code>&lt;Sidebar role={...} /&gt;</code> component, shared across all pages via React Router layouts</td></tr>
+<tr><td>Data Tables</td><td><code>innerHTML</code> template literals</td><td><code>&lt;DataTable columns={...} rows={...} onEdit={...} onDelete={...} /&gt;</code> component with proper state updates</td></tr>
+<tr><td>Modals</td><td><code>display:flex</code>/<code>display:none</code> toggled by <code>openModal()</code></td><td><code>&lt;Modal isOpen={state} onClose={fn}&gt;</code> with conditional rendering</td></tr>
+<tr><td>Role Filter Tabs</td><td>Inline <code>&lt;button&gt;</code> rendering + <code>currentActiveRoleFilter</code> global variable</td><td><code>&lt;FilterTabs tabs={...} active={...} onChange={setFilter} /&gt;</code> with <code>useState</code></td></tr>
+<tr><td>API calls + loading states</td><td>Manual <code>el.innerHTML = &#x27;Loading...&#x27;</code> before every fetch</td><td>Custom <code>useFetch(&#x27;/api/...&#x27;)</code> hook returning <code>{ data, loading, error }</code></td></tr>
+<tr><td>Page routing</td><td><code>window.location.href = &#x27;page.html&#x27;</code> (full reloads)</td><td><code>&lt;Routes&gt;</code> + <code>&lt;Route path=&quot;/dashboard&quot;&gt;</code> with <code>&lt;Navigate&gt;</code> for role-based protection</td></tr>
+<tr><td>Toast notifications</td><td><code>document.createElement(&#x27;div&#x27;)</code> injected into body</td><td><code>&lt;ToastProvider&gt;</code> using Context API + <code>useToast()</code> hook</td></tr>
+<tr><td>Authentication state</td><td><code>localStorage.getItem(&#x27;bp_user&#x27;)</code> read on every page load</td><td><code>AuthContext</code> providing <code>user</code>, <code>login()</code>, <code>logout()</code> to all components</td></tr>
+</tbody></table></div>
+
+<hr class="divider"/>
+<h2 class="section-title">First React Conversion Target</h2>
+<h3 class="doc-meta">Selected Feature: **Student Dashboard — Courses View**</h3>
+<p><strong>Reason for selection:</strong></p>
+<p>The <code>renderStudentCourses()</code> function in <code>fixes.js</code> (lines 147–205) is one of the most complex and self-contained render functions in the application. It:</p>
+<p>- Makes a real API call (<code>/api/students/me/courses</code>)</p>
+<p>- Handles loading and error states</p>
+<p>- Renders a rich, interactive card layout with nested module progress bars</p>
+<p>- Uses inline hover effects via <code>onmouseover</code>/<code>onmouseout</code></p>
+<p>- Builds deeply nested HTML using template literals</p>
+<p>It is an ideal first conversion target because it is fully <strong>isolated</strong> (does not depend on other views), it exercises <strong>data fetching</strong>, <strong>conditional rendering</strong>, and <strong>dynamic styling</strong> — core React concepts.</p>
+<h3 class="doc-meta">Initial React Conversion Sketch</h3>
+<pre class="code-block"><code class="jsx">// CourseCard.jsx — A single reusable course card
+function CourseCard({ course }) {
+  return (
+    &lt;div className=&quot;course-card&quot;&gt;
+      &lt;div className=&quot;course-header&quot;&gt;
+        &lt;span className=&quot;badge&quot;&gt;{course.course_code}&lt;/span&gt;
+        &lt;span className=&quot;credits&quot;&gt;{course.credits} Credits&lt;/span&gt;
+      &lt;/div&gt;
+      &lt;h3&gt;{course.course_name}&lt;/h3&gt;
+      &lt;p className=&quot;faculty&quot;&gt;{course.faculty_name}&lt;/p&gt;
+      &lt;div className=&quot;metrics&quot;&gt;
+        &lt;MetricBadge label=&quot;Attendance&quot; value={course.attendance_pct} unit=&quot;%&quot; /&gt;
+        &lt;MetricBadge label=&quot;Syllabus&quot;   value={course.syllabus_progress} unit=&quot;%&quot; /&gt;
+      &lt;/div&gt;
+      {course.modules?.map(m =&gt; (
+        &lt;ModuleProgressBar key={m.name} module={m} /&gt;
+      ))}
+    &lt;/div&gt;
+  );
+}
+
+// CoursesView.jsx — Fetches data and renders a list of cards
+function CoursesView() {
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState(null);
+
+  useEffect(() =&gt; {
+    api(&#x27;/students/me/courses&#x27;)
+      .then(data  =&gt; { setCourses(data); setLoading(false); })
+      .catch(err  =&gt; { setError(err.message); setLoading(false); });
+  }, []);
+
+  if (loading) return &lt;LoadingSpinner /&gt;;
+  if (error)   return &lt;ErrorMessage message={error} /&gt;;
+  if (!courses.length) return &lt;EmptyState message=&quot;No courses enrolled.&quot; /&gt;;
+
+  return (
+    &lt;div className=&quot;courses-grid&quot;&gt;
+      {courses.map(c =&gt; &lt;CourseCard key={c.course_id} course={c} /&gt;)}
+    &lt;/div&gt;
+  );
+}</code></pre>
+<p><strong>Components Identified for First Conversion:</strong></p>
+<div class="table-container"><table>
+<thead><tr><th>Component</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td><code>&lt;CoursesView /&gt;</code></td><td>Fetches and displays the course list with loading/error/empty states</td></tr>
+<tr><td><code>&lt;CourseCard /&gt;</code></td><td>Renders a single course card with all metrics</td></tr>
+<tr><td><code>&lt;MetricBadge /&gt;</code></td><td>Reusable metric display (Attendance %, Syllabus %) with colour coding</td></tr>
+<tr><td><code>&lt;ModuleProgressBar /&gt;</code></td><td>Renders a single module name + progress bar</td></tr>
+<tr><td><code>&lt;LoadingSpinner /&gt;</code></td><td>Shared loading placeholder (reusable across all views)</td></tr>
+<tr><td><code>&lt;EmptyState /&gt;</code></td><td>Shared empty data placeholder</td></tr>
+</tbody></table></div>
+
+<hr class="divider"/>
+<h2 class="section-title">Login Credentials</h2>
+<div class="table-container"><table>
+<thead><tr><th>Role</th><th>Email</th><th>Password</th><th>Institute Code</th></tr></thead>
+<tbody>
+<tr><td><strong>Student</strong></td><td><code>student@iiits.in</code></td><td><code>Pass@123</code></td><td><code>IIITS</code></td></tr>
+<tr><td><strong>Faculty</strong></td><td><code>faculty@iiits.in</code></td><td><code>Pass@123</code></td><td><code>IIITS</code></td></tr>
+<tr><td><strong>HOD / Academic Head</strong></td><td><code>head@iiits.in</code></td><td><code>Pass@123</code></td><td><code>IIITS</code></td></tr>
+<tr><td><strong>Institute Director</strong></td><td><code>director@iiits.in</code></td><td><code>Pass@123</code></td><td><code>IIITS</code></td></tr>
+<tr><td><strong>SaaS Global Admin</strong></td><td><code>saasadmin@platform.com</code></td><td><code>Pass@123</code></td><td><code>global</code></td></tr>
+<tr><td><strong>SaaS Sales Lead</strong></td><td><code>sales@platform.com</code></td><td><code>Pass@123</code></td><td><code>global</code></td></tr>
+<tr><td><strong>SaaS Tech Support</strong></td><td><code>techsupport@platform.com</code></td><td><code>Pass@123</code></td><td><code>global</code></td></tr>
+</tbody></table></div>
+
+<h2 class="section-title">Application URLs (Port 5001)</h2>
+<div class="table-container"><table>
+<thead><tr><th>Portal</th><th>URL</th></tr></thead>
+<tbody>
+<tr><td>Campus Login</td><td><code>http://localhost:5001/login.html</code></td></tr>
+<tr><td>SaaS Support Login</td><td><code>http://localhost:5001/saas-login.html</code></td></tr>
+<tr><td>Public Onboarding</td><td><code>http://localhost:5001/onboarding.html</code></td></tr>
+</tbody></table></div>
+
+</body>
+</html>

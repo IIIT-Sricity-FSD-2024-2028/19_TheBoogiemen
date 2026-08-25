@@ -1,5 +1,5 @@
-import { Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
+import { Module, NestModule, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
+import { APP_GUARD, APP_FILTER } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -25,6 +25,19 @@ import { LeaveModule } from './modules/leave/leave.leave.module';
 import { AssessmentModule } from './modules/assessment/assessment.assessment.module';
 import { OutcomeModule } from './modules/outcome/outcome.outcome.module';
 
+// Evaluation: Mandatory Uploads & Timetable Modules
+import { UploadsModule } from './uploads/uploads.module';
+import { TimetableModule } from './modules/timetable/timetable.module';
+
+// Evaluation: Mandatory Middleware & Services
+import { FileLoggerService } from './common/services/file-logger.service';
+import { LoggingMiddleware } from './common/middleware/logging.middleware';
+import { SecurityMiddleware } from './common/middleware/security.middleware';
+import { RateLimiterMiddleware } from './common/middleware/rate-limiter.middleware';
+import { TenantContextMiddleware } from './common/middleware/tenant-context.middleware';
+import { AuditLoggerMiddleware } from './common/middleware/audit-logger.middleware';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -34,6 +47,8 @@ import { OutcomeModule } from './modules/outcome/outcome.outcome.module';
     StudentsModule,
     FacultyModule,
     AdminModule,
+    UploadsModule,
+    TimetableModule,
     // Workflow modules
     FeeModule,
     ReportModule,
@@ -49,10 +64,64 @@ import { OutcomeModule } from './modules/outcome/outcome.outcome.module';
   controllers: [AppController],
   providers: [
     AppService,
+    FileLoggerService,
     {
       provide: APP_GUARD,
       useClass: RolesGuard,
     },
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionsFilter,
+    },
   ],
+  exports: [FileLoggerService],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    // ── 1. Global Security Middleware ──
+    consumer.apply(SecurityMiddleware).forRoutes('*');
+
+    // ── 2. Global Logging Middleware (logs to access.log & app.log) ──
+    consumer.apply(LoggingMiddleware).forRoutes('*');
+
+    // ── 3. Global Rate Limiter Middleware ──
+    consumer.apply(RateLimiterMiddleware).forRoutes('*');
+
+    // ── 4. Router-Level Tenant Context Middleware (Multi-Tenant Isolation) ──
+    consumer
+      .apply(TenantContextMiddleware)
+      .forRoutes(
+        'admin',
+        'faculty',
+        'students',
+        'platform',
+        'fees',
+        'uploads',
+        'timetable',
+        'courses',
+        'leave',
+        'attendance',
+        'reports',
+        'research'
+      );
+
+    // ── 5. Router-Level Audit Logger Middleware (for State Mutations) ──
+    consumer
+      .apply(AuditLoggerMiddleware)
+      .forRoutes(
+        { path: 'admin/*', method: RequestMethod.ALL },
+        { path: 'users/*', method: RequestMethod.ALL },
+        { path: 'users', method: RequestMethod.ALL },
+        { path: 'courses/*', method: RequestMethod.ALL },
+        { path: 'courses', method: RequestMethod.ALL },
+        { path: 'marks/*', method: RequestMethod.ALL },
+        { path: 'marks', method: RequestMethod.ALL },
+        { path: 'leave/*', method: RequestMethod.ALL },
+        { path: 'leave', method: RequestMethod.ALL },
+        { path: 'fees/*', method: RequestMethod.ALL },
+        { path: 'fees', method: RequestMethod.ALL },
+        { path: 'uploads/*', method: RequestMethod.ALL },
+        { path: 'timetable/*', method: RequestMethod.ALL }
+      );
+  }
+}

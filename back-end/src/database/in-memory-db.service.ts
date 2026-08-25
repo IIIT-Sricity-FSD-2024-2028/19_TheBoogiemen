@@ -328,5 +328,21 @@ export class InMemoryDbService {
   ];
 
   public active_sessions: Record<string, { refresh_token: string; user_id: string; tenant_id: string; expires_at: Date }> = {};
+
+  public uploads: any[] = [
+    {
+      file_id: 'doc_sample_report_u1',
+      original_name: 'Official_Progress_Report_Spring2026.pdf',
+      file_name: 'sample-progress-report-u1.pdf',
+      file_path: require('path').resolve(process.cwd(), 'uploads/sample-progress-report-u1.pdf'),
+      mime_type: 'application/pdf',
+      size_bytes: 109694,
+      uploaded_by: 'u2',
+      uploader_role: 'faculty',
+      category: 'progress_report',
+      related_entity_id: 'u1',
+      created_at: '2026-08-26T00:00:00.000Z',
+    },
+  ];
 }
 

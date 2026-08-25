@@ -1,14 +1,18 @@
 import { Controller, Get, Post, Body, Param, Headers, Query, BadRequestException } from '@nestjs/common';
 import { PlatformService } from './platform.service';
-import { ApiTags, ApiOperation, ApiResponse, ApiHeader } from '@nestjs/swagger';
+import { FileLoggerService } from '../common/services/file-logger.service';
+import { ApiTags, ApiOperation, ApiHeader } from '@nestjs/swagger';
 
-@ApiTags('B2B SaaS Platform')
+@ApiTags('B2B SaaS Platform & System Logs')
 @Controller('platform')
 export class PlatformController {
-  constructor(private readonly platformService: PlatformService) {}
+  constructor(
+    private readonly platformService: PlatformService,
+    private readonly fileLogger: FileLoggerService
+  ) {}
 
   @Get('tenants')
-  @ApiOperation({ summary: 'Get all subscribed educational institutions (SaaS Platform Super Admin)' })
+  @ApiOperation({ summary: 'Get all subscribed educational institutions' })
   getAllTenants() {
     return this.platformService.getAllTenants();
   }
@@ -88,5 +92,22 @@ export class PlatformController {
     const tenantId = tenantIdHeader || body.tenant_id || 't1';
     const userId = userIdHeader || body.user_id || 'u3_inst';
     return this.platformService.recordAuditLog(tenantId, userId, body.action, body.details);
+  }
+
+  // ── Evaluation Criteria: Log and Error Management Endpoints ──
+  @Get('logs')
+  @ApiOperation({ summary: 'Retrieve system log files (access, app, error, audit)' })
+  getSystemLogs(
+    @Query('type') type: 'access' | 'app' | 'error' | 'audit' = 'app',
+    @Query('limit') limit: string = '100'
+  ) {
+    const count = parseInt(limit, 10) || 100;
+    const lines = this.fileLogger.getRecentLogs(type, count);
+    return {
+      success: true,
+      log_type: type,
+      total_lines: lines.length,
+      lines,
+    };
   }
 }
