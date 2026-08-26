@@ -688,8 +688,8 @@
             <button class="btn-launch-primary" onclick="launchDirectorPortal()">
                 🚀 Launch Director Portal (Instant Sign-In)
             </button>
-            <a href="saas.html" class="btn-launch-saas">
-                🛡️ Inspect in SaaS Platform Queue →
+            <a href="saas-login.html" class="btn-launch-saas">
+                🛡️ Inspect in SaaS Platform Queue (Support Login) →
             </a>
             <button class="btn-launch-ghost" onclick="window.print()">
                 📄 Print Setup Kit
@@ -861,26 +861,37 @@ function handleInstitutionalSignup() {
 }
 
 function launchDirectorPortal() {
-    // Setup authenticated session for the Director and open director portal
+    const tenantCode = (provisionedTenantData.instCode || 'NEW').toUpperCase();
+    const instName = provisionedTenantData.instName || 'New Institution';
+    const adminName = provisionedTenantData.adminName || 'Director';
+    const email = provisionedTenantData.email || `director@${tenantCode.toLowerCase()}.edu`;
+
+    // Create a brand-new, unique authenticated Director session for this specific college
     const user = {
-        user_id: 'u3_inst',
-        name: provisionedTenantData.adminName || 'Dr. Rajesh Kumar',
-        email: provisionedTenantData.email || 'director@iiits.in',
+        user_id: 'u_dir_' + tenantCode.toLowerCase(),
+        name: adminName,
+        first_name: adminName,
+        last_name: '',
+        username: email.split('@')[0],
+        email: email,
         role: 'INSTITUTE_SUPER_ADMIN',
-        tenant_id: 't1'
+        tenant_id: 't_' + tenantCode.toLowerCase(),
+        tenant_code: tenantCode,
+        is_new_onboarding: true
     };
     const tenant = {
-        tenant_id: 't1',
-        name: provisionedTenantData.instName || 'NIT Warangal',
-        code: provisionedTenantData.instCode || 'NITW'
+        tenant_id: 't_' + tenantCode.toLowerCase(),
+        name: instName,
+        code: tenantCode
     };
 
     localStorage.setItem('bp_user', JSON.stringify(user));
     localStorage.setItem('user', JSON.stringify(user));
     localStorage.setItem('bp_tenant', JSON.stringify(tenant));
     localStorage.setItem('tenant', JSON.stringify(tenant));
-    localStorage.setItem('bp_token', 'mock_director_jwt_' + Date.now());
+    localStorage.setItem('bp_token', 'jwt_dir_' + tenantCode.toLowerCase() + '_' + Date.now());
 
+    // Redirect straight into the Director Portal
     window.location.href = 'director.html';
 }
 </script>

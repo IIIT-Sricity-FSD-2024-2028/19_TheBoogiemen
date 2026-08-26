@@ -63,11 +63,15 @@
     </div>
 </aside>
 
-<!-- ── Main Area ────────────────────────────── -->
 <div class="main-content">
     <div class="top-header-bar" id="top-header-bar">
         <h1 id="page-title">Dashboard</h1>
-        <div class="header-badges"><span class="badge-term">Spring 2026</span></div>
+        <div class="header-badges" style="display:flex;align-items:center;gap:10px;">
+            <button onclick="startDirectorTour(true)" style="background:#eef2ff;color:#4f46e5;border:1px solid #c7d2fe;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .2s;">
+                🎓 Step-by-Step Guide
+            </button>
+            <span class="badge-term" id="dirInstitutionBadge">Spring 2026</span>
+        </div>
     </div>
 
     <div class="content-body">
@@ -437,22 +441,65 @@
     </div>
 </div>
 
+<!-- ── Interactive Step-by-Step Guided Tutorial Modal ── -->
+<div class="modal-overlay" id="directorTourModal" style="display:none;align-items:center;justify-content:center;background:rgba(15,23,42,0.7);z-index:99999;">
+    <div class="modal" style="max-width:560px;width:92%;background:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 25px 60px rgba(0,0,0,0.3);border:1px solid #c7d2fe;padding:0;">
+        <div style="background:linear-gradient(135deg,#0f172a,#312e81);padding:24px 28px;color:#fff;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span id="tourBadge" style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.15);padding:4px 10px;border-radius:20px;font-size:11px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;color:#c7d2fe;">
+                    🎓 Director Walkthrough
+                </span>
+                <span id="tourStepIndicator" style="font-size:12px;font-weight:700;color:#94a3b8;">Step 1 of 4</span>
+            </div>
+            <h2 id="tourTitle" style="font-size:20px;font-weight:800;margin-top:10px;color:#fff;">1. Welcome to Your Campus Command Center</h2>
+        </div>
+        <div id="tourBody" style="padding:24px 28px;font-size:14px;line-height:1.6;color:#334155;min-height:160px;">
+            <!-- Tour content injected here -->
+        </div>
+        <div style="padding:16px 28px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;">
+            <div id="tourDots" style="display:flex;gap:6px;">
+                <span class="tour-dot" style="width:9px;height:9px;border-radius:50%;background:#4f46e5;display:inline-block;"></span>
+                <span class="tour-dot" style="width:9px;height:9px;border-radius:50%;background:#cbd5e1;display:inline-block;"></span>
+                <span class="tour-dot" style="width:9px;height:9px;border-radius:50%;background:#cbd5e1;display:inline-block;"></span>
+                <span class="tour-dot" style="width:9px;height:9px;border-radius:50%;background:#cbd5e1;display:inline-block;"></span>
+            </div>
+            <div style="display:flex;gap:8px;">
+                <button class="btn-cancel" onclick="closeTourModal()" style="font-size:13px;padding:8px 14px;">Skip Tour</button>
+                <button class="btn-cancel" id="tourPrevBtn" onclick="prevTourStep()" style="display:none;font-size:13px;padding:8px 14px;">← Back</button>
+                <button class="submit-btn" id="tourNextBtn" onclick="nextTourStep()" style="font-size:13px;padding:8px 18px;font-weight:700;">Next Step →</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="state.js"></script>
 <script src="script.js"></script>
 <script src="fixes.js"></script>
 <script>
+let currentTourStep = 0;
+let tourData = [];
+
 document.addEventListener('DOMContentLoaded', () => {
     const user = window.Auth.requireAuth(['INSTITUTE_SUPER_ADMIN', 'superadmin', 'admin']);
     if (!user) return;
-    const name = (user.first_name || '') + ' ' + (user.last_name || user.username || '');
+
+    const tenant = window.Auth.getTenant() || {};
+    const name = user.name || (user.first_name || '') + ' ' + (user.last_name || user.username || 'Director');
     const sn = document.getElementById('sidebar-user-name');
     if (sn) sn.textContent = name.trim();
+
+    const instBadge = document.getElementById('dirInstitutionBadge');
+    if (instBadge && tenant.name) {
+        instBadge.textContent = tenant.name + ' · Spring 2026';
+    }
+
     const addBtn = document.getElementById('addUserBtn');
     if (addBtn) addBtn.onclick = () => openModal('addUserModal');
+    
     // Inject notification bell
     window.Notifications?.injectBell?.();
-    // Load all sections
 
+    // Load all sections
     Promise.allSettled([
         window.renderReports && window.renderReports(),
         window.renderEventsTable && window.renderEventsTable(),
@@ -461,7 +508,124 @@ document.addEventListener('DOMContentLoaded', () => {
         window.renderUsersTable && window.renderUsersTable(),
         window.renderAttendanceOverride && window.renderAttendanceOverride(),
     ]);
+
+    // Check if new onboarding or guided tour requested
+    if (user.is_new_onboarding) {
+        user.is_new_onboarding = false;
+        localStorage.setItem('bp_user', JSON.stringify(user));
+        localStorage.setItem('user', JSON.stringify(user));
+        setTimeout(() => startDirectorTour(false), 500);
+    }
 });
+
+function initTourData() {
+    const user = window.Auth.getUser() || {};
+    const tenant = window.Auth.getTenant() || {};
+    const directorName = user.name || user.first_name || 'Director';
+    const instName = tenant.name || 'Your Institution';
+    const tenantCode = tenant.code || user.tenant_code || 'CAMPUS';
+
+    tourData = [
+        {
+            badge: "Campus Overview",
+            title: "1. Welcome to Your Campus Command Center",
+            body: `
+                <p>Welcome, <strong>${directorName}</strong>! Your institutional workspace for <strong>${instName}</strong> (Tenant Code: <code style="background:#eef2ff;color:#4f46e5;padding:2px 6px;border-radius:4px;font-weight:700;">${tenantCode}</code>) is fully live.</p>
+                <div style="background:#f8fafc;padding:12px 14px;border-radius:10px;margin:14px 0;font-size:13px;border-left:4px solid #4f46e5;line-height:1.5;">
+                    📊 <strong>Real-Time Analytics:</strong> The top KPI metrics gauge active student enrollment, faculty members, semester course offerings, and overall Outcome Attainment in real time.
+                </div>
+                <p style="font-size:13px;color:#64748b;">Let's take a quick 1-minute walkthrough through your core leadership tools.</p>
+            `
+        },
+        {
+            badge: "OBE & Accreditation",
+            title: "2. Outcome Attainment & NBA/NAAC Reports",
+            body: `
+                <p>Under <strong>Institutional Reports</strong>, view program-level Course Outcome (CO) and Program Outcome (PO) attainment calculated using Bloom's Taxonomy.</p>
+                <div style="background:#f8fafc;padding:12px 14px;border-radius:10px;margin:14px 0;font-size:13px;border-left:4px solid #059669;line-height:1.5;">
+                    📑 <strong>1-Click Audit Export:</strong> Generate certified cohort analysis reports and NBA/NAAC compliance sheets with one click.
+                </div>
+            `
+        },
+        {
+            badge: "Academic Scheduler",
+            title: "3. Clash-Free Timetable & Working Hours",
+            body: `
+                <p>Your campus is configured with working hours: <strong>08:45 AM – 05:30 PM (Mon – Sat)</strong>.</p>
+                <div style="background:#f8fafc;padding:12px 14px;border-radius:10px;margin:14px 0;font-size:13px;border-left:4px solid #f59e0b;line-height:1.5;">
+                    ☕ <strong>Built-In Breaks:</strong> Morning Tea (10:45 AM), Lunch Recess (1:00 PM – 2:15 PM), and Evening Break (4:15 PM – 4:30 PM) are pre-scheduled with 100% room conflict resolution.
+                </div>
+            `
+        },
+        {
+            badge: "Finance & Platform Support",
+            title: "4. Fee Management & Direct SaaS Escalations",
+            body: `
+                <p>Audit fee collections and student dues under <strong>Fee Compliance</strong>.</p>
+                <div style="background:#f8fafc;padding:12px 14px;border-radius:10px;margin:14px 0;font-size:13px;border-left:4px solid #6366f1;line-height:1.5;">
+                    🛡️ <strong>Direct SaaS Support Channel:</strong> Need module upgrades or assistance? Click <em>"Contact SaaS Support"</em> in the sidebar to send high-priority tickets directly to central platform engineering.
+                </div>
+            `
+        }
+    ];
+}
+
+window.startDirectorTour = function(isManual) {
+    initTourData();
+    currentTourStep = 0;
+    renderTourStep();
+    const modal = document.getElementById('directorTourModal');
+    if (modal) modal.style.display = 'flex';
+};
+
+function renderTourStep() {
+    const step = tourData[currentTourStep];
+    if (!step) return;
+
+    document.getElementById('tourBadge').textContent = '🎓 ' + step.badge;
+    document.getElementById('tourStepIndicator').textContent = `Step ${currentTourStep + 1} of ${tourData.length}`;
+    document.getElementById('tourTitle').textContent = step.title;
+    document.getElementById('tourBody').innerHTML = step.body;
+
+    // Prev / Next button states
+    document.getElementById('tourPrevBtn').style.display = currentTourStep > 0 ? 'inline-block' : 'none';
+    const nextBtn = document.getElementById('tourNextBtn');
+    if (currentTourStep === tourData.length - 1) {
+        nextBtn.textContent = 'Finish & Start Managing 🚀';
+        nextBtn.style.background = 'linear-gradient(135deg,#059669,#10b981)';
+    } else {
+        nextBtn.textContent = 'Next Step →';
+        nextBtn.style.background = 'linear-gradient(135deg,#0f172a,#1e1b4b)';
+    }
+
+    // Update dots
+    const dots = document.querySelectorAll('.tour-dot');
+    dots.forEach((dot, idx) => {
+        dot.style.background = idx === currentTourStep ? '#4f46e5' : '#cbd5e1';
+    });
+}
+
+window.nextTourStep = function() {
+    if (currentTourStep < tourData.length - 1) {
+        currentTourStep++;
+        renderTourStep();
+    } else {
+        closeTourModal();
+        showToast('🎉 You are all set! Welcome to BarelyPassing.', 'success');
+    }
+};
+
+window.prevTourStep = function() {
+    if (currentTourStep > 0) {
+        currentTourStep--;
+        renderTourStep();
+    }
+};
+
+window.closeTourModal = function() {
+    const modal = document.getElementById('directorTourModal');
+    if (modal) modal.style.display = 'none';
+};
 
 window.openDirectorSupportModal = function() {
     openModal('directorSupportModal');
@@ -478,11 +642,12 @@ window.submitDirectorSupportTicket = function() {
     }
 
     const user = window.Auth.getUser();
+    const tenant = window.Auth.getTenant();
     if (window.SaaSStore && window.SaaSStore.addTicket) {
         const ticket = window.SaaSStore.addTicket({
-            institution: 'IIIT Sricity',
-            tenantId: user?.tenant_id || 't1',
-            contactEmail: user?.email || 'director@iiits.in',
+            institution: tenant?.name || 'My Institution',
+            tenantId: user?.tenant_id || tenant?.code || 't1',
+            contactEmail: user?.email || 'director@institution.ac.in',
             subject: subject,
             priority: priority,
             message: msg
@@ -501,7 +666,7 @@ window.sendAdminAnnouncement = function() {
     const msg = document.getElementById('announceMsg')?.value.trim();
     if (!msg) { showToast('Please enter a message', 'warning'); return; }
     const user = window.Auth?.getUser?.();
-    const fromName = user ? (user.first_name || user.username || 'Admin') : 'Admin';
+    const fromName = user ? (user.name || user.first_name || user.username || 'Director') : 'Director';
     if (target === 'all') {
         window.Notifications?.broadcastAll(fromName, '📢 ' + msg, 'announcement');
     } else {
@@ -510,7 +675,6 @@ window.sendAdminAnnouncement = function() {
     showToast(`Announcement sent to ${target === 'all' ? 'everyone' : target + 's'}!`, 'success');
     document.getElementById('announceMsg').value = '';
 };
-
 </script>
 </body>
 </html>
