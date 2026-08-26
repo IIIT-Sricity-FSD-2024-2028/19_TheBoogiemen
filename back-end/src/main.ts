@@ -17,6 +17,7 @@ import { AppModule } from './app.module';
 import * as path from 'path';
 import * as express from 'express';
 import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { VALIDATION_PIPE_OPTIONS } from './common/errors/validation.factory';
 import { registerProcessHandlers } from './common/errors/process-handlers';
@@ -61,6 +62,42 @@ async function bootstrap() {
   // Populates req.cookies, which JwtAuthGuard reads the session token from.
   // Registered here rather than as module middleware so it runs before guards.
   app.use(cookieParser());
+
+  // 2b. Security response headers.
+  //
+  // Helmet sets ten headers and removes X-Powered-By. Nine apply to this app
+  // unchanged: HSTS, nosniff, frameguard, referrer-policy, COOP, CORP,
+  // Origin-Agent-Cluster, DNS-prefetch-control and permitted-cross-domain
+  // -policies. It also sets X-XSS-Protection to 0, which is correct — that
+  // legacy auditor was itself exploitable, and `1; mode=block` is the usual
+  // hand-rolled mistake.
+  //
+  // These govern a different layer from everything above: CORS decides who may
+  // *read* a response and the session cookie decides who may *hold* one, while
+  // these decide how the browser treats a response it already has.
+  //
+  // Registered before express.static (step 5), so the HTML pages — the
+  // responses that most need these headers — are covered, not just /api.
+  app.use(
+    helmet({
+      // OFF DELIBERATELY. Helmet's default CSP sets `script-src-attr 'none'`,
+      // which forbids inline event-handler attributes. The frontend has 194 of
+      // them (onclick, onsubmit, onchange, drag handlers) plus 5 inline
+      // <script> blocks, so enforcing the default policy would stop every
+      // button in the app from working.
+      //
+      // Turning CSP on is Phases 2-3 of HELMET_SECURITY_PLAN.md, and it is
+      // gated on removing those handlers — the same frontend pass as the
+      // innerHTML escaping work (audit C-06). Until then this app has no CSP,
+      // and no mitigation for stored XSS beyond escaping at the call sites.
+      contentSecurityPolicy: false,
+
+      // The API and the frontend are one origin, so nothing of ours is
+      // legitimately embedded by anyone else. Same stance as the CORS block
+      // above; loosen only if the frontend is split onto its own host.
+      crossOriginResourcePolicy: { policy: 'same-origin' },
+    }),
+  );
 
   // 3. Structured error handling. HTTP request logging is handled by pino-http
   // (configured in logger.config.ts), which hooks the response lifecycle rather
