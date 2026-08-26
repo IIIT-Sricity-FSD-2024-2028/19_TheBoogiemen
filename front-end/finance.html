@@ -142,11 +142,10 @@
     </div>
 </aside>
 
+<div class="main-content">
     <header class="top-header">
         <h1 id="finPageTitle">Fee Dashboard</h1>
         <div class="header-right">
-            <a href="onboarding.html" style="font-size:12px;color:#4f46e5;text-decoration:none;font-weight:700;padding:6px 12px;background:#eef2ff;border-radius:6px;border:1px solid #c7d2fe;">← Platform Overview</a>
-            <a href="login.html" style="font-size:12px;color:#334155;text-decoration:none;font-weight:700;padding:6px 12px;background:#f1f5f9;border-radius:6px;border:1px solid #e2e8f0;">Campus Login</a>
             <span class="badge-role">💰 Finance Officer</span>
             <span style="font-size:12px;color:#64748b;" id="finDateBadge"></span>
         </div>
@@ -322,8 +321,6 @@
 <div class="toast-container" id="finToastContainer"></div>
 
 <script src="state.js"></script>
-<script src="script.js"></script>
-<script src="fixes.js"></script>
 <script>
 (function(){
     let user = JSON.parse(localStorage.getItem('bp_user') || localStorage.getItem('user') || 'null');
@@ -360,16 +357,24 @@ function closeFinModal(id) { document.getElementById(id).classList.remove('open'
 const PAGE_TITLES = { 'dashboard-view':'Fee Dashboard','fee-records-view':'Fee Records','dues-view':'Student Dues','receipts-view':'Payment Receipts','fee-structure-view':'Fee Structures','compliance-view':'Compliance Report' };
 
 function switchFinView(viewId, el) {
-    document.querySelectorAll('.view-section').forEach(v=>v.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-    document.getElementById(viewId).classList.add('active');
-    if(el) el.classList.add('active');
-    document.getElementById('finPageTitle').textContent = PAGE_TITLES[viewId]||viewId;
-    if(viewId==='fee-records-view') loadFeeRecords();
-    if(viewId==='dues-view') loadDues();
-    if(viewId==='receipts-view') loadReceipts();
-    if(viewId==='compliance-view') loadComplianceReport();
-    if(viewId==='fee-structure-view') renderFeeStructures();
+    document.querySelectorAll('.view-section').forEach(v => {
+        v.classList.remove('active');
+        v.style.display = 'none';
+    });
+    document.querySelectorAll('.sidebar-nav .nav-item').forEach(n => n.classList.remove('active'));
+    const target = document.getElementById(viewId);
+    if (target) {
+        target.classList.add('active');
+        target.style.display = 'block';
+    }
+    if (el) el.classList.add('active');
+    document.getElementById('finPageTitle').textContent = PAGE_TITLES[viewId] || viewId;
+    if (viewId === 'dashboard-view') loadDashboard();
+    else if (viewId === 'fee-records-view') loadFeeRecords();
+    else if (viewId === 'dues-view') loadDues();
+    else if (viewId === 'receipts-view') loadReceipts();
+    else if (viewId === 'compliance-view') loadComplianceReport();
+    else if (viewId === 'fee-structure-view') renderFeeStructures();
 }
 
 let _fees = [];
