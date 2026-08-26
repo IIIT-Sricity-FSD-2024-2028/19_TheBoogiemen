@@ -437,23 +437,24 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Institution Name *</label>
-                        <input type="text" id="reg-inst-name" placeholder="e.g., National Institute of Technology" value="NIT Warangal" required>
+                        <input type="text" id="reg-inst-name" placeholder="e.g., National Institute of Technology" required>
                     </div>
                     <div class="form-group">
                         <label>Tenant Code / Prefix *</label>
-                        <input type="text" id="reg-inst-code" placeholder="e.g., NITW" value="NITW" style="text-transform:uppercase;" required>
+                        <input type="text" id="reg-inst-code" placeholder="e.g., NITW" style="text-transform:uppercase;" required>
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
                         <label>Primary Administrator Name *</label>
-                        <input type="text" id="reg-admin-name" placeholder="Dr. Rajesh Kumar" value="Dr. Rajesh Kumar" required>
+                        <input type="text" id="reg-admin-name" placeholder="e.g., Dr. Rajesh Kumar" required>
                     </div>
                     <div class="form-group">
                         <label>Administrator Role</label>
                         <select id="reg-admin-role">
-                            <option value="Director / Vice Chancellor" selected>Director / Vice Chancellor</option>
+                            <option value="" disabled selected>Select your role</option>
+                            <option value="Director / Vice Chancellor">Director / Vice Chancellor</option>
                             <option value="Dean of Academics">Dean of Academics</option>
                             <option value="Head of IT / ERP Lead">Head of IT / ERP Lead</option>
                             <option value="Department HOD">Department HOD</option>
@@ -464,11 +465,11 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Official Institutional Email *</label>
-                        <input type="email" id="reg-email" placeholder="director@institution.ac.in" value="director@nitw.ac.in" required>
+                        <input type="email" id="reg-email" placeholder="director@institution.ac.in" required>
                     </div>
                     <div class="form-group">
                         <label>Phone / Contact Number *</label>
-                        <input type="tel" id="reg-phone" placeholder="+91 98765 43210" value="+91 98765 43210" required>
+                        <input type="tel" id="reg-phone" placeholder="+91 98765 43210" required>
                     </div>
                 </div>
 
@@ -528,7 +529,7 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Target Go-Live Date</label>
-                        <input type="date" id="reg-golive" value="2026-09-01">
+                        <input type="date" id="reg-golive">
                     </div>
                     <div class="form-group">
                         <label>Deployment Environment</label>
