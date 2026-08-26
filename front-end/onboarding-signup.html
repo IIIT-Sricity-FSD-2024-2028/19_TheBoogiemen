@@ -467,26 +467,49 @@
                             <div class="module-checkbox-custom">✓</div>
                             <div class="module-content">
                                 <span class="module-badge" style="background:#dcfce7;color:#166534;">Auto Scheduler</span>
+                <!-- ALL MODULES INCLUDED -->
+                <div class="form-group">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                        <label style="margin-bottom:0;">Included Academic Platform Modules</label>
+                        <span style="font-size:11px;color:#059669;font-weight:700;">✓ 100% Active in All Plans</span>
+                    </div>
+                    <div class="modules-grid">
+                        
+                        <!-- Module 1 -->
+                        <div class="module-item selected" style="cursor:default;">
+                            <div class="module-checkbox-custom" style="background:#059669;border-color:#059669;">✓</div>
+                            <div class="module-content">
+                                <span class="module-badge" style="background:#dcfce7;color:#166534;">Included · Active</span>
+                                <h4>Outcome &amp; CO/PO Tracking</h4>
+                                <p>OBE Curriculum attainment, Bloom's Taxonomy mapping, and NBA/NAAC compliance matrix.</p>
+                            </div>
+                        </div>
+
+                        <!-- Module 2 -->
+                        <div class="module-item selected" style="cursor:default;">
+                            <div class="module-checkbox-custom" style="background:#059669;border-color:#059669;">✓</div>
+                            <div class="module-content">
+                                <span class="module-badge" style="background:#dcfce7;color:#166534;">Included · Active</span>
                                 <h4>Clash-Free Timetable Engine</h4>
                                 <p>Automated room &amp; faculty conflict resolution with standard campus breaks and lunch recess.</p>
                             </div>
                         </div>
 
                         <!-- Module 3 -->
-                        <div class="module-item selected" onclick="toggleModuleItem(this)">
-                            <div class="module-checkbox-custom">✓</div>
+                        <div class="module-item selected" style="cursor:default;">
+                            <div class="module-checkbox-custom" style="background:#059669;border-color:#059669;">✓</div>
                             <div class="module-content">
-                                <span class="module-badge" style="background:#fef3c7;color:#92400e;">Finance Core</span>
+                                <span class="module-badge" style="background:#dcfce7;color:#166534;">Included · Active</span>
                                 <h4>Finance &amp; Student Dues Portal</h4>
                                 <p>Fee collection, automated due notices, payment receipts, and compliance reporting.</p>
                             </div>
                         </div>
 
                         <!-- Module 4 -->
-                        <div class="module-item selected" onclick="toggleModuleItem(this)">
-                            <div class="module-checkbox-custom">✓</div>
+                        <div class="module-item selected" style="cursor:default;">
+                            <div class="module-checkbox-custom" style="background:#059669;border-color:#059669;">✓</div>
                             <div class="module-content">
-                                <span class="module-badge" style="background:#fae8ff;color:#86198f;">Research</span>
+                                <span class="module-badge" style="background:#dcfce7;color:#166534;">Included · Active</span>
                                 <h4>Research &amp; BTP Milestones</h4>
                                 <p>Undergraduate/postgraduate project lifecycle, milestone reviews, and faculty supervision.</p>
                             </div>
@@ -539,20 +562,21 @@
     <div class="success-box" id="successArea">
         <div class="success-icon">🎉</div>
         <h2>Institution Successfully Provisioned!</h2>
-        <p>Your academic workspace partition is generated and registered in the platform onboarding queue. You can now access your campus portals.</p>
+        <p>Your academic workspace partition is generated and registered in the platform onboarding queue. You can now access your campus portals or review the tenant in SaaS Admin.</p>
         
         <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:24px;max-width:520px;margin:0 auto 28px;text-align:left;font-size:13px;line-height:2;">
             <div><strong>🏛 Institution Name:</strong> <span id="confInst">—</span></div>
             <div><strong>🔑 Tenant Code:</strong> <span id="confCode" style="font-family:monospace;font-weight:800;color:#4f46e5;background:#eef2ff;padding:2px 8px;border-radius:6px;">—</span></div>
             <div><strong>👤 Administrator Contact:</strong> <span id="confAdmin">—</span></div>
             <div><strong>💼 Plan Tier:</strong> <span id="confPlan" style="font-weight:700;color:#059669;">—</span></div>
-            <div><strong>⚡ Modules Activated:</strong> <span id="confModules" style="font-weight:600;color:#334155;">All Selected (4 Modules)</span></div>
+            <div><strong>⚡ Modules Activated:</strong> <span style="font-weight:700;color:#059669;">All 4 Core Modules Active &amp; Provisioned</span></div>
             <div><strong>🛡 Status:</strong> <span style="background:#dcfce7;color:#166534;padding:3px 10px;border-radius:12px;font-weight:800;font-size:11px;">ACTIVE · PROVISIONED</span></div>
         </div>
 
         <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-            <a href="login.html" style="padding:13px 28px;background:#0f172a;color:#fff;border-radius:10px;font-weight:700;text-decoration:none;font-size:14px;box-shadow:0 4px 14px rgba(15,23,42,0.2);">Go to Campus Login →</a>
-            <a href="onboarding.html" style="padding:13px 24px;background:#f1f5f9;color:#334155;border:1px solid #e2e8f0;border-radius:10px;font-weight:700;text-decoration:none;font-size:14px;">Return to Main Page</a>
+            <a href="login.html" style="padding:13px 24px;background:#0f172a;color:#fff;border-radius:10px;font-weight:700;text-decoration:none;font-size:14px;box-shadow:0 4px 14px rgba(15,23,42,0.2);">Go to Campus Login →</a>
+            <a href="saas.html" style="padding:13px 24px;background:#4338ca;color:#fff;border-radius:10px;font-weight:700;text-decoration:none;font-size:14px;box-shadow:0 4px 14px rgba(67,56,202,0.2);">🛡️ View in SaaS Admin Queue →</a>
+            <a href="onboarding.html" style="padding:13px 20px;background:#f1f5f9;color:#334155;border:1px solid #e2e8f0;border-radius:10px;font-weight:700;text-decoration:none;font-size:14px;">Return to Overview</a>
         </div>
     </div>
 
@@ -659,9 +683,13 @@ function handleInstitutionalSignup() {
             institution: instName,
             email: email,
             phone: phone,
+            role: role,
             plan: selectedPlan,
-            students: students,
-            notes: `Tenant Code: ${instCode}, Role: ${role}, Modules: ${selectedModules.join(', ')}. Notes: ${notes || 'None'}`
+            size: students,
+            tenantCode: instCode,
+            status: 'Provisioned',
+            submitted: 'Just now',
+            notes: `Tenant Code: ${instCode}, Role: ${role}, Modules: All 4 Core Academic Modules Provisioned. Notes: ${notes || 'Standard Setup'}`
         });
     }
 
@@ -676,7 +704,6 @@ function handleInstitutionalSignup() {
         document.getElementById('confCode').textContent = instCode;
         document.getElementById('confAdmin').textContent = `${adminName} (${email})`;
         document.getElementById('confPlan').textContent = `${selectedPlan} Plan`;
-        document.getElementById('confModules').textContent = `${selectedModules.length} Modules Selected (${selectedModules.join(', ')})`;
 
         document.getElementById('successArea').style.display = 'block';
         window.scrollTo({ top: 0, behavior: 'smooth' });

@@ -88,11 +88,20 @@ window.SaaSStore = {
     },
     addOnboardingRequest: (req) => {
         const list = window.SaaSStore.getOnboardingRequests();
-        const item = { ...req, id: 'ob_' + Date.now(), status: 'Pending', submitted: 'Just now' };
+        const item = { 
+            id: 'ob_' + Date.now(), 
+            status: 'Pending', 
+            submitted: 'Just now',
+            role: req.role || 'Director / Administrator',
+            ...req 
+        };
         list.unshift(item);
         window.SaaSStore.saveOnboardingRequests(list);
-        window.SaaSStore.logActivity(`New Onboarding Inquiry from ${req.institution} (${req.email})`);
+        window.SaaSStore.logActivity(`New Institution Registered: "${req.institution}" (${req.email}, Plan: ${req.plan || 'Professional'})`);
         return item;
+    },
+    addLead: (req) => {
+        return window.SaaSStore.addOnboardingRequest(req);
     },
     getActivityLogs: () => {
         try {
