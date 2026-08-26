@@ -146,4 +146,65 @@ function selectRole(role) {
         if (emailInput) emailInput.placeholder = config.emailPlaceholder;
         if (passwordInput) passwordInput.placeholder = config.passwordPlaceholder;
     }
+
+    fillDemoCredentials(role);
 }
+
+// ─── Dev-only demo credentials ───────────────────────────────────────────────
+//
+// Picking a role fills in that actor's seeded login, so testing is
+// click-role -> Sign In instead of retyping a password every time.
+//
+// DELETE THIS WHOLE BLOCK (and the fillDemoCredentials call above) BEFORE THE
+// APP IS DEPLOYED ANYWHERE REAL.
+//
+// Two things keep it from becoming a credential leak in the meantime:
+//   * it runs only on localhost, and
+//   * the strip is built in JS, so these passwords are never written into
+//     login.html — on any other host the markup does not exist at all.
+//
+// Verified against back-end/data/mock-db.json by bcrypt-comparing each hash.
+// The seeded `admin@example.com` (u3) is deliberately absent: its digest
+// matches no known password, and there is no Admin tab on this page anyway.
+const DEMO_LOGINS = {
+    student:    { email: 'student@example.com', password: 'Student@123' },
+    faculty:    { email: 'faculty@example.com', password: 'Faculty@123' },
+    head:       { email: 'head@example.com',    password: 'Head@123'    },
+    superadmin: { email: 'super@example.com',   password: 'Super@123'   },
+};
+
+// '' covers opening the page as a file:// URL.
+const IS_LOCAL_DEV = ['localhost', '127.0.0.1', ''].includes(location.hostname);
+
+function fillDemoCredentials(role) {
+    if (!IS_LOCAL_DEV) return;
+
+    const creds = DEMO_LOGINS[role];
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    if (!creds || !emailInput || !passwordInput) return;
+
+    emailInput.value = creds.email;
+    passwordInput.value = creds.password;
+
+    const strip = document.getElementById('demo-credentials');
+    if (strip) strip.textContent = `DEV · ${creds.email} · ${creds.password}`;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('loginForm');
+    if (!IS_LOCAL_DEV || !form) return;   // not localhost, or not the login page
+
+    const strip = document.createElement('p');
+    strip.id = 'demo-credentials';
+    strip.style.cssText =
+        'margin:14px 0 0;padding:8px 10px;border:1px dashed #cbd5e1;border-radius:8px;' +
+        'background:#f8fafc;color:#475569;font-size:12px;text-align:center;' +
+        'font-family:ui-monospace,SFMono-Regular,Menlo,monospace;';
+    form.appendChild(strip);
+
+    // The Student tab is marked active in the markup, so selectRole() has not
+    // run yet and the fields would otherwise start empty.
+    const active = document.querySelector('.role-option.active');
+    fillDemoCredentials(active?.dataset.role || 'student');
+});
