@@ -5,6 +5,7 @@ import { NotificationService } from '../../common/services/notification.service'
 import { CreateFeeAuditInputDto } from './dto/create-fee-audit.input.dto';
 import { FeeAuditOutputDto } from './dto/fee-audit.output.dto';
 import { v4 as uuidv4 } from 'uuid';
+import { ErrorCode, errorBody } from '../../common/errors/error-codes';
 
 @Injectable()
 export class FeeService {
@@ -16,7 +17,9 @@ export class FeeService {
 
   async auditCompliance(dto: CreateFeeAuditInputDto): Promise<FeeAuditOutputDto> {
     const structure = await this.feeStructureRepo.findByYearId(dto.year_id);
-    if (!structure) throw new NotFoundException('Fee structure not found for year_id');
+    if (!structure) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Fee structure not found for year_id'),
+    );
 
     const payments = await this.feeRepo.findByFeeId(structure.fee_id);
     
@@ -48,7 +51,9 @@ export class FeeService {
 
   async getPaymentById(id: string) {
     const payment = await this.feeRepo.findOneById(id);
-    if (!payment) throw new NotFoundException('Payment not found');
+    if (!payment) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Payment not found'),
+    );
     return payment;
   }
 
@@ -65,7 +70,9 @@ export class FeeService {
 
   async updatePayment(id: string, dto: any) {
     const payment = await this.feeRepo.findOneById(id);
-    if (!payment) throw new NotFoundException('Payment not found');
+    if (!payment) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Payment not found'),
+    );
     
     // full replace requires all fields or defaults
     const updated = await this.feeRepo.update(id, {
@@ -81,7 +88,9 @@ export class FeeService {
 
   async patchPayment(id: string, dto: any) {
     const payment = await this.feeRepo.findOneById(id);
-    if (!payment) throw new NotFoundException('Payment not found');
+    if (!payment) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Payment not found'),
+    );
     
     const updated = await this.feeRepo.update(id, dto);
     return updated;
@@ -89,7 +98,9 @@ export class FeeService {
 
   async deletePayment(id: string) {
     const payment = await this.feeRepo.findOneById(id);
-    if (!payment) throw new NotFoundException('Payment not found');
+    if (!payment) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Payment not found'),
+    );
     await this.feeRepo.delete(id);
   }
 }

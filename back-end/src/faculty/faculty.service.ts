@@ -1,5 +1,13 @@
 import { Injectable } from '@nestjs/common';
+import { v4 as uuidv4 } from 'uuid';
 import { InMemoryDbService } from '../database/in-memory-db.service';
+import {
+  ATTENDANCE_STATUS,
+  isAtRisk,
+  normalizeAttendanceStatus,
+  riskReasons,
+  summariseAttendance,
+} from '../common/academic-rules';
 
 @Injectable()
 export class FacultyService {
@@ -26,14 +34,8 @@ export class FacultyService {
     }, {});
     return {
       grid,
-      days: ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'],
-      times: ['08:45', '09:45', '11:00', '12:00', '14:15', '15:15', '16:30'],
-      breaks: [
-        { label: 'Morning Tea Break', time: '10:45 - 11:00', after: '09:45' },
-        { label: 'Lunch Break', time: '13:00 - 14:15', after: '12:00' },
-        { label: 'Evening Short Break', time: '16:15 - 16:30', after: '15:15' },
-      ],
-      college_hours: '08:45 AM - 05:30 PM',
+      days: ['MON', 'TUE', 'WED', 'THU', 'FRI'],
+      times: ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00'],
     };
   }
 
@@ -49,17 +51,25 @@ export class FacultyService {
       .filter(s => uniqueStudentIds.includes(s.user_id))
       .map(s => {
         const records = this.db.attendance_log.filter(a => a.student_id === s.user_id);
-        const present = records.filter(r => r.status === 'present').length;
-        const attendance_pct = records.length > 0 ? Math.round((present / records.length) * 100) : 85;
+        // M-02: EXCUSED sessions from approved leave count as attended.
+        const attendance = summariseAttendance(records);
+        const attendance_pct = attendance.total > 0 ? attendance.percentage : null;
+
         const marks = this.db.marks_entry.filter(m => m.student_id === s.user_id);
-        const avgScore = marks.length > 0
-          ? Math.round(marks.reduce((sum, m) => sum + (m.marks_obtained / m.max_marks) * 100, 0) / marks.length)
-          : 75;
+        const scored = marks.filter(m => Number(m.max_marks) > 0);
+        const avgScore = scored.length > 0
+          ? Math.round(scored.reduce((sum, m) => sum + (Number(m.marks_obtained) / Number(m.max_marks)) * 100, 0) / scored.length)
+          : null;
+
         return {
           ...s,
           attendance_pct,
+          excused_sessions: attendance.excused,
           avg_score: avgScore,
-          is_at_risk: attendance_pct < 75 || s.cgpa < 6,
+          // M-04: shared predicate — this used the same rule expressed inline,
+          // which had already drifted from the admin report's `cgpa < 6.5`.
+          is_at_risk: isAtRisk({ cgpa: s.cgpa, attendancePct: attendance_pct }),
+          risk_reasons: riskReasons({ cgpa: s.cgpa, attendancePct: attendance_pct }),
         };
       });
   }
@@ -81,13 +91,42 @@ export class FacultyService {
 
   async recordAttendance(data: any) {
     const { course_id, date, records } = data;
-    const newLogs = (records || []).map((r: any, idx: number) => {
-      const logId = `al${this.db.attendance_log.length + idx + 1}`;
-      const log = { log_id: logId, student_id: r.student_id, course_id, date, status: r.status };
-      this.db.attendance_log.push(log as any);
-      return log;
-    });
-    return { saved: newLogs.length, records: newLogs };
+
+    // M-01: idempotent per student/course/date — re-submitting a session now
+    // corrects the existing rows instead of stacking duplicate absences.
+    // H-07: UUID identifiers; the previous length-based scheme produced both
+    // gaps and outright duplicate primary keys.
+    const saved: any[] = [];
+    let created = 0;
+    let updated = 0;
+
+    for (const r of records || []) {
+      if (!r?.student_id) continue;
+      const status = normalizeAttendanceStatus(r.status);
+      const existing = this.db.attendance_log.find(
+        a => a.student_id === r.student_id && a.course_id === course_id && a.date === date,
+      );
+
+      if (existing) {
+        // Approved leave outranks a plain absent mark for the same session.
+        if (normalizeAttendanceStatus(existing.status) === ATTENDANCE_STATUS.EXCUSED
+            && status === ATTENDANCE_STATUS.ABSENT) {
+          saved.push(existing);
+          continue;
+        }
+        existing.status = status;
+        updated++;
+        saved.push(existing);
+      } else {
+        const log = { log_id: uuidv4(), student_id: r.student_id, course_id, date, status };
+        this.db.attendance_log.push(log as any);
+        created++;
+        saved.push(log);
+      }
+    }
+
+    if (updated) this.db.persist();
+    return { saved: saved.length, created, updated, records: saved };
   }
 
   async postMarks(data: any) {
@@ -102,61 +141,21 @@ export class FacultyService {
   }
 
   async getAtRiskStudents() {
+    // M-04: one predicate for every at-risk surface. This previously filtered on
+    // `cgpa < 6` alone, so a student failing only on attendance never appeared.
     return this.db.students
-      .filter(s => s.cgpa < 6)
       .map(s => {
         const records = this.db.attendance_log.filter(a => a.student_id === s.user_id);
-        const present = records.filter(r => r.status === 'present').length;
-        const attendance_pct = records.length > 0 ? Math.round((present / records.length) * 100) : 0;
-        return { ...s, attendance_pct, is_at_risk: true };
-      });
-  }
-
-  async getLeaveRequests(facultyId: string) {
-    // Faculty sees leaves from students in their courses
-    const courseIds = this.db.courses.filter(c => c.faculty_id === facultyId).map(c => c.course_id);
-    const studentIds = this.db.enrollment
-      .filter(e => courseIds.includes(e.course_id))
-      .map(e => e.student_id);
-    const uniqueIds = [...new Set(studentIds)];
-    return this.db.leave_applications.filter(l => uniqueIds.includes(l.student_id));
-  }
-
-  async approveLeave(leaveId: string, facultyId: string, action: string) {
-    const leave = this.db.leave_applications.find(l => l.leave_id === leaveId);
-    if (!leave) return { error: 'Leave not found' };
-    leave.status = action === 'approve' ? 'approved' : 'rejected';
-    // If approved, mark attendance as excused for the leave period
-    if (action === 'approve') {
-      const start = new Date(leave.start_date);
-      const end = new Date(leave.end_date);
-      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-        const dateStr = d.toISOString().split('T')[0];
-        // Update existing absence or add excused entry
-        const existing = this.db.attendance_log.find(
-          a => a.student_id === leave.student_id && a.date === dateStr
-        );
-        if (existing) {
-          (existing as any).status = 'excused';
-        }
-      }
-    }
-    return leave;
-  }
-
-  async createAssessment(data: any) {
-    const newAssessment = {
-      assessment_id: `a${Date.now()}`,
-      tenant_id: data.tenant_id || 't1',
-      course_id: data.course_id,
-      name: data.name,
-      type: data.type || 'internal',
-      max_marks: data.max_marks || 50,
-      weightage: data.weightage || 20,
-      faculty_id: data.faculty_id,
-      date: data.date || new Date().toISOString().split('T')[0],
-    };
-    this.db.assessments.push(newAssessment as any);
-    return newAssessment;
+        const attendance = summariseAttendance(records);
+        const attendance_pct = attendance.total > 0 ? attendance.percentage : null;
+        return {
+          ...s,
+          attendance_pct,
+          excused_sessions: attendance.excused,
+          is_at_risk: isAtRisk({ cgpa: s.cgpa, attendancePct: attendance_pct }),
+          risk_reasons: riskReasons({ cgpa: s.cgpa, attendancePct: attendance_pct }),
+        };
+      })
+      .filter(s => s.is_at_risk);
   }
 }

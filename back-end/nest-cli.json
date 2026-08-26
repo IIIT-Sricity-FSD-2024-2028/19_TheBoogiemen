@@ -3,6 +3,13 @@
   "collection": "@nestjs/schematics",
   "sourceRoot": "src",
   "compilerOptions": {
-    "deleteOutDir": true
+    "deleteOutDir": true,
+    "assets": [
+      {
+        "include": "database/migrations/*.sql",
+        "outDir": "dist/src"
+      }
+    ],
+    "watchAssets": true
   }
 }

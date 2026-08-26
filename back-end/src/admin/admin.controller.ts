@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Put, Body, Query, Param } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { Roles } from '../auth/roles.guard';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiOperation , ApiBody} from '@nestjs/swagger';
 
 @ApiTags('Admin')
 @Controller('admin')
@@ -37,6 +37,7 @@ export class AdminController {
   @Post('events')
   @Roles('admin')
   @ApiOperation({ summary: 'Create a new event' })
+  @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async createEvent(@Body() body: any) {
     return this.adminService.createEvent(body);
   }

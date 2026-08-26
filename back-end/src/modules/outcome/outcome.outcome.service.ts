@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { MarksRepository } from '../assessment/marks.marks.repository';
 import { AssessmentRepository } from '../assessment/assessment.assessment.repository';
 import { STUDENT_OUTCOME } from '../../common/types/interfaces';
+import { ErrorCode, errorBody } from '../../common/errors/error-codes';
 
 @Injectable()
 export class OutcomeService {
@@ -19,7 +20,9 @@ export class OutcomeService {
 
   async mapAssessmentToOutcomes(dto: MapOutcomeInputDto) {
     if (dto.outcome_ids.length !== dto.weightages.length) {
-      throw new BadRequestException('Mismatched outcome_ids and weightages length');
+      throw new BadRequestException(
+      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'Mismatched outcome_ids and weightages length'),
+    );
     }
 
     const created: any[] = [];
@@ -86,7 +89,9 @@ export class OutcomeService {
 
   async getOutcomeById(id: string) {
     const outcome = await this.outcomeRepo.findOutcomeById(id);
-    if (!outcome) throw new BadRequestException('Outcome not found');
+    if (!outcome) throw new BadRequestException(
+      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'Outcome not found'),
+    );
     return outcome;
   }
 
@@ -101,7 +106,9 @@ export class OutcomeService {
 
   async updateOutcome(id: string, dto: any) {
     const outcome = await this.outcomeRepo.findOutcomeById(id);
-    if (!outcome) throw new BadRequestException('Outcome not found');
+    if (!outcome) throw new BadRequestException(
+      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'Outcome not found'),
+    );
     
     return this.outcomeRepo.update(id, {
       course_id: dto.course_id || outcome.course_id,
@@ -112,14 +119,18 @@ export class OutcomeService {
 
   async patchOutcome(id: string, dto: any) {
     const outcome = await this.outcomeRepo.findOutcomeById(id);
-    if (!outcome) throw new BadRequestException('Outcome not found');
+    if (!outcome) throw new BadRequestException(
+      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'Outcome not found'),
+    );
     
     return this.outcomeRepo.update(id, dto);
   }
 
   async deleteOutcome(id: string) {
     const outcome = await this.outcomeRepo.findOutcomeById(id);
-    if (!outcome) throw new BadRequestException('Outcome not found');
+    if (!outcome) throw new BadRequestException(
+      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'Outcome not found'),
+    );
     
     await this.outcomeRepo.delete(id);
   }

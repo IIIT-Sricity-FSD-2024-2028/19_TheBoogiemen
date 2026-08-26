@@ -5,6 +5,7 @@ import { UploadMilestoneInputDto } from './dto/upload-milestone.input.dto';
 import { ReviewMilestoneInputDto } from './dto/review-milestone.input.dto';
 import { MilestoneOutputDto } from './dto/milestone.output.dto';
 import { v4 as uuidv4 } from 'uuid';
+import { ErrorCode, errorBody } from '../../common/errors/error-codes';
 
 @Injectable()
 export class ResearchService {
@@ -15,10 +16,16 @@ export class ResearchService {
 
   async uploadMilestone(studentId: string, dto: UploadMilestoneInputDto): Promise<MilestoneOutputDto> {
     const project = await this.researchRepo.findProjectById(dto.project_id);
-    if (!project) throw new NotFoundException('Project not found');
-    if (project.student_id !== studentId) throw new ForbiddenException('Not your project');
+    if (!project) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Project not found'),
+    );
+    if (project.student_id !== studentId) throw new ForbiddenException(
+      errorBody(ErrorCode.NOT_RESOURCE_OWNER, 'Not your project'),
+    );
     
-    if (dto.file_type !== 'PDF' && dto.file_type !== 'DOCX') throw new BadRequestException('Invalid file type');
+    if (dto.file_type !== 'PDF' && dto.file_type !== 'DOCX') throw new BadRequestException(
+      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'Invalid file type'),
+    );
 
     const milestone = await this.researchRepo.createMilestone({
       milestone_id: uuidv4(),
@@ -36,19 +43,27 @@ export class ResearchService {
 
   async reviewMilestone(facultyId: string, dto: ReviewMilestoneInputDto): Promise<MilestoneOutputDto> {
     const milestone = await this.researchRepo.findMilestoneById(dto.milestone_id);
-    if (!milestone) throw new NotFoundException('Milestone not found');
+    if (!milestone) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Milestone not found'),
+    );
 
     const project = await this.researchRepo.findProjectById(milestone.project_id);
-    if (!project) throw new NotFoundException('Project not found');
+    if (!project) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Project not found'),
+    );
 
-    if (project.faculty_id !== facultyId) throw new ForbiddenException('You are not the reviewer for this project');
+    if (project.faculty_id !== facultyId) throw new ForbiddenException(
+      errorBody(ErrorCode.NOT_RESOURCE_OWNER, 'You are not the reviewer for this project'),
+    );
 
     const updated = await this.researchRepo.updateMilestone(dto.milestone_id, {
       comments: dto.comments,
       status: dto.status
     });
 
-    if (!updated) throw new NotFoundException('Milestone could not be updated');
+    if (!updated) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Milestone could not be updated'),
+    );
 
     this.notificationService.notify(project.student_id, `Milestone reviewed: ${dto.status}`);
 
@@ -66,13 +81,17 @@ export class ResearchService {
 
   async getProjectById(id: string) {
     const project = await this.researchRepo.findProjectById(id);
-    if (!project) throw new NotFoundException('Project not found');
+    if (!project) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Project not found'),
+    );
     return project;
   }
 
   async updateProject(id: string, dto: any) {
     const project = await this.researchRepo.findProjectById(id);
-    if (!project) throw new NotFoundException('Project not found');
+    if (!project) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Project not found'),
+    );
     
     return this.researchRepo.updateProject(id, {
       title: dto.title || project.title,
@@ -85,21 +104,27 @@ export class ResearchService {
 
   async patchProject(id: string, dto: any) {
     const project = await this.researchRepo.findProjectById(id);
-    if (!project) throw new NotFoundException('Project not found');
+    if (!project) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Project not found'),
+    );
     
     return this.researchRepo.updateProject(id, dto);
   }
 
   async deleteProject(id: string) {
     const project = await this.researchRepo.findProjectById(id);
-    if (!project) throw new NotFoundException('Project not found');
+    if (!project) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Project not found'),
+    );
     
     await this.researchRepo.deleteProject(id);
   }
 
   async deleteMilestone(id: string) {
     const milestone = await this.researchRepo.findMilestoneById(id);
-    if (!milestone) throw new NotFoundException('Milestone not found');
+    if (!milestone) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Milestone not found'),
+    );
     
     await this.researchRepo.deleteMilestone(id);
   }

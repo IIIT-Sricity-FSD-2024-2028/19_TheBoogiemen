@@ -1,106 +1,156 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+/**
+ * uploads.service.ts — document metadata and access control.
+ *
+ * Bytes live on disk under a random UUID name; this records what each file is,
+ * who uploaded it, and what it is attached to. Nothing else in the application
+ * touches the filesystem.
+ */
+
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
+import { randomUUID } from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { InMemoryDbService } from '../database/in-memory-db.service';
-import { FileLoggerService } from '../common/services/file-logger.service';
-import { UploadFile } from './upload.config';
+import { ErrorCode, errorBody } from '../common/errors/error-codes';
+import { UPLOAD_DIR, sanitizeOriginalName } from './upload.config';
+import type { Role } from '../auth/jwt-payload';
 
-export interface UploadedDoc {
+/** What a document is attached to. Determines who may read it. */
+export type UploadContext =
+  | 'leave'
+  | 'attendance_request'
+  | 'research_milestone'
+  | 'assessment_submission';
+
+export const UPLOAD_CONTEXTS: UploadContext[] = [
+  'leave',
+  'attendance_request',
+  'research_milestone',
+  'assessment_submission',
+];
+
+export interface UploadRecord {
   file_id: string;
-  original_name: string;
-  file_name: string;
-  file_path: string;
+  stored_name: string;      // the UUID filename on disk
+  original_name: string;    // sanitised, shown to users
   mime_type: string;
   size_bytes: number;
+  context: UploadContext;
   uploaded_by: string;
-  uploader_role: string;
-  category: 'progress_report' | 'assignment' | 'research' | 'general';
-  related_entity_id?: string;
-  created_at: string;
+  uploaded_at: string;
 }
+
+/** Staff who may read any document, because reviewing them is their job. */
+const REVIEWER_ROLES: Role[] = ['faculty', 'admin', 'head', 'superadmin'];
 
 @Injectable()
 export class UploadsService {
   constructor(
     private readonly db: InMemoryDbService,
-    private readonly fileLogger: FileLoggerService
+    @InjectPinoLogger(UploadsService.name) private readonly logger: PinoLogger,
   ) {}
 
-  async saveFileRecord(
-    file: UploadFile,
-    uploadedBy: string,
-    uploaderRole: string,
-    category: 'progress_report' | 'assignment' | 'research' | 'general' = 'general',
-    relatedEntityId?: string
-  ): Promise<UploadedDoc> {
-    const fileId = `doc_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
-    const record: UploadedDoc = {
-      file_id: fileId,
-      original_name: file.originalname,
-      file_name: file.filename,
-      file_path: file.path,
+  /** The collection is created lazily so no migration is needed for the JSON store. */
+  private get records(): UploadRecord[] {
+    const store = this.db as any;
+    if (!store.uploads) store.uploads = [];
+    return store.uploads;
+  }
+
+  record(file: Express.Multer.File, context: UploadContext, userId: string): UploadRecord {
+    const entry: UploadRecord = {
+      file_id: randomUUID(),
+      stored_name: file.filename,
+      original_name: sanitizeOriginalName(file.originalname),
       mime_type: file.mimetype,
       size_bytes: file.size,
-      uploaded_by: uploadedBy,
-      uploader_role: uploaderRole,
-      category,
-      related_entity_id: relatedEntityId,
-      created_at: new Date().toISOString(),
+      context,
+      uploaded_by: userId,
+      uploaded_at: new Date().toISOString(),
     };
 
-    if (!(this.db as any).uploads) {
-      (this.db as any).uploads = [];
-    }
-    (this.db as any).uploads.push(record);
+    this.records.push(entry);
+    this.db.persist();
 
-    this.fileLogger.logAudit(
-      'FILE_UPLOAD',
-      `${uploadedBy} (${uploaderRole})`,
-      file.originalname,
-      { fileId, size: file.size, category, relatedEntityId }
+    this.logger.info(
+      {
+        fileId: entry.file_id,
+        context,
+        userId,
+        sizeBytes: entry.size_bytes,
+        mimeType: entry.mime_type,
+      },
+      'Document uploaded',
     );
 
-    return record;
+    return entry;
   }
 
-  async getFileById(fileId: string): Promise<UploadedDoc> {
-    const list: UploadedDoc[] = (this.db as any).uploads || [];
-    const doc = list.find((d) => d.file_id === fileId);
-    if (!doc) {
-      throw new NotFoundException(`File record ${fileId} not found`);
+  findById(fileId: string): UploadRecord {
+    const found = this.records.find((r) => r.file_id === fileId);
+    if (!found) {
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Document not found'),
+      );
     }
-    if (!fs.existsSync(doc.file_path)) {
-      throw new NotFoundException(`Physical file ${doc.file_name} not found on server disk`);
-    }
-    return doc;
+    return found;
   }
 
-  async getProgressReportsForStudent(studentId: string): Promise<UploadedDoc[]> {
-    const list: UploadedDoc[] = (this.db as any).uploads || [];
-    return list.filter(
-      (d) => d.category === 'progress_report' && d.related_entity_id === studentId
+  /**
+   * Resolve a record to a path on disk, refusing anything outside UPLOAD_DIR.
+   *
+   * `stored_name` is generated by us, so traversal should be impossible — but
+   * this is the one place a bad value would become filesystem access, and the
+   * check costs nothing.
+   */
+  resolvePath(record: UploadRecord): string {
+    const full = path.resolve(UPLOAD_DIR, record.stored_name);
+    if (!full.startsWith(path.resolve(UPLOAD_DIR) + path.sep)) {
+      this.logger.error(
+        { fileId: record.file_id, storedName: record.stored_name },
+        'Upload path escaped the upload directory',
+      );
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Document not found'),
+      );
+    }
+    if (!fs.existsSync(full)) {
+      // Metadata without bytes — the row outlived the file.
+      this.logger.error({ fileId: record.file_id, path: full }, 'Upload metadata has no file on disk');
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Document is no longer available'),
+      );
+    }
+    return full;
+  }
+
+  /**
+   * Who may download a document.
+   *
+   * These are medical certificates and coursework, so the default is "only the
+   * person who uploaded it". Staff may read any document because approving leave
+   * or reviewing a milestone requires seeing the attachment — a student may not
+   * read another student's.
+   */
+  assertCanRead(record: UploadRecord, userId: string, role: Role): void {
+    if (record.uploaded_by === userId) return;
+    if (REVIEWER_ROLES.includes(role)) return;
+
+    this.logger.warn(
+      { fileId: record.file_id, userId, role, owner: record.uploaded_by },
+      'Blocked attempt to read another user document',
+    );
+    throw new ForbiddenException(
+      errorBody(ErrorCode.NOT_RESOURCE_OWNER, 'You do not have access to this document'),
     );
   }
 
-  async getAllUploads(category?: string): Promise<UploadedDoc[]> {
-    const list: UploadedDoc[] = (this.db as any).uploads || [];
-    if (category) {
-      return list.filter((d) => d.category === category);
-    }
-    return list;
-  }
-
-  async deleteFile(fileId: string): Promise<{ success: boolean; message: string }> {
-    const list: UploadedDoc[] = (this.db as any).uploads || [];
-    const idx = list.findIndex((d) => d.file_id === fileId);
-    if (idx === -1) {
-      throw new NotFoundException(`File record ${fileId} not found`);
-    }
-    const doc = list[idx];
-    if (fs.existsSync(doc.file_path)) {
-      fs.unlinkSync(doc.file_path);
-    }
-    list.splice(idx, 1);
-    return { success: true, message: `File ${doc.original_name} deleted successfully` };
+  /** Best-effort cleanup when a request fails after multer has written the file. */
+  discard(file?: Express.Multer.File): void {
+    if (!file?.path) return;
+    fs.promises.unlink(file.path).catch((err) =>
+      this.logger.warn({ err, path: file.path }, 'Could not remove orphaned upload'),
+    );
   }
 }

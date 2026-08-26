@@ -1,156 +1,122 @@
+/**
+ * uploads.controller.ts — one upload endpoint, one download endpoint.
+ *
+ * Every form that attaches a document (leave, attendance request, research
+ * milestone, assessment submission) posts here first, then sends the returned
+ * `file_id` with its own payload. That keeps multipart handling in one place
+ * instead of spread across five controllers.
+ */
+
 import {
-  Controller,
-  Post,
-  Get,
-  Delete,
-  Param,
-  Query,
-  Headers,
-  UseInterceptors,
-  UploadedFile,
   BadRequestException,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
   Res,
-  StreamableFile,
-  Body,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
-import * as fs from 'fs';
-import { UploadsService } from './uploads.service';
-import { multerStorage, fileFilter, UPLOAD_LIMITS, UploadFile } from './upload.config';
-import { ApiTags, ApiOperation, ApiConsumes } from '@nestjs/swagger';
+import { CurrentUserId, CurrentUserRole } from '../common/decorators/current-user.decorator';
+import { ErrorCode, errorBody } from '../common/errors/error-codes';
+import { UPLOAD_OPTIONS, ALLOWED_EXTENSIONS, MAX_FILE_BYTES } from './upload.config';
+import { UploadContext, UPLOAD_CONTEXTS, UploadsService } from './uploads.service';
+import type { Role } from '../auth/jwt-payload';
 
-@ApiTags('Uploads & Progress Reports')
+@ApiTags('Documents')
+@ApiBearerAuth()
 @Controller('uploads')
 export class UploadsController {
-  constructor(private readonly uploadsService: UploadsService) {}
+  constructor(private readonly uploads: UploadsService) {}
 
-  @Post('file')
-  @ApiOperation({ summary: 'Generic File Upload' })
+  @Post()
+  // No @Roles: any authenticated user may attach a document to their own work.
+  // Who can read it back is decided on download, by ownership.
+  @UseInterceptors(FileInterceptor('file', UPLOAD_OPTIONS))
   @ApiConsumes('multipart/form-data')
-  @UseInterceptors(
-    FileInterceptor('file', {
-      storage: multerStorage,
-      fileFilter,
-      limits: UPLOAD_LIMITS,
-    })
-  )
-  async uploadGenericFile(
-    @UploadedFile() file: any,
-    @Headers('user-id') userId: string,
-    @Headers('role') role: string,
-    @Body('category') category: 'progress_report' | 'assignment' | 'research' | 'general' = 'general',
-    @Body('related_entity_id') relatedEntityId?: string
+  @ApiOperation({ summary: 'Upload a document and receive a file_id to attach' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file', 'context'],
+      properties: {
+        file: { type: 'string', format: 'binary' },
+        context: { type: 'string', enum: UPLOAD_CONTEXTS },
+      },
+    },
+  })
+  @ApiResponse({ status: 201, description: 'Stored — returns file_id, original_name and size' })
+  @ApiResponse({ status: 400, description: 'Missing file, disallowed type, or unknown context' })
+  @ApiResponse({ status: 413, description: 'File exceeds the size limit' })
+  async upload(
+    @UploadedFile() file: Express.Multer.File | undefined,
+    @Query('context') context: string,
+    @CurrentUserId() userId: string,
   ) {
     if (!file) {
-      throw new BadRequestException('No file provided or invalid file format');
+      throw new BadRequestException(
+        errorBody(
+          ErrorCode.VALIDATION_FAILED,
+          'No file was uploaded. Send it as multipart/form-data under the field "file".',
+          { allowed: ALLOWED_EXTENSIONS, maxBytes: MAX_FILE_BYTES },
+        ),
+      );
     }
-    const record = await this.uploadsService.saveFileRecord(
-      file as UploadFile,
-      userId || 'anonymous',
-      role || 'student',
-      category,
-      relatedEntityId
-    );
-    return {
-      success: true,
-      message: `File "${file.originalname}" uploaded successfully!`,
-      data: record,
-    };
-  }
 
-  // ── Issue #50: Ingest Progress Reports for Students ──
-  @Post('progress-report')
-  @ApiOperation({ summary: 'Ingest Student Progress Report PDF' })
-  @ApiConsumes('multipart/form-data')
-  @UseInterceptors(
-    FileInterceptor('file', {
-      storage: multerStorage,
-      fileFilter,
-      limits: UPLOAD_LIMITS,
-    })
-  )
-  async uploadProgressReport(
-    @UploadedFile() file: any,
-    @Body('student_id') studentId: string,
-    @Body('semester') semester: string,
-    @Headers('user-id') userId: string,
-    @Headers('role') role: string
-  ) {
-    if (!file) {
-      throw new BadRequestException('Progress report PDF file is required');
+    // Validated after the file is on disk, so a bad context must not leave the
+    // bytes behind.
+    if (!UPLOAD_CONTEXTS.includes(context as UploadContext)) {
+      this.uploads.discard(file);
+      throw new BadRequestException(
+        errorBody(
+          ErrorCode.VALIDATION_FAILED,
+          `"context" must be one of: ${UPLOAD_CONTEXTS.join(', ')}`,
+          { received: context ?? null, allowed: UPLOAD_CONTEXTS },
+        ),
+      );
     }
-    if (!studentId) {
-      throw new BadRequestException('student_id is required');
-    }
-    const record = await this.uploadsService.saveFileRecord(
-      file as UploadFile,
-      userId || 'faculty_mentor',
-      role || 'faculty',
-      'progress_report',
-      studentId
-    );
+
+    const record = this.uploads.record(file, context as UploadContext, userId);
+
     return {
       success: true,
-      message: `Progress report for Student ${studentId} ingested successfully!`,
       data: {
-        ...record,
-        semester: semester || 'Spring 2026',
-        download_url: `/api/uploads/download/${record.file_id}`,
+        file_id: record.file_id,
+        original_name: record.original_name,
+        size_bytes: record.size_bytes,
+        mime_type: record.mime_type,
+        uploaded_at: record.uploaded_at,
       },
     };
   }
 
-  @Get('progress-reports/student/:studentId')
-  @ApiOperation({ summary: 'Get all ingested progress reports for a student' })
-  async getStudentProgressReports(@Param('studentId') studentId: string) {
-    const docs = await this.uploadsService.getProgressReportsForStudent(studentId);
-    return {
-      success: true,
-      student_id: studentId,
-      count: docs.length,
-      reports: docs.map((d) => ({
-        ...d,
-        download_url: `/api/uploads/download/${d.file_id}`,
-      })),
-    };
-  }
-
-  @Get('download/:fileId')
-  @ApiOperation({ summary: 'Download an uploaded file or progress report' })
-  async downloadFile(
+  @Get(':fileId')
+  @ApiOperation({ summary: 'Download a document (owner or reviewing staff only)' })
+  @ApiResponse({ status: 200, description: 'The file, as an attachment' })
+  @ApiResponse({ status: 403, description: 'Not the owner and not staff' })
+  @ApiResponse({ status: 404, description: 'No such document' })
+  async download(
     @Param('fileId') fileId: string,
-    @Res({ passthrough: true }) res: any
-  ): Promise<StreamableFile> {
-    const doc = await this.uploadsService.getFileById(fileId);
-    const fileStream = fs.createReadStream(doc.file_path);
+    @CurrentUserId() userId: string,
+    @CurrentUserRole() role: string,
+    @Res() res: Response,
+  ) {
+    const record = this.uploads.findById(fileId);
+    this.uploads.assertCanRead(record, userId, role as Role);
+    const filePath = this.uploads.resolvePath(record);
 
-    res.set({
-      'Content-Type': doc.mime_type,
-      'Content-Disposition': `attachment; filename="${encodeURIComponent(doc.original_name)}"`,
-      'Content-Length': doc.size_bytes.toString(),
-    });
-
-    return new StreamableFile(fileStream);
-  }
-
-  @Get()
-  @ApiOperation({ summary: 'List all uploaded files' })
-  async listAllUploads(@Query('category') category?: string) {
-    const docs = await this.uploadsService.getAllUploads(category);
-    return {
-      success: true,
-      count: docs.length,
-      files: docs.map((d) => ({
-        ...d,
-        download_url: `/api/uploads/download/${d.file_id}`,
-      })),
-    };
-  }
-
-  @Delete(':fileId')
-  @ApiOperation({ summary: 'Delete an uploaded file' })
-  async deleteUpload(@Param('fileId') fileId: string) {
-    return this.uploadsService.deleteFile(fileId);
+    // Always an attachment, never inline: a stored HTML or SVG file rendered
+    // inline would execute in this origin, and the origin holds the session.
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${record.original_name.replace(/"/g, '')}"`,
+    );
+    res.sendFile(filePath);
   }
 }

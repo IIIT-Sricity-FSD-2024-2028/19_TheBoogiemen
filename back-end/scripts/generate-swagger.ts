@@ -12,6 +12,10 @@ async function generate() {
     .setTitle('BarelyPassing API')
     .setDescription('Academic Progress & Outcome Tracking API')
     .setVersion('1.0')
+    .addApiKey({ type: 'apiKey', in: 'header', name: 'role' }, 'role')
+    .addApiKey({ type: 'apiKey', in: 'header', name: 'user-id' }, 'user-id')
+    .addSecurityRequirements('role')
+    .addSecurityRequirements('user-id')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   

@@ -1,65 +1,66 @@
-import { Injectable, CanActivate, ExecutionContext, SetMetadata, ForbiddenException, UnauthorizedException } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
+/**
+ * roles.guard.ts — authorization from verified token claims.
+ *
+ * This guard used to read `request.headers['role']`, which the client set freely:
+ * `curl -H "role: superadmin"` was a complete authorization bypass. It now reads
+ * `request.user.role`, populated by JwtAuthGuard from a signature-verified token.
+ *
+ * Runs after JwtAuthGuard, so `request.user` is guaranteed present on any route
+ * that is not @Public().
+ */
 
-export const Roles = (...roles: string[]) => SetMetadata('roles', roles);
+import { Injectable, CanActivate, ExecutionContext, SetMetadata, ForbiddenException } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import { IS_PUBLIC_KEY } from './public.decorator';
+import { Role } from './jwt-payload';
+import { ErrorCode, errorBody } from '../common/errors/error-codes';
+
+export const ROLES_KEY = 'roles';
+
+export const Roles = (...roles: Role[]) => SetMetadata(ROLES_KEY, roles);
 
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const requiredRoles = this.reflector.getAllAndOverride<string[]>('roles', [
+    if (context.getType() !== 'http') return true;
+
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (isPublic) return true;
+
+    const requiredRoles = this.reflector.getAllAndOverride<string[]>(ROLES_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
 
-    if (!requiredRoles || requiredRoles.length === 0) {
-      return true;
-    }
+    // No @Roles on the handler means "any authenticated user". Authentication
+    // itself was already enforced by JwtAuthGuard.
+    if (!requiredRoles || requiredRoles.length === 0) return true;
 
     const request = context.switchToHttp().getRequest();
-    const roleHeader = request.headers['role'];
-    const authHeader = request.headers['authorization'];
+    const role = request.user?.role;
 
-    // Determine user role from header or mock token
-    let userRole = roleHeader;
-
-    if (!userRole && authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.replace('Bearer ', '');
-      if (token.includes('saasadmin')) userRole = 'PLATFORM_SUPER_ADMIN';
-      else if (token.includes('sales')) userRole = 'PLATFORM_SALES_SUPPORT';
-      else if (token.includes('techsupport')) userRole = 'PLATFORM_TECH_SUPPORT';
-      else if (token.includes('director')) userRole = 'INSTITUTE_SUPER_ADMIN';
-      else if (token.includes('finance')) userRole = 'FINANCE_ADMIN';
-      else if (token.includes('hod') || token.includes('head')) userRole = 'DEPARTMENT_ADMIN_HOD';
-      else if (token.includes('faculty')) userRole = 'faculty';
-      else if (token.includes('student')) userRole = 'student';
+    if (!role) {
+      // Should be unreachable: JwtAuthGuard rejects unauthenticated requests first.
+      throw new ForbiddenException(
+        errorBody(ErrorCode.AUTHENTICATION_REQUIRED, 'No authenticated role on request'),
+      );
     }
 
-    if (!userRole) {
-      throw new UnauthorizedException('Authentication role header or bearer token required');
-    }
-
-    // Role Alias Mapping matrix
-    const roleMap: Record<string, string[]> = {
-      FINANCE_ADMIN: ['FINANCE_ADMIN', 'finance_admin'],
-      PLATFORM_SUPER_ADMIN: ['PLATFORM_SUPER_ADMIN', 'globaladmin'],
-      PLATFORM_SALES_SUPPORT: ['PLATFORM_SALES_SUPPORT', 'support'],
-      PLATFORM_TECH_SUPPORT: ['PLATFORM_TECH_SUPPORT', 'support'],
-      INSTITUTE_SUPER_ADMIN: ['INSTITUTE_SUPER_ADMIN', 'superadmin', 'admin'],
-      DEPARTMENT_ADMIN_HOD: ['DEPARTMENT_ADMIN_HOD', 'head'],
-      faculty: ['faculty', 'FACULTY_MENTOR'],
-      student: ['student', 'STUDENT'],
-    };
-
-    const userEquivalentRoles = roleMap[userRole] || [userRole];
-
-    const hasAccess = requiredRoles.some((reqRole) =>
-      userEquivalentRoles.includes(reqRole) || (roleMap[reqRole] && roleMap[reqRole].includes(userRole))
-    );
-
-    if (!hasAccess) {
-      throw new ForbiddenException(`Backend Authorization Error: Role "${userRole}" is forbidden from accessing this resource`);
+    if (!requiredRoles.includes(role)) {
+      // 403, not 401 — the caller is authenticated, just not permitted. The
+      // frontend relies on this distinction: 401 signs you out, 403 does not.
+      throw new ForbiddenException(
+        errorBody(
+          ErrorCode.INSUFFICIENT_ROLE,
+          `Requires one of: ${requiredRoles.join(', ')}. Your role is '${role}'.`,
+          { requiredRoles, actualRole: role },
+        ),
+      );
     }
 
     return true;

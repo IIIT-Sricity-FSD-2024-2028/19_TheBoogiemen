@@ -30,7 +30,7 @@ export const MOCK_USERS: USER[] = [
   { user_id: SEED.STUDENTS[2], username: 'charlie_brown', email: 'charlie@university.edu', role: 'student' },
   { user_id: SEED.FACULTY[0], username: 'dr_miller', email: 'miller@university.edu', role: 'faculty' },
   { user_id: SEED.FACULTY[1], username: 'dr_clark', email: 'clark@university.edu', role: 'faculty' },
-  { user_id: SEED.ACADEMIC_HEADS[0], username: 'prof_taylor', email: 'taylor@university.edu', role: 'academic_head' },
+  { user_id: SEED.ACADEMIC_HEADS[0], username: 'prof_taylor', email: 'taylor@university.edu', role: 'head' },
   { user_id: SEED.ADMINS[0], username: 'admin_sys', email: 'admin@university.edu', role: 'admin' },
 ];
 

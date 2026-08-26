@@ -3,6 +3,7 @@ import { AttendanceRepository } from './attendance.attendance.repository';
 import { NotificationService } from '../../common/services/notification.service';
 import { AttendanceOutputDto } from './dto/attendance.output.dto';
 import { v4 as uuidv4 } from 'uuid';
+import { ErrorCode, errorBody } from '../../common/errors/error-codes';
 
 @Injectable()
 export class AttendanceService {
@@ -13,7 +14,9 @@ export class AttendanceService {
 
   async getSubjectWiseAttendance(studentId: string): Promise<AttendanceOutputDto[]> {
     const enrollments = this.attendanceRepo.enrollments.filter(e => e.student_id === studentId);
-    if (!enrollments.length) throw new NotFoundException('No enrollments found for student');
+    if (!enrollments.length) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'No enrollments found for student'),
+    );
 
     const result: AttendanceOutputDto[] = [];
 
@@ -53,7 +56,9 @@ export class AttendanceService {
 
   async getLogById(id: string) {
     const log = await this.attendanceRepo.findOneById(id);
-    if (!log) throw new NotFoundException('Attendance log not found');
+    if (!log) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Attendance log not found'),
+    );
     return log;
   }
 
@@ -69,7 +74,9 @@ export class AttendanceService {
 
   async updateLog(id: string, dto: any) {
     const log = await this.attendanceRepo.findOneById(id);
-    if (!log) throw new NotFoundException('Attendance log not found');
+    if (!log) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Attendance log not found'),
+    );
     
     return this.attendanceRepo.update(id, {
       enrollment_id: dto.enrollment_id || log.enrollment_id,
@@ -81,14 +88,18 @@ export class AttendanceService {
 
   async patchLog(id: string, dto: any) {
     const log = await this.attendanceRepo.findOneById(id);
-    if (!log) throw new NotFoundException('Attendance log not found');
+    if (!log) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Attendance log not found'),
+    );
     
     return this.attendanceRepo.update(id, dto);
   }
 
   async deleteLog(id: string) {
     const log = await this.attendanceRepo.findOneById(id);
-    if (!log) throw new NotFoundException('Attendance log not found');
+    if (!log) throw new NotFoundException(
+      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Attendance log not found'),
+    );
     
     await this.attendanceRepo.delete(id);
   }
