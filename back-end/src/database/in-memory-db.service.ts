@@ -5,7 +5,14 @@ import * as path from 'path';
 
 @Injectable()
 export class InMemoryDbService implements OnModuleInit {
-  private readonly dataPath = path.join(__dirname, '..', '..', '..', 'data', 'mock-db.json');
+  private readonly dataPath = path.join(
+    __dirname,
+    '..',
+    '..',
+    '..',
+    'data',
+    'mock-db.json',
+  );
   private isLoaded = false;
 
   public departments = this.createProxyArray([]);
@@ -31,7 +38,8 @@ export class InMemoryDbService implements OnModuleInit {
   public resource_bookings = this.createProxyArray([]);
 
   constructor(
-    @InjectPinoLogger(InMemoryDbService.name) private readonly logger: PinoLogger,
+    @InjectPinoLogger(InMemoryDbService.name)
+    private readonly logger: PinoLogger,
   ) {}
 
   onModuleInit() {
@@ -42,7 +50,18 @@ export class InMemoryDbService implements OnModuleInit {
     return new Proxy(arr, {
       get: (target, prop, receiver) => {
         const value = Reflect.get(target, prop, receiver);
-        if (typeof value === 'function' && ['push', 'pop', 'shift', 'unshift', 'splice', 'sort', 'reverse'].includes(prop as string)) {
+        if (
+          typeof value === 'function' &&
+          [
+            'push',
+            'pop',
+            'shift',
+            'unshift',
+            'splice',
+            'sort',
+            'reverse',
+          ].includes(prop as string)
+        ) {
           return (...args: any[]) => {
             const result = value.apply(target, args);
             if (this.isLoaded) this.persist();
@@ -55,7 +74,7 @@ export class InMemoryDbService implements OnModuleInit {
         const result = Reflect.set(target, prop, value, receiver);
         if (this.isLoaded && prop !== 'length') this.persist();
         return result;
-      }
+      },
     });
   }
 
@@ -64,17 +83,17 @@ export class InMemoryDbService implements OnModuleInit {
       if (fs.existsSync(this.dataPath)) {
         const rawData = fs.readFileSync(this.dataPath, 'utf8');
         const data = JSON.parse(rawData);
-        
+
         // Disable persistence during bulk load
         this.isLoaded = false;
-        
+
         for (const key in data) {
           if (Array.isArray(data[key]) && this[key]) {
             this[key].length = 0; // Clear proxy array
             this[key].push(...data[key]); // Push into proxy array (will not persist due to isLoaded=false)
           }
         }
-        
+
         this.isLoaded = true;
         this.logger.info(
           { path: this.dataPath, collections: Object.keys(data).length },
@@ -89,7 +108,10 @@ export class InMemoryDbService implements OnModuleInit {
       }
     } catch (error) {
       this.isLoaded = true;
-      this.logger.error({ err: error, path: this.dataPath }, 'Failed to load seed data');
+      this.logger.error(
+        { err: error, path: this.dataPath },
+        'Failed to load seed data',
+      );
     }
   }
 
@@ -119,11 +141,18 @@ export class InMemoryDbService implements OnModuleInit {
         resource_bookings: this.resource_bookings,
       };
 
-      fs.writeFileSync(this.dataPath, JSON.stringify(dataToSave, null, 2), 'utf8');
+      fs.writeFileSync(
+        this.dataPath,
+        JSON.stringify(dataToSave, null, 2),
+        'utf8',
+      );
     } catch (error) {
       // Persistence failures are silent data loss — this must be an error, not a
       // warning, and will matter more once this is a real database.
-      this.logger.error({ err: error, path: this.dataPath }, 'Failed to persist data');
+      this.logger.error(
+        { err: error, path: this.dataPath },
+        'Failed to persist data',
+      );
     }
   }
 }

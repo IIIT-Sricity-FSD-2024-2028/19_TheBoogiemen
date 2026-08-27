@@ -5,7 +5,7 @@ export enum UserRoleEnum {
   STUDENT = 'student',
   FACULTY = 'faculty',
   ADMIN = 'admin',
-  ACADEMIC_HEAD = 'head'
+  ACADEMIC_HEAD = 'head',
 }
 
 export class UpdateRoleInputDto {

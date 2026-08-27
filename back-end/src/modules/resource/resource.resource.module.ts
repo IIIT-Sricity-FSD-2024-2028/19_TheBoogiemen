@@ -7,7 +7,12 @@ import { NotificationService } from '../../common/services/notification.service'
 
 @Module({
   controllers: [ResourceController],
-  providers: [ResourceService, ResourceRepository, EventRepository, NotificationService],
+  providers: [
+    ResourceService,
+    ResourceRepository,
+    EventRepository,
+    NotificationService,
+  ],
   exports: [ResourceService],
 })
 export class ResourceModule {}

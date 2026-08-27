@@ -6,23 +6,38 @@
  * after "sign out". None of those fail loudly, so they are asserted.
  */
 
-import { AUTH_COOKIE, setAuthCookie, clearAuthCookie, tokenTtlMs } from './auth-cookie';
+import {
+  AUTH_COOKIE,
+  setAuthCookie,
+  clearAuthCookie,
+  tokenTtlMs,
+} from './auth-cookie';
 
 const mockRes = () => ({ cookie: jest.fn(), clearCookie: jest.fn() }) as any;
 
 const makeToken = (expSecondsFromNow: number) => {
-  const payload = Buffer.from(JSON.stringify({ sub: 'u1', exp: Math.floor(Date.now() / 1000) + expSecondsFromNow }))
-    .toString('base64url');
+  const payload = Buffer.from(
+    JSON.stringify({
+      sub: 'u1',
+      exp: Math.floor(Date.now() / 1000) + expSecondsFromNow,
+    }),
+  ).toString('base64url');
   return `header.${payload}.signature`;
 };
 
 describe('setAuthCookie', () => {
-  afterEach(() => { delete process.env.NODE_ENV; });
+  afterEach(() => {
+    delete process.env.NODE_ENV;
+  });
 
   it('is httpOnly so XSS cannot read the token', () => {
     const res = mockRes();
     setAuthCookie(res, 'tok', 1000);
-    expect(res.cookie).toHaveBeenCalledWith(AUTH_COOKIE, 'tok', expect.objectContaining({ httpOnly: true }));
+    expect(res.cookie).toHaveBeenCalledWith(
+      AUTH_COOKIE,
+      'tok',
+      expect.objectContaining({ httpOnly: true }),
+    );
   });
 
   it('is SameSite=strict — the CSRF defence, since there is no CSRF token', () => {

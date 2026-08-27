@@ -4,7 +4,7 @@ import { ApiProperty } from '@nestjs/swagger';
 export enum EventTypeEnum {
   LECTURE = 'lecture',
   ASSESSMENT = 'assessment',
-  SEMINAR = 'seminar'
+  SEMINAR = 'seminar',
 }
 
 export class ScheduleEventInputDto {

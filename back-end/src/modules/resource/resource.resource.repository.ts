@@ -9,7 +9,7 @@ export class ResourceRepository {
   constructor() {}
 
   async findOneById(id: string): Promise<RESOURCE | undefined> {
-    return this.items.find(r => r.resource_id === id);
+    return this.items.find((r) => r.resource_id === id);
   }
 
   async findAll(): Promise<RESOURCE[]> {
@@ -22,7 +22,7 @@ export class ResourceRepository {
   }
 
   async update(id: string, data: Partial<RESOURCE>): Promise<RESOURCE | null> {
-    const idx = this.items.findIndex(r => r.resource_id === id);
+    const idx = this.items.findIndex((r) => r.resource_id === id);
     if (idx > -1) {
       Object.assign(this.items[idx], data);
       return this.items[idx];
@@ -31,7 +31,7 @@ export class ResourceRepository {
   }
 
   async delete(id: string): Promise<void> {
-    const idx = this.items.findIndex(r => r.resource_id === id);
+    const idx = this.items.findIndex((r) => r.resource_id === id);
     if (idx > -1) this.items.splice(idx, 1);
   }
 }

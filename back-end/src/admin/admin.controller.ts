@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Put, Body, Query, Param } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { Roles } from '../auth/roles.guard';
-import { ApiTags, ApiOperation , ApiBody} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBody } from '@nestjs/swagger';
 
 @ApiTags('Admin')
 @Controller('admin')
@@ -18,7 +18,10 @@ export class AdminController {
   @Put('leave/:id')
   @Roles('admin', 'head')
   @ApiOperation({ summary: 'Update leave application status' })
-  async updateLeaveStatus(@Param('id') id: string, @Body('status') status: string) {
+  async updateLeaveStatus(
+    @Param('id') id: string,
+    @Body('status') status: string,
+  ) {
     return this.adminService.updateLeaveStatus(id, status);
   }
 

@@ -1,4 +1,15 @@
-import { Controller, Post, Patch, Body, Param, UseGuards, SetMetadata, Get, Put, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Patch,
+  Body,
+  Param,
+  UseGuards,
+  SetMetadata,
+  Get,
+  Put,
+  Delete,
+} from '@nestjs/common';
 import { ApiTags, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
 import { LeaveService } from './leave.leave.service';
 import { EnvGuard } from '../../common/guards/env.guard';
@@ -29,7 +40,10 @@ export class LeaveController {
   @ApiParam({ name: 'id', description: 'Leave ID' })
   @ApiBody({ type: ApproveLeaveInputDto })
   @ApiResponse({ status: 200, type: LeaveOutputDto })
-  async approveLeave(@Param('id') id: string, @Body() dto: ApproveLeaveInputDto) {
+  async approveLeave(
+    @Param('id') id: string,
+    @Body() dto: ApproveLeaveInputDto,
+  ) {
     dto.leave_id = id;
     const adminId = SEED.ADMINS[0];
     const data = await this.leaveService.approveLeave(id, adminId);
@@ -39,11 +53,18 @@ export class LeaveController {
   @Get('mock-data')
   @SetMetadata('roles', ['faculty', 'student', 'admin', 'head', 'superadmin'])
   @UseGuards(EnvGuard)
-  @ApiResponse({ status: 200, description: 'Fetch mock data for testing UUIDs' })
+  @ApiResponse({
+    status: 200,
+    description: 'Fetch mock data for testing UUIDs',
+  })
   getMockData() {
-    return new BaseResponseDto(true, {
-      leaves: MOCK_LEAVE_REQUESTS
-    }, 'mock data fetched');
+    return new BaseResponseDto(
+      true,
+      {
+        leaves: MOCK_LEAVE_REQUESTS,
+      },
+      'mock data fetched',
+    );
   }
 
   @Get()
@@ -51,7 +72,11 @@ export class LeaveController {
   @ApiResponse({ status: 200, description: 'Fetch all leave requests' })
   async getAllLeaves() {
     const data = await this.leaveService.getAllLeaves();
-    return new BaseResponseDto(true, data, 'leave requests fetched successfully');
+    return new BaseResponseDto(
+      true,
+      data,
+      'leave requests fetched successfully',
+    );
   }
 
   @Get(':id')
@@ -59,7 +84,11 @@ export class LeaveController {
   @ApiResponse({ status: 200, description: 'Fetch leave request by ID' })
   async getLeaveById(@Param('id') id: string) {
     const data = await this.leaveService.getLeaveById(id);
-    return new BaseResponseDto(true, data, 'leave request fetched successfully');
+    return new BaseResponseDto(
+      true,
+      data,
+      'leave request fetched successfully',
+    );
   }
 
   @Put(':id')
@@ -68,7 +97,11 @@ export class LeaveController {
   @ApiResponse({ status: 200, description: 'Full update of leave request' })
   async updateLeave(@Param('id') id: string, @Body() dto: UpdateLeaveInputDto) {
     const data = await this.leaveService.updateLeave(id, dto);
-    return new BaseResponseDto(true, data, 'leave request updated successfully');
+    return new BaseResponseDto(
+      true,
+      data,
+      'leave request updated successfully',
+    );
   }
 
   @Patch(':id')
@@ -77,7 +110,11 @@ export class LeaveController {
   @ApiResponse({ status: 200, description: 'Partial update of leave request' })
   async patchLeave(@Param('id') id: string, @Body() dto: UpdateLeaveInputDto) {
     const data = await this.leaveService.patchLeave(id, dto);
-    return new BaseResponseDto(true, data, 'leave request patched successfully');
+    return new BaseResponseDto(
+      true,
+      data,
+      'leave request patched successfully',
+    );
   }
 
   @Delete(':id')
@@ -85,6 +122,10 @@ export class LeaveController {
   @ApiResponse({ status: 200, description: 'Delete leave request' })
   async deleteLeave(@Param('id') id: string) {
     await this.leaveService.deleteLeave(id);
-    return new BaseResponseDto(true, null, 'leave request deleted successfully');
+    return new BaseResponseDto(
+      true,
+      null,
+      'leave request deleted successfully',
+    );
   }
 }

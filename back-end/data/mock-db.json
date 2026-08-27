@@ -269,6 +269,132 @@
       "course_id": "c1",
       "date": "2026-04-12",
       "status": "absent"
+    },
+    {
+      "log_id": "74102416-72e7-4f4d-9cec-74a8203d3fa9",
+      "student_id": "u1",
+      "course_id": "c1",
+      "date": "2026-08-27",
+      "status": "absent"
+    },
+    {
+      "log_id": "393fb55c-cd87-4eb5-9b3a-6837802e30b4",
+      "student_id": "u6",
+      "course_id": "c1",
+      "date": "2026-08-27",
+      "status": "present"
+    },
+    {
+      "log_id": "b1b860dc-7d38-420b-ad59-50e24f4cff03",
+      "student_id": "u6",
+      "course_id": "c1",
+      "date": "2026-05-10",
+      "status": "excused",
+      "source": "leave:l2"
+    },
+    {
+      "log_id": "84b15521-2ae3-4398-b788-de27d88a1482",
+      "student_id": "u6",
+      "course_id": "c3",
+      "date": "2026-05-10",
+      "status": "excused",
+      "source": "leave:l2"
+    },
+    {
+      "log_id": "e67c11b9-7e6a-42d9-93fd-9f7c8914d258",
+      "student_id": "u6",
+      "course_id": "c1",
+      "date": "2026-05-11",
+      "status": "excused",
+      "source": "leave:l2"
+    },
+    {
+      "log_id": "f9a8a832-ce91-4b37-acf8-32ff6c7d4754",
+      "student_id": "u6",
+      "course_id": "c3",
+      "date": "2026-05-11",
+      "status": "excused",
+      "source": "leave:l2"
+    },
+    {
+      "log_id": "31a8a690-f37b-4c34-96ad-fe416531c846",
+      "student_id": "u6",
+      "course_id": "c1",
+      "date": "2026-05-12",
+      "status": "excused",
+      "source": "leave:l2"
+    },
+    {
+      "log_id": "3b2bcac0-8a98-45a2-b35d-dc5d33bfa96b",
+      "student_id": "u6",
+      "course_id": "c3",
+      "date": "2026-05-12",
+      "status": "excused",
+      "source": "leave:l2"
+    },
+    {
+      "log_id": "8bafa1da-ec3a-4a04-a6c0-b64d3f61e25c",
+      "student_id": "u1",
+      "course_id": "c1",
+      "date": "2026-06-01",
+      "status": "excused",
+      "source": "leave:l3"
+    },
+    {
+      "log_id": "0eace3bb-0d27-4d3e-844c-eda4d39ab858",
+      "student_id": "u1",
+      "course_id": "c2",
+      "date": "2026-06-01",
+      "status": "excused",
+      "source": "leave:l3"
+    },
+    {
+      "log_id": "f69d7328-1f36-49c2-affd-a4083257410a",
+      "student_id": "u1",
+      "course_id": "c5",
+      "date": "2026-06-01",
+      "status": "excused",
+      "source": "leave:l3"
+    },
+    {
+      "log_id": "b113a45e-cebb-4da0-9163-167688c43ee7",
+      "student_id": "u1",
+      "course_id": "c7",
+      "date": "2026-06-01",
+      "status": "excused",
+      "source": "leave:l3"
+    },
+    {
+      "log_id": "4dd7a0f6-1657-4c9c-a07e-25fc4a7d0ae9",
+      "student_id": "u1",
+      "course_id": "c1",
+      "date": "2026-06-02",
+      "status": "excused",
+      "source": "leave:l3"
+    },
+    {
+      "log_id": "c8928d88-fc18-47ff-9766-a44bee840be2",
+      "student_id": "u1",
+      "course_id": "c2",
+      "date": "2026-06-02",
+      "status": "excused",
+      "source": "leave:l3"
+    },
+    {
+      "log_id": "8981212b-789d-418b-8310-389fb0c4309a",
+      "student_id": "u1",
+      "course_id": "c5",
+      "date": "2026-06-02",
+      "status": "excused",
+      "source": "leave:l3"
+    },
+    {
+      "log_id": "2544ee42-e24d-4ba6-9261-4bc0f285c991",
+      "student_id": "u1",
+      "course_id": "c7",
+      "date": "2026-06-02",
+      "status": "excused",
+      "source": "leave:l3"
     }
   ],
   "assessments": [
@@ -355,7 +481,7 @@
       "start_date": "2026-05-10",
       "end_date": "2026-05-12",
       "reason": "Sister wedding",
-      "status": "pending",
+      "status": "approved",
       "applied_on": "2026-04-17"
     },
     {
@@ -366,7 +492,7 @@
       "start_date": "2026-06-01",
       "end_date": "2026-06-02",
       "reason": "Family function",
-      "status": "pending",
+      "status": "approved",
       "applied_on": "2026-05-20"
     }
   ],
@@ -916,7 +1042,7 @@
       "section": "A",
       "progress": 72,
       "updated_by": "u2",
-      "updated_at": "2026-04-25",
+      "updated_at": "2026-08-27",
       "modules": [
         {
           "name": "Module 1 – Arrays & Linked Lists",
@@ -945,7 +1071,7 @@
       "section": "B",
       "progress": 65,
       "updated_by": "u2",
-      "updated_at": "2026-04-25",
+      "updated_at": "2026-08-27",
       "modules": [
         {
           "name": "Module 1 – Arrays & Linked Lists",

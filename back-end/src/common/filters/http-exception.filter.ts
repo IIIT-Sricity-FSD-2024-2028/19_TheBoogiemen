@@ -42,7 +42,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const status = httpException.getStatus();
     const { code, message, details } = this.destructure(httpException, status);
 
-    const requestId = (request as any).id ?? request.header?.(REQUEST_ID_HEADER);
+    const requestId =
+      (request as any).id ?? request.header?.(REQUEST_ID_HEADER);
 
     const logContext = {
       requestId,
@@ -139,14 +140,16 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const rawMessage = asRecord.message;
 
     const message = Array.isArray(rawMessage)
-      ? rawMessage.join(', ')                    // class-validator default shape
+      ? rawMessage.join(', ') // class-validator default shape
       : typeof rawMessage === 'string'
         ? rawMessage
         : exception.message || 'Request failed';
 
-    const code = (typeof asRecord.code === 'string'
-      ? asRecord.code
-      : defaultCodeForStatus(status)) as ErrorCode;
+    const code = (
+      typeof asRecord.code === 'string'
+        ? asRecord.code
+        : defaultCodeForStatus(status)
+    ) as ErrorCode;
 
     return { code, message, details: asRecord.details };
   }

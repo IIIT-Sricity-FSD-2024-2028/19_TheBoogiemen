@@ -7,7 +7,12 @@ import { NotificationService } from '../../common/services/notification.service'
 
 @Module({
   controllers: [FeeController],
-  providers: [FeeService, FeeRepository, FeeStructureRepository, NotificationService],
+  providers: [
+    FeeService,
+    FeeRepository,
+    FeeStructureRepository,
+    NotificationService,
+  ],
   exports: [FeeService],
 })
 export class FeeModule {}

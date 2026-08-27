@@ -6,26 +6,39 @@
  */
 
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
-import { sanitizeOriginalName, uploadFileFilter, ALLOWED_EXTENSIONS } from './upload.config';
+import {
+  sanitizeOriginalName,
+  uploadFileFilter,
+  ALLOWED_EXTENSIONS,
+} from './upload.config';
 import { UploadsService, UploadRecord } from './uploads.service';
 import { ErrorCode } from '../common/errors/error-codes';
 
 const filter = (originalname: string, mimetype: string) => {
   let error: any = null;
   let accepted: boolean | undefined;
-  uploadFileFilter(null, { originalname, mimetype }, (e, ok) => { error = e; accepted = ok; });
+  uploadFileFilter(null, { originalname, mimetype }, (e, ok) => {
+    error = e;
+    accepted = ok;
+  });
   return { error, accepted };
 };
 
 describe('sanitizeOriginalName', () => {
   it('strips directory components so a name can never be a path', () => {
     expect(sanitizeOriginalName('../../etc/passwd')).toBe('passwd');
-    expect(sanitizeOriginalName('..\\..\\windows\\system32\\config')).not.toContain('\\');
-    expect(sanitizeOriginalName('/absolute/path/report.pdf')).toBe('report.pdf');
+    expect(
+      sanitizeOriginalName('..\\..\\windows\\system32\\config'),
+    ).not.toContain('\\');
+    expect(sanitizeOriginalName('/absolute/path/report.pdf')).toBe(
+      'report.pdf',
+    );
   });
 
   it('keeps ordinary names readable', () => {
-    expect(sanitizeOriginalName('Medical Certificate-2026.pdf')).toBe('Medical Certificate-2026.pdf');
+    expect(sanitizeOriginalName('Medical Certificate-2026.pdf')).toBe(
+      'Medical Certificate-2026.pdf',
+    );
   });
 
   it('replaces characters that could break headers or logs', () => {
@@ -39,7 +52,9 @@ describe('sanitizeOriginalName', () => {
   });
 
   it('bounds the length', () => {
-    expect(sanitizeOriginalName('x'.repeat(500)).length).toBeLessThanOrEqual(120);
+    expect(sanitizeOriginalName('x'.repeat(500)).length).toBeLessThanOrEqual(
+      120,
+    );
   });
 });
 
@@ -50,14 +65,20 @@ describe('uploadFileFilter', () => {
   });
 
   it('rejects a disallowed extension', () => {
-    const { error, accepted } = filter('payload.exe', 'application/octet-stream');
+    const { error, accepted } = filter(
+      'payload.exe',
+      'application/octet-stream',
+    );
     expect(accepted).toBe(false);
     expect(error.getResponse().code).toBe(ErrorCode.UNSUPPORTED_MEDIA_TYPE);
   });
 
   it('rejects an executable renamed to a permitted extension', () => {
     // The extension says pdf; the browser reported the real type.
-    const { error, accepted } = filter('payload.pdf', 'application/x-msdownload');
+    const { error, accepted } = filter(
+      'payload.pdf',
+      'application/x-msdownload',
+    );
     expect(accepted).toBe(false);
     expect(error.getResponse().message).toMatch(/do not match/);
   });
@@ -75,9 +96,15 @@ describe('uploadFileFilter', () => {
 
 describe('UploadsService access control', () => {
   const record = (over: Partial<UploadRecord> = {}): UploadRecord => ({
-    file_id: 'f1', stored_name: 'uuid.pdf', original_name: 'cert.pdf',
-    mime_type: 'application/pdf', size_bytes: 10, context: 'leave',
-    uploaded_by: 'u1', uploaded_at: '2026-01-01T00:00:00.000Z', ...over,
+    file_id: 'f1',
+    stored_name: 'uuid.pdf',
+    original_name: 'cert.pdf',
+    mime_type: 'application/pdf',
+    size_bytes: 10,
+    context: 'leave',
+    uploaded_by: 'u1',
+    uploaded_at: '2026-01-01T00:00:00.000Z',
+    ...over,
   });
 
   const service = () => {
@@ -87,18 +114,23 @@ describe('UploadsService access control', () => {
   };
 
   it('lets the uploader read their own document', () => {
-    expect(() => service().assertCanRead(record(), 'u1', 'student')).not.toThrow();
+    expect(() =>
+      service().assertCanRead(record(), 'u1', 'student'),
+    ).not.toThrow();
   });
 
   it('blocks a student reading another student document', () => {
     // The realistic case: leave attachments are medical certificates.
-    expect(() => service().assertCanRead(record({ uploaded_by: 'u1' }), 'u6', 'student'))
-      .toThrow(ForbiddenException);
+    expect(() =>
+      service().assertCanRead(record({ uploaded_by: 'u1' }), 'u6', 'student'),
+    ).toThrow(ForbiddenException);
   });
 
   it('lets reviewing staff read any document', () => {
     for (const role of ['faculty', 'admin', 'head', 'superadmin'] as const) {
-      expect(() => service().assertCanRead(record(), 'someone-else', role)).not.toThrow();
+      expect(() =>
+        service().assertCanRead(record(), 'someone-else', role),
+      ).not.toThrow();
     }
   });
 
@@ -108,17 +140,26 @@ describe('UploadsService access control', () => {
 
   it('records metadata and persists it', () => {
     const db: any = { uploads: [], persist: jest.fn() };
-    const svc = new UploadsService(db, { info: jest.fn(), warn: jest.fn(), error: jest.fn() } as any);
+    const svc = new UploadsService(db, {
+      info: jest.fn(),
+      warn: jest.fn(),
+      error: jest.fn(),
+    } as any);
 
     const saved = svc.record(
-      { filename: 'uuid-1.pdf', originalname: '../evil name.pdf', mimetype: 'application/pdf', size: 42 } as any,
+      {
+        filename: 'uuid-1.pdf',
+        originalname: '../evil name.pdf',
+        mimetype: 'application/pdf',
+        size: 42,
+      } as any,
       'leave',
       'u1',
     );
 
-    expect(saved.original_name).toBe('evil name.pdf');   // sanitised
-    expect(saved.stored_name).toBe('uuid-1.pdf');        // on-disk name untouched
-    expect(saved.file_id).not.toBe(saved.stored_name);   // id is not the path
+    expect(saved.original_name).toBe('evil name.pdf'); // sanitised
+    expect(saved.stored_name).toBe('uuid-1.pdf'); // on-disk name untouched
+    expect(saved.file_id).not.toBe(saved.stored_name); // id is not the path
     expect(db.uploads).toHaveLength(1);
     expect(db.persist).toHaveBeenCalled();
   });

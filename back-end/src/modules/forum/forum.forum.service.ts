@@ -11,11 +11,15 @@ import { ErrorCode, errorBody } from '../../common/errors/error-codes';
 export class ForumService {
   constructor(private readonly forumRepo: ForumRepository) {}
 
-  async createPost(userId: string, dto: CreatePostInputDto): Promise<PostOutputDto> {
+  async createPost(
+    userId: string,
+    dto: CreatePostInputDto,
+  ): Promise<PostOutputDto> {
     const topic = await this.forumRepo.findTopic(dto.topic_id);
-    if (!topic) throw new NotFoundException(
-      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Topic not found'),
-    );
+    if (!topic)
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Topic not found'),
+      );
 
     const post = await this.forumRepo.createPost({
       id: uuidv4(),
@@ -23,7 +27,7 @@ export class ForumService {
       author_id: userId,
       content: dto.content,
       created_at: new Date().toISOString(),
-      replies_count: 0
+      replies_count: 0,
     });
 
     return post;
@@ -31,16 +35,17 @@ export class ForumService {
 
   async replyToPost(userId: string, dto: ReplyInputDto): Promise<FORUM_REPLY> {
     const post = await this.forumRepo.findPost(dto.post_id);
-    if (!post) throw new NotFoundException(
-      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Post not found'),
-    );
+    if (!post)
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Post not found'),
+      );
 
     const reply = await this.forumRepo.createReply({
       id: uuidv4(),
       post_id: dto.post_id,
       author_id: userId,
       content: dto.content,
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
     });
 
     await this.forumRepo.incrementReplyCount(dto.post_id);
@@ -53,7 +58,9 @@ export class ForumService {
     if (!domain) return [];
 
     const topics = await this.forumRepo.findTopicsByDomain(domain.domain_id);
-    const posts = await this.forumRepo.findPostsByTopics(topics.map(t => t.topic_id));
+    const posts = await this.forumRepo.findPostsByTopics(
+      topics.map((t) => t.topic_id),
+    );
 
     return posts;
   }
@@ -64,38 +71,42 @@ export class ForumService {
 
   async getPostById(id: string) {
     const post = await this.forumRepo.findPost(id);
-    if (!post) throw new NotFoundException(
-      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Post not found'),
-    );
+    if (!post)
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Post not found'),
+      );
     return post;
   }
 
   async updatePost(id: string, dto: any) {
     const post = await this.forumRepo.findPost(id);
-    if (!post) throw new NotFoundException(
-      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Post not found'),
-    );
-    
+    if (!post)
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Post not found'),
+      );
+
     return this.forumRepo.updatePost(id, {
-      content: dto.content || post.content
+      content: dto.content || post.content,
     });
   }
 
   async patchPost(id: string, dto: any) {
     const post = await this.forumRepo.findPost(id);
-    if (!post) throw new NotFoundException(
-      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Post not found'),
-    );
-    
+    if (!post)
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Post not found'),
+      );
+
     return this.forumRepo.updatePost(id, dto);
   }
 
   async deletePost(id: string) {
     const post = await this.forumRepo.findPost(id);
-    if (!post) throw new NotFoundException(
-      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Post not found'),
-    );
-    
+    if (!post)
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Post not found'),
+      );
+
     await this.forumRepo.deletePost(id);
   }
 

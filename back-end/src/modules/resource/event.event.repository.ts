@@ -10,7 +10,7 @@ export class EventRepository {
   constructor() {}
 
   async findAllByResourceId(resourceId: string): Promise<EVENT[]> {
-    return this.items.filter(e => e.resource_id === resourceId);
+    return this.items.filter((e) => e.resource_id === resourceId);
   }
 
   async create(data: EVENT): Promise<EVENT> {
@@ -24,7 +24,7 @@ export class EventRepository {
   }
 
   async findOneById(id: string): Promise<EVENT | undefined> {
-    return this.items.find(e => e.id === id);
+    return this.items.find((e) => e.id === id);
   }
 
   async findAll(): Promise<EVENT[]> {
@@ -32,7 +32,7 @@ export class EventRepository {
   }
 
   async update(id: string, data: Partial<EVENT>): Promise<EVENT | null> {
-    const idx = this.items.findIndex(e => e.id === id);
+    const idx = this.items.findIndex((e) => e.id === id);
     if (idx > -1) {
       Object.assign(this.items[idx], data);
       return this.items[idx];
@@ -41,7 +41,7 @@ export class EventRepository {
   }
 
   async delete(id: string): Promise<void> {
-    const idx = this.items.findIndex(e => e.id === id);
+    const idx = this.items.findIndex((e) => e.id === id);
     if (idx > -1) this.items.splice(idx, 1);
   }
 }

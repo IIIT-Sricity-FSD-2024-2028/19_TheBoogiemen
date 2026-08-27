@@ -1,6 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { ATTENDANCE_LOG, ENROLLMENT, SECTION_INFO } from '../../common/types/interfaces';
-import { MOCK_ATTENDANCE, MOCK_ENROLLMENTS, MOCK_SECTIONS } from '../../common/types/mock-data';
+import {
+  ATTENDANCE_LOG,
+  ENROLLMENT,
+  SECTION_INFO,
+} from '../../common/types/interfaces';
+import {
+  MOCK_ATTENDANCE,
+  MOCK_ENROLLMENTS,
+  MOCK_SECTIONS,
+} from '../../common/types/mock-data';
 
 @Injectable()
 export class AttendanceRepository {
@@ -15,7 +23,7 @@ export class AttendanceRepository {
   }
 
   async findOneById(id: string): Promise<ATTENDANCE_LOG | null> {
-    return this.logs.find(l => l.log_id === id) || null;
+    return this.logs.find((l) => l.log_id === id) || null;
   }
 
   async create(data: ATTENDANCE_LOG): Promise<ATTENDANCE_LOG> {
@@ -23,8 +31,11 @@ export class AttendanceRepository {
     return data;
   }
 
-  async update(id: string, data: Partial<ATTENDANCE_LOG>): Promise<ATTENDANCE_LOG | null> {
-    const idx = this.logs.findIndex(l => l.log_id === id);
+  async update(
+    id: string,
+    data: Partial<ATTENDANCE_LOG>,
+  ): Promise<ATTENDANCE_LOG | null> {
+    const idx = this.logs.findIndex((l) => l.log_id === id);
     if (idx > -1) {
       Object.assign(this.logs[idx], data);
       return this.logs[idx];
@@ -33,7 +44,7 @@ export class AttendanceRepository {
   }
 
   async delete(id: string): Promise<void> {
-    const idx = this.logs.findIndex(l => l.log_id === id);
+    const idx = this.logs.findIndex((l) => l.log_id === id);
     if (idx > -1) this.logs.splice(idx, 1);
   }
 }

@@ -1,4 +1,9 @@
-import { Injectable, BadRequestException, Inject, forwardRef } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { OutcomeRepository } from './outcome.outcome.repository';
 import { MapOutcomeInputDto } from './dto/map-outcome.input.dto';
 import { StudentOutcomeOutputDto } from './dto/student-outcome.output.dto';
@@ -15,19 +20,24 @@ export class OutcomeService {
     @Inject(forwardRef(() => MarksRepository))
     private readonly marksRepo: MarksRepository,
     @Inject(forwardRef(() => AssessmentRepository))
-    private readonly assessmentRepo: AssessmentRepository
+    private readonly assessmentRepo: AssessmentRepository,
   ) {}
 
   async mapAssessmentToOutcomes(dto: MapOutcomeInputDto) {
     if (dto.outcome_ids.length !== dto.weightages.length) {
       throw new BadRequestException(
-      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'Mismatched outcome_ids and weightages length'),
-    );
+        errorBody(
+          ErrorCode.BUSINESS_RULE_VIOLATION,
+          'Mismatched outcome_ids and weightages length',
+        ),
+      );
     }
 
     const created: any[] = [];
     for (let i = 0; i < dto.outcome_ids.length; i++) {
-      const outcome = await this.outcomeRepo.findOutcomeById(dto.outcome_ids[i]);
+      const outcome = await this.outcomeRepo.findOutcomeById(
+        dto.outcome_ids[i],
+      );
       if (outcome) {
         const mapping = await this.outcomeRepo.createAssessmentOutcome({
           id: uuidv4(),
@@ -41,9 +51,14 @@ export class OutcomeService {
     return created;
   }
 
-  async updateAchievementLevel(marksEntryId: string, marks: number, maxMarks: number) {
+  async updateAchievementLevel(
+    marksEntryId: string,
+    marks: number,
+    maxMarks: number,
+  ) {
     const raw_percentage = maxMarks === 0 ? 0 : (marks / maxMarks) * 100;
-    let achievement_level: STUDENT_OUTCOME['achievement_level'] = 'NEEDS_IMPROVEMENT';
+    let achievement_level: STUDENT_OUTCOME['achievement_level'] =
+      'NEEDS_IMPROVEMENT';
 
     if (raw_percentage >= 90) achievement_level = 'EXCELLENT';
     else if (raw_percentage >= 75) achievement_level = 'GOOD';
@@ -52,11 +67,15 @@ export class OutcomeService {
     const entry = await this.marksRepo.findOneById(marksEntryId);
     if (!entry) return null;
 
-    const mappedOutcomes = await this.outcomeRepo.findAssessmentOutcomes(entry.assessment_id);
-    
+    const mappedOutcomes = await this.outcomeRepo.findAssessmentOutcomes(
+      entry.assessment_id,
+    );
+
     const results: any[] = [];
     for (const mapping of mappedOutcomes) {
-      const outcomeDef = await this.outcomeRepo.findOutcomeById(mapping.outcome_id);
+      const outcomeDef = await this.outcomeRepo.findOutcomeById(
+        mapping.outcome_id,
+      );
       if (outcomeDef) {
         const updated = await this.outcomeRepo.upsertStudentOutcome({
           id: uuidv4(),
@@ -64,7 +83,7 @@ export class OutcomeService {
           outcome_id: mapping.outcome_id,
           outcome_title: outcomeDef.title,
           achievement_level,
-          raw_percentage
+          raw_percentage,
         });
         results.push(updated);
       }
@@ -72,14 +91,16 @@ export class OutcomeService {
     return results;
   }
 
-  async getStudentOutcomes(studentId: string): Promise<StudentOutcomeOutputDto[]> {
+  async getStudentOutcomes(
+    studentId: string,
+  ): Promise<StudentOutcomeOutputDto[]> {
     const outcomes = await this.outcomeRepo.getStudentOutcomes(studentId);
-    return outcomes.map(o => ({
+    return outcomes.map((o) => ({
       student_id: o.student_id,
       outcome_id: o.outcome_id,
       outcome_title: o.outcome_title,
       achievement_level: o.achievement_level,
-      raw_percentage: o.raw_percentage
+      raw_percentage: o.raw_percentage,
     }));
   }
 
@@ -89,9 +110,10 @@ export class OutcomeService {
 
   async getOutcomeById(id: string) {
     const outcome = await this.outcomeRepo.findOutcomeById(id);
-    if (!outcome) throw new BadRequestException(
-      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'Outcome not found'),
-    );
+    if (!outcome)
+      throw new BadRequestException(
+        errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'Outcome not found'),
+      );
     return outcome;
   }
 
@@ -100,38 +122,41 @@ export class OutcomeService {
       outcome_id: uuidv4(),
       course_id: dto.course_id,
       title: dto.title,
-      description: dto.description || ''
+      description: dto.description || '',
     });
   }
 
   async updateOutcome(id: string, dto: any) {
     const outcome = await this.outcomeRepo.findOutcomeById(id);
-    if (!outcome) throw new BadRequestException(
-      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'Outcome not found'),
-    );
-    
+    if (!outcome)
+      throw new BadRequestException(
+        errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'Outcome not found'),
+      );
+
     return this.outcomeRepo.update(id, {
       course_id: dto.course_id || outcome.course_id,
       title: dto.title || outcome.title,
-      description: dto.description || outcome.description
+      description: dto.description || outcome.description,
     });
   }
 
   async patchOutcome(id: string, dto: any) {
     const outcome = await this.outcomeRepo.findOutcomeById(id);
-    if (!outcome) throw new BadRequestException(
-      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'Outcome not found'),
-    );
-    
+    if (!outcome)
+      throw new BadRequestException(
+        errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'Outcome not found'),
+      );
+
     return this.outcomeRepo.update(id, dto);
   }
 
   async deleteOutcome(id: string) {
     const outcome = await this.outcomeRepo.findOutcomeById(id);
-    if (!outcome) throw new BadRequestException(
-      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'Outcome not found'),
-    );
-    
+    if (!outcome)
+      throw new BadRequestException(
+        errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'Outcome not found'),
+      );
+
     await this.outcomeRepo.delete(id);
   }
 }

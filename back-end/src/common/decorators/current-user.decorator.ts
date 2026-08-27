@@ -12,7 +12,11 @@
  *   getProfile(@CurrentUserId() userId: string) { ... }
  */
 
-import { createParamDecorator, ExecutionContext, InternalServerErrorException } from '@nestjs/common';
+import {
+  createParamDecorator,
+  ExecutionContext,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { AuthenticatedUser } from '../../auth/jwt-payload';
 
 export const CurrentUser = createParamDecorator(

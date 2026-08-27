@@ -6,7 +6,11 @@
  * touches the filesystem.
  */
 
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { randomUUID } from 'crypto';
 import * as fs from 'fs';
@@ -32,8 +36,8 @@ export const UPLOAD_CONTEXTS: UploadContext[] = [
 
 export interface UploadRecord {
   file_id: string;
-  stored_name: string;      // the UUID filename on disk
-  original_name: string;    // sanitised, shown to users
+  stored_name: string; // the UUID filename on disk
+  original_name: string; // sanitised, shown to users
   mime_type: string;
   size_bytes: number;
   context: UploadContext;
@@ -58,7 +62,11 @@ export class UploadsService {
     return store.uploads;
   }
 
-  record(file: Express.Multer.File, context: UploadContext, userId: string): UploadRecord {
+  record(
+    file: Express.Multer.File,
+    context: UploadContext,
+    userId: string,
+  ): UploadRecord {
     const entry: UploadRecord = {
       file_id: randomUUID(),
       stored_name: file.filename,
@@ -117,9 +125,15 @@ export class UploadsService {
     }
     if (!fs.existsSync(full)) {
       // Metadata without bytes — the row outlived the file.
-      this.logger.error({ fileId: record.file_id, path: full }, 'Upload metadata has no file on disk');
+      this.logger.error(
+        { fileId: record.file_id, path: full },
+        'Upload metadata has no file on disk',
+      );
       throw new NotFoundException(
-        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Document is no longer available'),
+        errorBody(
+          ErrorCode.RESOURCE_NOT_FOUND,
+          'Document is no longer available',
+        ),
       );
     }
     return full;
@@ -142,15 +156,23 @@ export class UploadsService {
       'Blocked attempt to read another user document',
     );
     throw new ForbiddenException(
-      errorBody(ErrorCode.NOT_RESOURCE_OWNER, 'You do not have access to this document'),
+      errorBody(
+        ErrorCode.NOT_RESOURCE_OWNER,
+        'You do not have access to this document',
+      ),
     );
   }
 
   /** Best-effort cleanup when a request fails after multer has written the file. */
   discard(file?: Express.Multer.File): void {
     if (!file?.path) return;
-    fs.promises.unlink(file.path).catch((err) =>
-      this.logger.warn({ err, path: file.path }, 'Could not remove orphaned upload'),
-    );
+    fs.promises
+      .unlink(file.path)
+      .catch((err) =>
+        this.logger.warn(
+          { err, path: file.path },
+          'Could not remove orphaned upload',
+        ),
+      );
   }
 }

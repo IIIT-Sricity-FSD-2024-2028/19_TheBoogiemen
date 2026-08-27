@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InMemoryDbService } from '../database/in-memory-db.service';
 import { PasswordService } from './password.service';
@@ -27,7 +31,10 @@ export class AuthService {
     // wrong email and a wrong password take the same time to answer. Without
     // this, response timing distinguishes registered from unregistered emails.
     const storedHash = user?.password_hash ?? DUMMY_HASH;
-    const passwordValid = await this.passwordService.verify(password, storedHash);
+    const passwordValid = await this.passwordService.verify(
+      password,
+      storedHash,
+    );
 
     if (!user || !passwordValid) {
       // Deliberately identical for both cases — no user enumeration.
@@ -38,7 +45,10 @@ export class AuthService {
 
     if (!isRole(user.role)) {
       throw new UnauthorizedException(
-        errorBody(ErrorCode.MISCONFIGURATION, 'Account has no valid role assigned. Contact an administrator.'),
+        errorBody(
+          ErrorCode.MISCONFIGURATION,
+          'Account has no valid role assigned. Contact an administrator.',
+        ),
       );
     }
 
@@ -72,23 +82,35 @@ export class AuthService {
     // session itself is invalid — 401 and the client-side sign-out are correct.
     if (!user) {
       throw new UnauthorizedException(
-        errorBody(ErrorCode.TOKEN_INVALID, 'Session is no longer valid. Please sign in again.'),
+        errorBody(
+          ErrorCode.TOKEN_INVALID,
+          'Session is no longer valid. Please sign in again.',
+        ),
       );
     }
 
     // A wrong current password is a failure of the submitted form, not of the
     // session. 401 here would trigger the client's sign-out handler and silently
     // end the session instead of showing an error, so this must stay a 400.
-    const currentValid = await this.passwordService.verify(current, user.password_hash);
+    const currentValid = await this.passwordService.verify(
+      current,
+      user.password_hash,
+    );
     if (!currentValid) {
       throw new BadRequestException(
-        errorBody(ErrorCode.INVALID_CREDENTIALS, 'Current password is incorrect'),
+        errorBody(
+          ErrorCode.INVALID_CREDENTIALS,
+          'Current password is incorrect',
+        ),
       );
     }
 
     if (current === newPass) {
       throw new BadRequestException(
-        errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'New password must be different from your current password'),
+        errorBody(
+          ErrorCode.BUSINESS_RULE_VIOLATION,
+          'New password must be different from your current password',
+        ),
       );
     }
 
@@ -108,4 +130,5 @@ export class AuthService {
  * when the email does not exist. Comparing against this costs the same as a
  * genuine check.
  */
-const DUMMY_HASH = '$2b$12$C6UzMDM.H6dfI/f/IKcEe.6DxIxU7hqYQ8Q0Uu4pQPQ7WEXZ8lCPu';
+const DUMMY_HASH =
+  '$2b$12$C6UzMDM.H6dfI/f/IKcEe.6DxIxU7hqYQ8Q0Uu4pQPQ7WEXZ8lCPu';

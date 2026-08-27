@@ -1,6 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import { SECTION_INFO, ENROLLMENT, MARKS_ENTRY, USER, STUDENT } from '../../common/types/interfaces';
-import { MOCK_SECTIONS, MOCK_ENROLLMENTS, MOCK_MARKS, MOCK_STUDENTS } from '../../common/types/mock-data';
+import {
+  SECTION_INFO,
+  ENROLLMENT,
+  MARKS_ENTRY,
+  USER,
+  STUDENT,
+} from '../../common/types/interfaces';
+import {
+  MOCK_SECTIONS,
+  MOCK_ENROLLMENTS,
+  MOCK_MARKS,
+  MOCK_STUDENTS,
+} from '../../common/types/mock-data';
 
 @Injectable()
 export class ReportRepository {
@@ -18,7 +29,7 @@ export class ReportRepository {
   }
 
   async findOneById(id: string): Promise<any | undefined> {
-    return this.savedReports.find(r => r.id === id);
+    return this.savedReports.find((r) => r.id === id);
   }
 
   async create(data: any): Promise<any> {
@@ -27,7 +38,7 @@ export class ReportRepository {
   }
 
   async update(id: string, data: Partial<any>): Promise<any | null> {
-    const idx = this.savedReports.findIndex(r => r.id === id);
+    const idx = this.savedReports.findIndex((r) => r.id === id);
     if (idx > -1) {
       Object.assign(this.savedReports[idx], data);
       return this.savedReports[idx];
@@ -36,7 +47,7 @@ export class ReportRepository {
   }
 
   async delete(id: string): Promise<void> {
-    const idx = this.savedReports.findIndex(r => r.id === id);
+    const idx = this.savedReports.findIndex((r) => r.id === id);
     if (idx > -1) this.savedReports.splice(idx, 1);
   }
 }

@@ -1,6 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { LEAVE_REQUEST, ATTENDANCE_LOG, ENROLLMENT, SECTION_INFO } from '../../common/types/interfaces';
-import { MOCK_LEAVE_REQUESTS, MOCK_ATTENDANCE, MOCK_ENROLLMENTS, MOCK_SECTIONS } from '../../common/types/mock-data';
+import {
+  LEAVE_REQUEST,
+  ATTENDANCE_LOG,
+  ENROLLMENT,
+  SECTION_INFO,
+} from '../../common/types/interfaces';
+import {
+  MOCK_LEAVE_REQUESTS,
+  MOCK_ATTENDANCE,
+  MOCK_ENROLLMENTS,
+  MOCK_SECTIONS,
+} from '../../common/types/mock-data';
 
 @Injectable()
 export class LeaveRepository {
@@ -11,11 +21,22 @@ export class LeaveRepository {
 
   constructor() {}
 
-  async createLeave(data: LEAVE_REQUEST): Promise<LEAVE_REQUEST> { this.requests.push(data); return data; }
-  async getLeave(id: string): Promise<LEAVE_REQUEST | undefined> { return this.requests.find(r => r.leave_id === id); }
-  async updateLeaveStatus(id: string, status: 'APPROVED' | 'REJECTED'): Promise<LEAVE_REQUEST | null> {
+  async createLeave(data: LEAVE_REQUEST): Promise<LEAVE_REQUEST> {
+    this.requests.push(data);
+    return data;
+  }
+  async getLeave(id: string): Promise<LEAVE_REQUEST | undefined> {
+    return this.requests.find((r) => r.leave_id === id);
+  }
+  async updateLeaveStatus(
+    id: string,
+    status: 'APPROVED' | 'REJECTED',
+  ): Promise<LEAVE_REQUEST | null> {
     const l = await this.getLeave(id);
-    if(l) { l.status = status; return l; }
+    if (l) {
+      l.status = status;
+      return l;
+    }
     return null;
   }
 
@@ -23,8 +44,11 @@ export class LeaveRepository {
     return this.requests;
   }
 
-  async update(id: string, data: Partial<LEAVE_REQUEST>): Promise<LEAVE_REQUEST | null> {
-    const idx = this.requests.findIndex(r => r.leave_id === id);
+  async update(
+    id: string,
+    data: Partial<LEAVE_REQUEST>,
+  ): Promise<LEAVE_REQUEST | null> {
+    const idx = this.requests.findIndex((r) => r.leave_id === id);
     if (idx > -1) {
       Object.assign(this.requests[idx], data);
       return this.requests[idx];
@@ -33,7 +57,7 @@ export class LeaveRepository {
   }
 
   async delete(id: string): Promise<void> {
-    const idx = this.requests.findIndex(r => r.leave_id === id);
+    const idx = this.requests.findIndex((r) => r.leave_id === id);
     if (idx > -1) this.requests.splice(idx, 1);
   }
 }
