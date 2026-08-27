@@ -160,25 +160,26 @@ window.Auth = {
             headers
         }).catch(() => null);
 
+        const isListEndpoint = ['/admin/users', '/users', '/leave', '/events', '/fees', '/resources', '/assessments', '/discussions', '/research', '/courses', '/students/me/courses', '/attendance-requests', '/syllabus-progress', '/submissions'].some(p => endpoint.includes(p));
+
         if (!res) {
-            return {};
+            return isListEndpoint ? [] : {};
         }
 
         if (res.status === 401) {
             console.warn(`[Auth API] 401 for ${endpoint} - continuing session with fallback data`);
-            return {};
+            return isListEndpoint ? [] : {};
         }
         if (res.status === 403) {
             console.warn(`[Auth API] 403 for ${endpoint} - permission denied`);
-            return {};
+            return isListEndpoint ? [] : {};
         }
 
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) {
-            const errMsg = (Array.isArray(data.message) ? data.message.join(', ') : data.message)
-                || data.error || `HTTP ${res.status}`;
+        const data = await res.json().catch(() => null);
+        if (!res.ok || data === null) {
+            const errMsg = data ? ((Array.isArray(data.message) ? data.message.join(', ') : data.message) || data.error || `HTTP ${res.status}`) : `HTTP ${res.status}`;
             console.warn(`[Auth API] Error ${res.status} for ${endpoint}:`, errMsg);
-            return data || {};
+            return isListEndpoint ? [] : (data || {});
         }
         return data;
     },
