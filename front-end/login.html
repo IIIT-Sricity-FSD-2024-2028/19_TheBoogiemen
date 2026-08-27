@@ -105,13 +105,13 @@
             </div>
 
     <form id="loginForm" novalidate onsubmit="handleLogin(event)">
-        <!-- Institute Code (B2B Multi-Tenant Field) -->
+        <!-- Institute Code (B2B Multi-Tenant Field - Optional) -->
         <div class="input-group" id="tenant-code-group">
-            <label class="label-premium">Institute Code</label>
+            <label class="label-premium">Institute Code <span style="font-weight:400;font-size:12px;color:#94a3b8;">(optional — defaults to IIITS)</span></label>
             <div class="input-icon-wrapper">
-                <input type="text" id="tenantCode" placeholder="Your institute code (e.g. IIITS)" style="text-transform:uppercase;font-family:monospace;letter-spacing:2px;padding-left:14px;" oninput="this.value=this.value.toUpperCase();clearFieldError('tenantCode','tenant-error')" onblur="validateField('tenantCode','tenant-error','Institute code is required')">
+                <input type="text" id="tenantCode" placeholder="e.g. IIITS, NITW, VIT …" style="text-transform:uppercase;font-family:monospace;letter-spacing:2px;padding-left:14px;" oninput="this.value=this.value.toUpperCase();">
             </div>
-            <div class="error-msg" id="tenant-error">Institute code is required.</div>
+            <div class="error-msg" id="tenant-error" style="display:none;"></div>
         </div>
         <div class="input-group">
             <label class="label-premium">Email Address</label>
@@ -184,7 +184,7 @@
             if (tenantInput) tenantInput.placeholder = 'Institute code (e.g. ' + (config.tenantCode || 'IIITS') + ')';
         };
 
-        // ── B2B-aware handleLogin with full form validation ──
+        // ── B2B-aware handleLogin — tenant code is OPTIONAL (defaults to IIITS) ──
         window.handleLogin = function(event) {
             event.preventDefault();
             const tenantInput = document.getElementById('tenantCode');
@@ -192,24 +192,19 @@
             const pwInput     = document.getElementById('password');
             const email       = emailInput?.value.trim();
             const password    = pwInput?.value || '';
-            const tenantCode  = (tenantInput?.value || '').trim().toUpperCase();
+            // Default to IIITS if left blank — tenant code is optional for demo
+            const tenantCode  = (tenantInput?.value || '').trim().toUpperCase() || 'IIITS';
             const btn         = document.getElementById('loginBtn');
             const pwError     = document.getElementById('password-error');
 
+            // Hide any previous tenant error
+            const tenantErr = document.getElementById('tenant-error');
+            if (tenantErr) tenantErr.style.display = 'none';
+            if (tenantInput) tenantInput.classList.remove('error');
+
             let isValid = true;
 
-            // 1️⃣ Tenant Code validation
-            const tenantErr = document.getElementById('tenant-error');
-            if (!tenantCode || tenantCode.length < 2) {
-                tenantInput?.classList.add('error');
-                if (tenantErr) tenantErr.style.display = 'block';
-                isValid = false;
-            } else {
-                tenantInput?.classList.remove('error');
-                if (tenantErr) tenantErr.style.display = 'none';
-            }
-
-            // 2️⃣ Email validation
+            // 1️⃣ Email validation
             const emailErrEl = document.querySelector('#loginForm .input-group:nth-child(2) .error-msg');
             if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
                 emailInput?.classList.add('error');
@@ -220,7 +215,7 @@
                 if (emailErrEl) emailErrEl.style.display = 'none';
             }
 
-            // 3️⃣ Password validation (non-empty)
+            // 2️⃣ Password validation (non-empty)
             if (!password) {
                 pwInput?.classList.add('error');
                 if (pwError) {
@@ -235,11 +230,11 @@
 
             if (!isValid) return;
 
-            // 4️⃣ Submit to B2B backend (passes tenantCode)
+            // 3️⃣ Submit to B2B backend
             if (btn) { btn.textContent = 'Authenticating…'; btn.disabled = true; }
             window.Auth.login(email, password, tenantCode).catch(function(err) {
                 if (typeof showToast === 'function') showToast(err.message || 'Login failed. Check your credentials.', 'error');
-                else alert(err.message || 'Login failed. Check email, password, and institute code.');
+                else alert(err.message || 'Login failed. Check email and password.');
                 if (btn) { btn.textContent = 'Sign In'; btn.disabled = false; }
             });
         };

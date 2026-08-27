@@ -278,52 +278,46 @@ window.Auth = {
             console.warn('API login request failed, falling back to local tenant auth:', apiErr);
         }
 
-        // 4. Demo Fallbacks for @iiits.in accounts
-        if (cleanEmail === 'director@iiits.in' || cleanEmail.startsWith('director@')) {
-            const user = { user_id: 'u3', name: 'Institute Director', email: cleanEmail, role: 'INSTITUTE_SUPER_ADMIN' };
+        // 4. Comprehensive demo credential fallbacks (API-independent)
+        //    Covers both @example.com (backend DB) and @iiits.in (frontend demo)
+        const DEMO_ACCOUNTS = {
+            // ── Director / Super Admin ──
+            'super@example.com':       { user_id: 'u5', name: 'Super Admin', role: 'superadmin',           pass: 'Super@123',  dest: 'director.html' },
+            'admin@example.com':       { user_id: 'u3', name: 'Admin',       role: 'admin',                pass: 'password',   dest: 'director.html' },
+            'director@iiits.in':       { user_id: 'u_dir', name: 'Institute Director (IIITS)', role: 'INSTITUTE_SUPER_ADMIN', pass: 'Pass@123', dest: 'director.html' },
+            // ── HOD ──
+            'head@example.com':        { user_id: 'u4', name: 'Academic Head', role: 'head',              pass: 'Head@123',   dest: 'hod.html' },
+            'head@iiits.in':           { user_id: 'u_hod', name: 'Head of Dept (IIITS)', role: 'head',    pass: 'Pass@123',   dest: 'hod.html' },
+            // ── Faculty ──
+            'faculty@example.com':     { user_id: 'u2', name: 'Dr. Jane Smith', role: 'faculty',          pass: 'Faculty@123', dest: 'faculty.html' },
+            'faculty2@example.com':    { user_id: 'u7', name: 'Robert Wilson', role: 'faculty',           pass: 'Faculty@123', dest: 'faculty.html' },
+            'faculty@iiits.in':        { user_id: 'u_fac', name: 'Faculty (IIITS)', role: 'faculty',      pass: 'Pass@123',   dest: 'faculty.html' },
+            // ── Student ──
+            'student@example.com':     { user_id: 'u1', name: 'John Doe', role: 'student',                pass: 'Student@123', dest: 'student.html' },
+            'student2@example.com':    { user_id: 'u6', name: 'Alice Vance', role: 'student',             pass: 'Student@123', dest: 'student.html' },
+            'student@iiits.in':        { user_id: 'u_stu', name: 'Student (IIITS)', role: 'student',      pass: 'Pass@123',   dest: 'student.html' },
+            // ── Finance ──
+            'finance@iiits.in':        { user_id: 'u_fin', name: 'Finance Officer', role: 'FINANCE_ADMIN', pass: 'Pass@123',  dest: 'finance.html' },
+        };
+
+        const acct = DEMO_ACCOUNTS[cleanEmail];
+        if (acct) {
+            // For demo accounts we don't enforce password — any non-empty password accepted
+            if (!cleanPass) {
+                throw new Error('Password is required.');
+            }
+            const user   = { user_id: acct.user_id, name: acct.name, email: cleanEmail, role: acct.role };
             const tenant = { tenant_id: 't1', name: 'IIIT Sri City', code: cleanTenant };
-            localStorage.setItem('bp_token', 'jwt_dir_' + Date.now());
-            localStorage.setItem('bp_user', JSON.stringify(user));
+            localStorage.setItem('bp_token',  'jwt_demo_' + Date.now());
+            localStorage.setItem('bp_user',   JSON.stringify(user));
             localStorage.setItem('bp_tenant', JSON.stringify(tenant));
-            localStorage.setItem('user', JSON.stringify(user));
-            window.location.href = 'director.html';
+            localStorage.setItem('user',      JSON.stringify(user));
+            localStorage.setItem('tenant',    JSON.stringify(tenant));
+            window.location.href = acct.dest;
             return true;
         }
 
-        if (cleanEmail === 'head@iiits.in' || cleanEmail.startsWith('head@')) {
-            const user = { user_id: 'u4', name: 'Academic Head (CSE)', email: cleanEmail, role: 'head' };
-            const tenant = { tenant_id: 't1', name: 'IIIT Sri City', code: cleanTenant };
-            localStorage.setItem('bp_token', 'jwt_hod_' + Date.now());
-            localStorage.setItem('bp_user', JSON.stringify(user));
-            localStorage.setItem('bp_tenant', JSON.stringify(tenant));
-            localStorage.setItem('user', JSON.stringify(user));
-            window.location.href = 'hod.html';
-            return true;
-        }
-
-        if (cleanEmail === 'faculty@iiits.in' || cleanEmail.startsWith('faculty@')) {
-            const user = { user_id: 'u2', name: 'Dr. Jane Smith', email: cleanEmail, role: 'faculty' };
-            const tenant = { tenant_id: 't1', name: 'IIIT Sri City', code: cleanTenant };
-            localStorage.setItem('bp_token', 'jwt_fac_' + Date.now());
-            localStorage.setItem('bp_user', JSON.stringify(user));
-            localStorage.setItem('bp_tenant', JSON.stringify(tenant));
-            localStorage.setItem('user', JSON.stringify(user));
-            window.location.href = 'faculty.html';
-            return true;
-        }
-
-        if (cleanEmail === 'student@iiits.in' || cleanEmail.startsWith('student@')) {
-            const user = { user_id: 'u1', name: 'John Doe', email: cleanEmail, role: 'student' };
-            const tenant = { tenant_id: 't1', name: 'IIIT Sri City', code: cleanTenant };
-            localStorage.setItem('bp_token', 'jwt_stu_' + Date.now());
-            localStorage.setItem('bp_user', JSON.stringify(user));
-            localStorage.setItem('bp_tenant', JSON.stringify(tenant));
-            localStorage.setItem('user', JSON.stringify(user));
-            window.location.href = 'student.html';
-            return true;
-        }
-
-        throw new Error('Invalid email or password. Please verify your credentials.');
+        throw new Error('Email not recognised. Use your institutional email (e.g. student@example.com or student@iiits.in).');
     },
 
     // ── Logout (clears all B2B + old keys, context-aware redirect) ────────
