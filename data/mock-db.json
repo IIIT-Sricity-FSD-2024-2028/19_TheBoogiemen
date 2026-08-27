@@ -15,37 +15,37 @@
     {
       "user_id": "u1",
       "username": "student",
-      "email": "student@example.com",
+      "email": "student@iiits.in",
       "role": "student",
-      "password_hash": "$2b$12$JIMrssEhBipbIk6g/yiUM.TE2egkr203VXUXZZiIf4RVbl.qPRn46"
+      "password_hash": "$2b$10$G7vnIfZp1.WvPiQvsfLvlunNkdZ2wveRx4Byv8muJoP8ERipz2Ky."
     },
     {
       "user_id": "u2",
       "username": "faculty",
-      "email": "faculty@example.com",
+      "email": "faculty@iiits.in",
       "role": "faculty",
-      "password_hash": "$2b$12$81Elh/Ru5pDpKKp6EdmpGObgWsPAT8tbJ1E6PNYB9AuB7OaWmI85G"
+      "password_hash": "$2b$10$G7vnIfZp1.WvPiQvsfLvlunNkdZ2wveRx4Byv8muJoP8ERipz2Ky."
     },
     {
       "user_id": "u3",
       "username": "admin",
       "email": "admin@example.com",
       "role": "admin",
-      "password_hash": "$2b$12$obffwRD1a29Ho5PvugE/kuhARblGZugK7PO5scvegUXv0KQxuO2v."
+      "password_hash": "$2b$10$G7vnIfZp1.WvPiQvsfLvlunNkdZ2wveRx4Byv8muJoP8ERipz2Ky."
     },
     {
       "user_id": "u4",
       "username": "head",
-      "email": "head@example.com",
+      "email": "head@iiits.in",
       "role": "head",
-      "password_hash": "$2b$12$CZx5Sy33X1haBNV..57Ws.hKe3oBcOZl/ZMvF8cRrv4FYrZAPll9m"
+      "password_hash": "$2b$10$G7vnIfZp1.WvPiQvsfLvlunNkdZ2wveRx4Byv8muJoP8ERipz2Ky."
     },
     {
       "user_id": "u5",
-      "username": "superadmin",
-      "email": "super@example.com",
+      "username": "director",
+      "email": "director@iiits.in",
       "role": "superadmin",
-      "password_hash": "$2b$12$/I4TCcbZl227InQ7VwXukOIMCEJgGOnj.OrJ5QIuvDdMvzxXrVur6"
+      "password_hash": "$2b$10$G7vnIfZp1.WvPiQvsfLvlunNkdZ2wveRx4Byv8muJoP8ERipz2Ky."
     },
     {
       "user_id": "u6",
@@ -60,6 +60,48 @@
       "email": "faculty2@example.com",
       "role": "faculty",
       "password_hash": "$2b$12$qFLRiGff4WC2LAVfOPT5e./z1FSKW0ob.Ls8CfDLApYtYDyKEwZaO"
+    },
+    {
+      "user_id": "u1_alt",
+      "username": "student_alt",
+      "email": "student@example.com",
+      "role": "student",
+      "password_hash": "$2b$10$G7vnIfZp1.WvPiQvsfLvlunNkdZ2wveRx4Byv8muJoP8ERipz2Ky."
+    },
+    {
+      "user_id": "u2_alt",
+      "username": "faculty_alt",
+      "email": "faculty@example.com",
+      "role": "faculty",
+      "password_hash": "$2b$10$G7vnIfZp1.WvPiQvsfLvlunNkdZ2wveRx4Byv8muJoP8ERipz2Ky."
+    },
+    {
+      "user_id": "u4_alt",
+      "username": "head_alt",
+      "email": "head@example.com",
+      "role": "head",
+      "password_hash": "$2b$10$G7vnIfZp1.WvPiQvsfLvlunNkdZ2wveRx4Byv8muJoP8ERipz2Ky."
+    },
+    {
+      "user_id": "u5_alt",
+      "username": "superadmin_alt",
+      "email": "super@example.com",
+      "role": "superadmin",
+      "password_hash": "$2b$10$G7vnIfZp1.WvPiQvsfLvlunNkdZ2wveRx4Byv8muJoP8ERipz2Ky."
+    },
+    {
+      "user_id": "u_fin",
+      "username": "finance",
+      "email": "finance@iiits.in",
+      "role": "FINANCE_ADMIN",
+      "password_hash": "$2b$10$G7vnIfZp1.WvPiQvsfLvlunNkdZ2wveRx4Byv8muJoP8ERipz2Ky."
+    },
+    {
+      "user_id": "saas_admin",
+      "username": "saasadmin",
+      "email": "saasadmin@platform.com",
+      "role": "PLATFORM_SUPER_ADMIN",
+      "password_hash": "$2b$10$G7vnIfZp1.WvPiQvsfLvlunNkdZ2wveRx4Byv8muJoP8ERipz2Ky."
     }
   ],
   "students": [
