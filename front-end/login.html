@@ -181,7 +181,7 @@
             if (titleEl)     titleEl.textContent    = config.title;
             if (subtitleEl)  subtitleEl.textContent  = config.subtitle;
             if (emailInput)  emailInput.placeholder  = config.email;
-            if (tenantInput) tenantInput.value        = config.tenantCode || 'IIITS';
+            if (tenantInput) tenantInput.placeholder = 'Institute code (e.g. ' + (config.tenantCode || 'IIITS') + ')';
         };
 
         // ── B2B-aware handleLogin with full form validation ──
@@ -220,18 +220,11 @@
                 if (emailErrEl) emailErrEl.style.display = 'none';
             }
 
-            // 3️⃣ Password validation: 8+ chars, 1 uppercase, 1 number, 1 special char
-            const pwRules = [
-                { test: password.length >= 8,          msg: '• At least 8 characters' },
-                { test: /[A-Z]/.test(password),         msg: '• At least 1 uppercase letter (A-Z)' },
-                { test: /[0-9]/.test(password),         msg: '• At least 1 number (0-9)' },
-                { test: /[^A-Za-z0-9]/.test(password),  msg: '• At least 1 special character (@, #, !, etc.)' }
-            ];
-            const failedRules = pwRules.filter(r => !r.test);
-            if (failedRules.length > 0) {
+            // 3️⃣ Password validation (non-empty)
+            if (!password) {
                 pwInput?.classList.add('error');
                 if (pwError) {
-                    pwError.innerHTML = '<strong>Password requirements not met:</strong><br>' + failedRules.map(r => r.msg).join('<br>');
+                    pwError.textContent = 'Password is required.';
                     pwError.style.display = 'block';
                 }
                 isValid = false;
