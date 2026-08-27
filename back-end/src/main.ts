@@ -119,9 +119,21 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe(VALIDATION_PIPE_OPTIONS));
 
   // 5. Serve Static Files (Windows & Mac Compatible)
-  // This resolves the 'front-end' folder relative to your current project location
-  // Add one extra '..' to go out of the back-end folder and into the root
-  const frontendPath = path.join(__dirname, '..', '..', '..', 'front-end');
+  // Check candidate locations for 'front-end' directory
+  const candidateFrontendPaths = [
+    path.join(__dirname, '..', '..', 'front-end'),
+    path.join(__dirname, '..', '..', '..', 'front-end'),
+    path.resolve(process.cwd(), 'front-end'),
+    path.resolve(process.cwd(), '..', 'front-end'),
+  ];
+  let frontendPath = path.resolve(process.cwd(), '..', 'front-end');
+  const fs = require('fs');
+  for (const p of candidateFrontendPaths) {
+    if (fs.existsSync(p)) {
+      frontendPath = p;
+      break;
+    }
+  }
   logger.log({ frontendPath, msg: 'Serving static frontend' });
   app.use(express.static(frontendPath));
 
