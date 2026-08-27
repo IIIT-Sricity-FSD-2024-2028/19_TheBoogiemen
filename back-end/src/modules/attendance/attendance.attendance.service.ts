@@ -9,32 +9,52 @@ import { ErrorCode, errorBody } from '../../common/errors/error-codes';
 export class AttendanceService {
   constructor(
     private readonly attendanceRepo: AttendanceRepository,
-    private readonly notificationService: NotificationService
+    private readonly notificationService: NotificationService,
   ) {}
 
-  async getSubjectWiseAttendance(studentId: string): Promise<AttendanceOutputDto[]> {
-    const enrollments = this.attendanceRepo.enrollments.filter(e => e.student_id === studentId);
-    if (!enrollments.length) throw new NotFoundException(
-      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'No enrollments found for student'),
+  async getSubjectWiseAttendance(
+    studentId: string,
+  ): Promise<AttendanceOutputDto[]> {
+    const enrollments = this.attendanceRepo.enrollments.filter(
+      (e) => e.student_id === studentId,
     );
+    if (!enrollments.length)
+      throw new NotFoundException(
+        errorBody(
+          ErrorCode.RESOURCE_NOT_FOUND,
+          'No enrollments found for student',
+        ),
+      );
 
     const result: AttendanceOutputDto[] = [];
 
     for (const enrol of enrollments) {
-      const section = this.attendanceRepo.sections.find(s => s.section_id === enrol.section_id);
+      const section = this.attendanceRepo.sections.find(
+        (s) => s.section_id === enrol.section_id,
+      );
       if (!section) continue;
 
-      const logs = this.attendanceRepo.logs.filter(l => l.enrollment_id === enrol.enrollment_id);
+      const logs = this.attendanceRepo.logs.filter(
+        (l) => l.enrollment_id === enrol.enrollment_id,
+      );
       const total_classes = logs.length;
       if (total_classes === 0) continue;
 
-      const attended = logs.filter(l => l.status === 'PRESENT' || l.status === 'EXCUSED').length;
+      const attended = logs.filter(
+        (l) => l.status === 'PRESENT' || l.status === 'EXCUSED',
+      ).length;
       const percentage = (attended / total_classes) * 100;
       const flagged = percentage < 75;
 
       if (flagged) {
-        this.notificationService.notify(studentId, `Low attendance alert for course ${section.course_id}`);
-        this.notificationService.notify(section.faculty_id, `Student ${studentId} has low attendance in ${section.course_id}`);
+        this.notificationService.notify(
+          studentId,
+          `Low attendance alert for course ${section.course_id}`,
+        );
+        this.notificationService.notify(
+          section.faculty_id,
+          `Student ${studentId} has low attendance in ${section.course_id}`,
+        );
       }
 
       result.push({
@@ -43,7 +63,7 @@ export class AttendanceService {
         total_classes,
         attended,
         percentage,
-        flagged
+        flagged,
       });
     }
 
@@ -56,9 +76,10 @@ export class AttendanceService {
 
   async getLogById(id: string) {
     const log = await this.attendanceRepo.findOneById(id);
-    if (!log) throw new NotFoundException(
-      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Attendance log not found'),
-    );
+    if (!log)
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Attendance log not found'),
+      );
     return log;
   }
 
@@ -68,39 +89,42 @@ export class AttendanceService {
       enrollment_id: dto.enrollment_id,
       date: dto.date,
       timeslot: dto.timeslot || '09:00',
-      status: dto.status
+      status: dto.status,
     });
   }
 
   async updateLog(id: string, dto: any) {
     const log = await this.attendanceRepo.findOneById(id);
-    if (!log) throw new NotFoundException(
-      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Attendance log not found'),
-    );
-    
+    if (!log)
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Attendance log not found'),
+      );
+
     return this.attendanceRepo.update(id, {
       enrollment_id: dto.enrollment_id || log.enrollment_id,
       date: dto.date || log.date,
       timeslot: dto.timeslot || log.timeslot,
-      status: dto.status || 'PRESENT'
+      status: dto.status || 'PRESENT',
     });
   }
 
   async patchLog(id: string, dto: any) {
     const log = await this.attendanceRepo.findOneById(id);
-    if (!log) throw new NotFoundException(
-      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Attendance log not found'),
-    );
-    
+    if (!log)
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Attendance log not found'),
+      );
+
     return this.attendanceRepo.update(id, dto);
   }
 
   async deleteLog(id: string) {
     const log = await this.attendanceRepo.findOneById(id);
-    if (!log) throw new NotFoundException(
-      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Attendance log not found'),
-    );
-    
+    if (!log)
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Attendance log not found'),
+      );
+
     await this.attendanceRepo.delete(id);
   }
 }

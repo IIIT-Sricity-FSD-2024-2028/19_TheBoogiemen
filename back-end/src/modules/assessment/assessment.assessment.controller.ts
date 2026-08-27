@@ -1,4 +1,15 @@
-import { Controller, Post, Patch, Body, UseGuards, SetMetadata, Get, Param, Put, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Patch,
+  Body,
+  UseGuards,
+  SetMetadata,
+  Get,
+  Param,
+  Put,
+  Delete,
+} from '@nestjs/common';
 import { ApiTags, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { AssessmentService } from './assessment.assessment.service';
 import { EnvGuard } from '../../common/guards/env.guard';
@@ -6,10 +17,17 @@ import { CreateAssessmentInputDto } from './dto/create-assessment.input.dto';
 import { UpdateAssessmentInputDto } from './dto/update-assessment.input.dto';
 import { GradeInputDto } from './dto/grade.input.dto';
 import { SyllabusUpdateInputDto } from './dto/syllabus-update.input.dto';
-import { AssessmentOutputDto, MarksEntryOutputDto } from './dto/assessment.output.dto';
+import {
+  AssessmentOutputDto,
+  MarksEntryOutputDto,
+} from './dto/assessment.output.dto';
 import { BaseResponseDto } from '../../common/dto/base-response.dto';
 import { SEED } from '../../common/types/seed-constants';
-import { MOCK_ASSESSMENTS, MOCK_COURSES, MOCK_MARKS } from '../../common/types/mock-data';
+import {
+  MOCK_ASSESSMENTS,
+  MOCK_COURSES,
+  MOCK_MARKS,
+} from '../../common/types/mock-data';
 
 @ApiTags('Assessment')
 @Controller()
@@ -49,13 +67,20 @@ export class AssessmentController {
   @Get('mock-data')
   @SetMetadata('roles', ['faculty', 'student', 'admin', 'head', 'superadmin'])
   @UseGuards(EnvGuard)
-  @ApiResponse({ status: 200, description: 'Fetch mock data for testing UUIDs' })
+  @ApiResponse({
+    status: 200,
+    description: 'Fetch mock data for testing UUIDs',
+  })
   getMockData() {
-    return new BaseResponseDto(true, {
-      assessments: MOCK_ASSESSMENTS,
-      courses: MOCK_COURSES,
-      marks: MOCK_MARKS
-    }, 'mock data fetched');
+    return new BaseResponseDto(
+      true,
+      {
+        assessments: MOCK_ASSESSMENTS,
+        courses: MOCK_COURSES,
+        marks: MOCK_MARKS,
+      },
+      'mock data fetched',
+    );
   }
 
   @Get('assessments')
@@ -78,7 +103,10 @@ export class AssessmentController {
   @SetMetadata('roles', ['admin', 'faculty', 'superadmin'])
   @ApiBody({ type: UpdateAssessmentInputDto })
   @ApiResponse({ status: 200, description: 'Full update of assessment' })
-  async updateAssessment(@Param('id') id: string, @Body() dto: UpdateAssessmentInputDto) {
+  async updateAssessment(
+    @Param('id') id: string,
+    @Body() dto: UpdateAssessmentInputDto,
+  ) {
     const data = await this.assessmentService.updateAssessment(id, dto);
     return new BaseResponseDto(true, data, 'assessment updated successfully');
   }
@@ -87,7 +115,10 @@ export class AssessmentController {
   @SetMetadata('roles', ['admin', 'faculty', 'superadmin'])
   @ApiBody({ type: UpdateAssessmentInputDto })
   @ApiResponse({ status: 200, description: 'Partial update of assessment' })
-  async patchAssessment(@Param('id') id: string, @Body() dto: UpdateAssessmentInputDto) {
+  async patchAssessment(
+    @Param('id') id: string,
+    @Body() dto: UpdateAssessmentInputDto,
+  ) {
     const data = await this.assessmentService.patchAssessment(id, dto);
     return new BaseResponseDto(true, data, 'assessment patched successfully');
   }

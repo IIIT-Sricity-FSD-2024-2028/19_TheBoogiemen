@@ -23,7 +23,8 @@ import type { CookieOptions, Response } from 'express';
 
 export const AUTH_COOKIE = 'bp_session';
 
-const isProduction = () => (process.env.NODE_ENV ?? '').trim().toLowerCase() === 'production';
+const isProduction = () =>
+  (process.env.NODE_ENV ?? '').trim().toLowerCase() === 'production';
 
 /**
  * Attributes must be identical on set and clear, or the browser treats them as
@@ -38,7 +39,11 @@ function baseOptions(): CookieOptions {
   };
 }
 
-export function setAuthCookie(res: Response, token: string, maxAgeMs: number): void {
+export function setAuthCookie(
+  res: Response,
+  token: string,
+  maxAgeMs: number,
+): void {
   res.cookie(AUTH_COOKIE, token, { ...baseOptions(), maxAge: maxAgeMs });
 }
 
@@ -56,9 +61,14 @@ export function clearAuthCookie(res: Response): void {
  * Decodes without verifying: this runs immediately after we signed the token
  * ourselves, and the value only decides a cookie lifetime.
  */
-export function tokenTtlMs(token: string, fallbackMs = 2 * 60 * 60 * 1000): number {
+export function tokenTtlMs(
+  token: string,
+  fallbackMs = 2 * 60 * 60 * 1000,
+): number {
   try {
-    const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString());
+    const payload = JSON.parse(
+      Buffer.from(token.split('.')[1], 'base64url').toString(),
+    );
     const remaining = payload.exp * 1000 - Date.now();
     if (Number.isFinite(remaining) && remaining > 0) return remaining;
   } catch {

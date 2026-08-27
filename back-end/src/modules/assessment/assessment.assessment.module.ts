@@ -9,7 +9,12 @@ import { OutcomeModule } from '../outcome/outcome.outcome.module';
 @Module({
   imports: [forwardRef(() => OutcomeModule)],
   controllers: [AssessmentController],
-  providers: [AssessmentService, AssessmentRepository, MarksRepository, NotificationService],
+  providers: [
+    AssessmentService,
+    AssessmentRepository,
+    MarksRepository,
+    NotificationService,
+  ],
   exports: [AssessmentService, MarksRepository, AssessmentRepository],
 })
 export class AssessmentModule {}

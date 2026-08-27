@@ -19,12 +19,30 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import type { Response } from 'express';
-import { CurrentUserId, CurrentUserRole } from '../common/decorators/current-user.decorator';
+import {
+  CurrentUserId,
+  CurrentUserRole,
+} from '../common/decorators/current-user.decorator';
 import { ErrorCode, errorBody } from '../common/errors/error-codes';
-import { UPLOAD_OPTIONS, ALLOWED_EXTENSIONS, MAX_FILE_BYTES } from './upload.config';
-import { UploadContext, UPLOAD_CONTEXTS, UploadsService } from './uploads.service';
+import {
+  UPLOAD_OPTIONS,
+  ALLOWED_EXTENSIONS,
+  MAX_FILE_BYTES,
+} from './upload.config';
+import {
+  UploadContext,
+  UPLOAD_CONTEXTS,
+  UploadsService,
+} from './uploads.service';
 import type { Role } from '../auth/jwt-payload';
 
 @ApiTags('Documents')
@@ -38,7 +56,9 @@ export class UploadsController {
   // Who can read it back is decided on download, by ownership.
   @UseInterceptors(FileInterceptor('file', UPLOAD_OPTIONS))
   @ApiConsumes('multipart/form-data')
-  @ApiOperation({ summary: 'Upload a document and receive a file_id to attach' })
+  @ApiOperation({
+    summary: 'Upload a document and receive a file_id to attach',
+  })
   @ApiBody({
     schema: {
       type: 'object',
@@ -49,8 +69,14 @@ export class UploadsController {
       },
     },
   })
-  @ApiResponse({ status: 201, description: 'Stored — returns file_id, original_name and size' })
-  @ApiResponse({ status: 400, description: 'Missing file, disallowed type, or unknown context' })
+  @ApiResponse({
+    status: 201,
+    description: 'Stored — returns file_id, original_name and size',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Missing file, disallowed type, or unknown context',
+  })
   @ApiResponse({ status: 413, description: 'File exceeds the size limit' })
   async upload(
     @UploadedFile() file: Express.Multer.File | undefined,
@@ -95,7 +121,9 @@ export class UploadsController {
   }
 
   @Get(':fileId')
-  @ApiOperation({ summary: 'Download a document (owner or reviewing staff only)' })
+  @ApiOperation({
+    summary: 'Download a document (owner or reviewing staff only)',
+  })
   @ApiResponse({ status: 200, description: 'The file, as an attachment' })
   @ApiResponse({ status: 403, description: 'Not the owner and not staff' })
   @ApiResponse({ status: 404, description: 'No such document' })

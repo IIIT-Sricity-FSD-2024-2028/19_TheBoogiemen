@@ -8,9 +8,19 @@ export class MarksRepository {
 
   constructor() {}
 
-  async findOneById(id: string): Promise<MARKS_ENTRY | undefined> { return this.items.find(m => m.entry_id === id); }
-  async findByAssessmentAndStudent(assessmentId: string, studentId: string): Promise<MARKS_ENTRY | undefined> {
-    return this.items.find(m => m.assessment_id === assessmentId && m.student_id === studentId);
+  async findOneById(id: string): Promise<MARKS_ENTRY | undefined> {
+    return this.items.find((m) => m.entry_id === id);
   }
-  async create(data: MARKS_ENTRY): Promise<MARKS_ENTRY> { this.items.push(data); return data; }
+  async findByAssessmentAndStudent(
+    assessmentId: string,
+    studentId: string,
+  ): Promise<MARKS_ENTRY | undefined> {
+    return this.items.find(
+      (m) => m.assessment_id === assessmentId && m.student_id === studentId,
+    );
+  }
+  async create(data: MARKS_ENTRY): Promise<MARKS_ENTRY> {
+    this.items.push(data);
+    return data;
+  }
 }

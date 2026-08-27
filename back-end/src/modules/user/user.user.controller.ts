@@ -1,4 +1,15 @@
-import { Controller, Patch, Get, Body, Param, UseGuards, SetMetadata, Post, Put, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Patch,
+  Get,
+  Body,
+  Param,
+  UseGuards,
+  SetMetadata,
+  Post,
+  Put,
+  Delete,
+} from '@nestjs/common';
 import { ApiTags, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
 import { UserService } from './user.user.service';
 import { EnvGuard } from '../../common/guards/env.guard';
@@ -6,7 +17,11 @@ import { UpdateRoleInputDto } from './dto/update-role.input.dto';
 import { UpdateUserInputDto } from './dto/update-user.input.dto';
 import { UserOutputDto } from './dto/user.output.dto';
 import { BaseResponseDto } from '../../common/dto/base-response.dto';
-import { MOCK_USERS, MOCK_STUDENTS, MOCK_FACULTY } from '../../common/types/mock-data';
+import {
+  MOCK_USERS,
+  MOCK_STUDENTS,
+  MOCK_FACULTY,
+} from '../../common/types/mock-data';
 
 @ApiTags('User')
 @Controller('users')
@@ -18,7 +33,10 @@ export class UserController {
   @ApiParam({ name: 'id', description: 'User ID' })
   @ApiBody({ type: UpdateRoleInputDto })
   @ApiResponse({ status: 200, type: UserOutputDto })
-  async updateUserRole(@Param('id') id: string, @Body() dto: UpdateRoleInputDto) {
+  async updateUserRole(
+    @Param('id') id: string,
+    @Body() dto: UpdateRoleInputDto,
+  ) {
     const data = await this.userService.updateUserRole(id, dto);
     return new BaseResponseDto(true, data, 'role update successful');
   }
@@ -26,13 +44,20 @@ export class UserController {
   @Get('mock-data')
   @SetMetadata('roles', ['faculty', 'student', 'admin', 'head', 'superadmin'])
   @UseGuards(EnvGuard)
-  @ApiResponse({ status: 200, description: 'Fetch mock data for testing UUIDs' })
+  @ApiResponse({
+    status: 200,
+    description: 'Fetch mock data for testing UUIDs',
+  })
   getMockData() {
-    return new BaseResponseDto(true, {
-      users: MOCK_USERS,
-      students: MOCK_STUDENTS,
-      faculty: MOCK_FACULTY
-    }, 'mock data fetched');
+    return new BaseResponseDto(
+      true,
+      {
+        users: MOCK_USERS,
+        students: MOCK_STUDENTS,
+        faculty: MOCK_FACULTY,
+      },
+      'mock data fetched',
+    );
   }
 
   @Get(':id')

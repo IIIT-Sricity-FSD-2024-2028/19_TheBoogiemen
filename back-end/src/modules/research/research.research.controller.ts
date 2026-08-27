@@ -1,4 +1,16 @@
-import { Controller, Post, Patch, Body, Param, UseGuards, SetMetadata, Req, Get, Put, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Patch,
+  Body,
+  Param,
+  UseGuards,
+  SetMetadata,
+  Req,
+  Get,
+  Put,
+  Delete,
+} from '@nestjs/common';
 import { ApiTags, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
 import { ResearchService } from './research.research.service';
 import { EnvGuard } from '../../common/guards/env.guard';
@@ -31,7 +43,10 @@ export class ResearchController {
   @ApiParam({ name: 'id', description: 'Milestone ID' })
   @ApiBody({ type: ReviewMilestoneInputDto })
   @ApiResponse({ status: 200, type: MilestoneOutputDto })
-  async reviewMilestone(@Param('id') id: string, @Body() dto: ReviewMilestoneInputDto) {
+  async reviewMilestone(
+    @Param('id') id: string,
+    @Body() dto: ReviewMilestoneInputDto,
+  ) {
     // Explicitly set the id from path since class-validator might not map param to dto seamlessly without complex setup
     dto.milestone_id = id;
     const facultyId = SEED.FACULTY[0];
@@ -42,11 +57,18 @@ export class ResearchController {
   @Get('mock-data')
   @SetMetadata('roles', ['faculty', 'student', 'admin', 'head', 'superadmin'])
   @UseGuards(EnvGuard)
-  @ApiResponse({ status: 200, description: 'Fetch mock data for testing UUIDs' })
+  @ApiResponse({
+    status: 200,
+    description: 'Fetch mock data for testing UUIDs',
+  })
   getMockData() {
-    return new BaseResponseDto(true, {
-      projects: MOCK_RESEARCH_PROJECTS
-    }, 'mock data fetched');
+    return new BaseResponseDto(
+      true,
+      {
+        projects: MOCK_RESEARCH_PROJECTS,
+      },
+      'mock data fetched',
+    );
   }
 
   @Get()
@@ -69,7 +91,10 @@ export class ResearchController {
   @SetMetadata('roles', ['admin', 'faculty', 'superadmin'])
   @ApiBody({ type: UpdateProjectInputDto })
   @ApiResponse({ status: 200, description: 'Full update of project' })
-  async updateProject(@Param('id') id: string, @Body() dto: UpdateProjectInputDto) {
+  async updateProject(
+    @Param('id') id: string,
+    @Body() dto: UpdateProjectInputDto,
+  ) {
     const data = await this.researchService.updateProject(id, dto);
     return new BaseResponseDto(true, data, 'project updated successfully');
   }
@@ -78,7 +103,10 @@ export class ResearchController {
   @SetMetadata('roles', ['admin', 'faculty', 'superadmin'])
   @ApiBody({ type: UpdateProjectInputDto })
   @ApiResponse({ status: 200, description: 'Partial update of project' })
-  async patchProject(@Param('id') id: string, @Body() dto: UpdateProjectInputDto) {
+  async patchProject(
+    @Param('id') id: string,
+    @Body() dto: UpdateProjectInputDto,
+  ) {
     const data = await this.researchService.patchProject(id, dto);
     return new BaseResponseDto(true, data, 'project patched successfully');
   }

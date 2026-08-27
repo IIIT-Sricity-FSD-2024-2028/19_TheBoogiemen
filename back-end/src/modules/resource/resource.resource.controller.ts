@@ -1,4 +1,15 @@
-import { Controller, Post, Body, UseGuards, SetMetadata, Get, Param, Put, Patch, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  SetMetadata,
+  Get,
+  Param,
+  Put,
+  Patch,
+  Delete,
+} from '@nestjs/common';
 import { ApiTags, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { ResourceService } from './resource.resource.service';
 import { EnvGuard } from '../../common/guards/env.guard';
@@ -26,12 +37,19 @@ export class ResourceController {
   @Get('mock-data')
   @SetMetadata('roles', ['faculty', 'student', 'admin', 'head', 'superadmin'])
   @UseGuards(EnvGuard)
-  @ApiResponse({ status: 200, description: 'Fetch mock data for testing UUIDs' })
+  @ApiResponse({
+    status: 200,
+    description: 'Fetch mock data for testing UUIDs',
+  })
   getMockData() {
-    return new BaseResponseDto(true, {
-      resources: MOCK_RESOURCES,
-      events: MOCK_EVENTS
-    }, 'mock data fetched');
+    return new BaseResponseDto(
+      true,
+      {
+        resources: MOCK_RESOURCES,
+        events: MOCK_EVENTS,
+      },
+      'mock data fetched',
+    );
   }
 
   @Get()
@@ -63,7 +81,10 @@ export class ResourceController {
   @SetMetadata('roles', ['admin', 'superadmin'])
   @ApiBody({ type: UpdateResourceInputDto })
   @ApiResponse({ status: 200, description: 'Full update of resource' })
-  async updateResource(@Param('id') id: string, @Body() dto: UpdateResourceInputDto) {
+  async updateResource(
+    @Param('id') id: string,
+    @Body() dto: UpdateResourceInputDto,
+  ) {
     const data = await this.resourceService.updateResource(id, dto);
     return new BaseResponseDto(true, data, 'resource updated successfully');
   }
@@ -72,7 +93,10 @@ export class ResourceController {
   @SetMetadata('roles', ['admin', 'superadmin'])
   @ApiBody({ type: UpdateResourceInputDto })
   @ApiResponse({ status: 200, description: 'Partial update of resource' })
-  async patchResource(@Param('id') id: string, @Body() dto: UpdateResourceInputDto) {
+  async patchResource(
+    @Param('id') id: string,
+    @Body() dto: UpdateResourceInputDto,
+  ) {
     const data = await this.resourceService.patchResource(id, dto);
     return new BaseResponseDto(true, data, 'resource patched successfully');
   }
@@ -105,7 +129,10 @@ export class ResourceController {
   @SetMetadata('roles', ['admin', 'faculty', 'superadmin'])
   @ApiBody({ type: ScheduleEventInputDto })
   @ApiResponse({ status: 200, description: 'Update event' })
-  async updateEvent(@Param('id') id: string, @Body() dto: ScheduleEventInputDto) {
+  async updateEvent(
+    @Param('id') id: string,
+    @Body() dto: ScheduleEventInputDto,
+  ) {
     const data = await this.resourceService.updateEvent(id, dto);
     return new BaseResponseDto(true, data, 'event updated successfully');
   }

@@ -1,4 +1,15 @@
-import { Controller, Post, Body, UseGuards, SetMetadata, Get, Param, Put, Patch, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  SetMetadata,
+  Get,
+  Param,
+  Put,
+  Patch,
+  Delete,
+} from '@nestjs/common';
 import { ApiTags, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { ReportService } from './report.report.service';
 import { EnvGuard } from '../../common/guards/env.guard';
@@ -24,12 +35,19 @@ export class ReportController {
   @Get('mock-data')
   @SetMetadata('roles', ['faculty', 'student', 'admin', 'head', 'superadmin'])
   @UseGuards(EnvGuard)
-  @ApiResponse({ status: 200, description: 'Fetch mock data for testing UUIDs' })
+  @ApiResponse({
+    status: 200,
+    description: 'Fetch mock data for testing UUIDs',
+  })
   getMockData() {
-    return new BaseResponseDto(true, {
-      students: MOCK_STUDENTS,
-      sections: MOCK_SECTIONS
-    }, 'mock data fetched');
+    return new BaseResponseDto(
+      true,
+      {
+        students: MOCK_STUDENTS,
+        sections: MOCK_SECTIONS,
+      },
+      'mock data fetched',
+    );
   }
 
   @Get()

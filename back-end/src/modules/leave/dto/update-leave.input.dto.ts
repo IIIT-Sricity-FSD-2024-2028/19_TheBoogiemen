@@ -1,4 +1,10 @@
-import { IsUUID, IsString, IsISO8601, IsOptional, IsEnum } from 'class-validator';
+import {
+  IsUUID,
+  IsString,
+  IsISO8601,
+  IsOptional,
+  IsEnum,
+} from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdateLeaveInputDto {

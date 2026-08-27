@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { InMemoryDbService } from '../database/in-memory-db.service';
 import { syncLeaveAttendance } from '../common/leave-attendance.sync';
@@ -13,16 +17,24 @@ export class AdminService {
   }
 
   async updateLeaveStatus(leaveId: string, status: string) {
-    const leave = this.db.leave_applications.find((l) => l.leave_id === leaveId);
-    if (!leave) throw new NotFoundException(
-      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Leave application not found'),
+    const leave = this.db.leave_applications.find(
+      (l) => l.leave_id === leaveId,
     );
+    if (!leave)
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Leave application not found'),
+      );
 
-    const normalized = String(status ?? '').trim().toLowerCase();
+    const normalized = String(status ?? '')
+      .trim()
+      .toLowerCase();
     if (!['pending', 'approved', 'rejected'].includes(normalized)) {
       throw new BadRequestException(
-      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'status must be one of: pending, approved, rejected'),
-    );
+        errorBody(
+          ErrorCode.BUSINESS_RULE_VIOLATION,
+          'status must be one of: pending, approved, rejected',
+        ),
+      );
     }
 
     leave.status = normalized;
@@ -37,7 +49,11 @@ export class AdminService {
 
   async getTimetable(section: string) {
     const grid = this.db.timetable.filter((t) => t.section === section);
-    return { grid, days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], times: ['09:00', '10:00', '11:00', '12:00'] };
+    return {
+      grid,
+      days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+      times: ['09:00', '10:00', '11:00', '12:00'],
+    };
   }
 
   async getEvents() {

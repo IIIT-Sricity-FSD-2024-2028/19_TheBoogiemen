@@ -4,7 +4,8 @@ import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 @Injectable()
 export class NotificationService {
   constructor(
-    @InjectPinoLogger(NotificationService.name) private readonly logger: PinoLogger,
+    @InjectPinoLogger(NotificationService.name)
+    private readonly logger: PinoLogger,
   ) {}
 
   /**
@@ -13,6 +14,9 @@ export class NotificationService {
    * a separate piece of work.
    */
   notify(recipientId: string, message: string): void {
-    this.logger.info({ recipientId, message, delivered: false }, 'Notification raised');
+    this.logger.info(
+      { recipientId, message, delivered: false },
+      'Notification raised',
+    );
   }
 }

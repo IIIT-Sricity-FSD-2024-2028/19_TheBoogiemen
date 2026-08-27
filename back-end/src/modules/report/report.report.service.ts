@@ -9,28 +9,50 @@ import { ErrorCode, errorBody } from '../../common/errors/error-codes';
 export class ReportService {
   constructor(private readonly reportRepo: ReportRepository) {}
 
-  async generateReport(dto: GenerateProgressInputDto): Promise<ProgressReportOutputDto[]> {
-    const facultySections = this.reportRepo.sections.filter(s => s.faculty_id === dto.faculty_id);
-    if (!facultySections.length) throw new NotFoundException(
-      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'No sections found for this faculty'),
+  async generateReport(
+    dto: GenerateProgressInputDto,
+  ): Promise<ProgressReportOutputDto[]> {
+    const facultySections = this.reportRepo.sections.filter(
+      (s) => s.faculty_id === dto.faculty_id,
+    );
+    if (!facultySections.length)
+      throw new NotFoundException(
+        errorBody(
+          ErrorCode.RESOURCE_NOT_FOUND,
+          'No sections found for this faculty',
+        ),
+      );
+
+    const targetSection = dto.course_id
+      ? facultySections.find((s) => s.course_id === dto.course_id)
+      : facultySections[0];
+    if (!targetSection)
+      throw new NotFoundException(
+        errorBody(
+          ErrorCode.RESOURCE_NOT_FOUND,
+          'Specified course section not found for this faculty',
+        ),
+      );
+
+    const enrollments = this.reportRepo.enrollments.filter(
+      (e) => e.section_id === targetSection.section_id,
     );
 
-    const targetSection = dto.course_id ? facultySections.find(s => s.course_id === dto.course_id) : facultySections[0];
-    if (!targetSection) throw new NotFoundException(
-      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Specified course section not found for this faculty'),
-    );
+    const reports: ProgressReportOutputDto[] = enrollments.map((enrol) => {
+      const student = this.reportRepo.students.find(
+        (s) => s.student_id === enrol.student_id,
+      );
+      const studentName = student
+        ? `${student.first_name} ${student.last_name}`
+        : 'Unknown';
+      const studentMarks = this.reportRepo.marks.filter(
+        (m) => m.student_id === enrol.student_id,
+      );
 
-    const enrollments = this.reportRepo.enrollments.filter(e => e.section_id === targetSection.section_id);
-
-    const reports: ProgressReportOutputDto[] = enrollments.map(enrol => {
-      const student = this.reportRepo.students.find(s => s.student_id === enrol.student_id);
-      const studentName = student ? `${student.first_name} ${student.last_name}` : 'Unknown';
-      const studentMarks = this.reportRepo.marks.filter(m => m.student_id === enrol.student_id);
-      
-      const marksDetails = studentMarks.map(m => ({
+      const marksDetails = studentMarks.map((m) => ({
         assessment: m.assessment_id,
         score: m.marks,
-        max: 100 // Mock max marks
+        max: 100, // Mock max marks
       }));
 
       const totalScore = studentMarks.reduce((sum, m) => sum + m.marks, 0);
@@ -41,7 +63,7 @@ export class ReportService {
         marks: marksDetails,
         internal_marks_placeholder: totalScore,
         graded_placeholder: totalScore >= 50 ? 'PASS' : 'FAIL',
-        generated_at: new Date().toISOString()
+        generated_at: new Date().toISOString(),
       };
     });
 
@@ -54,43 +76,47 @@ export class ReportService {
 
   async getReportById(id: string) {
     const report = await this.reportRepo.findOneById(id);
-    if (!report) throw new NotFoundException(
-      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Report not found'),
-    );
+    if (!report)
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Report not found'),
+      );
     return report;
   }
 
   async createReport(dto: any) {
     return this.reportRepo.create({
       id: uuidv4(),
-      ...dto
+      ...dto,
     });
   }
 
   async updateReport(id: string, dto: any) {
     const report = await this.reportRepo.findOneById(id);
-    if (!report) throw new NotFoundException(
-      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Report not found'),
-    );
-    
+    if (!report)
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Report not found'),
+      );
+
     return this.reportRepo.update(id, dto);
   }
 
   async patchReport(id: string, dto: any) {
     const report = await this.reportRepo.findOneById(id);
-    if (!report) throw new NotFoundException(
-      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Report not found'),
-    );
-    
+    if (!report)
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Report not found'),
+      );
+
     return this.reportRepo.update(id, dto);
   }
 
   async deleteReport(id: string) {
     const report = await this.reportRepo.findOneById(id);
-    if (!report) throw new NotFoundException(
-      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Report not found'),
-    );
-    
+    if (!report)
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Report not found'),
+      );
+
     await this.reportRepo.delete(id);
   }
 }

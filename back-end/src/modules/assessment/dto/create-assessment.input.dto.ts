@@ -1,4 +1,11 @@
-import { IsUUID, IsString, IsEnum, IsNumber, Min, IsISO8601 } from 'class-validator';
+import {
+  IsUUID,
+  IsString,
+  IsEnum,
+  IsNumber,
+  Min,
+  IsISO8601,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateAssessmentInputDto {

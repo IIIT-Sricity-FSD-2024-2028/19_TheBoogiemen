@@ -10,7 +10,7 @@ import { ErrorCode, errorBody } from '../../common/errors/error-codes';
 export class LeaveService {
   constructor(
     private readonly leaveRepo: LeaveRepository,
-    private readonly notificationService: NotificationService
+    private readonly notificationService: NotificationService,
   ) {}
 
   async applyLeave(dto: ApplyLeaveInputDto): Promise<LeaveOutputDto> {
@@ -21,35 +21,47 @@ export class LeaveService {
       end_date: dto.end_date,
       reason: dto.reason,
       doc_ref: dto.doc_ref,
-      status: 'PENDING'
+      status: 'PENDING',
     });
     return leave;
   }
 
-  async approveLeave(leaveId: string, adminId: string): Promise<LeaveOutputDto> {
+  async approveLeave(
+    leaveId: string,
+    adminId: string,
+  ): Promise<LeaveOutputDto> {
     const leave = await this.leaveRepo.getLeave(leaveId);
-    if (!leave) throw new NotFoundException(
-      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Leave request not found'),
+    if (!leave)
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Leave request not found'),
+      );
+
+    const enrollments = this.leaveRepo.enrollments.filter(
+      (e) => e.student_id === leave.student_id,
     );
+    const enrolIds = enrollments.map((e) => e.enrollment_id);
 
-    const enrollments = this.leaveRepo.enrollments.filter(e => e.student_id === leave.student_id);
-    const enrolIds = enrollments.map(e => e.enrollment_id);
-
-    const logs = this.leaveRepo.attendance_logs.filter(l => 
-      enrolIds.includes(l.enrollment_id) && 
-      new Date(l.date) >= new Date(leave.start_date) && 
-      new Date(l.date) <= new Date(leave.end_date)
+    const logs = this.leaveRepo.attendance_logs.filter(
+      (l) =>
+        enrolIds.includes(l.enrollment_id) &&
+        new Date(l.date) >= new Date(leave.start_date) &&
+        new Date(l.date) <= new Date(leave.end_date),
     );
 
     for (const log of logs) {
       log.status = 'EXCUSED';
     }
 
-    const sectionIds = enrollments.map(e => e.section_id);
-    const sections = this.leaveRepo.sections.filter(s => sectionIds.includes(s.section_id));
+    const sectionIds = enrollments.map((e) => e.section_id);
+    const sections = this.leaveRepo.sections.filter((s) =>
+      sectionIds.includes(s.section_id),
+    );
 
     for (const sec of sections) {
-      this.notificationService.notify(sec.faculty_id, `Leave approved for student ${leave.student_id}`);
+      this.notificationService.notify(
+        sec.faculty_id,
+        `Leave approved for student ${leave.student_id}`,
+      );
     }
 
     const updated = await this.leaveRepo.updateLeaveStatus(leaveId, 'APPROVED');
@@ -62,43 +74,47 @@ export class LeaveService {
 
   async getLeaveById(id: string) {
     const leave = await this.leaveRepo.getLeave(id);
-    if (!leave) throw new NotFoundException(
-      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Leave request not found'),
-    );
+    if (!leave)
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Leave request not found'),
+      );
     return leave;
   }
 
   async updateLeave(id: string, dto: any) {
     const leave = await this.leaveRepo.getLeave(id);
-    if (!leave) throw new NotFoundException(
-      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Leave request not found'),
-    );
-    
+    if (!leave)
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Leave request not found'),
+      );
+
     return this.leaveRepo.update(id, {
       student_id: dto.student_id || leave.student_id,
       start_date: dto.start_date || leave.start_date,
       end_date: dto.end_date || leave.end_date,
       reason: dto.reason || leave.reason,
       doc_ref: dto.doc_ref || leave.doc_ref,
-      status: dto.status || leave.status
+      status: dto.status || leave.status,
     });
   }
 
   async patchLeave(id: string, dto: any) {
     const leave = await this.leaveRepo.getLeave(id);
-    if (!leave) throw new NotFoundException(
-      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Leave request not found'),
-    );
-    
+    if (!leave)
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Leave request not found'),
+      );
+
     return this.leaveRepo.update(id, dto);
   }
 
   async deleteLeave(id: string) {
     const leave = await this.leaveRepo.getLeave(id);
-    if (!leave) throw new NotFoundException(
-      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Leave request not found'),
-    );
-    
+    if (!leave)
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Leave request not found'),
+      );
+
     await this.leaveRepo.delete(id);
   }
 }

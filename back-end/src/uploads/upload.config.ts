@@ -17,9 +17,14 @@ import * as path from 'path';
 import { ErrorCode, errorBody } from '../common/errors/error-codes';
 
 /** Where the bytes live. Gitignored; created at boot if absent. */
-export const UPLOAD_DIR = path.resolve(process.cwd(), process.env.UPLOAD_DIR ?? 'uploads');
+export const UPLOAD_DIR = path.resolve(
+  process.cwd(),
+  process.env.UPLOAD_DIR ?? 'uploads',
+);
 
-export const MAX_FILE_BYTES = Number(process.env.UPLOAD_MAX_BYTES ?? 5 * 1024 * 1024);
+export const MAX_FILE_BYTES = Number(
+  process.env.UPLOAD_MAX_BYTES ?? 5 * 1024 * 1024,
+);
 
 /**
  * Allowed types, keyed by extension, with the MIME types each may legitimately
@@ -35,15 +40,23 @@ export const MAX_FILE_BYTES = Number(process.env.UPLOAD_MAX_BYTES ?? 5 * 1024 * 
  * is storage, not execution — see the download route's Content-Disposition.
  */
 const ALLOWED: Record<string, string[]> = {
-  '.pdf':  ['application/pdf'],
-  '.jpg':  ['image/jpeg'],
+  '.pdf': ['application/pdf'],
+  '.jpg': ['image/jpeg'],
   '.jpeg': ['image/jpeg'],
-  '.png':  ['image/png'],
-  '.doc':  ['application/msword'],
-  '.docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
-  '.ppt':  ['application/vnd.ms-powerpoint'],
-  '.pptx': ['application/vnd.openxmlformats-officedocument.presentationml.presentation'],
-  '.zip':  ['application/zip', 'application/x-zip-compressed', 'multipart/x-zip'],
+  '.png': ['image/png'],
+  '.doc': ['application/msword'],
+  '.docx': [
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  ],
+  '.ppt': ['application/vnd.ms-powerpoint'],
+  '.pptx': [
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  ],
+  '.zip': [
+    'application/zip',
+    'application/x-zip-compressed',
+    'multipart/x-zip',
+  ],
 };
 
 export const ALLOWED_EXTENSIONS = Object.keys(ALLOWED);
@@ -59,7 +72,10 @@ export function sanitizeOriginalName(name: string): string {
   // [A-Za-z0-9._ -] with an underscore, which also removes control
   // characters that could forge line breaks in logs or headers.
   const base = path.basename(String(name ?? ''));
-  const cleaned = base.replace(/[^A-Za-z0-9._ -]/g, '_').replace(/^\.+/, '').trim();
+  const cleaned = base
+    .replace(/[^A-Za-z0-9._ -]/g, '_')
+    .replace(/^\.+/, '')
+    .trim();
   return (cleaned || 'document').slice(0, 120);
 }
 

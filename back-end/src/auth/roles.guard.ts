@@ -9,7 +9,13 @@
  * that is not @Public().
  */
 
-import { Injectable, CanActivate, ExecutionContext, SetMetadata, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  SetMetadata,
+  ForbiddenException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from './public.decorator';
 import { Role } from './jwt-payload';
@@ -32,10 +38,10 @@ export class RolesGuard implements CanActivate {
     ]);
     if (isPublic) return true;
 
-    const requiredRoles = this.reflector.getAllAndOverride<string[]>(ROLES_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    const requiredRoles = this.reflector.getAllAndOverride<string[]>(
+      ROLES_KEY,
+      [context.getHandler(), context.getClass()],
+    );
 
     // No @Roles on the handler means "any authenticated user". Authentication
     // itself was already enforced by JwtAuthGuard.
@@ -47,7 +53,10 @@ export class RolesGuard implements CanActivate {
     if (!role) {
       // Should be unreachable: JwtAuthGuard rejects unauthenticated requests first.
       throw new ForbiddenException(
-        errorBody(ErrorCode.AUTHENTICATION_REQUIRED, 'No authenticated role on request'),
+        errorBody(
+          ErrorCode.AUTHENTICATION_REQUIRED,
+          'No authenticated role on request',
+        ),
       );
     }
 

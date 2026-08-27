@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { ResourceRepository } from './resource.resource.repository';
 import { EventRepository } from './event.event.repository';
 import { ScheduleEventInputDto } from './dto/schedule-event.input.dto';
@@ -10,28 +14,35 @@ import { ErrorCode, errorBody } from '../../common/errors/error-codes';
 export class ResourceService {
   constructor(
     private readonly resourceRepo: ResourceRepository,
-    private readonly eventRepo: EventRepository
+    private readonly eventRepo: EventRepository,
   ) {}
 
   async scheduleEvent(dto: ScheduleEventInputDto): Promise<EventOutputDto> {
     const resource = await this.resourceRepo.findOneById(dto.resource_id);
-    if (!resource) throw new NotFoundException(
-      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Resource not found'),
-    );
+    if (!resource)
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Resource not found'),
+      );
 
-    const existingEvents = await this.eventRepo.findAllByResourceId(dto.resource_id);
+    const existingEvents = await this.eventRepo.findAllByResourceId(
+      dto.resource_id,
+    );
     const dtoStart = new Date(dto.start_time).getTime();
     const dtoEnd = new Date(dto.end_time).getTime();
 
-    const overlap = existingEvents.some(e => {
+    const overlap = existingEvents.some((e) => {
       const eStart = new Date(e.start_time).getTime();
       const eEnd = new Date(e.end_time).getTime();
       return eStart < dtoEnd && eEnd > dtoStart;
     });
 
-    if (overlap) throw new ConflictException(
-      errorBody(ErrorCode.DUPLICATE_RESOURCE, 'Resource already booked for this time slot'),
-    );
+    if (overlap)
+      throw new ConflictException(
+        errorBody(
+          ErrorCode.DUPLICATE_RESOURCE,
+          'Resource already booked for this time slot',
+        ),
+      );
 
     const newEvent = await this.eventRepo.create({
       id: uuidv4(),
@@ -57,7 +68,7 @@ export class ResourceService {
       start_time: newEvent.start_time,
       end_time: newEvent.end_time,
       event_type: newEvent.event_type,
-      venue_id
+      venue_id,
     };
   }
 
@@ -67,9 +78,10 @@ export class ResourceService {
 
   async getResourceById(id: string) {
     const res = await this.resourceRepo.findOneById(id);
-    if (!res) throw new NotFoundException(
-      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Resource not found'),
-    );
+    if (!res)
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Resource not found'),
+      );
     return res;
   }
 
@@ -79,39 +91,42 @@ export class ResourceService {
       name: dto.name,
       capacity: dto.capacity || 10,
       type: dto.type || 'ROOM',
-      location: dto.location || 'Main Building'
+      location: dto.location || 'Main Building',
     });
   }
 
   async updateResource(id: string, dto: any) {
     const res = await this.resourceRepo.findOneById(id);
-    if (!res) throw new NotFoundException(
-      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Resource not found'),
-    );
-    
+    if (!res)
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Resource not found'),
+      );
+
     return this.resourceRepo.update(id, {
       name: dto.name || res.name,
       capacity: dto.capacity || res.capacity,
       type: dto.type || res.type,
-      location: dto.location || res.location
+      location: dto.location || res.location,
     });
   }
 
   async patchResource(id: string, dto: any) {
     const res = await this.resourceRepo.findOneById(id);
-    if (!res) throw new NotFoundException(
-      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Resource not found'),
-    );
-    
+    if (!res)
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Resource not found'),
+      );
+
     return this.resourceRepo.update(id, dto);
   }
 
   async deleteResource(id: string) {
     const res = await this.resourceRepo.findOneById(id);
-    if (!res) throw new NotFoundException(
-      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Resource not found'),
-    );
-    
+    if (!res)
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Resource not found'),
+      );
+
     await this.resourceRepo.delete(id);
   }
 
@@ -121,27 +136,30 @@ export class ResourceService {
 
   async getEventById(id: string) {
     const event = await this.eventRepo.findOneById(id);
-    if (!event) throw new NotFoundException(
-      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Event not found'),
-    );
+    if (!event)
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Event not found'),
+      );
     return event;
   }
 
   async updateEvent(id: string, dto: any) {
     const event = await this.eventRepo.findOneById(id);
-    if (!event) throw new NotFoundException(
-      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Event not found'),
-    );
-    
+    if (!event)
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Event not found'),
+      );
+
     return this.eventRepo.update(id, dto);
   }
 
   async deleteEvent(id: string) {
     const event = await this.eventRepo.findOneById(id);
-    if (!event) throw new NotFoundException(
-      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Event not found'),
-    );
-    
+    if (!event)
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Event not found'),
+      );
+
     await this.eventRepo.delete(id);
   }
 }

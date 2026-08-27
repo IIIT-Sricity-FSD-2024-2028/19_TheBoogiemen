@@ -23,3 +23,6 @@ npm-debug.log*
 
 # Uploaded documents (bytes live on disk, metadata in the store)
 back-end/uploads/
+
+# Log files (dated, one per day; permanent record)
+back-end/logs/

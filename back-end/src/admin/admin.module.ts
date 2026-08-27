@@ -10,4 +10,3 @@ import { DatabaseModule } from '../database/database.module';
   providers: [AdminService],
 })
 export class AdminModule {}
-

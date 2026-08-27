@@ -32,7 +32,9 @@ describe('error-codes', () => {
       code: ErrorCode.RESOURCE_NOT_FOUND,
       message: 'gone',
     });
-    expect(errorBody(ErrorCode.IMMUTABLE_FIELD, 'nope', { fields: ['role'] })).toEqual({
+    expect(
+      errorBody(ErrorCode.IMMUTABLE_FIELD, 'nope', { fields: ['role'] }),
+    ).toEqual({
       code: ErrorCode.IMMUTABLE_FIELD,
       message: 'nope',
       details: { fields: ['role'] },
@@ -51,11 +53,15 @@ describe('database-error.mapper', () => {
   it('recognises driver errors only by a five-character SQLSTATE', () => {
     expect(isPgError(pgError('23505'))).toBe(true);
     expect(isPgError(new Error('plain'))).toBe(false);
-    expect(isPgError(Object.assign(new Error('x'), { code: 'ENOENT' }))).toBe(false);
+    expect(isPgError(Object.assign(new Error('x'), { code: 'ENOENT' }))).toBe(
+      false,
+    );
   });
 
   it('maps a unique violation to 409, not 500', () => {
-    const mapped = mapDatabaseError(pgError('23505', { constraint: 'users_email_key' }));
+    const mapped = mapDatabaseError(
+      pgError('23505', { constraint: 'users_email_key' }),
+    );
     expect(mapped).toBeInstanceOf(ConflictException);
     expect(mapped!.getStatus()).toBe(HttpStatus.CONFLICT);
     const body = mapped!.getResponse() as any;
@@ -65,31 +71,47 @@ describe('database-error.mapper', () => {
 
   it('maps the marks-lock constraint to its business message', () => {
     const mapped = mapDatabaseError(
-      pgError('23505', { constraint: 'marks_entry_student_id_assessment_id_key' }),
+      pgError('23505', {
+        constraint: 'marks_entry_student_id_assessment_id_key',
+      }),
     );
-    expect((mapped!.getResponse() as any).message).toMatch(/already been entered/);
+    expect((mapped!.getResponse() as any).message).toMatch(
+      /already been entered/,
+    );
   });
 
   it('maps a foreign-key violation to 400', () => {
-    expect(mapDatabaseError(pgError('23503'))).toBeInstanceOf(BadRequestException);
+    expect(mapDatabaseError(pgError('23503'))).toBeInstanceOf(
+      BadRequestException,
+    );
   });
 
   it('maps a check violation to 400 with a business-rule code', () => {
-    const mapped = mapDatabaseError(pgError('23514', { constraint: 'users_role_check' }));
+    const mapped = mapDatabaseError(
+      pgError('23514', { constraint: 'users_role_check' }),
+    );
     expect(mapped!.getStatus()).toBe(HttpStatus.BAD_REQUEST);
-    expect((mapped!.getResponse() as any).code).toBe(ErrorCode.BUSINESS_RULE_VIOLATION);
+    expect((mapped!.getResponse() as any).code).toBe(
+      ErrorCode.BUSINESS_RULE_VIOLATION,
+    );
   });
 
   it('maps connection-exhaustion to 503 so a client knows to retry', () => {
     // 53300 is the Aiven free-tier ceiling being hit.
-    expect(mapDatabaseError(pgError('53300'))).toBeInstanceOf(ServiceUnavailableException);
-    expect(mapDatabaseError(pgError('08006'))).toBeInstanceOf(ServiceUnavailableException);
+    expect(mapDatabaseError(pgError('53300'))).toBeInstanceOf(
+      ServiceUnavailableException,
+    );
+    expect(mapDatabaseError(pgError('08006'))).toBeInstanceOf(
+      ServiceUnavailableException,
+    );
   });
 
   it('maps our own broken SQL to 500 without leaking the reason', () => {
     const mapped = mapDatabaseError(pgError('42703', { column: 'nope' })); // undefined_column
     expect(mapped).toBeInstanceOf(InternalServerErrorException);
-    expect((mapped!.getResponse() as any).message).toBe('Internal server error');
+    expect((mapped!.getResponse() as any).message).toBe(
+      'Internal server error',
+    );
   });
 
   it('returns null for a non-database error so callers can rethrow untouched', () => {
@@ -99,8 +121,12 @@ describe('database-error.mapper', () => {
 });
 
 describe('validationExceptionFactory', () => {
-  const err = (property: string, constraints: Record<string, string>, children: ValidationError[] = []): ValidationError =>
-    ({ property, constraints, children } as ValidationError);
+  const err = (
+    property: string,
+    constraints: Record<string, string>,
+    children: ValidationError[] = [],
+  ): ValidationError =>
+    ({ property, constraints, children }) as ValidationError;
 
   it('groups messages by field instead of a flat string array', () => {
     const ex = validationExceptionFactory([
@@ -137,8 +163,17 @@ describe('validationExceptionFactory', () => {
 describe('AllExceptionsFilter', () => {
   const run = (thrown: unknown) => {
     const json = jest.fn();
-    const res: any = { status: jest.fn().mockReturnThis(), json, headersSent: false };
-    const req: any = { method: 'POST', url: '/api/thing', id: 'req-1', header: () => undefined };
+    const res: any = {
+      status: jest.fn().mockReturnThis(),
+      json,
+      headersSent: false,
+    };
+    const req: any = {
+      method: 'POST',
+      url: '/api/thing',
+      id: 'req-1',
+      header: () => undefined,
+    };
     const logger: any = { error: jest.fn(), debug: jest.fn() };
 
     const host: any = {
@@ -147,12 +182,18 @@ describe('AllExceptionsFilter', () => {
     };
 
     new AllExceptionsFilter(logger).catch(thrown, host);
-    return { body: json.mock.calls[0][0], status: res.status.mock.calls[0][0], logger };
+    return {
+      body: json.mock.calls[0][0],
+      status: res.status.mock.calls[0][0],
+      logger,
+    };
   };
 
   it('returns the code and message for a 4xx, and logs at debug', () => {
     const { body, status, logger } = run(
-      new NotFoundException(errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Course not found')),
+      new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Course not found'),
+      ),
     );
     expect(status).toBe(404);
     expect(body).toMatchObject({
@@ -167,7 +208,9 @@ describe('AllExceptionsFilter', () => {
   });
 
   it('never leaks a 5xx message, and logs at error with the original exception', () => {
-    const secret = new Error('connection string postgres://user:hunter2@host/db');
+    const secret = new Error(
+      'connection string postgres://user:hunter2@host/db',
+    );
     const { body, status, logger } = run(secret);
     expect(status).toBe(500);
     expect(body.message).toBe('Internal server error');
@@ -178,13 +221,17 @@ describe('AllExceptionsFilter', () => {
   });
 
   it('translates a driver error into its mapped status', () => {
-    const { body, status } = run(pgError('23505', { constraint: 'users_email_key' }));
+    const { body, status } = run(
+      pgError('23505', { constraint: 'users_email_key' }),
+    );
     expect(status).toBe(409);
     expect(body.code).toBe(ErrorCode.DUPLICATE_RESOURCE);
   });
 
   it('collapses class-validator array messages into one string', () => {
-    const { body } = run(new BadRequestException({ message: ['a must be x', 'b must be y'] }));
+    const { body } = run(
+      new BadRequestException({ message: ['a must be x', 'b must be y'] }),
+    );
     expect(body.message).toBe('a must be x, b must be y');
   });
 
@@ -196,24 +243,43 @@ describe('AllExceptionsFilter', () => {
   });
 
   it('passes details through on a 4xx but never on a 5xx', () => {
-    const ok = run(new BadRequestException(errorBody(ErrorCode.IMMUTABLE_FIELD, 'no', { fields: ['role'] })));
+    const ok = run(
+      new BadRequestException(
+        errorBody(ErrorCode.IMMUTABLE_FIELD, 'no', { fields: ['role'] }),
+      ),
+    );
     expect(ok.body.details).toEqual({ fields: ['role'] });
 
-    const bad = run(new InternalServerErrorException(errorBody(ErrorCode.DATABASE_ERROR, 'boom', { sql: 'SELECT 1' })));
+    const bad = run(
+      new InternalServerErrorException(
+        errorBody(ErrorCode.DATABASE_ERROR, 'boom', { sql: 'SELECT 1' }),
+      ),
+    );
     expect(bad.body.details).toBeUndefined();
   });
 
   it('does not write twice when the response has already started', () => {
     const json = jest.fn();
-    const res: any = { status: jest.fn().mockReturnThis(), json, headersSent: true };
+    const res: any = {
+      status: jest.fn().mockReturnThis(),
+      json,
+      headersSent: true,
+    };
     const host: any = {
       getType: () => 'http',
       switchToHttp: () => ({
         getResponse: () => res,
-        getRequest: () => ({ method: 'GET', url: '/x', header: () => undefined }),
+        getRequest: () => ({
+          method: 'GET',
+          url: '/x',
+          header: () => undefined,
+        }),
       }),
     };
-    new AllExceptionsFilter({ error: jest.fn(), debug: jest.fn() } as any).catch(new Error('late'), host);
+    new AllExceptionsFilter({
+      error: jest.fn(),
+      debug: jest.fn(),
+    } as any).catch(new Error('late'), host);
     expect(json).not.toHaveBeenCalled();
   });
 });

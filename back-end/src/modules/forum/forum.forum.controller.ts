@@ -1,4 +1,15 @@
-import { Controller, Post, Get, Body, Param, UseGuards, SetMetadata, Put, Patch, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  Param,
+  UseGuards,
+  SetMetadata,
+  Put,
+  Patch,
+  Delete,
+} from '@nestjs/common';
 import { ApiTags, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
 import { ForumService } from './forum.forum.service';
 import { EnvGuard } from '../../common/guards/env.guard';
@@ -8,7 +19,11 @@ import { UpdatePostInputDto } from './dto/update-post.input.dto';
 import { PostOutputDto } from './dto/post.output.dto';
 import { BaseResponseDto } from '../../common/dto/base-response.dto';
 import { SEED } from '../../common/types/seed-constants';
-import { MOCK_FORUM_POSTS, MOCK_FORUM_REPLIES, MOCK_TOPICS } from '../../common/types/mock-data';
+import {
+  MOCK_FORUM_POSTS,
+  MOCK_FORUM_REPLIES,
+  MOCK_TOPICS,
+} from '../../common/types/mock-data';
 
 @ApiTags('Forum')
 @Controller('forum')
@@ -21,7 +36,7 @@ export class ForumController {
   @ApiResponse({ status: 201, type: PostOutputDto })
   async createPost(@Body() dto: CreatePostInputDto) {
     // Mock user context extraction
-    const userId = SEED.STUDENTS[0]; 
+    const userId = SEED.STUDENTS[0];
     const data = await this.forumService.createPost(userId, dto);
     return new BaseResponseDto(true, data, 'post created');
   }
@@ -31,7 +46,10 @@ export class ForumController {
   @ApiParam({ name: 'postId', description: 'Post ID' })
   @ApiBody({ type: ReplyInputDto })
   @ApiResponse({ status: 201 })
-  async replyToPost(@Param('postId') postId: string, @Body() dto: ReplyInputDto) {
+  async replyToPost(
+    @Param('postId') postId: string,
+    @Body() dto: ReplyInputDto,
+  ) {
     dto.post_id = postId;
     // Mock user context extraction
     const userId = SEED.STUDENTS[0];
@@ -51,13 +69,20 @@ export class ForumController {
   @Get('mock-data')
   @SetMetadata('roles', ['faculty', 'student', 'admin', 'head', 'superadmin'])
   @UseGuards(EnvGuard)
-  @ApiResponse({ status: 200, description: 'Fetch mock data for testing UUIDs' })
+  @ApiResponse({
+    status: 200,
+    description: 'Fetch mock data for testing UUIDs',
+  })
   getMockData() {
-    return new BaseResponseDto(true, {
-      posts: MOCK_FORUM_POSTS,
-      replies: MOCK_FORUM_REPLIES,
-      topics: MOCK_TOPICS
-    }, 'mock data fetched');
+    return new BaseResponseDto(
+      true,
+      {
+        posts: MOCK_FORUM_POSTS,
+        replies: MOCK_FORUM_REPLIES,
+        topics: MOCK_TOPICS,
+      },
+      'mock data fetched',
+    );
   }
 
   @Get()

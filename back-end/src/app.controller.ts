@@ -14,5 +14,3 @@ export class AppController {
     res.redirect('/login.html');
   }
 }
-
-

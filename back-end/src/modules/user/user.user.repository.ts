@@ -8,11 +8,18 @@ export class UserRepository {
 
   constructor() {}
 
-  async findAll(): Promise<USER[]> { return this.items; }
-  async findOneById(id: string): Promise<USER | undefined> { return this.items.find(i => i.user_id === id); }
+  async findAll(): Promise<USER[]> {
+    return this.items;
+  }
+  async findOneById(id: string): Promise<USER | undefined> {
+    return this.items.find((i) => i.user_id === id);
+  }
   async update(id: string, data: Partial<USER>): Promise<USER | null> {
-    const idx = this.items.findIndex(i => i.user_id === id);
-    if(idx > -1) { Object.assign(this.items[idx], data); return this.items[idx]; }
+    const idx = this.items.findIndex((i) => i.user_id === id);
+    if (idx > -1) {
+      Object.assign(this.items[idx], data);
+      return this.items[idx];
+    }
     return null;
   }
   async create(data: USER): Promise<USER> {
@@ -20,7 +27,7 @@ export class UserRepository {
     return data;
   }
   async delete(id: string): Promise<void> {
-    const idx = this.items.findIndex(i => i.user_id === id);
-    if(idx > -1) this.items.splice(idx, 1);
+    const idx = this.items.findIndex((i) => i.user_id === id);
+    if (idx > -1) this.items.splice(idx, 1);
   }
 }

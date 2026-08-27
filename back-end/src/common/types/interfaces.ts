@@ -224,6 +224,11 @@ export interface STUDENT_OUTCOME {
   student_id: string; // FK
   outcome_id: string; // FK
   outcome_title: string;
-  achievement_level: 'EXCELLENT' | 'GOOD' | 'SATISFACTORY' | 'NEEDS_IMPROVEMENT' | 'NOT_GRADED';
+  achievement_level:
+    | 'EXCELLENT'
+    | 'GOOD'
+    | 'SATISFACTORY'
+    | 'NEEDS_IMPROVEMENT'
+    | 'NOT_GRADED';
   raw_percentage: number;
 }

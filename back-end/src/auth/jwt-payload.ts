@@ -9,11 +9,19 @@
  * anything here that the user should not see.
  */
 
-export const ROLES = ['student', 'faculty', 'admin', 'head', 'superadmin'] as const;
-export type Role = typeof ROLES[number];
+export const ROLES = [
+  'student',
+  'faculty',
+  'admin',
+  'head',
+  'superadmin',
+] as const;
+export type Role = (typeof ROLES)[number];
 
 export function isRole(value: unknown): value is Role {
-  return typeof value === 'string' && (ROLES as readonly string[]).includes(value);
+  return (
+    typeof value === 'string' && (ROLES as readonly string[]).includes(value)
+  );
 }
 
 export interface JwtPayload {

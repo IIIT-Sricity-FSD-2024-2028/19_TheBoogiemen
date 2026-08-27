@@ -8,22 +8,14 @@ export const SEED = {
     '3a18b76c-fb1d-4034-8c83-05c04ccfbdb5',
     'e01a0bc1-5fbb-4cf1-8fb2-cc31d8e12bfe',
   ],
-  ACADEMIC_HEADS: [
-    'f3ca9b7f-ad88-4228-b21a-dc7dc33b664d',
-  ],
-  ADMINS: [
-    '811db334-edc7-43ca-a0ba-e2c7a95b8d23',
-  ],
+  ACADEMIC_HEADS: ['f3ca9b7f-ad88-4228-b21a-dc7dc33b664d'],
+  ADMINS: ['811db334-edc7-43ca-a0ba-e2c7a95b8d23'],
   COURSES: [
     'c2c11818-5a02-4fc6-b2fc-24ee2df8fb1f',
     'd83155ab-cbed-4a5f-9e66-4e5a9ee07971',
   ],
-  SECTIONS: [
-    '72b9a1eb-98ff-4537-83d7-ea8eaf6a9282',
-  ],
-  FEE_STRUCTURES: [
-    '9e46a780-333e-4ed7-a50d-6e8ddc70ab03',
-  ],
+  SECTIONS: ['72b9a1eb-98ff-4537-83d7-ea8eaf6a9282'],
+  FEE_STRUCTURES: ['9e46a780-333e-4ed7-a50d-6e8ddc70ab03'],
   ASSESSMENTS: [
     'e7c2ba43-1cf0-4be6-aab8-ac8a6a6839a8',
     '8f4a1372-af83-4a1d-88b1-cca55ed186ef',
@@ -45,5 +37,5 @@ export const SEED = {
   PROJECTS: [
     '421dff1d-ff1e-4cb8-8c1d-1aaf42f1f6ba',
     'e99c15bf-3ee8-4903-bbcc-0453715d3119',
-  ]
+  ],
 };

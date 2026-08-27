@@ -24,7 +24,10 @@ import type { Logger } from 'nestjs-pino';
 const FLUSH_MS = 250;
 const SHUTDOWN_TIMEOUT_MS = 5_000;
 
-export function registerProcessHandlers(app: INestApplication, logger: Logger): void {
+export function registerProcessHandlers(
+  app: INestApplication,
+  logger: Logger,
+): void {
   let shuttingDown = false;
 
   const shutdown = async (reason: string, exitCode: number) => {
@@ -32,7 +35,10 @@ export function registerProcessHandlers(app: INestApplication, logger: Logger): 
     shuttingDown = true;
 
     const forceExit = setTimeout(() => {
-      logger.error({ reason, msg: 'Graceful shutdown timed out — forcing exit' });
+      logger.error({
+        reason,
+        msg: 'Graceful shutdown timed out — forcing exit',
+      });
       process.exit(exitCode);
     }, SHUTDOWN_TIMEOUT_MS);
     forceExit.unref();

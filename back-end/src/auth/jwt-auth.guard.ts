@@ -52,8 +52,13 @@ export class JwtAuthGuard implements CanActivate {
       payload = await this.jwtService.verifyAsync<JwtPayload>(token);
     } catch (err: any) {
       // Distinguish only in the log — the client gets a uniform message either way.
-      const reason = err?.name === 'TokenExpiredError' ? 'expired' : 'invalid signature or format';
-      this.logger.warn(`Rejected token on ${request.method} ${request.url}: ${reason}`);
+      const reason =
+        err?.name === 'TokenExpiredError'
+          ? 'expired'
+          : 'invalid signature or format';
+      this.logger.warn(
+        `Rejected token on ${request.method} ${request.url}: ${reason}`,
+      );
       throw new UnauthorizedException(
         err?.name === 'TokenExpiredError'
           ? 'Your session has expired. Please sign in again.'
@@ -64,7 +69,9 @@ export class JwtAuthGuard implements CanActivate {
     // A token that verifies but carries a malformed payload is still unusable —
     // downstream code treats `sub` and `role` as guaranteed.
     if (!payload?.sub || !isRole(payload.role)) {
-      this.logger.warn(`Token verified but payload malformed on ${request.method} ${request.url}`);
+      this.logger.warn(
+        `Token verified but payload malformed on ${request.method} ${request.url}`,
+      );
       throw new UnauthorizedException(
         errorBody(ErrorCode.TOKEN_INVALID, 'Invalid authentication token'),
       );
@@ -84,7 +91,8 @@ export class JwtAuthGuard implements CanActivate {
    */
   private extractToken(request: any): string | null {
     const fromCookie = request?.cookies?.[AUTH_COOKIE];
-    if (typeof fromCookie === 'string' && fromCookie.trim()) return fromCookie.trim();
+    if (typeof fromCookie === 'string' && fromCookie.trim())
+      return fromCookie.trim();
     return this.extractBearerToken(request);
   }
 

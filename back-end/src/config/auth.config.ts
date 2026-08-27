@@ -26,14 +26,16 @@ const REJECTED_SECRETS = [
 
 export class AuthConfigError extends Error {}
 
-export function loadAuthConfig(env: NodeJS.ProcessEnv = process.env): AuthConfig {
+export function loadAuthConfig(
+  env: NodeJS.ProcessEnv = process.env,
+): AuthConfig {
   const jwtSecret = (env.JWT_SECRET ?? '').trim();
 
   if (!jwtSecret) {
     throw new AuthConfigError(
       'JWT_SECRET is not set.\n' +
-      '  Copy back-end/.env.example to back-end/.env and set a strong secret.\n' +
-      '  Generate one with:  node -e "console.log(require(\'crypto\').randomBytes(48).toString(\'base64url\'))"',
+        '  Copy back-end/.env.example to back-end/.env and set a strong secret.\n' +
+        "  Generate one with:  node -e \"console.log(require('crypto').randomBytes(48).toString('base64url'))\"",
     );
   }
 
@@ -50,8 +52,14 @@ export function loadAuthConfig(env: NodeJS.ProcessEnv = process.env): AuthConfig
   }
 
   const bcryptRounds = Number(env.BCRYPT_ROUNDS ?? 12);
-  if (!Number.isInteger(bcryptRounds) || bcryptRounds < 10 || bcryptRounds > 15) {
-    throw new AuthConfigError('BCRYPT_ROUNDS must be an integer between 10 and 15.');
+  if (
+    !Number.isInteger(bcryptRounds) ||
+    bcryptRounds < 10 ||
+    bcryptRounds > 15
+  ) {
+    throw new AuthConfigError(
+      'BCRYPT_ROUNDS must be an integer between 10 and 15.',
+    );
   }
 
   return {

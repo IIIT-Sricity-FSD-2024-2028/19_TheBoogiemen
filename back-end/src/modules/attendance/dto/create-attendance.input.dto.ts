@@ -1,4 +1,10 @@
-import { IsUUID, IsISO8601, IsEnum, IsOptional, IsString } from 'class-validator';
+import {
+  IsUUID,
+  IsISO8601,
+  IsEnum,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateAttendanceInputDto {
