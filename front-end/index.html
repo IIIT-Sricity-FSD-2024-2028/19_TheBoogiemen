@@ -1,109 +1,1819 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BarelyPassing - Academic Performance Platform</title>
-    <!-- Use same premium styling rules -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-dark: #0f172a;
-            --bg-card: #1e293b;
-            --primary: #3b82f6;
-            --primary-hover: #2563eb;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BarelyPassing | B2B Enterprise EdTech Ecosystem</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'system-ui', 'sans-serif'],
+            },
+          },
+        },
+      };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <!-- React & Redux UMD Libraries -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@reduxjs/toolkit@1.9.7/dist/redux-toolkit.umd.js"></script>
+    <script src="https://unpkg.com/react-redux@8.1.3/dist/react-redux.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="state.js"></script>
+    <script src="fixes.js"></script>
+  </head>
+  <!-- ── BarelyPassing Theme Override: White + Navy Blue (matches old platform) ── -->
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap');
+
+    :root {
+      --navy: #0f172a;
+      --navy-mid: #1e1b4b;
+      --navy-light: #1e293b;
+      --indigo: #6366f1;
+      --indigo-dark: #4338ca;
+      --blue: #2563eb;
+      --white: #ffffff;
+      --bg: #f8fafc;
+      --border: #e2e8f0;
+      --text: #1e293b;
+      --muted: #64748b;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+    }
+
+    *, *::before, *::after { font-family: 'Outfit', 'Inter', system-ui, sans-serif !important; }
+
+    /* ── Root app wrapper ── */
+    #root { background: var(--bg) !important; }
+
+    /* ── Navbar: white + navy ── */
+    nav.bp-nav {
+      background: var(--navy) !important;
+      border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+      color: white !important;
+      box-shadow: 0 2px 16px rgba(15,23,42,0.3) !important;
+    }
+    nav.bp-nav button, nav.bp-nav a { color: #94a3b8 !important; font-family: 'Outfit', sans-serif !important; }
+    nav.bp-nav button:hover, nav.bp-nav a:hover { color: white !important; }
+    nav.bp-nav .bp-nav-active { background: rgba(99,102,241,0.2) !important; color: white !important; }
+
+    /* ── Main content area ── */
+    main { background: var(--bg) !important; }
+
+    /* ── Dark card overrides → white cards ── */
+    .bg-slate-900, .bg-slate-950 { background: #ffffff !important; }
+    .bg-slate-900\/40, .bg-slate-950\/40 { background: rgba(255,255,255,0.7) !important; }
+    .bg-slate-800 { background: #f1f5f9 !important; }
+    .bg-slate-950\/60, .bg-slate-950\/80 { background: rgba(255,255,255,0.9) !important; }
+    .bg-slate-900\/90 { background: var(--navy) !important; }  /* navbar stays dark */
+
+    /* ── Text overrides ── */
+    .text-slate-100 { color: var(--text) !important; }
+    .text-slate-200 { color: #334155 !important; }
+    .text-slate-300 { color: var(--muted) !important; }
+    .text-slate-400 { color: #94a3b8 !important; }
+    .text-white { color: var(--text) !important; }
+
+    /* ── Navbar-specific: keep text white ── */
+    nav .text-slate-100, nav .text-slate-200, nav .text-slate-300, nav .text-white,
+    nav .text-slate-400 { color: rgba(255,255,255,0.8) !important; }
+    nav .text-indigo-300 { color: #a5b4fc !important; }
+
+    /* ── Borders ── */
+    .border-slate-800, .border-slate-800\/50, .border-slate-800\/80 { border-color: var(--border) !important; }
+    .border-slate-700 { border-color: #cbd5e1 !important; }
+
+    /* ── Section backgrounds ── */
+    .min-h-screen { background: var(--bg) !important; color: var(--text) !important; }
+
+    /* ── Cards ── */
+    .rounded-3xl, .rounded-2xl {
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important;
+    }
+
+    /* ── Landing hero section ── */
+    .bp-hero {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%) !important;
+      color: white !important;
+    }
+    .bp-hero h1, .bp-hero p, .bp-hero span { color: white !important; }
+
+    /* ── Role cards on landing ── */
+    .bp-role-card {
+      background: white !important;
+      border: 1px solid var(--border) !important;
+      color: var(--text) !important;
+      transition: box-shadow 0.2s, transform 0.2s !important;
+    }
+    .bp-role-card:hover {
+      box-shadow: 0 4px 20px rgba(99,102,241,0.15) !important;
+      transform: translateY(-2px) !important;
+    }
+
+    /* ── Tab navs inside portals ── */
+    .bp-tabs { background: white !important; border: 1px solid var(--border) !important; border-radius: 12px !important; padding: 6px !important; }
+    .bp-tab { color: var(--muted) !important; font-weight: 600 !important; border-radius: 8px !important; padding: 8px 16px !important; cursor: pointer !important; }
+    .bp-tab-active { background: var(--navy) !important; color: white !important; }
+    .bp-tab:hover:not(.bp-tab-active) { background: #f1f5f9 !important; color: var(--text) !important; }
+
+    /* ── Stats/metric cards ── */
+    .bp-metric-card {
+      background: white !important; border: 1px solid var(--border) !important;
+      border-radius: 16px !important; padding: 20px !important;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05) !important;
+    }
+    .bp-metric-card .label { font-size: 11px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+    .bp-metric-card .value { font-size: 28px; font-weight: 800; color: var(--navy); margin-top: 6px; }
+
+    /* ── Header bands inside portal views ── */
+    .bp-portal-header {
+      background: linear-gradient(135deg, var(--navy) 0%, #1e3a5f 100%) !important;
+      color: white !important; border-radius: 16px !important;
+      padding: 24px !important; margin-bottom: 20px !important;
+    }
+    .bp-portal-header h1, .bp-portal-header p, .bp-portal-header span { color: white !important; }
+
+    /* ── Buttons ── */
+    .bp-btn-primary {
+      background: var(--navy) !important; color: white !important;
+      border-radius: 8px !important; padding: 10px 20px !important;
+      font-weight: 600 !important; font-size: 13px !important;
+      border: none !important; cursor: pointer !important;
+      transition: background 0.2s !important;
+    }
+    .bp-btn-primary:hover { background: #1e293b !important; }
+
+    /* ── Tables inside portals ── */
+    table { width: 100% !important; border-collapse: collapse !important; }
+    table th { background: #f8fafc !important; color: var(--muted) !important; font-size: 11px !important; text-transform: uppercase !important; padding: 10px 12px !important; }
+    table td { padding: 10px 12px !important; border-bottom: 1px solid var(--border) !important; font-size: 13px !important; color: var(--text) !important; }
+    table tr:hover td { background: #f1f5f9 !important; }
+
+    /* ── Modals ── */
+    .bp-modal-backdrop { background: rgba(15,23,42,0.7) !important; }
+    .bp-modal { background: white !important; border-radius: 20px !important; box-shadow: 0 20px 60px rgba(0,0,0,0.2) !important; }
+    .bp-modal h3 { color: var(--navy) !important; }
+    .bp-modal label { color: var(--muted) !important; font-size: 12px !important; font-weight: 600 !important; }
+    .bp-modal input, .bp-modal select {
+      border: 1.5px solid var(--border) !important; border-radius: 8px !important;
+      padding: 8px 12px !important; color: var(--text) !important;
+      background: white !important;
+    }
+
+    /* ── Footer ── */
+    footer { background: var(--navy) !important; color: rgba(255,255,255,0.5) !important; border-top: none !important; }
+
+    /* ── Toast notifications ── */
+    .bg-indigo-950\/90 { background: var(--navy) !important; color: white !important; }
+    .border-indigo-500\/80 { border-color: var(--indigo) !important; }
+    .text-indigo-100 { color: rgba(255,255,255,0.9) !important; }
+
+    /* ── Portal section headings ── */
+    .bp-section-title { font-size: 18px; font-weight: 700; color: var(--navy); margin-bottom: 16px; }
+
+    /* ── Progress bars ── */
+    .bg-emerald-500 { background: #10b981 !important; }
+    .bg-indigo-600 { background: var(--indigo) !important; }
+    .bg-red-500 { background: var(--danger) !important; }
+    .bg-amber-400 { background: var(--warning) !important; }
+
+    /* ── Badge pills ── */
+    .bg-indigo-500\/20 { background: rgba(99,102,241,0.1) !important; }
+    .text-indigo-300 { color: var(--indigo) !important; }
+    .text-emerald-400 { color: #059669 !important; }
+    .text-indigo-400 { color: var(--indigo) !important; }
+    .text-amber-400 { color: #d97706 !important; }
+    .bg-purple-950\/40, .bg-amber-950\/40, .bg-blue-950\/40, .bg-emerald-950\/40, .bg-indigo-950\/40 {
+      background: white !important;
+    }
+    .border-purple-700\/50, .border-amber-700\/50, .border-blue-700\/50, .border-emerald-700\/50, .border-indigo-700\/50 {
+      border-color: var(--border) !important;
+    }
+
+    /* ── Dark gradient headers inside portals ── */
+    .bg-gradient-to-r.from-indigo-950\/60, .bg-gradient-to-r.from-slate-900 {
+      background: linear-gradient(135deg, var(--navy) 0%, #1e3a5f 100%) !important;
+    }
+    .bg-blue-950\/40 { background: #eff6ff !important; }
+    .text-blue-300 { color: var(--blue) !important; }
+    .text-blue-200\/70 { color: #3b82f6 !important; }
+
+    /* ── inline dark text in dark zones (keep white) ── */
+    .bg-gradient-to-r .text-white,
+    .bp-portal-header .text-white,
+    .bp-hero .text-white { color: white !important; }
+
+    /* ── Role card text colors in the subscribed accounts ── */
+    .bg-purple-950\/40 .text-purple-300 { color: #7c3aed !important; }
+    .bg-amber-950\/40 .text-amber-300 { color: #b45309 !important; }
+    .bg-blue-950\/40 .text-blue-300 { color: var(--blue) !important; }
+    .bg-emerald-950\/40 .text-emerald-300 { color: #047857 !important; }
+    .bg-indigo-950\/40 .text-indigo-300 { color: var(--indigo) !important; }
+
+    .bg-purple-950\/40 .text-white,
+    .bg-amber-950\/40 .text-white,
+    .bg-blue-950\/40 .text-white,
+    .bg-emerald-950\/40 .text-white,
+    .bg-indigo-950\/40 .text-white { color: var(--navy) !important; }
+
+    /* ── HOD/Student tab buttons ── */
+    .bg-slate-900 button.text-slate-400 { color: var(--muted) !important; }
+    .bg-slate-900 button.text-white { color: var(--text) !important; }
+
+    /* ── Inputs in modals/forms (dark → white) ── */
+    .bg-slate-950.border.border-slate-800 {
+      background: white !important;
+      border-color: var(--border) !important;
+      color: var(--text) !important;
+    }
+    input.bg-slate-950, select.bg-slate-950, textarea.bg-slate-950 {
+      background: white !important;
+      border: 1.5px solid var(--border) !important;
+      color: var(--text) !important;
+    }
+  </style>
+  <body class="bg-slate-50 text-slate-800 antialiased font-sans">
+    <div id="root"></div>
+
+    <script type="text/babel">
+      const { useState, useEffect } = React;
+      const { configureStore, createSlice, createAsyncThunk } = RTK;
+      const { Provider, useSelector, useDispatch } = ReactRedux;
+
+      // ── 1. Custom Redux Middlewares ──
+      const tokenAuthMiddleware = store => next => async action => {
+        const result = next(action);
+        if (action.type?.endsWith('/rejected') && action.payload?.status === 401) {
+          console.warn('🔑 tokenAuthMiddleware: Intercepted 401 Unauthorized.');
         }
+        return result;
+      };
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { background-color: var(--bg-dark); color: var(--text-main); line-height: 1.6; overflow-x: hidden; }
+      const quotaCheckerMiddleware = store => next => action => {
+        const result = next(action);
+        if (action.type?.startsWith('tenant/') || action.type?.startsWith('subscription/')) {
+          const state = store.getState();
+          const activeTenant = state.tenant?.activeTenant;
+          if (activeTenant && activeTenant.monthly_token_quota > 0) {
+            const pct = Math.round((activeTenant.used_tokens / activeTenant.monthly_token_quota) * 100);
+            if (pct >= 90 && !state.ui?.alertShown) {
+              store.dispatch(addNotification({
+                id: `q-${Date.now()}`,
+                type: 'danger',
+                title: 'Token Quota Alert (90%)',
+                message: `${activeTenant.name} has used ${pct}% of monthly API tokens.`
+              }));
+            }
+          }
+        }
+        return result;
+      };
 
-        /* Navbar */
-        nav { display: flex; justify-content: space-between; align-items: center; padding: 24px 8%; position: fixed; width: 100%; top: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); z-index: 100; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .logo { font-size: 24px; font-weight: 700; background: linear-gradient(135deg, #60a5fa, #a78bfa); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .nav-links { display: flex; gap: 32px; align-items: center; }
-        .nav-links a { color: var(--text-main); text-decoration: none; font-weight: 500; transition: color 0.3s; }
-        .nav-links a:hover { color: var(--primary); }
-        
-        .btn { padding: 12px 24px; border-radius: 8px; font-weight: 600; text-decoration: none; transition: all 0.3s; cursor: pointer; display: inline-block; }
-        .btn-outline { border: 1px solid rgba(255,255,255,0.2); color: white; }
-        .btn-outline:hover { background: rgba(255,255,255,0.1); }
-        .btn-primary { background: var(--primary); color: white; border: none; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4); }
-        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6); }
+      const auditLoggerMiddleware = store => next => action => {
+        const result = next(action);
+        if (['subscription/upgradeTier', 'tenant/onboard'].some(a => action.type?.includes(a))) {
+          console.log('📋 auditLoggerMiddleware: Action logged ->', action.type);
+        }
+        return result;
+      };
 
-        /* Hero */
-        .hero { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 0 20px; position: relative; }
-        .hero-glow { position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(59,130,246,0.15) 0%, rgba(15,23,42,0) 70%); top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: -1; pointer-events: none; }
-        .hero h1 { font-size: 64px; font-weight: 800; letter-spacing: -1px; margin-bottom: 24px; max-width: 900px; line-height: 1.1; }
-        .hero h1 span { background: linear-gradient(135deg, #60a5fa, #c084fc); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .hero p { font-size: 20px; color: var(--text-muted); max-width: 600px; margin-bottom: 40px; }
-        .hero-btns { display: flex; gap: 16px; }
+      // ── 2. Redux Async Thunks & Slices ──
+      const loginThunk = createAsyncThunk('auth/login', async ({ email, password, tenant_code }, { rejectWithValue }) => {
+        try {
+          const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password, tenant_code }),
+          });
+          const data = await res.json();
+          if (!res.ok || !data.success) return rejectWithValue(data.message || 'Invalid credentials');
+          return data;
+        } catch (e) {
+          return rejectWithValue('Network connection error');
+        }
+      });
 
-        /* Features */
-        .features { padding: 100px 8%; background: #0b1121; }
-        .section-title { text-align: center; font-size: 36px; margin-bottom: 64px; }
-        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 32px; }
-        .feature-card { background: var(--bg-card); padding: 40px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); transition: transform 0.3s, box-shadow 0.3s; }
-        .feature-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .feature-icon { width: 48px; height: 48px; background: rgba(59,130,246,0.1); color: var(--primary); display: flex; justify-content: center; align-items: center; border-radius: 12px; margin-bottom: 24px; }
-        .feature-icon svg { width: 24px; height: 24px; }
-        .feature-card h3 { font-size: 20px; margin-bottom: 12px; }
-        .feature-card p { color: var(--text-muted); font-size: 15px; }
+      const authSlice = createSlice({
+        name: 'auth',
+        initialState: {
+          accessToken: localStorage.getItem('accessToken') || null,
+          refreshToken: localStorage.getItem('refreshToken') || null,
+          user: JSON.parse(localStorage.getItem('user') || 'null'),
+          tenant: JSON.parse(localStorage.getItem('tenant') || 'null'),
+          isAuthenticated: !!localStorage.getItem('accessToken'),
+          loading: false,
+          error: null,
+        },
+        reducers: {
+          logout: (state) => {
+            state.user = null;
+            state.tenant = null;
+            state.accessToken = null;
+            state.refreshToken = null;
+            state.isAuthenticated = false;
+            state.error = null;
+          },
+          clearError: (state) => { state.error = null; }
+        },
+        extraReducers: (builder) => {
+          builder
+            .addCase(loginThunk.pending, (state) => { state.loading = true; state.error = null; })
+            .addCase(loginThunk.fulfilled, (state, action) => {
+              state.loading = false;
+              state.isAuthenticated = true;
+              state.accessToken = action.payload.accessToken || action.payload.token;
+              state.refreshToken = action.payload.refreshToken;
+              state.user = action.payload.user;
+              state.tenant = action.payload.tenant;
+              localStorage.setItem('accessToken', state.accessToken);
+              if (state.refreshToken) localStorage.setItem('refreshToken', state.refreshToken);
+              localStorage.setItem('user', JSON.stringify(state.user));
+              localStorage.setItem('tenant', JSON.stringify(state.tenant));
+            })
+            .addCase(loginThunk.rejected, (state, action) => {
+              state.loading = false;
+              state.error = action.payload || 'Login failed';
+            });
+        }
+      });
 
-        /* Footer */
-        footer { padding: 40px 8%; text-align: center; color: var(--text-muted); border-top: 1px solid rgba(255,255,255,0.05); font-size: 14px; }
-    </style>
-</head>
-<body>
+      const fetchTenantsThunk = createAsyncThunk('tenant/fetchAll', async () => {
+        const res = await fetch('/api/platform/tenants');
+        return await res.json();
+      });
 
-    <nav>
-        <div class="logo">BarelyPassing</div>
-        <div class="nav-links">
-            <a href="#features">Features</a>
-            <a href="login.html" class="btn btn-primary" style="padding: 8px 20px;">Sign In</a>
-        </div>
-    </nav>
+      const onboardTenantThunk = createAsyncThunk('tenant/onboard', async (data, { rejectWithValue }) => {
+        try {
+          const res = await fetch('/api/platform/tenants/onboard', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+          });
+          const result = await res.json();
+          if (!res.ok) return rejectWithValue(result.message || 'Onboarding failed');
+          return result;
+        } catch (e) {
+          return rejectWithValue('Network error');
+        }
+      });
 
-    <section class="hero">
-        <div class="hero-glow"></div>
-        <h1>Modernize your campus with <span>BarelyPassing</span></h1>
-        <p>A completely unified portal for Outcome-Based Education, managing everything from student attendance and faculty workloads to institutional accreditation reporting.</p>
-        <div class="hero-btns">
-            <a href="login.html" class="btn btn-primary">Login to Dashboard</a>
-        </div>
-    </section>
+      const tenantSlice = createSlice({
+        name: 'tenant',
+        initialState: { allTenants: [], activeTenant: JSON.parse(localStorage.getItem('tenant') || 'null') },
+        reducers: {
+          setActiveTenant: (state, action) => {
+            state.activeTenant = action.payload;
+            localStorage.setItem('tenant', JSON.stringify(action.payload));
+          }
+        },
+        extraReducers: (builder) => {
+          builder
+            .addCase(fetchTenantsThunk.fulfilled, (state, action) => { state.allTenants = action.payload; })
+            .addCase(onboardTenantThunk.fulfilled, (state, action) => {
+              if (action.payload.tenant) state.allTenants.push(action.payload.tenant);
+            });
+        }
+      });
 
-    <section class="features" id="features">
-        <h2 class="section-title">Everything you need to run an institution</h2>
-        <div class="grid-3">
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20v-6M6 20v-4M18 20V10M2 20h20M4 10l8-8 8 8"></path></svg>
+      const fetchTokenMeterThunk = createAsyncThunk('subscription/fetchMeter', async (tenantId) => {
+        const res = await fetch(`/api/platform/tokens/meter?tenant_id=${tenantId || 't1'}`, {
+          headers: { 'x-tenant-id': tenantId || 't1' }
+        });
+        return await res.json();
+      });
+
+      const subscriptionSlice = createSlice({
+        name: 'subscription',
+        initialState: { tokenMeter: null },
+        reducers: {},
+        extraReducers: (builder) => {
+          builder.addCase(fetchTokenMeterThunk.fulfilled, (state, action) => {
+            state.tokenMeter = action.payload;
+          });
+        }
+      });
+
+      const fetchHierarchyThunk = createAsyncThunk('hierarchy/fetch', async (tenantId) => {
+        const res = await fetch(`/api/platform/hierarchy?tenant_id=${tenantId || 't1'}`, {
+          headers: { 'x-tenant-id': tenantId || 't1' }
+        });
+        return await res.json();
+      });
+
+      const hierarchySlice = createSlice({
+        name: 'hierarchy',
+        initialState: { departments: [], hierarchy: { director_super_admin: [], department_heads: [], faculty_mentors: [], students: [] } },
+        reducers: {},
+        extraReducers: (builder) => {
+          builder.addCase(fetchHierarchyThunk.fulfilled, (state, action) => {
+            state.departments = action.payload.departments || [];
+            state.hierarchy = action.payload.hierarchy || state.hierarchy;
+          });
+        }
+      });
+
+      const uiSlice = createSlice({
+        name: 'ui',
+        initialState: { activeView: 'landing', notifications: [], isLoginModalOpen: false, isOnboardModalOpen: false, isProfileModalOpen: false },
+        reducers: {
+          setActiveView: (state, action) => { state.activeView = action.payload; },
+          setLoginModalOpen: (state, action) => { state.isLoginModalOpen = action.payload; },
+          setOnboardModalOpen: (state, action) => { state.isOnboardModalOpen = action.payload; },
+          setProfileModalOpen: (state, action) => { state.isProfileModalOpen = action.payload; },
+          addNotification: (state, action) => { state.notifications.unshift(action.payload); },
+          removeNotification: (state, action) => {
+            state.notifications = state.notifications.filter(n => n.id !== action.payload);
+          }
+        }
+      });
+
+      const { logout, clearError, updateUserProfile } = authSlice.actions;
+      const { setActiveView, setLoginModalOpen, setOnboardModalOpen, setProfileModalOpen, addNotification, removeNotification } = uiSlice.actions;
+
+      const store = configureStore({
+        reducer: {
+          auth: authSlice.reducer,
+          tenant: tenantSlice.reducer,
+          subscription: subscriptionSlice.reducer,
+          hierarchy: hierarchySlice.reducer,
+          ui: uiSlice.reducer,
+        },
+        middleware: (getDefaultMiddleware) =>
+          getDefaultMiddleware().concat(tokenAuthMiddleware, quotaCheckerMiddleware, auditLoggerMiddleware),
+      });
+
+      // ── 3. Components ──
+      function Navbar() {
+        const dispatch = useDispatch();
+        const { isAuthenticated, user, tenant } = useSelector((state) => state.auth);
+        const { activeView } = useSelector((state) => state.ui);
+        const { tokenMeter } = useSelector((state) => state.subscription);
+
+        return (
+          <nav className="bp-nav sticky top-0 z-50 px-6 py-3.5 flex items-center justify-between" style={{background:'#0f172a',borderBottom:'1px solid rgba(255,255,255,0.08)',boxShadow:'0 2px 16px rgba(15,23,42,0.35)'}}>
+            <div className="flex items-center space-x-4 cursor-pointer" onClick={() => dispatch(setActiveView('landing'))}>
+              <div style={{width:40,height:40,borderRadius:10,background:'linear-gradient(135deg,#6366f1,#4338ca)',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:900,fontSize:18,color:'white',flexShrink:0}}>
+                BP
+              </div>
+              <div>
+                <div className="flex items-center space-x-2">
+                  <span style={{fontWeight:800,fontSize:17,color:'white',letterSpacing:'-0.3px'}}>
+                    BarelyPassing
+                  </span>
+                  <span style={{fontSize:9,fontWeight:700,textTransform:'uppercase',letterSpacing:'1px',padding:'2px 8px',borderRadius:20,background:'rgba(99,102,241,0.3)',color:'#a5b4fc',border:'1px solid rgba(165,180,252,0.3)'}}>
+                    EdTech Platform
+                  </span>
                 </div>
-                <h3>Academic Progress</h3>
-                <p>Track CGPA, calculate Outcome-Based Education (OBE) mapping for NAAC/NBA automatically, and flag at-risk students for early intervention.</p>
+                {tenant && (
+                  <div style={{fontSize:11,color:'rgba(255,255,255,0.6)',display:'flex',alignItems:'center',gap:6,marginTop:2}}>
+                    <span>{tenant.logo || '🏫'}</span>
+                    <span style={{color:'#a5b4fc',fontWeight:600}}>{tenant.name}</span>
+                    <span>•</span>
+                    <span>{tenant.subscription_tier}</span>
+                  </div>
+                )}
+              </div>
             </div>
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75M9 7a4 4 0 100 8 4 4 0 000-8z"></path></svg>
-                </div>
-                <h3>Role-Based Workflows</h3>
-                <p>Secure login portals segregated perfectly for Students, Faculty, Academic Heads, and the Super-Admin. Every user only sees what they need to.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                </div>
-                <h3>Event & Leave Scheduling</h3>
-                <p>Fully automated approval pipelines for leave processing and built-in institutional event schedulers accessible across all hierarchy levels.</p>
-            </div>
-        </div>
-    </section>
 
-    <footer>
-        &copy; 2026 BarelyPassing Educational Platforms. Designed for IIITS. All rights reserved.
-    </footer>
+            {isAuthenticated && (
+              <div className="hidden md:flex items-center space-x-1" style={{background:'rgba(255,255,255,0.07)',padding:6,borderRadius:10,border:'1px solid rgba(255,255,255,0.1)',fontSize:12,fontWeight:600}}>
+                {user?.role === 'PLATFORM_SUPER_ADMIN' && (
+                  <button onClick={() => dispatch(setActiveView('saas-admin'))} style={{padding:'6px 12px',borderRadius:8,border:'none',cursor:'pointer',background:activeView==='saas-admin'?'#6366f1':'transparent',color:activeView==='saas-admin'?'white':'rgba(255,255,255,0.65)',transition:'all 0.15s'}}>
+                    🌐 SaaS Admin
+                  </button>
+                )}
+                {user?.role === 'PLATFORM_SALES_SUPPORT' && (
+                  <button onClick={() => dispatch(setActiveView('internal-support'))} style={{padding:'6px 12px',borderRadius:8,border:'none',cursor:'pointer',background:activeView==='internal-support'?'#d97706':'transparent',color:activeView==='internal-support'?'white':'rgba(255,255,255,0.65)',transition:'all 0.15s'}}>
+                    🛡️ Platform Support
+                  </button>
+                )}
+                {(user?.role === 'INSTITUTE_SUPER_ADMIN' || user?.role === 'superadmin' || user?.role === 'admin') && (
+                  <button onClick={() => dispatch(setActiveView('institute-admin'))} style={{padding:'6px 12px',borderRadius:8,border:'none',cursor:'pointer',background:activeView==='institute-admin'?'#6366f1':'transparent',color:activeView==='institute-admin'?'white':'rgba(255,255,255,0.65)',transition:'all 0.15s'}}>
+                    🏛️ Director Portal
+                  </button>
+                )}
+                {(user?.role === 'DEPARTMENT_ADMIN_HOD' || user?.role === 'head') && (
+                  <button onClick={() => dispatch(setActiveView('hod'))} style={{padding:'6px 12px',borderRadius:8,border:'none',cursor:'pointer',background:activeView==='hod'?'#6366f1':'transparent',color:activeView==='hod'?'white':'rgba(255,255,255,0.65)',transition:'all 0.15s'}}>
+                    🎓 HOD Control
+                  </button>
+                )}
+                {user?.role === 'faculty' && (
+                  <button onClick={() => dispatch(setActiveView('faculty'))} style={{padding:'6px 12px',borderRadius:8,border:'none',cursor:'pointer',background:activeView==='faculty'?'#6366f1':'transparent',color:activeView==='faculty'?'white':'rgba(255,255,255,0.65)',transition:'all 0.15s'}}>
+                    👨‍🏫 Faculty Hub
+                  </button>
+                )}
+                {user?.role === 'student' && (
+                  <button onClick={() => dispatch(setActiveView('student'))} style={{padding:'6px 12px',borderRadius:8,border:'none',cursor:'pointer',background:activeView==='student'?'#6366f1':'transparent',color:activeView==='student'?'white':'rgba(255,255,255,0.65)',transition:'all 0.15s'}}>
+                    👨‍🎓 Student Hub
+                  </button>
+                )}
+              </div>
+            )}
 
-</body>
+            <div className="flex items-center space-x-3">
+              {tenant && tokenMeter && user?.role === 'PLATFORM_SUPER_ADMIN' && (
+                <div className="hidden lg:flex items-center space-x-2 bg-slate-950/80 px-3 py-1.5 rounded-xl border border-slate-800 text-xs">
+                  <span className="text-amber-400 font-bold">⚡ Token Meter:</span>
+                  <span className="text-slate-200 font-mono">{tokenMeter.used_tokens?.toLocaleString()} / {tokenMeter.monthly_quota?.toLocaleString()}</span>
+                  <div className="w-16 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                    <div className={`h-full ${tokenMeter.usage_percentage >= 90 ? 'bg-red-500' : 'bg-emerald-500'}`} style={{ width: `${tokenMeter.usage_percentage}%` }}></div>
+                  </div>
+                </div>
+              )}
+
+              {isAuthenticated ? (
+                <div className="flex items-center space-x-3">
+                  <div onClick={() => dispatch(setProfileModalOpen(true))} className="flex items-center space-x-2.5 cursor-pointer bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 px-3 py-1.5 rounded-xl transition-all" title="View & Edit Profile">
+                    <div style={{width:28,height:28,borderRadius:8,background:'linear-gradient(135deg,#6366f1,#8b5cf6)',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:900,fontSize:12,color:'white'}}>
+                      {(user?.name || user?.username || 'U')[0]}
+                    </div>
+                    <div className="text-left hidden sm:block">
+                      <div style={{fontSize:12,fontWeight:700,color:'white'}}>{user?.name || user?.username}</div>
+                      <div style={{fontSize:10,color:'rgba(255,255,255,0.5)'}}>{user?.email}</div>
+                    </div>
+                  </div>
+                  <span style={{fontSize:9,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.8px',padding:'3px 8px',borderRadius:6,background:'rgba(99,102,241,0.25)',color:'#a5b4fc',border:'1px solid rgba(165,180,252,0.3)'}}>
+                    {user?.role?.replace(/_/g, ' ')}
+                  </span>
+                  <button onClick={() => { dispatch(logout()); dispatch(setActiveView('landing')); }} style={{padding:'6px 14px',borderRadius:8,background:'rgba(255,255,255,0.1)',border:'1px solid rgba(255,255,255,0.2)',color:'rgba(255,255,255,0.8)',fontSize:12,fontWeight:600,cursor:'pointer',transition:'all 0.15s'}}>
+                    Logout
+                  </button>
+                </div>
+              ) : (
+                <a href="login.html" style={{padding:'8px 18px',borderRadius:8,background:'#6366f1',color:'white',fontWeight:700,fontSize:12,textDecoration:'none',display:'inline-block',cursor:'pointer'}}>
+                  Institute Sign In
+                </a>
+              )}
+            </div>
+          </nav>
+        );
+      }
+
+      function LandingPage() {
+        const dispatch = useDispatch();
+        const { loading, error } = useSelector((state) => state.auth);
+        const { isLoginModalOpen, isOnboardModalOpen } = useSelector((state) => state.ui);
+
+        const [email, setEmail] = useState('');
+        const [password, setPassword] = useState('Pass@123');
+        const [tenantCode, setTenantCode] = useState('IIITS');
+
+        const [onboardData, setOnboardData] = useState({ name: '', code: '', domain: '', subscription_tier: 'Growth Campus', contact_email: '' });
+        const [onboardResult, setOnboardResult] = useState(null);
+
+        const [showInternalTrigger, setShowInternalTrigger] = useState(
+          new URLSearchParams(window.location.search).get('mode') === 'internal'
+        );
+
+        useEffect(() => {
+          const handleKeyDown = (e) => {
+            if (e.ctrlKey && e.shiftKey && (e.key === 'S' || e.key === 's')) {
+              setShowInternalTrigger((prev) => !prev);
+              dispatch(addNotification({
+                id: `sec-${Date.now()}`,
+                type: 'warning',
+                title: 'Internal Support Panel Unlocked',
+                message: 'Support team internal panel toggled via shortcut.'
+              }));
+            }
+          };
+          window.addEventListener('keydown', handleKeyDown);
+          return () => window.removeEventListener('keydown', handleKeyDown);
+        }, [dispatch]);
+
+        const handleLoginSubmit = async (e) => {
+          e.preventDefault();
+          const result = await dispatch(loginThunk({ email, password, tenant_code: tenantCode }));
+          if (loginThunk.fulfilled.match(result)) {
+            dispatch(setLoginModalOpen(false));
+            const role = result.payload.user?.role;
+            if (role === 'PLATFORM_SUPER_ADMIN') dispatch(setActiveView('saas-admin'));
+            else if (role === 'PLATFORM_SALES_SUPPORT') dispatch(setActiveView('internal-support'));
+            else if (role === 'INSTITUTE_SUPER_ADMIN' || role === 'superadmin' || role === 'admin') dispatch(setActiveView('institute-admin'));
+            else if (role === 'DEPARTMENT_ADMIN_HOD' || role === 'head') dispatch(setActiveView('hod'));
+            else if (role === 'faculty') dispatch(setActiveView('faculty'));
+            else dispatch(setActiveView('student'));
+          }
+        };
+
+        const handleRoleClick = async (roleEmail, code = 'IIITS') => {
+          setEmail(roleEmail);
+          const result = await dispatch(loginThunk({ email: roleEmail, password: 'Pass@123', tenant_code: code }));
+          if (loginThunk.fulfilled.match(result)) {
+            const role = result.payload.user?.role;
+            if (role === 'PLATFORM_SUPER_ADMIN') dispatch(setActiveView('saas-admin'));
+            else if (role === 'PLATFORM_SALES_SUPPORT') dispatch(setActiveView('internal-support'));
+            else if (role === 'INSTITUTE_SUPER_ADMIN' || role === 'superadmin' || role === 'admin') dispatch(setActiveView('institute-admin'));
+            else if (role === 'DEPARTMENT_ADMIN_HOD' || role === 'head') dispatch(setActiveView('hod'));
+            else if (role === 'faculty') dispatch(setActiveView('faculty'));
+            else dispatch(setActiveView('student'));
+          }
+        };
+
+        const handleOnboardSubmit = async (e) => {
+          e.preventDefault();
+          const res = await dispatch(onboardTenantThunk(onboardData));
+          if (onboardTenantThunk.fulfilled.match(res)) {
+            setOnboardResult(res.payload);
+          }
+        };
+
+        return (
+          <div style={{minHeight:'100vh',background:'#f8fafc',color:'#1e293b',display:'flex',flexDirection:'column',fontFamily:"'Outfit','Inter',sans-serif"}}>
+            <section style={{background:'linear-gradient(135deg,#0f172a 0%,#1e1b4b 60%,#1e3a5f 100%)',padding:'80px 24px 80px',display:'flex',flexDirection:'column',alignItems:'center',textAlign:'center'}}>
+              <h1 style={{fontSize:'clamp(28px,5vw,52px)',fontWeight:900,color:'white',letterSpacing:'-1px',lineHeight:1.15,maxWidth:760,marginBottom:20}}>
+                Multi-Tenant Enterprise Platform for Educational Institutions
+              </h1>
+
+              <p style={{fontSize:17,color:'rgba(255,255,255,0.65)',maxWidth:560,marginBottom:36,fontWeight:400,lineHeight:1.6}}>
+                Empower your institution with custom campus portals, token-metered API integrations, and complete multi-tier actor delegation.
+              </p>
+
+              <div style={{display:'flex',flexWrap:'wrap',alignItems:'center',justifyContent:'center',gap:16}}>
+                <button onClick={() => dispatch(setOnboardModalOpen(true))} style={{padding:'14px 30px',borderRadius:10,background:'white',color:'#0f172a',fontWeight:700,fontSize:15,border:'none',cursor:'pointer',boxShadow:'0 4px 20px rgba(255,255,255,0.2)',transition:'all 0.2s'}}>
+                  🏢 Onboard Your Institute
+                </button>
+                <a href="login.html" style={{padding:'14px 30px',borderRadius:10,background:'rgba(255,255,255,0.12)',color:'white',fontWeight:700,fontSize:15,border:'1px solid rgba(255,255,255,0.25)',cursor:'pointer',textDecoration:'none',display:'inline-flex',alignItems:'center',gap:8,transition:'all 0.2s'}}>
+                  🔑 Access Campus Portal
+                </a>
+              </div>
+
+              {showInternalTrigger && (
+                <div className="mt-8 p-4 rounded-2xl bg-amber-950/60 border border-amber-700/60 max-w-md w-full text-left space-y-2 animate-fade-in">
+                  <div className="text-xs font-bold text-amber-300 flex items-center justify-between">
+                    <span>🛡️ Secret Internal Support Trigger Active</span>
+                    <button onClick={() => setShowInternalTrigger(false)} className="text-slate-400 hover:text-white cursor-pointer">✕</button>
+                  </div>
+                  <p className="text-[11px] text-amber-200/80">
+                    This panel is hidden from public students and clients. Authenticate as Platform Support Service Team.
+                  </p>
+                  <button
+                    onClick={() => handleRoleClick('sales@platform.com')}
+                    className="w-full py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs transition-all shadow-md cursor-pointer"
+                  >
+                    Login as Platform Support Team (sales@platform.com)
+                  </button>
+                </div>
+              )}
+            </section>
+
+            {/* IIITS Subscribed Campus Accounts */}
+            <section style={{padding:'48px 24px',background:'white',borderTop:'1px solid #e2e8f0',borderBottom:'1px solid #e2e8f0'}}>
+              <div className="max-w-7xl mx-auto">
+                <div className="text-center mb-8">
+                  <h2 style={{fontSize:22,fontWeight:700,color:'#0f172a'}}>IIIT Sricity (IIITS) — Subscribed Campus Accounts</h2>
+                  <p style={{fontSize:12,color:'#64748b',marginTop:6}}>Click any role to log in directly (Password: Pass@123)</p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
+                  <button onClick={() => handleRoleClick('saasadmin@platform.com')} style={{background:'white',border:'1px solid #e2e8f0',borderLeft:'4px solid #7c3aed',padding:16,borderRadius:12,textAlign:'left',cursor:'pointer',transition:'all 0.2s',boxShadow:'0 1px 4px rgba(0,0,0,0.05)'}}>
+                    <div style={{fontSize:10,fontWeight:700,color:'#7c3aed',textTransform:'uppercase',letterSpacing:'0.5px'}}>Level 0: SaaS Owner</div>
+                    <div style={{fontSize:14,fontWeight:700,color:'#0f172a',marginTop:4}}>Platform Admin</div>
+                    <div style={{fontSize:10,color:'#94a3b8',marginTop:4,fontFamily:'monospace'}}>saasadmin@platform.com</div>
+                  </button>
+
+                  <button onClick={() => handleRoleClick('director@iiits.in')} style={{background:'white',border:'1px solid #e2e8f0',borderLeft:'4px solid #d97706',padding:16,borderRadius:12,textAlign:'left',cursor:'pointer',transition:'all 0.2s',boxShadow:'0 1px 4px rgba(0,0,0,0.05)'}}>
+                    <div style={{fontSize:10,fontWeight:700,color:'#d97706',textTransform:'uppercase',letterSpacing:'0.5px'}}>Level 1: Campus Admin</div>
+                    <div style={{fontSize:14,fontWeight:700,color:'#0f172a',marginTop:4}}>Institute Director</div>
+                    <div className="text-[10px] text-amber-400/80 mt-1 font-mono">director@iiits.in</div>
+                  </button>
+
+                  <button onClick={() => handleRoleClick('head@iiits.in')} style={{background:'white',border:'1px solid #e2e8f0',borderLeft:'4px solid #2563eb',padding:16,borderRadius:12,textAlign:'left',cursor:'pointer',transition:'all 0.2s',boxShadow:'0 1px 4px rgba(0,0,0,0.05)'}}>
+                    <div style={{fontSize:10,fontWeight:700,color:'#2563eb',textTransform:'uppercase',letterSpacing:'0.5px'}}>Level 2: Dept Head</div>
+                    <div style={{fontSize:14,fontWeight:700,color:'#0f172a',marginTop:4}}>CS HOD</div>
+                    <div style={{fontSize:10,color:'#94a3b8',marginTop:4,fontFamily:'monospace'}}>head@iiits.in</div>
+                  </button>
+
+                  <button onClick={() => handleRoleClick('faculty@iiits.in')} style={{background:'white',border:'1px solid #e2e8f0',borderLeft:'4px solid #059669',padding:16,borderRadius:12,textAlign:'left',cursor:'pointer',transition:'all 0.2s',boxShadow:'0 1px 4px rgba(0,0,0,0.05)'}}>
+                    <div style={{fontSize:10,fontWeight:700,color:'#059669',textTransform:'uppercase',letterSpacing:'0.5px'}}>Level 3: Faculty</div>
+                    <div style={{fontSize:14,fontWeight:700,color:'#0f172a',marginTop:4}}>Prof. Jane Smith</div>
+                    <div style={{fontSize:10,color:'#94a3b8',marginTop:4,fontFamily:'monospace'}}>faculty@iiits.in</div>
+                  </button>
+
+                  <button onClick={() => handleRoleClick('student@iiits.in')} style={{background:'white',border:'1px solid #e2e8f0',borderLeft:'4px solid #6366f1',padding:16,borderRadius:12,textAlign:'left',cursor:'pointer',transition:'all 0.2s',boxShadow:'0 1px 4px rgba(0,0,0,0.05)'}}>
+                    <div style={{fontSize:10,fontWeight:700,color:'#6366f1',textTransform:'uppercase',letterSpacing:'0.5px'}}>Level 4: Student</div>
+                    <div style={{fontSize:14,fontWeight:700,color:'#0f172a',marginTop:4}}>John Doe</div>
+                    <div style={{fontSize:10,color:'#94a3b8',marginTop:4,fontFamily:'monospace'}}>student@iiits.in</div>
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            {/* Login Modal */}
+            {isLoginModalOpen && (
+              <div style={{position:'fixed',inset:0,zIndex:50,background:'rgba(15,23,42,0.7)',backdropFilter:'blur(4px)',display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
+                <div style={{background:'white',borderRadius:20,padding:28,maxWidth:440,width:'100%',position:'relative',boxShadow:'0 20px 60px rgba(0,0,0,0.2)'}}>
+                  <button onClick={() => dispatch(setLoginModalOpen(false))} style={{position:'absolute',top:16,right:16,background:'none',border:'none',fontSize:18,cursor:'pointer',color:'#94a3b8'}}>✕</button>
+                  <h3 style={{fontSize:20,fontWeight:700,color:'#0f172a',marginBottom:4}}>Campus Sign In</h3>
+                  <p style={{fontSize:12,color:'#64748b',marginBottom:24}}>Enter your email, password, and institution code</p>
+
+                  {error && <div style={{marginBottom:16,padding:'10px 14px',borderRadius:8,background:'#fef2f2',border:'1px solid #fca5a5',color:'#dc2626',fontSize:12,fontWeight:500}}>{error}</div>}
+
+                  <form onSubmit={handleLoginSubmit} style={{display:'flex',flexDirection:'column',gap:14}}>
+                    <div>
+                      <label style={{display:'block',fontSize:12,fontWeight:600,color:'#475569',marginBottom:4}}>Institute Code</label>
+                      <input type="text" value={tenantCode} onChange={(e) => setTenantCode(e.target.value)} placeholder="IIITS" style={{width:'100%',border:'1.5px solid #e2e8f0',borderRadius:8,padding:'10px 14px',fontSize:13,color:'#0f172a',fontFamily:'monospace',outline:'none',textTransform:'uppercase'}} required />
+                    </div>
+                    <div>
+                      <label style={{display:'block',fontSize:12,fontWeight:600,color:'#475569',marginBottom:4}}>Email</label>
+                      <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@institute.edu" style={{width:'100%',border:'1.5px solid #e2e8f0',borderRadius:8,padding:'10px 14px',fontSize:13,color:'#0f172a',outline:'none'}} required />
+                    </div>
+                    <div>
+                      <label style={{display:'block',fontSize:12,fontWeight:600,color:'#475569',marginBottom:4}}>Password</label>
+                      <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} style={{width:'100%',border:'1.5px solid #e2e8f0',borderRadius:8,padding:'10px 14px',fontSize:13,color:'#0f172a',outline:'none'}} required />
+                    </div>
+                    <button type="submit" disabled={loading} style={{width:'100%',padding:12,borderRadius:8,background:'#0f172a',color:'white',fontWeight:700,fontSize:14,border:'none',cursor:'pointer',marginTop:4}}>
+                      {loading ? 'Authenticating...' : 'Sign In'}
+                    </button>
+                  </form>
+                </div>
+              </div>
+            )}
+
+            {/* Onboard Modal */}
+            {isOnboardModalOpen && (
+              <div style={{position:'fixed',inset:0,zIndex:50,background:'rgba(15,23,42,0.7)',backdropFilter:'blur(4px)',display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
+                <div style={{background:'white',borderRadius:20,padding:28,maxWidth:520,width:'100%',position:'relative',boxShadow:'0 20px 60px rgba(0,0,0,0.2)'}}>
+                  <button onClick={() => { dispatch(setOnboardModalOpen(false)); setOnboardResult(null); }} style={{position:'absolute',top:16,right:16,background:'none',border:'none',fontSize:18,cursor:'pointer',color:'#94a3b8'}}>✕</button>
+
+                  {onboardResult ? (
+                    <div style={{textAlign:'center',padding:'16px 0',display:'flex',flexDirection:'column',gap:16}}>
+                      <div style={{fontSize:40}}>🎉</div>
+                      <h3 style={{fontSize:20,fontWeight:700,color:'#0f172a'}}>Institute Provisioned!</h3>
+                      <p style={{fontSize:12,color:'#64748b'}}>{onboardResult.message}</p>
+                      <div style={{background:'#f8fafc',padding:14,borderRadius:10,border:'1px solid #e2e8f0',textAlign:'left',fontSize:12,fontFamily:'monospace',display:'flex',flexDirection:'column',gap:4}}>
+                        <div>Institute: {onboardResult.tenant?.name}</div>
+                        <div>Code: {onboardResult.tenant?.code}</div>
+                        <div>Director Email: {onboardResult.admin_credentials?.email}</div>
+                        <div>Password: Pass@123</div>
+                      </div>
+                      <button onClick={() => { setEmail(onboardResult.admin_credentials.email); setTenantCode(onboardResult.tenant.code); dispatch(setOnboardModalOpen(false)); dispatch(setLoginModalOpen(true)); }} style={{width:'100%',padding:12,borderRadius:8,background:'#0f172a',color:'white',fontWeight:700,fontSize:13,border:'none',cursor:'pointer'}}>
+                        Login as Director
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <h3 style={{fontSize:20,fontWeight:700,color:'#0f172a',marginBottom:4}}>Onboard Educational Institution</h3>
+                      <p style={{fontSize:12,color:'#64748b',marginBottom:24}}>Create a multi-tenant B2B campus workspace</p>
+                      <form onSubmit={handleOnboardSubmit} style={{display:'flex',flexDirection:'column',gap:14}}>
+                        <div>
+                          <label style={{display:'block',fontSize:12,fontWeight:600,color:'#475569',marginBottom:4}}>Institute Name</label>
+                          <input type="text" value={onboardData.name} onChange={(e) => setOnboardData({ ...onboardData, name: e.target.value })} placeholder="e.g. National Institute of Technology" style={{width:'100%',border:'1.5px solid #e2e8f0',borderRadius:8,padding:'9px 13px',fontSize:13,color:'#0f172a',outline:'none'}} required />
+                        </div>
+                        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+                          <div>
+                            <label style={{display:'block',fontSize:12,fontWeight:600,color:'#475569',marginBottom:4}}>Tenant Code</label>
+                            <input type="text" value={onboardData.code} onChange={(e) => setOnboardData({ ...onboardData, code: e.target.value })} placeholder="NITK" style={{width:'100%',border:'1.5px solid #e2e8f0',borderRadius:8,padding:'9px 13px',fontSize:13,color:'#0f172a',fontFamily:'monospace',textTransform:'uppercase',outline:'none'}} required />
+                          </div>
+                          <div>
+                            <label style={{display:'block',fontSize:12,fontWeight:600,color:'#475569',marginBottom:4}}>Domain</label>
+                            <input type="text" value={onboardData.domain} onChange={(e) => setOnboardData({ ...onboardData, domain: e.target.value })} placeholder="nitk.ac.in" style={{width:'100%',border:'1.5px solid #e2e8f0',borderRadius:8,padding:'9px 13px',fontSize:13,color:'#0f172a',outline:'none'}} required />
+                          </div>
+                        </div>
+                        <div>
+                          <label style={{display:'block',fontSize:12,fontWeight:600,color:'#475569',marginBottom:4}}>Director Email</label>
+                          <input type="email" value={onboardData.contact_email} onChange={(e) => setOnboardData({ ...onboardData, contact_email: e.target.value })} placeholder="director@nitk.ac.in" style={{width:'100%',border:'1.5px solid #e2e8f0',borderRadius:8,padding:'9px 13px',fontSize:13,color:'#0f172a',outline:'none'}} required />
+                        </div>
+                        <div>
+                          <label style={{display:'block',fontSize:12,fontWeight:600,color:'#475569',marginBottom:4}}>Subscription Package</label>
+                          <select value={onboardData.subscription_tier} onChange={(e) => setOnboardData({ ...onboardData, subscription_tier: e.target.value })} style={{width:'100%',border:'1.5px solid #e2e8f0',borderRadius:8,padding:'9px 13px',fontSize:13,color:'#0f172a',outline:'none',background:'white'}}>
+                            <option value="Free Trial">Free Trial ($0/mo)</option>
+                            <option value="Growth Campus">Growth Campus ($299/mo)</option>
+                            <option value="Enterprise University">Enterprise University ($799/mo)</option>
+                          </select>
+                        </div>
+                        <button type="submit" style={{width:'100%',padding:13,borderRadius:8,background:'#0f172a',color:'white',fontWeight:700,fontSize:14,border:'none',cursor:'pointer',marginTop:4}}>
+                          Activate Institute Subscription
+                        </button>
+                      </form>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      // ── Profile Modal Component ──
+      function ProfileModal({ isOpen, onClose }) {
+        const dispatch = useDispatch();
+        const { user } = useSelector((state) => state.auth);
+
+        const [formData, setFormData] = useState({
+          first_name: user?.first_name || user?.name?.split(' ')[0] || 'User',
+          last_name: user?.last_name || user?.name?.split(' ').slice(1).join(' ') || '',
+          email: user?.email || '',
+          phone: user?.phone || '+91 98765 43210',
+          department: user?.department || 'Computer Science & Engineering',
+          batch: user?.batch || '2024-2028',
+          bio: user?.bio || 'Passionate about academic excellence and research.',
+        });
+        const [savedSuccess, setSavedSuccess] = useState(false);
+
+        useEffect(() => {
+          if (user) {
+            setFormData({
+              first_name: user.first_name || user.name?.split(' ')[0] || 'User',
+              last_name: user.last_name || user.name?.split(' ').slice(1).join(' ') || '',
+              email: user.email || '',
+              phone: user.phone || '+91 98765 43210',
+              department: user.department || 'Computer Science & Engineering',
+              batch: user.batch || '2024-2028',
+              bio: user.bio || 'Passionate about academic excellence and research.',
+            });
+          }
+        }, [user]);
+
+        if (!isOpen) return null;
+
+        const handleSave = (e) => {
+          e.preventDefault();
+          const fullName = `${formData.first_name} ${formData.last_name}`.trim();
+          dispatch(updateUserProfile({ ...formData, name: fullName }));
+          setSavedSuccess(true);
+          setTimeout(() => {
+            setSavedSuccess(false);
+            onClose();
+          }, 1200);
+        };
+
+        const getRoleBadge = (role) => {
+          if (role === 'student') return { label: 'Level 4: Student', color: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' };
+          if (role === 'faculty') return { label: 'Level 3: Faculty', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' };
+          if (role === 'DEPARTMENT_ADMIN_HOD' || role === 'head') return { label: 'Level 2: Department HOD', color: 'bg-blue-500/20 text-blue-300 border-blue-500/30' };
+          if (role === 'INSTITUTE_SUPER_ADMIN' || role === 'superadmin') return { label: 'Level 1: Institute Director', color: 'bg-amber-500/20 text-amber-300 border-amber-500/30' };
+          return { label: 'Level 0: Platform Admin', color: 'bg-purple-500/20 text-purple-300 border-purple-500/30' };
+        };
+
+        const badge = getRoleBadge(user?.role);
+        const initials = `${formData.first_name[0] || 'U'}${formData.last_name[0] || ''}`;
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-lg w-full shadow-2xl relative space-y-5">
+              <button onClick={onClose} className="absolute top-5 right-5 text-slate-400 hover:text-white text-lg font-bold">✕</button>
+
+              <div className="flex items-center space-x-4">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white font-black text-xl shadow-lg border border-indigo-400/30 flex-shrink-0">
+                  {initials}
+                </div>
+                <div>
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border ${badge.color}`}>
+                    {badge.label}
+                  </span>
+                  <h3 className="text-xl font-black text-white mt-1">{formData.first_name} {formData.last_name}</h3>
+                  <p className="text-xs text-slate-400 font-mono">User ID: {user?.user_id || user?.id || 'u1'}</p>
+                </div>
+              </div>
+
+              {savedSuccess && (
+                <div className="p-3 bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 rounded-xl text-xs font-bold flex items-center gap-2">
+                  <span>✓</span> Profile Information Updated Successfully!
+                </div>
+              )}
+
+              <form onSubmit={handleSave} className="space-y-3.5 text-xs">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-slate-400 mb-1 font-semibold">First Name</label>
+                    <input type="text" value={formData.first_name} onChange={e => setFormData({...formData, first_name: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white" required />
+                  </div>
+                  <div>
+                    <label className="block text-slate-400 mb-1 font-semibold">Last Name</label>
+                    <input type="text" value={formData.last_name} onChange={e => setFormData({...formData, last_name: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white" required />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-slate-400 mb-1 font-semibold">Email Address</label>
+                    <input type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white" required />
+                  </div>
+                  <div>
+                    <label className="block text-slate-400 mb-1 font-semibold">Phone Number</label>
+                    <input type="text" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-slate-400 mb-1 font-semibold">Department / Branch</label>
+                    <input type="text" value={formData.department} onChange={e => setFormData({...formData, department: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white" />
+                  </div>
+                  <div>
+                    <label className="block text-slate-400 mb-1 font-semibold">Batch / Year</label>
+                    <input type="text" value={formData.batch} onChange={e => setFormData({...formData, batch: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-slate-400 mb-1 font-semibold">Bio / Specialization</label>
+                  <textarea rows="2" value={formData.bio} onChange={e => setFormData({...formData, bio: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white" />
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button type="button" onClick={onClose} className="w-1/2 py-2.5 rounded-xl bg-slate-800 text-slate-300 font-bold hover:bg-slate-700 transition-colors">Cancel</button>
+                  <button type="submit" className="w-1/2 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition-colors">Save Profile Info</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        );
+      }
+
+      // ── 4. Connected Dashboards with Full Last Semester Features ──
+      // Student Dashboard
+      function StudentPortalView() {
+        const dispatch = useDispatch();
+        const { user } = useSelector((state) => state.auth);
+        const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'courses' | 'timetable' | 'leaves' | 'fees' | 'btp' | 'forum'
+        const [profile, setProfile] = useState(null);
+        const [leaves, setLeaves] = useState([]);
+        const [fees, setFees] = useState([]);
+        const [projects, setProjects] = useState([]);
+        const [leaveReason, setLeaveReason] = useState('');
+        const [leaveStartDate, setLeaveStartDate] = useState('');
+        const [leaveEndDate, setLeaveEndDate] = useState('');
+        const [leaveSubmitted, setLeaveSubmitted] = useState(false);
+        const [forumTitle, setForumTitle] = useState('');
+        const [forumContent, setForumContent] = useState('');
+
+        useEffect(() => {
+          const fetchApi = window.apiFetch || (async (endpoint) => {
+            const res = await fetch(`/api${endpoint}`, {
+              headers: { 'role': user?.role || 'student', 'user-id': user?.user_id || 'u1' }
+            });
+            return res.json();
+          });
+
+          fetchApi('/students/me').then(setProfile).catch(console.error);
+          fetchApi('/students/me/leaves').then(setLeaves).catch(console.error);
+          fetchApi('/students/me/fees').then(setFees).catch(console.error);
+          fetchApi('/students/me/projects').then(setProjects).catch(console.error);
+        }, [user]);
+
+        const handleLeaveSubmit = (e) => {
+          e.preventDefault();
+          const fetchApi = window.apiFetch || (async (endpoint, opts) => {
+            const res = await fetch(`/api${endpoint}`, {
+              ...opts,
+              headers: { 'Content-Type': 'application/json', 'role': user?.role || 'student', 'user-id': user?.user_id || 'u1' }
+            });
+            return res.json();
+          });
+
+          fetchApi('/students/me/leaves', {
+            method: 'POST',
+            body: JSON.stringify({ start_date: leaveStartDate, end_date: leaveEndDate, reason: leaveReason })
+          }).then((newLeave) => {
+            setLeaves([...leaves, newLeave]);
+            setLeaveSubmitted(true);
+            setLeaveReason('');
+            setLeaveStartDate('');
+            setLeaveEndDate('');
+            setTimeout(() => setLeaveSubmitted(false), 3000);
+          }).catch(console.error);
+        };
+
+        return (
+          <div className="p-6 max-w-7xl mx-auto space-y-6">
+            {/* Student Header */}
+            <div className="bg-gradient-to-r from-indigo-950/60 to-slate-900 p-6 rounded-3xl border border-indigo-800/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-center space-x-4">
+                <div className="w-14 h-14 rounded-2xl bg-indigo-600/30 border border-indigo-400/40 flex items-center justify-center text-indigo-300 font-black text-xl flex-shrink-0">
+                  {(user?.name || profile?.profile?.first_name || 'S')[0]}
+                </div>
+                <div>
+                  <span className="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-bold uppercase">👨‍🎓 Level 4: Student Workspace</span>
+                  <h1 className="text-2xl font-black text-white mt-1">Welcome, {user?.name || `${profile?.profile?.first_name || 'John'} ${profile?.profile?.last_name || 'Doe'}`}</h1>
+                  <p className="text-xs text-indigo-200/70 mt-0.5">Roll: {user?.user_id || 'u1'} • Branch: {user?.department || profile?.profile?.branch || 'CS'} • Batch: {user?.batch || profile?.profile?.batch || '2022-2026'}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <button onClick={() => dispatch(setProfileModalOpen(true))} className="px-3.5 py-2 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-500/30 text-indigo-200 font-bold text-xs cursor-pointer transition-all flex items-center gap-1.5">
+                  👤 Edit Profile Info
+                </button>
+                <div className="bg-slate-900 px-4 py-2 rounded-2xl border border-indigo-800/50 text-right">
+                  <div className="text-[10px] text-indigo-400 font-bold uppercase">Current CGPA</div>
+                  <div className="text-2xl font-black text-emerald-400">{profile?.profile?.cgpa || 8.5}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Navigation Tabs for All Last Semester Features */}
+            <div className="flex flex-wrap items-center gap-2 bg-slate-900 p-2 rounded-2xl border border-slate-800 text-xs font-bold">
+              {['overview', 'courses', 'timetable', 'leaves', 'fees', 'btp', 'forum'].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-4 py-2 rounded-xl capitalize transition-all cursor-pointer ${
+                    activeTab === tab ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  {tab === 'btp' ? 'BTP Research' : tab}
+                </button>
+              ))}
+            </div>
+
+            {/* Tab 1: Overview */}
+            {activeTab === 'overview' && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-2">
+                  <div className="text-xs text-slate-400 font-semibold">Attendance Percentage</div>
+                  <div className="text-4xl font-black text-emerald-400">85%</div>
+                  <div className="text-xs text-emerald-500 font-medium">✓ Safe Attendance Status</div>
+                </div>
+                <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-2">
+                  <div className="text-xs text-slate-400 font-semibold">Registered Courses</div>
+                  <div className="text-4xl font-black text-indigo-400">{profile?.enrolledCourses?.length || 4} Courses</div>
+                  <div className="text-xs text-slate-400">Semester 5 (2026)</div>
+                </div>
+                <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-2">
+                  <div className="text-xs text-slate-400 font-semibold">Fee Compliance</div>
+                  <div className="text-xl font-bold text-amber-400">Pending Dues</div>
+                  <div className="text-xs text-slate-400">Semester Fee: ₹1,50,000</div>
+                </div>
+              </div>
+            )}
+
+            {/* Tab 2: Enrolled Courses & Attendance */}
+            {activeTab === 'courses' && (
+              <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-4">
+                <h2 className="text-base font-bold text-white">Enrolled Academic Courses</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {(profile?.enrolledCourses || [
+                    { course_code: 'CS201', course_name: 'Data Structures', attendance_percentage: 88, credits: 4 },
+                    { course_code: 'CS202', course_name: 'Database Systems', attendance_percentage: 82, credits: 4 },
+                    { course_code: 'CS401', course_name: 'Computer Networks', attendance_percentage: 78, credits: 4 },
+                    { course_code: 'CS403', course_name: 'Advanced DSA', attendance_percentage: 92, credits: 4 },
+                  ]).map((c, i) => (
+                    <div key={i} className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-xs font-bold text-indigo-400">{c.course_code}</span>
+                        <span className="text-xs font-bold text-emerald-400">{c.attendance_percentage || 85}% Attendance</span>
+                      </div>
+                      <div className="font-bold text-sm text-white">{c.course_name}</div>
+                      <div className="w-full h-1.5 bg-slate-900 rounded-full overflow-hidden">
+                        <div className="h-full bg-emerald-500" style={{ width: `${c.attendance_percentage || 85}%` }}></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Tab 3: Time Table */}
+            {activeTab === 'timetable' && (
+              <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-4">
+                <h2 className="text-base font-bold text-white">Weekly Class Schedule</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800">
+                    <div className="text-xs font-bold text-indigo-400">Monday • 09:00 AM</div>
+                    <div className="text-sm font-bold text-white mt-1">CS201 Data Structures</div>
+                    <div className="text-[10px] text-slate-400">Room 101 • Lecture</div>
+                  </div>
+                  <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800">
+                    <div className="text-xs font-bold text-indigo-400">Tuesday • 10:00 AM</div>
+                    <div className="text-sm font-bold text-white mt-1">CS202 Database Systems</div>
+                    <div className="text-[10px] text-slate-400">Room 102 • Lecture</div>
+                  </div>
+                  <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800">
+                    <div className="text-xs font-bold text-indigo-400">Friday • 02:00 PM</div>
+                    <div className="text-sm font-bold text-white mt-1">CS403 Advanced DSA</div>
+                    <div className="text-[10px] text-slate-400">Computing Lab 2 • Lab Session</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Tab 4: Leave Application Workflow */}
+            {activeTab === 'leaves' && (
+              <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-6">
+                <div>
+                  <h2 className="text-base font-bold text-white mb-4">Leave Applications</h2>
+                  <div className="space-y-3">
+                    {leaves.map((l, i) => (
+                      <div key={i} className="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex justify-between items-center">
+                        <div>
+                          <div className="font-bold text-sm text-white">{l.reason}</div>
+                          <div className="text-xs text-slate-400">{l.start_date} to {l.end_date}</div>
+                        </div>
+                        <div className={`text-xs font-bold px-2 py-1 rounded-md ${l.status === 'approved' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>
+                          {l.status.toUpperCase()}
+                        </div>
+                      </div>
+                    ))}
+                    {leaves.length === 0 && <div className="text-xs text-slate-500">No leaves applied yet.</div>}
+                  </div>
+                </div>
+                
+                <div className="pt-4 border-t border-slate-800">
+                  <h2 className="text-sm font-bold text-white mb-3">Apply for New Leave</h2>
+                  {leaveSubmitted && <div className="p-3 mb-3 bg-emerald-500/20 text-emerald-300 rounded-xl text-xs font-bold">✓ Leave Application Submitted to Faculty!</div>}
+                  <form onSubmit={handleLeaveSubmit} className="space-y-3">
+                    <div className="flex gap-3">
+                      <input type="date" value={leaveStartDate} onChange={(e) => setLeaveStartDate(e.target.value)} className="w-1/2 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white" required />
+                      <input type="date" value={leaveEndDate} onChange={(e) => setLeaveEndDate(e.target.value)} className="w-1/2 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white" required />
+                    </div>
+                    <input type="text" placeholder="Reason for leave (e.g. Medical, Event)" value={leaveReason} onChange={(e) => setLeaveReason(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white" required />
+                    <button type="submit" className="w-full py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-xs cursor-pointer">Submit Leave Request</button>
+                  </form>
+                </div>
+              </div>
+            )}
+
+            {/* Tab 5: Fee Compliance */}
+            {activeTab === 'fees' && (
+              <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-4">
+                <h2 className="text-base font-bold text-white">Fee Compliance & Payment Tracking</h2>
+                <div className="space-y-3">
+                  {fees.map((f, i) => (
+                    <div key={i} className="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex items-center justify-between">
+                      <div>
+                        <div className="font-bold text-sm text-white">{f.semester} Tuition Fee</div>
+                        <div className="text-xs text-slate-400">Due: {f.due_date} • Paid: ₹{f.paid_amount} / ₹{f.total_amount}</div>
+                      </div>
+                      {f.status !== 'Paid' ? (
+                         <button onClick={() => alert('Online Payment Gateway Simulated!')} className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs cursor-pointer transition-colors">Pay ₹{f.total_amount - f.paid_amount}</button>
+                      ) : (
+                         <div className="text-emerald-400 font-bold text-xs">PAID</div>
+                      )}
+                    </div>
+                  ))}
+                  {fees.length === 0 && <div className="text-xs text-slate-500">No fee records found.</div>}
+                </div>
+              </div>
+            )}
+
+            {/* Tab 6: BTP Research */}
+            {activeTab === 'btp' && (
+              <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-4">
+                <h2 className="text-base font-bold text-white">BTech Project (BTP) Workspace</h2>
+                <div className="space-y-3">
+                  {projects.map((p, i) => (
+                    <div key={i} className="bg-slate-950 p-4 rounded-2xl border border-slate-800">
+                      <div className="flex justify-between items-start mb-2">
+                         <div className="font-bold text-sm text-white">{p.title}</div>
+                         <div className="text-xs font-bold text-indigo-400">{p.status}</div>
+                      </div>
+                      <div className="text-xs text-slate-400 mb-3">{p.abstract}</div>
+                      <div className="w-full h-1.5 bg-slate-900 rounded-full overflow-hidden">
+                        <div className="h-full bg-indigo-500" style={{ width: `${p.progress}%` }}></div>
+                      </div>
+                    </div>
+                  ))}
+                  {projects.length === 0 && <div className="text-xs text-slate-500">No projects found.</div>}
+                </div>
+              </div>
+            )}
+
+            {/* Tab 6: BTP Milestone Research Upload */}
+            {activeTab === 'btp' && (
+              <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-4">
+                <h2 className="text-base font-bold text-white">BTP Final Year Milestone Submissions</h2>
+                <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
+                  <div className="text-sm font-bold text-white">Blockchain Academic Records</div>
+                  <div className="text-xs text-slate-400">Supervisor: Prof. Jane Smith</div>
+                  <div className="w-full h-2 bg-slate-900 rounded-full overflow-hidden">
+                    <div className="h-full bg-indigo-500 w-1/2"></div>
+                  </div>
+                  <button onClick={() => alert('Milestone PDF uploaded for Faculty Review!')} className="px-4 py-2 bg-indigo-600 text-white font-bold text-xs rounded-xl cursor-pointer">Upload Phase 2 Deliverable PDF</button>
+                </div>
+              </div>
+            )}
+
+            {/* Tab 7: Discussion Forum */}
+            {activeTab === 'forum' && (
+              <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-4">
+                <h2 className="text-base font-bold text-white">Academic Discussion Forum</h2>
+                <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
+                  <div className="text-xs font-bold text-indigo-400">CS201 • Posted by Prof. Jane Smith</div>
+                  <div className="text-sm font-bold text-white">Clarification on Heap Sort & Build-Heap complexity</div>
+                  <p className="text-xs text-slate-400">Build-heap takes O(n) linear time due to the summation of geometric series.</p>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      // Faculty Dashboard
+      function FacultyPortalView() {
+        const { user } = useSelector((state) => state.auth);
+        const [activeTab, setActiveTab] = useState('attendance');
+        const [profile, setProfile] = useState(null);
+        const [courses, setCourses] = useState([]);
+        const [students, setStudents] = useState([]);
+        const [assessments, setAssessments] = useState([]);
+        const [leaveRequests, setLeaveRequests] = useState([]);
+        const [selectedCourse, setSelectedCourse] = useState('c1');
+        const [attendanceMap, setAttendanceMap] = useState({});
+        const [attendanceSaved, setAttendanceSaved] = useState(false);
+        const [marksEntry, setMarksEntry] = useState({ student_id: '', assessment_id: '', marks_obtained: '', max_marks: 50 });
+        const [marksSaved, setMarksSaved] = useState(false);
+        const [newAssessment, setNewAssessment] = useState({ course_id: '', name: '', type: 'internal', max_marks: 50, weightage: 20 });
+        const [assessmentCreated, setAssessmentCreated] = useState(false);
+
+        useEffect(() => {
+          const fetchApi = window.apiFetch || (async (endpoint) => {
+            const res = await fetch(`/api${endpoint}`, {
+              headers: { 'role': user?.role || 'faculty', 'user-id': user?.user_id || 'u2' }
+            });
+            return res.json();
+          });
+
+          fetchApi('/faculty/me/profile').then(setProfile).catch(console.error);
+          fetchApi('/faculty/me/courses').then(data => { if (Array.isArray(data)) { setCourses(data); if (data.length) setSelectedCourse(data[0].course_id); } }).catch(console.error);
+          fetchApi('/faculty/me/students').then(data => Array.isArray(data) && setStudents(data)).catch(console.error);
+          fetchApi('/faculty/me/assessments').then(data => Array.isArray(data) && setAssessments(data)).catch(console.error);
+          fetchApi('/faculty/me/leaves').then(data => Array.isArray(data) && setLeaveRequests(data)).catch(console.error);
+        }, [user]);
+
+        const handleAttendanceSave = () => {
+          const records = students.map(s => ({ student_id: s.user_id, status: attendanceMap[s.user_id] || 'present' }));
+          window.apiFetch('/faculty/attendance', {
+            method: 'POST',
+            body: JSON.stringify({ course_id: selectedCourse, date: new Date().toISOString().split('T')[0], records })
+          }).then(() => { setAttendanceSaved(true); setTimeout(() => setAttendanceSaved(false), 3000); }).catch(console.error);
+        };
+
+        const handleMarksSave = () => {
+          window.apiFetch('/faculty/marks', { method: 'POST', body: JSON.stringify(marksEntry) })
+            .then(() => { setMarksSaved(true); setTimeout(() => setMarksSaved(false), 3000); }).catch(console.error);
+        };
+
+        const handleLeaveAction = (leaveId, action) => {
+          window.apiFetch(`/faculty/me/leaves/${leaveId}/action`, { method: 'POST', body: JSON.stringify({ action }) })
+            .then((updated) => {
+              setLeaveRequests(prev => prev.map(l => l.leave_id === leaveId ? { ...l, status: updated.status } : l));
+            }).catch(console.error);
+        };
+
+        const handleCreateAssessment = (e) => {
+          e.preventDefault();
+          window.apiFetch('/faculty/me/assessments', { method: 'POST', body: JSON.stringify(newAssessment) })
+            .then((created) => {
+              setAssessments([...assessments, created]);
+              setAssessmentCreated(true);
+              setTimeout(() => setAssessmentCreated(false), 3000);
+            }).catch(console.error);
+        };
+
+        const tabs = ['attendance', 'grading', 'leaves', 'btp-review', 'syllabus', 'resources'];
+
+        return (
+          <div className="p-6 max-w-7xl mx-auto space-y-6">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-emerald-950/60 to-slate-900 p-6 rounded-3xl border border-emerald-800/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-center space-x-4">
+                <div className="w-14 h-14 rounded-2xl bg-emerald-600/30 border border-emerald-400/40 flex items-center justify-center text-emerald-300 font-black text-xl flex-shrink-0">
+                  {(user?.name || profile?.first_name || 'F')[0]}
+                </div>
+                <div>
+                  <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold uppercase">👨‍🏫 Level 3: Faculty Hub</span>
+                  <h1 className="text-2xl font-black text-white mt-1">Prof. {user?.name || `${profile?.first_name || 'Jane'} ${profile?.last_name || 'Smith'}`} Dashboard</h1>
+                  <p className="text-xs text-emerald-200/70 mt-0.5">Dept: {profile?.department_name || user?.department || 'Computer Science'} • Courses: {courses.map(c => c.course_code).join(', ') || 'CS201, CS202'}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <button onClick={() => dispatch(setProfileModalOpen(true))} className="px-3.5 py-2 rounded-xl bg-emerald-600/30 hover:bg-emerald-600/50 border border-emerald-500/30 text-emerald-200 font-bold text-xs cursor-pointer transition-all flex items-center gap-1.5">
+                  👤 Edit Profile Info
+                </button>
+                <div className="bg-slate-900 px-4 py-2 rounded-2xl border border-emerald-800/50 text-center">
+                  <div className="text-[10px] text-emerald-400 font-bold uppercase">Students</div>
+                  <div className="text-2xl font-black text-white">{students.length || '—'}</div>
+                </div>
+                <div className="bg-slate-900 px-4 py-2 rounded-2xl border border-emerald-800/50 text-center">
+                  <div className="text-[10px] text-amber-400 font-bold uppercase">Pending Leaves</div>
+                  <div className="text-2xl font-black text-amber-300">{leaveRequests.filter(l => l.status === 'pending').length}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex flex-wrap items-center gap-2 bg-slate-900 p-2 rounded-2xl border border-slate-800 text-xs font-bold">
+              {tabs.map((tab) => (
+                <button key={tab} onClick={() => setActiveTab(tab)}
+                  className={`px-4 py-2 rounded-xl capitalize transition-all cursor-pointer ${activeTab === tab ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}>
+                  {tab === 'btp-review' ? 'BTP Review' : tab}
+                  {tab === 'leaves' && leaveRequests.filter(l => l.status === 'pending').length > 0 &&
+                    <span className="ml-1.5 bg-amber-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">
+                      {leaveRequests.filter(l => l.status === 'pending').length}
+                    </span>
+                  }
+                </button>
+              ))}
+            </div>
+
+            {/* Attendance Tab */}
+            {activeTab === 'attendance' && (
+              <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-base font-bold text-white">Mark Class Attendance</h2>
+                  <select value={selectedCourse} onChange={e => setSelectedCourse(e.target.value)}
+                    className="bg-slate-950 border border-slate-700 rounded-xl text-xs text-white px-3 py-1.5 cursor-pointer">
+                    {courses.map(c => <option key={c.course_id} value={c.course_id}>{c.course_code} – {c.course_name}</option>)}
+                  </select>
+                </div>
+                {attendanceSaved && <div className="p-3 bg-emerald-500/20 text-emerald-300 rounded-xl text-xs font-bold">✓ Attendance saved for today!</div>}
+                <div className="space-y-2">
+                  {students.map((s) => (
+                    <div key={s.user_id} className="bg-slate-950 p-3 rounded-2xl border border-slate-800 flex items-center justify-between">
+                      <div>
+                        <div className="font-bold text-sm text-white">{s.first_name} {s.last_name}</div>
+                        <div className="text-xs text-slate-400">Overall: {s.attendance_pct}% {s.attendance_pct < 75 ? '⚠️ Low' : '✓'}</div>
+                      </div>
+                      <div className="flex gap-2">
+                        {['present', 'absent', 'late'].map(status => (
+                          <button key={status} onClick={() => setAttendanceMap({ ...attendanceMap, [s.user_id]: status })}
+                            className={`px-3 py-1 rounded-lg text-[10px] font-bold capitalize transition-all cursor-pointer ${
+                              (attendanceMap[s.user_id] || 'present') === status
+                                ? status === 'present' ? 'bg-emerald-600 text-white' : status === 'absent' ? 'bg-red-600 text-white' : 'bg-amber-600 text-white'
+                                : 'bg-slate-800 text-slate-400'
+                            }`}>{status}</button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                  {students.length === 0 && <div className="text-xs text-slate-500">No students enrolled in your courses.</div>}
+                </div>
+                <button onClick={handleAttendanceSave} className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs cursor-pointer transition-colors">Save Today's Attendance</button>
+              </div>
+            )}
+
+            {/* Grading Tab */}
+            {activeTab === 'grading' && (
+              <div className="space-y-4">
+                <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-4">
+                  <h2 className="text-base font-bold text-white">Create Assessment</h2>
+                  {assessmentCreated && <div className="p-3 bg-emerald-500/20 text-emerald-300 rounded-xl text-xs font-bold">✓ Assessment created!</div>}
+                  <form onSubmit={handleCreateAssessment} className="grid grid-cols-2 gap-3">
+                    <select value={newAssessment.course_id} onChange={e => setNewAssessment({...newAssessment, course_id: e.target.value})}
+                      className="col-span-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white px-3 py-2 cursor-pointer" required>
+                      <option value="">Select Course</option>
+                      {courses.map(c => <option key={c.course_id} value={c.course_id}>{c.course_code} – {c.course_name}</option>)}
+                    </select>
+                    <input type="text" placeholder="Assessment Name (e.g. Internal 1)" value={newAssessment.name}
+                      onChange={e => setNewAssessment({...newAssessment, name: e.target.value})}
+                      className="col-span-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white px-3 py-2" required />
+                    <select value={newAssessment.type} onChange={e => setNewAssessment({...newAssessment, type: e.target.value})}
+                      className="bg-slate-950 border border-slate-700 rounded-xl text-xs text-white px-3 py-2 cursor-pointer">
+                      {['internal', 'midterm', 'final', 'quiz', 'lab'].map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                    <input type="number" placeholder="Max Marks" value={newAssessment.max_marks}
+                      onChange={e => setNewAssessment({...newAssessment, max_marks: +e.target.value})}
+                      className="bg-slate-950 border border-slate-700 rounded-xl text-xs text-white px-3 py-2" />
+                    <button type="submit" className="col-span-2 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs cursor-pointer transition-colors">Create Assessment</button>
+                  </form>
+                </div>
+
+                <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-4">
+                  <h2 className="text-base font-bold text-white">Enter Student Marks</h2>
+                  {marksSaved && <div className="p-3 bg-emerald-500/20 text-emerald-300 rounded-xl text-xs font-bold">✓ Marks saved!</div>}
+                  <div className="grid grid-cols-2 gap-3">
+                    <select value={marksEntry.assessment_id} onChange={e => setMarksEntry({...marksEntry, assessment_id: e.target.value})}
+                      className="bg-slate-950 border border-slate-700 rounded-xl text-xs text-white px-3 py-2 cursor-pointer">
+                      <option value="">Select Assessment</option>
+                      {assessments.map(a => <option key={a.assessment_id} value={a.assessment_id}>{a.name} ({a.course_id})</option>)}
+                    </select>
+                    <select value={marksEntry.student_id} onChange={e => setMarksEntry({...marksEntry, student_id: e.target.value})}
+                      className="bg-slate-950 border border-slate-700 rounded-xl text-xs text-white px-3 py-2 cursor-pointer">
+                      <option value="">Select Student</option>
+                      {students.map(s => <option key={s.user_id} value={s.user_id}>{s.first_name} {s.last_name}</option>)}
+                    </select>
+                    <input type="number" placeholder="Marks Obtained" value={marksEntry.marks_obtained}
+                      onChange={e => setMarksEntry({...marksEntry, marks_obtained: e.target.value})}
+                      className="bg-slate-950 border border-slate-700 rounded-xl text-xs text-white px-3 py-2" />
+                    <input type="number" placeholder="Max Marks" value={marksEntry.max_marks}
+                      onChange={e => setMarksEntry({...marksEntry, max_marks: +e.target.value})}
+                      className="bg-slate-950 border border-slate-700 rounded-xl text-xs text-white px-3 py-2" />
+                  </div>
+                  <button onClick={handleMarksSave} className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs cursor-pointer transition-colors">Save Marks</button>
+                </div>
+              </div>
+            )}
+
+            {/* Leaves Tab */}
+            {activeTab === 'leaves' && (
+              <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-4">
+                <h2 className="text-base font-bold text-white">Student Leave Requests</h2>
+                <div className="space-y-3">
+                  {leaveRequests.map((l, i) => (
+                    <div key={i} className="bg-slate-950 p-4 rounded-2xl border border-slate-800">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <div className="font-bold text-sm text-white">{l.student_name}</div>
+                          <div className="text-xs text-slate-400">{l.leave_type} • {l.start_date} to {l.end_date}</div>
+                          <div className="text-xs text-slate-300 mt-1">Reason: {l.reason}</div>
+                        </div>
+                        {l.status === 'pending' ? (
+                          <div className="flex gap-2">
+                            <button onClick={() => handleLeaveAction(l.leave_id, 'approve')}
+                              className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold cursor-pointer transition-colors">Approve</button>
+                            <button onClick={() => handleLeaveAction(l.leave_id, 'reject')}
+                              className="px-3 py-1 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-bold cursor-pointer transition-colors">Reject</button>
+                          </div>
+                        ) : (
+                          <div className={`text-xs font-bold px-2 py-1 rounded-md ${l.status === 'approved' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
+                            {l.status.toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {leaveRequests.length === 0 && <div className="text-xs text-slate-500">No leave requests for your students.</div>}
+                </div>
+              </div>
+            )}
+
+            {/* BTP Review Tab */}
+            {activeTab === 'btp-review' && (
+              <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-4">
+                <h2 className="text-base font-bold text-white">BTP Milestone Supervision</h2>
+                <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
+                  <div className="font-bold text-sm text-white">Blockchain Academic Records (Student: John Doe)</div>
+                  <div className="text-xs text-slate-400">Progress: 45% • Status: Active</div>
+                  <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                    <div className="h-full bg-indigo-500 w-[45%]"></div>
+                  </div>
+                  <button onClick={() => alert('Milestone Approved! Student notified.')} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl cursor-pointer transition-colors">Approve Milestone Deliverable</button>
+                </div>
+              </div>
+            )}
+
+            {/* Syllabus Tab */}
+            {activeTab === 'syllabus' && (
+              <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-4">
+                <h2 className="text-base font-bold text-white">Syllabus Completion Tracker</h2>
+                {courses.map((c, i) => (
+                  <div key={i} className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
+                    <div className="flex justify-between text-xs font-bold">
+                      <span>{c.course_code} {c.course_name}</span>
+                      <span className="text-emerald-400">72% Completed</span>
+                    </div>
+                    <div className="w-full h-2 bg-slate-900 rounded-full overflow-hidden">
+                      <div className="h-full bg-emerald-500 w-[72%]"></div>
+                    </div>
+                  </div>
+                ))}
+                {courses.length === 0 && <div className="text-xs text-slate-500">No courses found.</div>}
+              </div>
+            )}
+
+            {/* Resources Tab */}
+            {activeTab === 'resources' && (
+              <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-4">
+                <h2 className="text-base font-bold text-white">Book Campus Resources</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {[['Computing Lab 1', 'Lab Exam / Practice'], ['Seminar Hall A', 'Guest Lecture'], ['Conference Room B', 'Meeting'], ['Auditorium', 'Event']].map(([venue, desc]) => (
+                    <div key={venue} className="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex justify-between items-center">
+                      <div>
+                        <div className="font-bold text-sm text-white">{venue}</div>
+                        <div className="text-xs text-slate-400">{desc}</div>
+                      </div>
+                      <button onClick={() => alert(`Booking request for ${venue} sent to Admin!`)}
+                        className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs cursor-pointer transition-colors">Book</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      function HODDashboardView() {
+        const dispatch = useDispatch();
+        const { user } = useSelector((state) => state.auth);
+        const [activeTab, setActiveTab] = useState('courses');
+        const [atRiskStudents, setAtRiskStudents] = useState([]);
+        const [leaves, setLeaves] = useState([]);
+
+        useEffect(() => {
+          const fetchApi = window.apiFetch || (async (endpoint) => {
+            const res = await fetch(`/api${endpoint}`, {
+              headers: { 'role': user?.role || 'head', 'user-id': user?.user_id || 'u4_hod' }
+            });
+            return res.json();
+          });
+
+          fetchApi('/faculty/me/at-risk').then(data => Array.isArray(data) && setAtRiskStudents(data)).catch(console.error);
+          fetchApi('/admin/leave').then(data => Array.isArray(data) && setLeaves(data)).catch(console.error);
+        }, [user]);
+
+        const handleLeaveUpdate = (leaveId, status) => {
+          window.apiFetch(`/admin/leave/${leaveId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ status })
+          }).then(updated => {
+            setLeaves(prev => prev.map(l => l.leave_id === leaveId ? { ...l, status } : l));
+          }).catch(console.error);
+        };
+
+        return (
+          <div className="p-6 max-w-7xl mx-auto space-y-6">
+            {/* HOD Header */}
+            <div className="bg-gradient-to-r from-blue-950/80 via-slate-900 to-slate-900 p-6 rounded-3xl border border-blue-800/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-center space-x-4">
+                <div className="w-14 h-14 rounded-2xl bg-blue-600/30 border border-blue-400/40 flex items-center justify-center text-blue-300 font-black text-xl flex-shrink-0">
+                  {(user?.name || 'H')[0]}
+                </div>
+                <div>
+                  <span className="px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-bold uppercase">🎓 Level 2: Department Admin / HOD</span>
+                  <h1 className="text-2xl font-black text-white mt-1">{user?.name || 'Computer Science Department Control'}</h1>
+                  <p className="text-xs text-blue-200/70 mt-0.5">Curriculum Management • Faculty Allocations • Batch Risk & Escalation Alerts</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <button onClick={() => dispatch(setProfileModalOpen(true))} className="px-3.5 py-2 rounded-xl bg-blue-600/30 hover:bg-blue-600/50 border border-blue-500/30 text-blue-200 font-bold text-xs cursor-pointer transition-all flex items-center gap-1.5">
+                  👤 Edit Profile Info
+                </button>
+                <div className="bg-slate-900 px-4 py-2 rounded-2xl border border-blue-800/50 text-center">
+                  <div className="text-[10px] text-red-400 font-bold uppercase">At-Risk Students</div>
+                  <div className="text-2xl font-black text-red-400">{atRiskStudents.length}</div>
+                </div>
+                <div className="bg-slate-900 px-4 py-2 rounded-2xl border border-blue-800/50 text-center">
+                  <div className="text-[10px] text-amber-400 font-bold uppercase">Escalated Leaves</div>
+                  <div className="text-2xl font-black text-amber-300">{leaves.filter(l => l.status === 'pending').length}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Navigation Tabs */}
+            <div className="flex items-center gap-2 bg-slate-900 p-2 rounded-2xl border border-slate-800 text-xs font-bold">
+              {['courses', 'at-risk', 'leaves'].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-4 py-2 rounded-xl capitalize transition-all cursor-pointer ${
+                    activeTab === tab ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  {tab === 'at-risk' ? '⚠️ At-Risk Students' : tab === 'leaves' ? '📋 Department Leaves' : '📚 Course Allocations'}
+                </button>
+              ))}
+            </div>
+
+            {/* Tab 1: Course Allocations */}
+            {activeTab === 'courses' && (
+              <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-4">
+                <h2 className="text-base font-bold text-white">Department Course & Faculty Allocations</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex justify-between items-center">
+                    <div>
+                      <div className="font-bold text-sm text-white">CS201 Data Structures</div>
+                      <div className="text-xs text-indigo-400 mt-1">Allocated Faculty: Prof. Jane Smith</div>
+                      <div className="text-[10px] text-slate-400 mt-0.5">Enrolled: 64 Students • 4 Credits</div>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs font-bold">Active</span>
+                  </div>
+                  <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex justify-between items-center">
+                    <div>
+                      <div className="font-bold text-sm text-white">CS202 Database Systems</div>
+                      <div className="text-xs text-indigo-400 mt-1">Allocated Faculty: Prof. Jane Smith</div>
+                      <div className="text-[10px] text-slate-400 mt-0.5">Enrolled: 58 Students • 4 Credits</div>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs font-bold">Active</span>
+                  </div>
+                  <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex justify-between items-center">
+                    <div>
+                      <div className="font-bold text-sm text-white">CS401 Computer Networks</div>
+                      <div className="text-xs text-indigo-400 mt-1">Allocated Faculty: Prof. Robert Wilson</div>
+                      <div className="text-[10px] text-slate-400 mt-0.5">Enrolled: 42 Students • 4 Credits</div>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs font-bold">Active</span>
+                  </div>
+                  <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex justify-between items-center">
+                    <div>
+                      <div className="font-bold text-sm text-white">CS403 Advanced DSA</div>
+                      <div className="text-xs text-indigo-400 mt-1">Allocated Faculty: Prof. Robert Wilson</div>
+                      <div className="text-[10px] text-slate-400 mt-0.5">Enrolled: 36 Students • 3 Credits</div>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs font-bold">Active</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Tab 2: At Risk Students */}
+            {activeTab === 'at-risk' && (
+              <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-base font-bold text-white">Academic Early Warning System (At-Risk Tracking)</h2>
+                  <span className="text-xs text-red-400 font-semibold">Criteria: CGPA &lt; 6.0 OR Attendance &lt; 75%</span>
+                </div>
+                <div className="space-y-3">
+                  {atRiskStudents.map((s, i) => (
+                    <div key={i} className="bg-slate-950 p-4 rounded-2xl border border-red-900/40 flex items-center justify-between">
+                      <div>
+                        <div className="font-bold text-sm text-white flex items-center gap-2">
+                          {s.first_name} {s.last_name}
+                          <span className="text-[10px] bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full font-bold">AT RISK</span>
+                        </div>
+                        <div className="text-xs text-slate-400 mt-1">
+                          Roll ID: <span className="font-mono text-indigo-300">{s.user_id}</span> • CGPA: <span className="text-amber-400 font-bold">{s.cgpa}</span> • Attendance: <span className="text-red-400 font-bold">{s.attendance_pct}%</span>
+                        </div>
+                      </div>
+                      <button onClick={() => alert(`Academic Advisory Notice sent to ${s.first_name}!`)} className="px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs cursor-pointer transition-colors">
+                        Issue Academic Warning
+                      </button>
+                    </div>
+                  ))}
+                  {atRiskStudents.length === 0 && <div className="text-xs text-slate-500">No students currently flagged at risk.</div>}
+                </div>
+              </div>
+            )}
+
+            {/* Tab 3: Department Leave Escalations */}
+            {activeTab === 'leaves' && (
+              <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-4">
+                <h2 className="text-base font-bold text-white">Department Leave Escalation Desk</h2>
+                <div className="space-y-3">
+                  {leaves.map((l, i) => (
+                    <div key={i} className="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex justify-between items-center">
+                      <div>
+                        <div className="font-bold text-sm text-white">{l.student_name || l.student_id} — {l.leave_type || 'General'}</div>
+                        <div className="text-xs text-slate-400">{l.start_date} to {l.end_date} • Reason: {l.reason}</div>
+                      </div>
+                      {l.status === 'pending' ? (
+                        <div className="flex gap-2">
+                          <button onClick={() => handleLeaveUpdate(l.leave_id, 'approved')} className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold cursor-pointer transition-colors">Approve</button>
+                          <button onClick={() => handleLeaveUpdate(l.leave_id, 'rejected')} className="px-3 py-1 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-bold cursor-pointer transition-colors">Reject</button>
+                        </div>
+                      ) : (
+                        <span className={`text-xs font-bold px-2.5 py-1 rounded-md ${l.status === 'approved' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
+                          {l.status.toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                  {leaves.length === 0 && <div className="text-xs text-slate-500">No leave applications found.</div>}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      function InstituteAdminPortalView() {
+        const dispatch = useDispatch();
+        const { tenant } = useSelector((state) => state.auth);
+        const { tokenMeter } = useSelector((state) => state.subscription);
+        const { hierarchy } = useSelector((state) => state.hierarchy);
+        const tenantId = tenant?.tenant_id || 't1';
+
+        useEffect(() => {
+          dispatch(fetchHierarchyThunk(tenantId));
+          dispatch(fetchTokenMeterThunk(tenantId));
+        }, [dispatch, tenantId]);
+
+        return (
+          <div className="p-6 max-w-7xl mx-auto space-y-8">
+            <div className="bg-gradient-to-r from-slate-900 via-indigo-950/60 to-slate-900 p-6 rounded-3xl border border-indigo-500/30 flex items-center justify-between">
+              <div>
+                <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold uppercase">🏛️ Level 1: Institute Director</span>
+                <h1 className="text-2xl font-black text-white">{tenant?.name || 'IIIT Sricity Workspace'}</h1>
+                <p className="text-xs text-indigo-200/70 font-mono mt-0.5">Code: {tenant?.code} • Domain: {tenant?.domain}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800">
+                <div className="text-xs text-slate-400 font-semibold">Seat Allocation</div>
+                <div className="text-2xl font-black text-indigo-400 mt-2">120 / 500 Active Seats</div>
+              </div>
+              <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800">
+                <div className="text-xs text-slate-400 font-semibold">Active Faculty & Students</div>
+                <div className="text-2xl font-black text-emerald-400 mt-2">{(hierarchy.faculty_mentors?.length || 0) + (hierarchy.students?.length || 0)}</div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      function SaaSAdminPortalView() {
+        const dispatch = useDispatch();
+        const { allTenants } = useSelector((state) => state.tenant);
+        useEffect(() => { dispatch(fetchTenantsThunk()); }, [dispatch]);
+
+        return (
+          <div className="p-6 max-w-7xl mx-auto space-y-8">
+            <div className="bg-purple-950/40 p-6 rounded-3xl border border-purple-800/50 flex items-center justify-between">
+              <div>
+                <span className="px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-xs font-bold">🌐 Level 0: SaaS Owner</span>
+                <h1 className="text-2xl font-black text-white mt-1">Platform Super Admin Control</h1>
+              </div>
+            </div>
+
+            <div className="bg-slate-900 rounded-3xl border border-slate-800 p-6 overflow-x-auto">
+              <h2 className="text-lg font-bold text-white mb-4">Subscribed Educational Institutions</h2>
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-950 text-slate-400 uppercase font-semibold border-b border-slate-800">
+                  <tr>
+                    <th className="p-3">Institute</th>
+                    <th className="p-3">Code</th>
+                    <th className="p-3">Tier</th>
+                    <th className="p-3">Seats</th>
+                    <th className="p-3">Token Meter</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800">
+                  {allTenants.map(t => (
+                    <tr key={t.tenant_id}>
+                      <td className="p-3 font-bold">{t.name}</td>
+                      <td className="p-3 font-mono text-indigo-300">{t.code}</td>
+                      <td className="p-3 text-purple-300">{t.subscription_tier}</td>
+                      <td className="p-3">{t.seats_used} / {t.seats_allocated}</td>
+                      <td className="p-3 font-mono">{t.used_tokens} / {t.monthly_token_quota}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      }
+
+      function InternalSupportDashboardView() {
+        return (
+          <div className="p-6 max-w-7xl mx-auto space-y-8">
+            <div className="bg-amber-950/40 p-6 rounded-3xl border border-amber-700/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold">🛡️ Level 0: Platform Support Team</span>
+                <h1 className="text-2xl font-black text-white mt-1">Platform Customer Success & Support Portal</h1>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      function AppMain() {
+        const { activeView, notifications } = useSelector((state) => state.ui);
+        const { isAuthenticated, user } = useSelector((state) => state.auth);
+        const dispatch = useDispatch();
+
+        const renderView = () => {
+          switch (activeView) {
+            case 'saas-admin': return <SaaSAdminPortalView />;
+            case 'internal-support': return <InternalSupportDashboardView />;
+            case 'institute-admin': return <InstituteAdminPortalView />;
+            case 'hod': return <HODDashboardView />;
+            case 'faculty': return <FacultyPortalView />;
+            case 'student': return <StudentPortalView />;
+            case 'landing':
+            default:
+              if (isAuthenticated) {
+                if (user?.role === 'PLATFORM_SUPER_ADMIN') return <SaaSAdminPortalView />;
+                if (user?.role === 'PLATFORM_SALES_SUPPORT') return <InternalSupportDashboardView />;
+                if (user?.role === 'INSTITUTE_SUPER_ADMIN' || user?.role === 'superadmin' || user?.role === 'admin') return <InstituteAdminPortalView />;
+                if (user?.role === 'DEPARTMENT_ADMIN_HOD' || user?.role === 'head') return <HODDashboardView />;
+                if (user?.role === 'faculty') return <FacultyPortalView />;
+                return <StudentPortalView />;
+              }
+              return <LandingPage />;
+          }
+        };
+
+        return (
+          <div style={{minHeight:'100vh',background:'#f8fafc',color:'#1e293b',display:'flex',flexDirection:'column',fontFamily:"'Outfit','Inter',sans-serif"}}>
+            <Navbar />
+            <div className="fixed bottom-6 right-6 z-50 space-y-3 max-w-md w-full px-4 pointer-events-none">
+              {notifications.map((n) => (
+                <div key={n.id} className="pointer-events-auto p-4 rounded-2xl border bg-indigo-950/90 border-indigo-500/80 text-indigo-100 shadow-2xl flex items-start justify-between" style={{background:'#0f172a',borderColor:'#6366f1'}}>
+                  <div>
+                    <div className="font-bold text-xs" style={{color:'white'}}>{n.title}</div>
+                    <div className="text-[11px] opacity-90 mt-0.5" style={{color:'rgba(255,255,255,0.7)'}}>{n.message}</div>
+                  </div>
+                  <button onClick={() => dispatch(removeNotification(n.id))} className="text-xs font-bold ml-3 cursor-pointer" style={{color:'rgba(255,255,255,0.6)'}}>✕</button>
+                </div>
+              ))}
+            </div>
+            <main className="flex-1" style={{background:'#f8fafc'}}>{renderView()}</main>
+            <ProfileModal isOpen={isProfileModalOpen} onClose={() => dispatch(setProfileModalOpen(false))} />
+            <footer style={{background:'#0f172a',borderTop:'1px solid rgba(255,255,255,0.1)',padding:'20px 24px',textAlign:'center',fontSize:12,color:'rgba(255,255,255,0.5)'}}>
+              BarelyPassing Enterprise EdTech Platform
+            </footer>
+          </div>
+        );
+      }
+
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(
+        <Provider store={store}>
+          <AppMain />
+        </Provider>
+      );
+    </script>
+  </body>
 </html>

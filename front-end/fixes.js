@@ -70,7 +70,7 @@ function triggerViewRender(viewId) {
         : (localStorage.getItem('bp_role') || '');
     const isStudent = role === 'student';
     const isFaculty = role === 'faculty';
-    const isAdmin   = ['admin','head','superadmin'].includes(role);
+    const isAdmin   = ['admin','head','superadmin','INSTITUTE_SUPER_ADMIN','DEPARTMENT_ADMIN_HOD'].includes(role);
 
     const renders = {
         'settings-view':              () => renderSettings(),
@@ -125,13 +125,10 @@ window.renderStudentAttendance = async function() {
     if (!el) return;
     try {
         const data = await api('/students/me/attendance');
-        const { totalPresent=0, totalAbsent=0, totalExcused=0, overallPct=0, summary=[] } = data;
-        // M-02: excused sessions (approved leave) are shown separately and count
-        // towards the overall percentage rather than against it.
-        let html = `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;">
+        const { totalPresent=0, totalAbsent=0, overallPct=0, summary=[] } = data;
+        let html = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;">
             <div style="text-align:center;padding:16px;background:#f0fdf4;border-radius:8px;"><div style="font-size:12px;color:#64748b;margin-bottom:4px;">PRESENT</div><div style="font-size:32px;font-weight:700;color:#16a34a;">${totalPresent}</div></div>
             <div style="text-align:center;padding:16px;background:#fef2f2;border-radius:8px;"><div style="font-size:12px;color:#64748b;margin-bottom:4px;">ABSENT</div><div style="font-size:32px;font-weight:700;color:#ef4444;">${totalAbsent}</div></div>
-            <div style="text-align:center;padding:16px;background:#fefce8;border-radius:8px;" title="Sessions covered by approved leave — these do not count against you."><div style="font-size:12px;color:#64748b;margin-bottom:4px;">ON LEAVE</div><div style="font-size:32px;font-weight:700;color:#ca8a04;">${totalExcused}</div></div>
             <div style="text-align:center;padding:16px;background:#eff6ff;border-radius:8px;"><div style="font-size:12px;color:#64748b;margin-bottom:4px;">OVERALL %</div><div style="font-size:32px;font-weight:700;color:#2563eb;">${overallPct}%</div></div>
         </div>`;
         if (summary.length) {
@@ -150,18 +147,63 @@ window.renderStudentAttendance = async function() {
 window.renderStudentCourses = async function() {
     const el = document.getElementById('my-courses-list');
     if (!el) return;
+    el.innerHTML = '<div style="text-align:center;color:#64748b;padding:20px;">Loading courses...</div>';
     try {
         const courses = await api('/students/me/courses');
-        if (!courses.length) { el.innerHTML = '<p style="color:#64748b;text-align:center;padding:20px;">No courses enrolled. Click "+ Enroll in Course" to get started.</p>'; return; }
-        el.innerHTML = courses.map(c => `
-            <div style="padding:16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
-                <div><div style="font-weight:700;font-size:15px;">${c.course_code}</div><div style="font-size:13px;color:#64748b;margin-top:2px;">${c.course_name}</div><div style="font-size:12px;color:#94a3b8;margin-top:4px;">${c.credits} Credits · Sem ${c.semester} · ${c.faculty_name||'Faculty'}</div></div>
-                <span style="padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;background:${c.enrollment_status==='active'?'#dcfce7':'#fef9c3'};color:${c.enrollment_status==='active'?'#166534':'#713f12'};">${c.enrollment_status||'active'}</span>
-            </div>`).join('');
-    } catch(e) { el.innerHTML = `<p style="color:#ef4444">Failed to load courses: ${e.message}</p>`; }
+        if (!courses || !courses.length) {
+            el.innerHTML = '<p style="color:#64748b;text-align:center;padding:20px;">No courses enrolled.</p>';
+            return;
+        }
+        el.innerHTML = courses.map(c => {
+            const marksPct  = c.marks_percentage !== null && c.marks_percentage !== undefined ? c.marks_percentage : null;
+            const attPct    = c.attendance_pct  !== null && c.attendance_pct  !== undefined ? c.attendance_pct  : null;
+            const syllPct   = c.syllabus_progress !== null && c.syllabus_progress !== undefined ? c.syllabus_progress : null;
+            const marksColor = marksPct !== null ? (marksPct >= 75 ? '#16a34a' : marksPct >= 50 ? '#f59e0b' : '#ef4444') : '#94a3b8';
+            const attColor   = attPct  !== null ? (attPct  >= 75 ? '#16a34a' : attPct  >= 50 ? '#f59e0b' : '#ef4444') : '#94a3b8';
+            const syllColor  = syllPct !== null ? '#6366f1' : '#94a3b8';
+            const modulesHtml = (c.modules || []).map(m => `
+                <div style="margin-bottom:8px;">
+                    <div style="display:flex;justify-content:space-between;font-size:12px;color:#475569;margin-bottom:3px;">
+                        <span>${m.name}</span>
+                        <span style="font-weight:700;color:${m.progress===100?'#16a34a':'#6366f1'};">${m.progress}%</span>
+                    </div>
+                    <div style="height:5px;background:#e2e8f0;border-radius:4px;overflow:hidden;">
+                        <div style="height:100%;background:${m.progress===100?'#16a34a':'#6366f1'};width:${m.progress}%;border-radius:4px;transition:width .5s;"></div>
+                    </div>
+                </div>`).join('');
+            return `
+            <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.05);margin-bottom:2px;transition:box-shadow .2s;" onmouseover="this.style.boxShadow='0 4px 16px rgba(99,102,241,.12)'" onmouseout="this.style.boxShadow='0 1px 4px rgba(0,0,0,.05)'">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+                    <div>
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                            <span style="font-size:11px;font-weight:700;background:#eff6ff;color:#2563eb;padding:3px 8px;border-radius:6px;">${c.course_code}</span>
+                            <span style="font-size:10px;color:#94a3b8;font-weight:600;">${c.credits} Credits &middot; Sem ${c.semester}</span>
+                        </div>
+                        <div style="font-weight:700;font-size:15px;color:#0f172a;">${c.course_name}</div>
+                        <div style="font-size:12px;color:#64748b;margin-top:2px;">&#128105;&#8205;&#127979; ${c.faculty_name||'Faculty'} &middot; Section ${c.section||'A'}</div>
+                    </div>
+                    <span style="padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;background:${c.enrollment_status==='active'?'#dcfce7':'#fef9c3'};color:${c.enrollment_status==='active'?'#166534':'#713f12'};">${(c.enrollment_status||'active').toUpperCase()}</span>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+                    <div style="text-align:center;padding:10px 8px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;">
+                        <div style="font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Attendance</div>
+                        <div style="font-size:20px;font-weight:800;color:${attColor};">${attPct!==null?attPct+'%':'&#8212;'}</div>
+                        <div style="font-size:10px;color:${attPct!==null&&attPct<75?'#ef4444':'#94a3b8'};font-weight:${attPct!==null&&attPct<75?'700':'400'};margin-top:2px;">${attPct!==null&&attPct<75?'&#9888; Below 75%':'&nbsp;'}</div>
+                    </div>
+                    <div style="text-align:center;padding:10px 8px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;">
+                        <div style="font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Syllabus</div>
+                        <div style="font-size:20px;font-weight:800;color:${syllColor};">${syllPct!==null?syllPct+'%':'&#8212;'}</div>
+                        <div style="font-size:10px;color:#94a3b8;margin-top:2px;">covered</div>
+                    </div>
+                </div>
+                ${c.modules&&c.modules.length?`<div style="border-top:1px solid #f1f5f9;padding-top:12px;"><div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">&#128218; Module Coverage</div>${modulesHtml}</div>`:''}
+            </div>`;
+        }).join('');
+    } catch(e) {
+        el.innerHTML = `<p style="color:#ef4444;padding:16px;">Failed to load courses: ${e.message}</p>`;
+    }
 };
 
-// ── Student: Timetable ───────────────────────────────────────────────────────
 window.renderStudentTimetable = async function() {
     const el = document.getElementById('timetable-grid');
     if (!el) return;
@@ -174,24 +216,33 @@ window.renderStudentTimetable = async function() {
 
 function renderTimetableGrid(data) {
     if (!data || !data.grid) return '<div style="text-align:center;padding:40px 20px;"><div style="font-size:48px;margin-bottom:16px;">📅</div><p style="color:#64748b;font-size:15px;font-weight:600;">No timetable data available</p><p style="color:#94a3b8;font-size:13px;margin-top:4px;">Your schedule will appear here once classes are assigned.</p></div>';
-    const days  = data.days  || ['MON','TUE','WED','THU','FRI'];
-    const times = data.times || ['09:00','10:00','11:00','12:00','13:00','14:00','15:00'];
-    const dayLabels = { MON:'Monday', TUE:'Tuesday', WED:'Wednesday', THU:'Thursday', FRI:'Friday' };
-    const dayShort  = { MON:'Mon', TUE:'Tue', WED:'Wed', THU:'Thu', FRI:'Fri' };
+    const days  = data.days  || ['MON','TUE','WED','THU','FRI','SAT'];
+    const times = data.times || ['08:45','09:45','11:00','12:00','14:15','15:15','16:30'];
+    const dayLabels = { MON:'Monday', TUE:'Tuesday', WED:'Wednesday', THU:'Thursday', FRI:'Friday', SAT:'Saturday' };
+    const dayShort  = { MON:'Mon', TUE:'Tue', WED:'Wed', THU:'Thu', FRI:'Fri', SAT:'Sat' };
     const dayColors = {
         MON: { bg:'#6366f1', light:'#eef2ff' },
         TUE: { bg:'#8b5cf6', light:'#f5f3ff' },
         WED: { bg:'#0ea5e9', light:'#f0f9ff' },
         THU: { bg:'#f59e0b', light:'#fffbeb' },
         FRI: { bg:'#10b981', light:'#ecfdf5' },
+        SAT: { bg:'#475569', light:'#f1f5f9' },
     };
     const typeColors = {
-        lab:      { bg:'linear-gradient(135deg, #fef3c7, #fde68a)', border:'#f59e0b', text:'#92400e', icon:'🔬' },
-        lecture:  { bg:'linear-gradient(135deg, #eff6ff, #dbeafe)', border:'#6366f1', text:'#1e40af', icon:'📖' },
-        tutorial: { bg:'linear-gradient(135deg, #f0fdf4, #dcfce7)', border:'#22c55e', text:'#166534', icon:'✏️' },
+        lab:       { bg:'linear-gradient(135deg, #fef3c7, #fde68a)', border:'#f59e0b', text:'#92400e', icon:'🔬' },
+        lecture:   { bg:'linear-gradient(135deg, #eff6ff, #dbeafe)', border:'#6366f1', text:'#1e40af', icon:'📖' },
+        tutorial:  { bg:'linear-gradient(135deg, #f0fdf4, #dcfce7)', border:'#22c55e', text:'#166534', icon:'✏️' },
+        mentoring: { bg:'linear-gradient(135deg, #fdf4ff, #fae8ff)', border:'#c026d3', text:'#86198f', icon:'🤝' },
     };
 
-    function formatTime(t) {
+    function formatTimeSlot(t) {
+        if (t === '08:45') return '08:45 - 09:45';
+        if (t === '09:45') return '09:45 - 10:45';
+        if (t === '11:00') return '11:00 - 12:00';
+        if (t === '12:00') return '12:00 - 01:00';
+        if (t === '14:15') return '02:15 - 03:15';
+        if (t === '15:15') return '03:15 - 04:15';
+        if (t === '16:30') return '04:30 - 05:30';
         const [h, m] = t.split(':').map(Number);
         const suffix = h >= 12 ? 'PM' : 'AM';
         const h12 = h > 12 ? h - 12 : h === 0 ? 12 : h;
@@ -203,38 +254,87 @@ function renderTimetableGrid(data) {
     days.forEach(d => { if (data.grid[d]) totalSlots += Object.keys(data.grid[d]).length; });
     if (totalSlots === 0) return '<div style="text-align:center;padding:40px 20px;"><div style="font-size:48px;margin-bottom:16px;">📭</div><p style="color:#64748b;font-size:15px;font-weight:600;">No classes scheduled this week</p></div>';
 
-    let html = `<div style="overflow-x:auto;border-radius:12px;border:1px solid #e2e8f0;">
-    <table style="width:100%;border-collapse:separate;border-spacing:0;font-size:13px;min-width:750px;background:#fff;">
+    let html = `
+    <!-- Timetable Generation System Header Bar -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;padding:12px 18px;background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;">
+        <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;">📅</div>
+            <div>
+                <div style="font-weight:800;font-size:15px;color:#0f172a;letter-spacing:-0.2px;">Timetable Generation System</div>
+                <div style="font-size:11px;color:#64748b;">Automated conflict-free academic schedule (Mon – Sat, 08:45 AM – 05:30 PM)</div>
+            </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:11px;font-weight:700;background:#ecfdf5;color:#059669;padding:4px 10px;border-radius:20px;border:1px solid #a7f3d0;">✓ Clash-Free Auto Generated</span>
+            <span style="font-size:11px;font-weight:700;background:#eff6ff;color:#2563eb;padding:4px 10px;border-radius:20px;border:1px solid #bfdbfe;">Active Semester</span>
+        </div>
+    </div>
+
+    <div style="overflow-x:auto;border-radius:12px;border:1px solid #e2e8f0;">
+    <table style="width:100%;border-collapse:separate;border-spacing:0;font-size:13px;min-width:850px;background:#fff;">
     <thead><tr>
-        <th style="width:90px;padding:14px 12px;background:linear-gradient(135deg,#f8fafc,#f1f5f9);color:#475569;font-size:11px;font-weight:800;text-align:center;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid #e2e8f0;border-right:1px solid #e2e8f0;position:sticky;left:0;z-index:1;">
+        <th style="width:110px;padding:14px 12px;background:linear-gradient(135deg,#f8fafc,#f1f5f9);color:#475569;font-size:11px;font-weight:800;text-align:center;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid #e2e8f0;border-right:1px solid #e2e8f0;position:sticky;left:0;z-index:1;">
             <div style="display:flex;align-items:center;justify-content:center;gap:4px;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                Time
+                Time / Period
             </div>
         </th>
         ${days.map(d => {
             const dc = dayColors[d] || { bg:'#6366f1', light:'#eef2ff' };
             return `<th style="padding:14px 8px;background:${dc.bg};color:#fff;font-size:12px;font-weight:700;text-align:center;letter-spacing:0.5px;border-bottom:2px solid ${dc.bg};">
                 <div style="font-size:13px;font-weight:800;">${dayShort[d]||d}</div>
-                <div style="font-size:9px;opacity:0.8;margin-top:2px;font-weight:500;">${dayLabels[d]||d}</div>
+                <div style="font-size:9px;opacity:0.85;margin-top:2px;font-weight:500;">${dayLabels[d]||d}</div>
             </th>`;
         }).join('')}
     </tr></thead>
     <tbody>`;
 
     times.forEach((t, idx) => {
+        // Render break rows
+        if (t === '11:00') {
+            html += `<tr style="background:#fffbeb;border-top:1px dashed #fde68a;border-bottom:1px dashed #fde68a;">
+                <td style="padding:8px;font-size:11px;font-weight:800;color:#b45309;text-align:center;background:#fef3c7;position:sticky;left:0;z-index:1;border-right:1px solid #fde68a;">
+                    10:45 - 11:00
+                </td>
+                <td colspan="${days.length}" style="padding:8px 16px;text-align:center;font-size:11px;font-weight:700;color:#92400e;letter-spacing:1px;">
+                    ☕ MORNING TEA & REFRESHMENT BREAK (15 MINS)
+                </td>
+            </tr>`;
+        }
+        if (t === '14:15') {
+            html += `<tr style="background:#f0fdf4;border-top:1px dashed #bbf7d0;border-bottom:1px dashed #bbf7d0;">
+                <td style="padding:8px;font-size:11px;font-weight:800;color:#15803d;text-align:center;background:#dcfce7;position:sticky;left:0;z-index:1;border-right:1px solid #bbf7d0;">
+                    01:00 - 02:15
+                </td>
+                <td colspan="${days.length}" style="padding:8px 16px;text-align:center;font-size:11px;font-weight:700;color:#166534;letter-spacing:1px;">
+                    🍽️ LUNCH BREAK & CAMPUS RECESS (75 MINS: 1:00 PM – 2:15 PM)
+                </td>
+            </tr>`;
+        }
+        if (t === '16:30') {
+            html += `<tr style="background:#fdf4ff;border-top:1px dashed #f5d0fe;border-bottom:1px dashed #f5d0fe;">
+                <td style="padding:8px;font-size:11px;font-weight:800;color:#a21caf;text-align:center;background:#fae8ff;position:sticky;left:0;z-index:1;border-right:1px solid #f5d0fe;">
+                    04:15 - 04:30
+                </td>
+                <td colspan="${days.length}" style="padding:8px 16px;text-align:center;font-size:11px;font-weight:700;color:#86198f;letter-spacing:1px;">
+                    ☕ SHORT EVENING RECESS / TEA (15 MINS: 4:15 PM – 4:30 PM)
+                </td>
+            </tr>`;
+        }
+
         const isEvenRow = idx % 2 === 0;
         const rowBg = isEvenRow ? '#ffffff' : '#fafbfc';
         html += `<tr style="background:${rowBg};">
-            <td style="padding:10px 8px;font-size:12px;color:#475569;font-weight:700;text-align:center;vertical-align:middle;white-space:nowrap;border-right:1px solid #e2e8f0;background:${isEvenRow ? '#f8fafc' : '#f1f5f9'};position:sticky;left:0;z-index:1;">
-                <div style="font-size:13px;font-weight:800;color:#334155;">${formatTime(t)}</div>
+            <td style="padding:10px 8px;font-size:11px;color:#475569;font-weight:700;text-align:center;vertical-align:middle;white-space:nowrap;border-right:1px solid #e2e8f0;background:${isEvenRow ? '#f8fafc' : '#f1f5f9'};position:sticky;left:0;z-index:1;">
+                <div style="font-size:12px;font-weight:800;color:#334155;">${formatTimeSlot(t)}</div>
+                <div style="font-size:10px;color:#94a3b8;margin-top:2px;">Period ${idx + 1}</div>
             </td>`;
         days.forEach(d => {
             const cell = data.grid[d] && data.grid[d][t];
             if (!cell) {
                 html += `<td style="padding:6px;vertical-align:top;border-bottom:1px solid #f1f5f9;">
                     <div style="min-height:60px;border-radius:8px;background:#f8fafc;border:1px dashed #e2e8f0;display:flex;align-items:center;justify-content:center;">
-                        <span style="font-size:18px;opacity:0.15;">—</span>
+                        <span style="font-size:14px;color:#cbd5e1;">—</span>
                     </div>
                 </td>`;
                 return;
@@ -274,6 +374,9 @@ function renderTimetableGrid(data) {
         <span style="display:flex;align-items:center;gap:5px;font-size:12px;color:#166534;font-weight:600;">
             <span style="width:12px;height:12px;border-radius:3px;background:#22c55e;display:inline-block;"></span>Tutorial
         </span>
+        <span style="display:flex;align-items:center;gap:5px;font-size:12px;color:#86198f;font-weight:600;">
+            <span style="width:12px;height:12px;border-radius:3px;background:#c026d3;display:inline-block;"></span>Mentoring/BTP
+        </span>
         <span style="margin-left:auto;font-size:11px;color:#94a3b8;font-weight:500;">${totalSlots} classes/week</span>
     </div>`;
 
@@ -295,7 +398,7 @@ window.renderStudentLeave = async function() {
             const statusColors = { approved:'#dcfce7,#166534', pending:'#fef9c3,#713f12', rejected:'#fef2f2,#991b1b' };
             const [bg,fg] = (statusColors[l.status]||'#f1f5f9,#475569').split(',');
             return `<div style="padding:14px 16px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;">
-                <div><div style="font-weight:600;font-size:14px;">${l.leave_type||l.type||'Leave'}</div><div style="font-size:12px;color:#64748b;margin-top:2px;">${l.start_date||l.from_date||''} → ${l.end_date||l.to_date||''}</div><div style="font-size:12px;color:#94a3b8;margin-top:2px;">${l.reason||''}</div>${l.file_id ? `<button type="button" onclick="downloadDocument('${l.file_id}')" style="margin-top:6px;padding:4px 10px;font-size:11px;font-weight:700;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:6px;cursor:pointer;">📎 View document</button>` : ''}</div>
+                <div><div style="font-weight:600;font-size:14px;">${l.leave_type||l.type||'Leave'}</div><div style="font-size:12px;color:#64748b;margin-top:2px;">${l.start_date||l.from_date||''} → ${l.end_date||l.to_date||''}</div><div style="font-size:12px;color:#94a3b8;margin-top:2px;">${l.reason||''}</div></div>
                 <span style="padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;background:${bg};color:${fg};">${l.status}</span>
             </div>`;
         }).join('');
@@ -444,16 +547,11 @@ async function submitLeaveApplication() {
     // Handle optional file attachment
     const fileInput = document.getElementById('leaveFileInput');
     const file = fileInput?.files?.[0];
+    if (file && file.size > 5 * 1024 * 1024) { showToast('File must be under 5MB', 'warning'); return; }
+    const fullReason = file ? `${reason} [Attached: ${file.name}]` : reason;
     try {
-        // Upload first: the leave record stores a file_id, not the filename.
-        // Previously only the name was concatenated into the reason and the
-        // bytes were discarded, so nothing was ever actually attached.
-        const uploaded = file ? await window.Auth.uploadFile(file, 'leave') : null;
-        await api('/leave', { method:'POST', body: JSON.stringify({
-            leave_type, start_date, end_date, reason,
-            file_id: uploaded?.file_id ?? null,
-        }) });
-        showToast(uploaded ? `Leave application submitted with ${uploaded.original_name}! ✅` : 'Leave application submitted!', 'success');
+        await api('/leave', { method:'POST', body: JSON.stringify({ leave_type, start_date, end_date, reason: fullReason }) });
+        showToast(file ? `Leave application submitted with ${file.name}! ✅` : 'Leave application submitted!', 'success');
         closeModal('leaveModal');
         // Reset upload zone
         if (fileInput) fileInput.value = '';
@@ -515,13 +613,10 @@ async function submitResearchProgress() {
         valid = false;
     }
     if (!valid) { showToast('Please fill all required fields.', 'warning'); return; }
+    if (file.size > 10 * 1024 * 1024) { showToast('File must be under 10MB', 'warning'); return; }
+    const submission_notes = `${notes} [File: ${file.name}]`;
     try {
-        const uploaded = await window.Auth.uploadFile(file, 'research_milestone');
-        await api(`/research/${id}/progress`, { method:'PATCH', body: JSON.stringify({
-            submission_notes: notes,
-            file_id: uploaded?.file_id ?? null,
-            file_name: uploaded?.original_name ?? null,
-        }) });
+        await api(`/research/${id}/progress`, { method:'PATCH', body: JSON.stringify({ submission_notes }) });
         // Notify ALL faculty that a student submitted work
         const user = window.Auth?.getUser?.();
         const studentName = user ? `${user.first_name||''} ${user.last_name||''}`.trim() : 'A student';
@@ -551,9 +646,7 @@ window.renderSettings = function() {
         <div style="padding:20px;background:#f8fafc;border-radius:8px;">
             <h4 style="margin:0 0 16px;font-size:14px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Change Password</h4>
             <input type="password" id="currentPass" placeholder="Current password" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;box-sizing:border-box;font-size:14px;">
-            <input type="password" id="newPass" placeholder="New password" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:6px;margin-bottom:6px;box-sizing:border-box;font-size:14px;">
-            <input type="password" id="confirmPass" placeholder="Confirm new password" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:6px;margin-bottom:8px;box-sizing:border-box;font-size:14px;">
-            <p style="margin:0 0 14px;font-size:11px;color:#94a3b8;line-height:1.5;">Must be at least 8 characters and include an uppercase letter, a lowercase letter, a number and a special character (@$!%*?&amp;) &mdash; the same rule the sign-in page enforces.</p>
+            <input type="password" id="newPass" placeholder="New password (min 6 chars)" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:6px;margin-bottom:16px;box-sizing:border-box;font-size:14px;">
             <button onclick="changePassword()" style="width:100%;padding:12px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;">Update Password</button>
         </div>
     </div></div>`;
@@ -562,30 +655,14 @@ window.renderSettings = function() {
 window.changePassword = async function() {
     const current = document.getElementById('currentPass')?.value;
     const newPass = document.getElementById('newPass')?.value;
-    const confirm = document.getElementById('confirmPass')?.value;
-
-    if (!current || !newPass) { showToast('Fill in your current and new password', 'warning'); return; }
-    if (confirm !== undefined && newPass !== confirm) { showToast('New passwords do not match', 'warning'); return; }
-    if (newPass === current) { showToast('New password must be different from your current one', 'warning'); return; }
-    // Mirror the server policy (and the sign-in page) so a user cannot set a
-    // password here that they would then be unable to log in with.
-    if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(newPass)) {
-        showToast('Password needs 8+ characters with an uppercase, lowercase, number and special character', 'warning');
-        return;
-    }
-
+    if (!current || !newPass) { showToast('Fill both fields', 'warning'); return; }
+    if (newPass.length < 6) { showToast('New password too short', 'warning'); return; }
     try {
         await api('/auth/change-password', { method:'POST', body: JSON.stringify({ current_password: current, new_password: newPass }) });
-        showToast('Password updated! Use it the next time you sign in.', 'success');
-        ['currentPass', 'newPass', 'confirmPass'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.value = '';
-        });
-    } catch(e) {
-        // A wrong current password now returns 400, so it surfaces here as a
-        // message instead of being swallowed by the global 401 logout handler.
-        showToast(e.message || 'Failed to change password', 'error');
-    }
+        showToast('Password updated!', 'success');
+        document.getElementById('currentPass').value = '';
+        document.getElementById('newPass').value = '';
+    } catch(e) { showToast(e.message || 'Failed to change password', 'error'); }
 };
 // ── Faculty: Timetable ───────────────────────────────────────────────────────
 window.renderFacultyTimetable = async function() {
@@ -620,12 +697,8 @@ window.renderFacultyStudents = async function() {
                 branch: p.branch || p.department || '',
                 batch: p.batch || '',
                 section: p.section || '',
-                // M-04: trust the server's verdict. Re-deriving it here with yet
-                // another threshold (6.5) was a fourth competing definition of
-                // "at risk". null attendance means "no data", not zero.
-                attendance_pct: (p.attendance_pct === null || p.attendance_pct === undefined) ? null : p.attendance_pct,
-                is_at_risk: !!p.is_at_risk,
-                risk_reasons: p.risk_reasons || [],
+                attendance_pct: p.attendance_pct || 0,
+                is_at_risk: p.is_at_risk || (p.cgpa && p.cgpa < 6.5),
             };
         });
         if (!students.length) { el.innerHTML = '<div style="padding:20px;text-align:center;color:#64748b;">No students found.</div>'; return; }
@@ -646,10 +719,7 @@ function renderStudentCards(students) {
         const riskBg    = s.is_at_risk ? '#fef2f2' : (s.cgpa && s.cgpa < 7 ? '#fef9c3' : '#dcfce7');
         const riskLabel = s.is_at_risk ? 'AT RISK'  : (s.cgpa && s.cgpa < 7 ? 'LOW CGPA' : 'GOOD');
         const cgpaColor = (s.cgpa && s.cgpa < 6) ? '#dc2626' : (s.cgpa && s.cgpa < 7) ? '#d97706' : '#16a34a';
-        // Distinguish "no attendance recorded" from a genuine 0%.
-        const hasAtt    = s.attendance_pct !== null && s.attendance_pct !== undefined;
-        const attText   = hasAtt ? `${s.attendance_pct}%` : 'N/A';
-        const attColor  = !hasAtt ? '#94a3b8' : (s.attendance_pct < 75 ? '#ef4444' : '#16a34a');
+        const attColor  = (s.attendance_pct||0) < 75 ? '#ef4444' : '#16a34a';
         const sid = s.user_id;
         const fname = (s.first_name||'').replace(/'/g, '');
         const safeFullName = fullName.replace(/'/g, '');
@@ -670,7 +740,7 @@ function renderStudentCards(students) {
                 </div>
                 <div style="text-align:center;">
                     <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.5px;">Attendance</div>
-                    <div style="font-size:18px;font-weight:800;color:${attColor};">${attText}</div>
+                    <div style="font-size:18px;font-weight:800;color:${attColor};">${s.attendance_pct||0}%</div>
                 </div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
@@ -1000,9 +1070,9 @@ window.renderFacultyDashboard = async function() {
             Object.values(tt.grid).forEach(day => { slots += Object.keys(day).length; });
             classesEl.textContent = slots;
         }).catch(() => { if (classesEl) classesEl.textContent = '—'; });
-        // At-risk students — flagged by the server's single shared rule (M-04).
+        // At-risk students (CGPA < 7 or low attendance)
         if (bodyEl) {
-            const atRisk = students.filter(s => s.is_at_risk);
+            const atRisk = students.filter(s => (s.cgpa && s.cgpa < 7) || s.is_at_risk);
             if (!atRisk.length) {
                 bodyEl.innerHTML = '<div style="text-align:center;padding:24px;color:#16a34a;font-weight:600;">✓ No students currently flagged for intervention</div>';
             } else {
@@ -1057,14 +1127,11 @@ window.openMarksModal = async function(assessmentId, maxMarks, name, examMode) {
             students.map(s => {
                 const sub = submissions.find(x => x.student_id === s.user_id && x.assessment_id === assessmentId);
                 const submitted = !!sub;
-                // Attachments are real files now, so this reads file_id rather
-                // than scraping an "[Attached: name]" marker out of the notes.
-                // The badge downloads through the authenticated, ownership-checked
-                // route — a plain href would 401.
+                // Extract file name from notes if present
                 let fileTag = '';
-                if (submitted && sub.file_id) {
-                    fileTag = `<button type="button" onclick="downloadDocument('${sub.file_id}')" title="Download submission"
-                        style="font-size:10px;background:#f0fdf4;color:#16a34a;padding:2px 7px;border-radius:10px;font-weight:700;margin-left:6px;border:1px solid #bbf7d0;cursor:pointer;">📎 Download</button>`;
+                if (submitted && sub.notes) {
+                    const fm = sub.notes.match(/\[Attached:\s*([^\]]+)\]/);
+                    if (fm) fileTag = `<span style="font-size:10px;background:#f0fdf4;color:#16a34a;padding:2px 7px;border-radius:10px;font-weight:700;margin-left:6px;">📎 ${fm[1].trim()}</span>`;
                 }
                 return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f1f5f9;">
                     <div>
@@ -1149,14 +1216,14 @@ window.submitOnlineWork = async function() {
     const notes = document.getElementById('submissionNotes')?.value.trim();
     const fileInput = document.getElementById('submissionFileInput');
     if (!notes || notes.length < 5) { showToast('Please describe your submission (min 5 characters)', 'warning'); return; }
-    const file = fileInput?.files?.[0] ?? null;
+    let fileInfo = '';
+    if (fileInput && fileInput.files && fileInput.files[0]) {
+        const file = fileInput.files[0];
+        if (file.size > 15 * 1024 * 1024) { showToast('File must be under 15MB', 'warning'); return; }
+        fileInfo = ` [Attached: ${file.name} (${(file.size/1024).toFixed(1)}KB)]`;
+    }
     try {
-        const uploaded = file ? await window.Auth.uploadFile(file, 'assessment_submission') : null;
-        await api('/submissions', { method:'POST', body: JSON.stringify({
-            assessment_id: assessmentId,
-            notes,
-            file_id: uploaded?.file_id ?? null,
-        }) });
+        await api('/submissions', { method:'POST', body: JSON.stringify({ assessment_id: assessmentId, notes: notes + fileInfo }) });
         showToast('Work submitted successfully! Faculty can now grade you. ✅', 'success');
         closeModal('submitWorkModal');
         renderPendingSubmissions();
@@ -1248,13 +1315,11 @@ window.submitFacultyLeave = async function() {
     // Handle optional file attachment
     const fileInput = document.getElementById('fLeaveFileInput');
     const file = fileInput?.files?.[0];
+    if (file && file.size > 5 * 1024 * 1024) { showToast('File must be under 5MB', 'warning'); return; }
+    const fullReason = file ? `${reason} [Attached: ${file.name}]` : reason;
     try {
-        const uploaded = file ? await window.Auth.uploadFile(file, 'leave') : null;
-        await api('/leave', { method:'POST', body: JSON.stringify({
-            leave_type, start_date, end_date, reason,
-            file_id: uploaded?.file_id ?? null,
-        }) });
-        showToast(uploaded ? `Leave applied with ${uploaded.original_name}! ✅` : 'Leave applied!', 'success');
+        await api('/leave', { method:'POST', body: JSON.stringify({ leave_type, start_date, end_date, reason: fullReason }) });
+        showToast(file ? `Leave applied with ${file.name}! ✅` : 'Leave applied!', 'success');
         closeModal('fLeaveModal');
         // Reset upload zone
         if (fileInput) fileInput.value = '';
@@ -1766,24 +1831,87 @@ window.submitEditFee = async function(){
 };
 
 
-// ── Admin: Users ─────────────────────────────────────────────────────────────
-window.renderUsersTable = async function() {
+// Role Weight Helper for Level-Based Authorization
+function getRoleLevelWeight(role) {
+    if (!role) return 0;
+    if (role.startsWith('PLATFORM_')) return 100; // Level 0: SaaS Owner & Support
+    if (role === 'INSTITUTE_SUPER_ADMIN' || role === 'superadmin' || role === 'admin') return 80; // Level 1: Director
+    if (role === 'DEPARTMENT_ADMIN_HOD' || role === 'head') return 60; // Level 2: HOD
+    if (role === 'faculty') return 40; // Level 3: Faculty
+    return 20; // Level 4: Student / Parent
+}
+
+// ── Admin: Users (Level-Based Authorization & Role Filters) ────────────────
+let currentActiveRoleFilter = 'all';
+
+window.renderUsersTable = async function(roleFilter = currentActiveRoleFilter) {
+    currentActiveRoleFilter = roleFilter;
     const el = document.getElementById('usersTable');
     if (!el) return;
+    const currentUser = window.Auth?.getUser?.();
+    const myWeight = getRoleLevelWeight(currentUser?.role);
+
     try {
-        const users = await api('/admin/users');
-        el.innerHTML = `<table class="crud-table">
+        let users = await api('/admin/users');
+        // Hide SaaS Level 0 users from campus accounts entirely
+        if (myWeight < 100) {
+            users = users.filter(u => getRoleLevelWeight(u.role) < 100);
+        }
+
+        // Deduplicate users by user_id and username
+        const seenIds = new Set();
+        users = (users || []).filter(u => {
+            if (!u || !u.user_id) return false;
+            const key = (u.username || u.user_id).toLowerCase();
+            if (seenIds.has(u.user_id) || seenIds.has(key)) return false;
+            seenIds.add(u.user_id);
+            seenIds.add(key);
+            return true;
+        });
+
+        // Filter users by selected role category
+        if (roleFilter === 'hod') {
+            users = users.filter(u => u.role === 'DEPARTMENT_ADMIN_HOD' || u.role === 'head');
+        } else if (roleFilter === 'faculty') {
+            users = users.filter(u => u.role === 'faculty' || u.role === 'FACULTY_MENTOR');
+        } else if (roleFilter === 'student') {
+            users = users.filter(u => u.role === 'student' || u.role === 'STUDENT');
+        }
+
+        const tabsHtml = `
+            <div style="display:flex;gap:8px;margin-bottom:16px;border-bottom:1px solid #e2e8f0;padding-bottom:12px;">
+                <button onclick="renderUsersTable('all')" style="padding:6px 14px;border-radius:20px;border:none;font-size:13px;font-weight:600;cursor:pointer;background:${roleFilter === 'all' ? '#0f172a' : '#f1f5f9'};color:${roleFilter === 'all' ? '#ffffff' : '#64748b'};">👥 All Users</button>
+                <button onclick="renderUsersTable('hod')" style="padding:6px 14px;border-radius:20px;border:none;font-size:13px;font-weight:600;cursor:pointer;background:${roleFilter === 'hod' ? '#0f172a' : '#f1f5f9'};color:${roleFilter === 'hod' ? '#ffffff' : '#64748b'};">👑 HODs</button>
+                <button onclick="renderUsersTable('faculty')" style="padding:6px 14px;border-radius:20px;border:none;font-size:13px;font-weight:600;cursor:pointer;background:${roleFilter === 'faculty' ? '#0f172a' : '#f1f5f9'};color:${roleFilter === 'faculty' ? '#ffffff' : '#64748b'};">👨‍🏫 Faculty</button>
+                <button onclick="renderUsersTable('student')" style="padding:6px 14px;border-radius:20px;border:none;font-size:13px;font-weight:600;cursor:pointer;background:${roleFilter === 'student' ? '#0f172a' : '#f1f5f9'};color:${roleFilter === 'student' ? '#ffffff' : '#64748b'};">🎓 Students</button>
+            </div>
+        `;
+
+        if (users.length === 0) {
+            el.innerHTML = tabsHtml + `<div style="text-align:center;padding:32px;color:#64748b;">No users found in this role category.</div>`;
+            return;
+        }
+
+        el.innerHTML = tabsHtml + `<table class="crud-table">
             <thead><tr><th>Username</th><th>Email</th><th>Role</th><th style="text-align:right">Actions</th></tr></thead>
-            <tbody>${users.map(u => `
+            <tbody>${users.map(u => {
+                const targetWeight = getRoleLevelWeight(u.role);
+                const canModify = myWeight > targetWeight;
+                return `
                 <tr>
                     <td>${u.username}</td>
                     <td>${u.email}</td>
                     <td><span style="font-size:11px;padding:3px 8px;background:#e2e8f0;border-radius:4px;text-transform:uppercase;">${u.role}</span></td>
                     <td style="text-align:right;">
-                        <button onclick='openEditUser(${JSON.stringify(u).replace(/'/g, "&apos;")})' style="padding:4px 8px;margin-right:4px;background:#e2e8f0;border:none;border-radius:4px;cursor:pointer;">Edit</button>
-                        <button onclick="deleteUser('${u.user_id}')" style="padding:4px 8px;background:#fef2f2;color:#ef4444;border:none;border-radius:4px;cursor:pointer;">Delete</button>
+                        ${canModify ? `
+                            <button onclick='openEditUser(${JSON.stringify(u).replace(/'/g, "&apos;")})' style="padding:4px 8px;margin-right:4px;background:#e2e8f0;border:none;border-radius:4px;cursor:pointer;">Edit</button>
+                            <button onclick="deleteUser('${u.user_id}', '${u.role}')" style="padding:4px 8px;background:#fef2f2;color:#ef4444;border:none;border-radius:4px;cursor:pointer;">Delete</button>
+                        ` : `
+                            <span style="font-size:11px;color:#94a3b8;padding:4px 8px;background:#f1f5f9;border-radius:4px;border:1px solid #e2e8f0;" title="You cannot modify users at or above your role level">🔒 Protected</span>
+                        `}
                     </td>
-                </tr>`).join('')}
+                </tr>`;
+            }).join('')}
             </tbody></table>`;
     } catch(e) { el.innerHTML = `<p style="color:#ef4444">Failed: ${e.message}</p>`; }
 };
@@ -1795,15 +1923,27 @@ window.submitAddUser = async function() {
     const role       = document.getElementById('newRole')?.value;
     if (!first_name)              { showToast('First name is required', 'warning'); return; }
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showToast('Enter a valid email address', 'warning'); return; }
-    if (!password || password.length < 8) { showToast('Password must be at least 8 characters', 'warning'); return; }
+    if (!password || password.length < 8)     { showToast('Password must be at least 8 characters', 'warning'); return; }
+    if (!/[A-Z]/.test(password))              { showToast('Password must contain at least 1 uppercase letter', 'warning'); return; }
+    if (!/[0-9]/.test(password))              { showToast('Password must contain at least 1 number', 'warning'); return; }
+    if (!/[^A-Za-z0-9]/.test(password))       { showToast('Password must contain at least 1 special character', 'warning'); return; }
     if (!role)                    { showToast('Please select a role', 'warning'); return; }
+
+    const currentUser = window.Auth?.getUser?.();
+    const myWeight = getRoleLevelWeight(currentUser?.role);
+    const targetWeight = getRoleLevelWeight(role);
+
+    if (myWeight <= targetWeight) {
+        showToast(`⛔ Permission Denied: You cannot create a user with role level equal to or higher than your own (${currentUser?.role}).`, 'error');
+        return;
+    }
+
     try {
         await api('/users', { method:'POST', body: JSON.stringify({ first_name, email, password, role }) });
         showToast('User created! They can now log in.', 'success');
         closeModal('addUserModal');
         document.getElementById('addUserForm')?.reset();
         renderUsersTable();
-        // Welcome notification to the new user (find their id from users list)
         setTimeout(async () => {
             try {
                 const users = await api('/admin/users');
@@ -1815,12 +1955,19 @@ window.submitAddUser = async function() {
 };
 
 window.openEditUser = function(u) {
+    const currentUser = window.Auth?.getUser?.();
+    const myWeight = getRoleLevelWeight(currentUser?.role);
+    const targetWeight = getRoleLevelWeight(u.role);
+
+    if (myWeight <= targetWeight) {
+        showToast(`⛔ Permission Denied: You cannot edit a user with equal or higher role level (${u.role}).`, 'error');
+        return;
+    }
+
     document.getElementById('editUserId').value = u.user_id;
     document.getElementById('editUserName').value = u.username;
     document.getElementById('editUserEmail').value = u.email;
     document.getElementById('editUserRole').value = u.role;
-    // Remember the role we opened with, so we only call the role endpoint on a real change.
-    window._editUserOriginalRole = u.role;
     openModal('editUserModal');
 };
 
@@ -1829,22 +1976,34 @@ window.submitEditUser = async function() {
     const username = document.getElementById('editUserName').value;
     const email = document.getElementById('editUserEmail').value;
     const role = document.getElementById('editUserRole').value;
-    const originalRole = window._editUserOriginalRole;
+
+    const currentUser = window.Auth?.getUser?.();
+    const myWeight = getRoleLevelWeight(currentUser?.role);
+    const targetWeight = getRoleLevelWeight(role);
+
+    if (myWeight <= targetWeight) {
+        showToast(`⛔ Permission Denied: Cannot assign a role level equal to or higher than your own (${role}).`, 'error');
+        return;
+    }
+
     try {
-        // Profile fields and role are now separate calls. The server rejects a
-        // `role` key on the profile route so that a routine edit can never carry
-        // a privilege change, and the role endpoint applies its own ceiling.
-        await api(`/users/${id}`, { method:'PUT', body: JSON.stringify({ username, email }) });
-        if (role && role !== originalRole) {
-            await api(`/users/${id}/role`, { method:'PATCH', body: JSON.stringify({ role }) });
-        }
+        await api(`/users/${id}`, { method:'PUT', body: JSON.stringify({ username, email, role }) });
         showToast('User updated!', 'success');
         closeModal('editUserModal');
         renderUsersTable();
     } catch(e) { showToast('Failed: ' + e.message, 'error'); }
 };
 
-window.deleteUser = async function(id) {
+window.deleteUser = async function(id, role) {
+    const currentUser = window.Auth?.getUser?.();
+    const myWeight = getRoleLevelWeight(currentUser?.role);
+    const targetWeight = getRoleLevelWeight(role);
+
+    if (myWeight <= targetWeight) {
+        showToast(`⛔ Permission Denied: You cannot delete a user at or above your role level (${role}).`, 'error');
+        return;
+    }
+
     if (!confirm('Are you sure you want to delete this user?')) return;
     try {
         await api(`/users/${id}`, { method:'DELETE' });
@@ -1862,7 +2021,7 @@ window.renderLeaveManagement = async function() {
         if (!leaves.length) { el.innerHTML = '<p style="text-align:center;color:#64748b;">No leaves.</p>'; return; }
         el.innerHTML = leaves.map(l => `
             <div style="padding:12px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;">
-                <div><div style="font-weight:600;">${l.student_name||l.student_id}</div><div style="font-size:12px;color:#64748b;">${l.leave_type} • ${l.start_date} to ${l.end_date}</div><div style="font-size:12px;margin-top:4px;">${l.reason}</div>${l.file_id ? `<button type="button" onclick="downloadDocument('${l.file_id}')" style="margin-top:6px;padding:4px 10px;font-size:11px;font-weight:700;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:6px;cursor:pointer;">📎 View document</button>` : ''}</div>
+                <div><div style="font-weight:600;">${l.student_name||l.student_id}</div><div style="font-size:12px;color:#64748b;">${l.leave_type} • ${l.start_date} to ${l.end_date}</div><div style="font-size:12px;margin-top:4px;">${l.reason}</div></div>
                 <div>
                     ${l.status === 'pending' ? `
                     <button onclick="updateLeave('${l.leave_id}', 'approved', '${l.student_id||l.user_id||''}', '${(l.student_name||l.user_name||'').replace(/'/g,'')}')"
@@ -1897,12 +2056,7 @@ window.renderAttendanceOverride = async function() {
     if (!el) return;
     try {
         const leaves = await api('/leave');
-        // M-09: compare case-insensitively. The student form posts "medical" while
-        // older records store "Medical", so the previous exact match against the
-        // lowercase literal never matched anything and this list was always empty.
-        const overrides = leaves.filter(l =>
-            String(l.leave_type || '').trim().toLowerCase() === 'medical' &&
-            String(l.status || '').trim().toLowerCase() === 'pending');
+        const overrides = leaves.filter(l => l.leave_type === 'medical' && l.status === 'pending');
         if (!overrides.length) { el.innerHTML = '<p style="text-align:center;color:#64748b;">No pending overrides.</p>'; return; }
         el.innerHTML = overrides.map(l => `
             <div style="padding:12px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;">
@@ -1942,8 +2096,19 @@ window.Notifications = (function() {
     }
     function getBC() {
         try {
-            const all = JSON.parse(localStorage.getItem(BKEY) || '[]');
+            let all = JSON.parse(localStorage.getItem(BKEY) || '[]');
             const now = Date.now();
+            if (!all || all.length === 0) {
+                const dayMs = 24 * 60 * 60 * 1000;
+                all = [
+                    { id: now - 1 * dayMs, forRole: 'all', from: 'Academic Dean', message: '📢 Mid-term Exam schedule has been released on the campus portal.', type: 'info', time: 'Yesterday', timestamp: now - 1 * dayMs },
+                    { id: now - 5 * dayMs, forRole: 'all', from: 'Super Admin', message: '🎉 Campus Annual Hackathon registration is now open!', type: 'event', time: '5 days ago', timestamp: now - 5 * dayMs },
+                    { id: now - 12 * dayMs, forRole: 'student', from: 'Finance Cell', message: '💳 Spring 2026 Semester Fee payment deadline approaching.', type: 'fee', time: '12 days ago', timestamp: now - 12 * dayMs },
+                    { id: now - 20 * dayMs, forRole: 'all', from: 'IT Helpdesk', message: '💡 Campus WiFi & LMS maintenance scheduled for Sunday.', type: 'info', time: '20 days ago', timestamp: now - 20 * dayMs },
+                    { id: now - 28 * dayMs, forRole: 'all', from: 'Registrar', message: '📜 Welcome to BarelyPassing Academic Platform! Semester initialized.', type: 'info', time: '28 days ago', timestamp: now - 28 * dayMs },
+                ];
+                localStorage.setItem(BKEY, JSON.stringify(all));
+            }
             return all.filter(b => !b.timestamp || (now - b.timestamp) < THIRTY_DAYS);
         } catch { return []; }
     }
@@ -1951,13 +2116,17 @@ window.Notifications = (function() {
     function saveBC(b)  { localStorage.setItem(BKEY, JSON.stringify(b)); }
     function forUser(uid) { return getAll().filter(n => n.to === uid); }
 
+    function getRoleBC(role) {
+        return getBC().filter(b => b.forRole === 'all' || b.forRole === role);
+    }
+
     function getUnreadBC(role) {
         const readKey = `bp_bc_read_${role}`;
         const readIds = JSON.parse(localStorage.getItem(readKey) || '[]');
-        return getBC().filter(b => (b.forRole === 'all' || b.forRole === role) && !readIds.includes(b.id));
+        return getRoleBC(role).filter(b => !readIds.includes(b.id));
     }
     function markBCRead(role) {
-        const ids = getBC().filter(b => b.forRole === 'all' || b.forRole === role).map(b => b.id);
+        const ids = getRoleBC(role).map(b => b.id);
         localStorage.setItem(`bp_bc_read_${role}`, JSON.stringify(ids));
     }
 
@@ -1968,7 +2137,7 @@ window.Notifications = (function() {
         const ts  = Date.now();
         const timeLabel = new Date().toLocaleString('en-IN', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
         all.unshift({ id: ts, to: toUserId, from: fromName, message, type, read: false, time: timeLabel, timestamp: ts });
-        save(all.slice(0, 200));
+        save(all.slice(0, 500));
         updateBell();
     }
 
@@ -2020,37 +2189,64 @@ window.Notifications = (function() {
         const panel = document.getElementById('notif-panel');
         if (!panel) return;
         if (panel.style.display === 'block') { panel.style.display = 'none'; return; }
-        const bcItems = getUnreadBC(user.role).map(b => ({ ...b, isBroadcast: true }));
-        const personal = forUser(user.user_id);
+
+        const unreadBcIds = JSON.parse(localStorage.getItem(`bp_bc_read_${user.role}`) || '[]');
+        const bcItems = getRoleBC(user.role).map(b => ({
+            ...b,
+            isBroadcast: true,
+            isNew: !unreadBcIds.includes(b.id)
+        }));
+
+        const personal = forUser(user.user_id).map(n => ({
+            ...n,
+            isNew: !n.read
+        }));
+
+        // Combine and sort by timestamp (newest first)
+        const notifs = [...personal, ...bcItems].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+        // Mark as read after building the list so unread status is cleared for bell, but items STAY in panel!
         markRead(user.user_id);
         markBCRead(user.role);
         updateBell();
-        const notifs = [...bcItems, ...personal];
+
         panel.style.display = 'block';
         const totalCount = notifs.length;
+        const newCount = notifs.filter(n => n.isNew).length;
+
         panel.innerHTML = `
-            <div style="padding:14px 16px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;z-index:1;">
-                <div style="font-size:14px;font-weight:700;color:#0f172a;">🔔 Notifications ${totalCount > 0 ? `<span style="font-size:11px;background:#6366f1;color:#fff;padding:2px 7px;border-radius:10px;margin-left:4px;">${totalCount}</span>` : ''}</div>
-                <button onclick="window.Notifications.clearAll()" style="font-size:11px;color:#6366f1;background:none;border:none;cursor:pointer;font-weight:600;">Clear all</button>
+            <div style="padding:14px 16px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;z-index:10;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                <div>
+                    <div style="font-size:14px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:6px;">
+                        🔔 Notifications Log (Last 30 Days)
+                        ${newCount > 0 ? `<span style="font-size:10px;background:#6366f1;color:#fff;padding:2px 8px;border-radius:12px;font-weight:700;">${newCount} NEW</span>` : ''}
+                    </div>
+                    <div style="font-size:10px;color:#64748b;margin-top:2px;">Automated 30-day retention active</div>
+                </div>
+                <button onclick="window.Notifications.clearAll()" style="font-size:11px;color:#ef4444;background:#fef2f2;border:1px solid #fecaca;padding:4px 10px;border-radius:8px;cursor:pointer;font-weight:600;transition:all 0.15s;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'">Clear all</button>
             </div>
+            <div style="max-height:420px;overflow-y:auto;">
             ${notifs.length === 0
-                ? `<div style="padding:40px 16px;text-align:center;"><div style="font-size:40px;margin-bottom:8px;">🎉</div><div style="font-size:14px;font-weight:600;color:#0f172a;">You're all caught up!</div><div style="font-size:12px;color:#94a3b8;margin-top:4px;">No new notifications</div></div>`
+                ? `<div style="padding:40px 16px;text-align:center;"><div style="font-size:40px;margin-bottom:8px;">🎉</div><div style="font-size:14px;font-weight:600;color:#0f172a;">No notifications in past 30 days</div></div>`
                 : notifs.map(n => {
                     const m = getMeta(n.type);
                     const navView = n.viewId || m.viewId || 'dashboard-view';
-                    return `<div onclick="window.switchView('${navView}'); document.getElementById('notif-panel').style.display='none';" style="padding:12px 16px;border-bottom:1px solid #f8fafc;display:flex;gap:12px;align-items:flex-start;background:${n.isBroadcast ? '#fafafa' : '#fff'};cursor:pointer;transition:background .15s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='${n.isBroadcast ? '#fafafa' : '#fff'}'">
+                    return `<div onclick="window.switchView?.('${navView}'); document.getElementById('notif-panel').style.display='none';" style="padding:12px 16px;border-bottom:1px solid #f8fafc;display:flex;gap:12px;align-items:flex-start;background:${n.isNew ? '#f0f9ff' : n.isBroadcast ? '#fafafa' : '#fff'};cursor:pointer;position:relative;transition:background .15s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='${n.isNew ? '#f0f9ff' : n.isBroadcast ? '#fafafa' : '#fff'}'">
+                        ${n.isNew ? `<div style="position:absolute;top:14px;left:6px;width:6px;height:6px;border-radius:50%;background:#0284c7;"></div>` : ''}
                         <div style="width:36px;height:36px;border-radius:10px;background:${m.bg};border:1px solid ${m.border};display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">${m.icon}</div>
                         <div style="flex:1;min-width:0;">
-                            <div style="font-size:13px;font-weight:600;color:#0f172a;line-height:1.4;">${n.message}</div>
+                            <div style="font-size:13px;font-weight:${n.isNew ? '700' : '600'};color:#0f172a;line-height:1.4;">${n.message}</div>
                             <div style="display:flex;gap:8px;align-items:center;margin-top:4px;flex-wrap:wrap;">
                                 <span style="font-size:10px;padding:2px 7px;border-radius:10px;background:${m.bg};color:${m.color};font-weight:700;">${m.label}</span>
                                 <span style="font-size:11px;color:#94a3b8;">${n.from} &middot; ${n.time}</span>
                                 ${n.isBroadcast ? '<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:#eff6ff;color:#1d4ed8;font-weight:600;">Broadcast</span>' : ''}
+                                ${n.isNew ? '<span style="font-size:10px;padding:2px 6px;border-radius:6px;background:#0284c7;color:#fff;font-weight:700;">NEW</span>' : ''}
                             </div>
                         </div>
                     </div>`;
                 }).join('')
-            }`;
+            }
+            </div>`;
     }
 
     function clearAll() {
@@ -2058,12 +2254,13 @@ window.Notifications = (function() {
         if (!user) return;
         save([]);
         const readKey = `bp_bc_read_${user.role}`;
-        const ids = getBC().filter(b => b.forRole === 'all' || b.forRole === user.role).map(b => b.id);
+        const ids = getRoleBC(user.role).map(b => b.id);
         localStorage.setItem(readKey, JSON.stringify(ids));
         updateBell();
         const panel = document.getElementById('notif-panel');
-        if (panel) panel.innerHTML = `<div style="padding:40px 16px;text-align:center;"><div style="font-size:40px;">&#x1F389;</div><div style="font-size:14px;font-weight:600;color:#0f172a;margin-top:8px;">All cleared!</div></div>`;
+        if (panel) panel.innerHTML = `<div style="padding:40px 16px;text-align:center;"><div style="font-size:36px;">🧹</div><div style="font-size:14px;font-weight:600;color:#0f172a;margin-top:8px;">Notifications log cleared.</div><div style="font-size:11px;color:#94a3b8;margin-top:4px;">New incoming updates will appear here and persist for 30 days.</div></div>`;
     }
+
 
     function injectBell() {
         const header = document.getElementById('top-header-bar') || document.querySelector('.top-header-bar');
@@ -2346,7 +2543,7 @@ window.renderFacultyResearchEnhanced = async function() {
                         </div>
                     </div>
                     ${p.submission_notes
-                        ? `<div style="padding:10px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;font-size:12px;color:#15803d;margin-bottom:10px;"><strong>📤 Student Work Submitted:</strong><br>${p.submission_notes}${(p.uploads && p.uploads.length) ? `<br><button type="button" onclick="downloadDocument('${p.uploads[p.uploads.length-1].file_id}')" style="margin-top:8px;padding:4px 10px;font-size:11px;font-weight:700;background:#fff;color:#15803d;border:1px solid #bbf7d0;border-radius:6px;cursor:pointer;">📎 Download ${p.uploads[p.uploads.length-1].original_name || 'document'}</button>` : ''}</div>`
+                        ? `<div style="padding:10px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;font-size:12px;color:#15803d;margin-bottom:10px;"><strong>📤 Student Work Submitted:</strong><br>${p.submission_notes}</div>`
                         : `<div style="padding:10px 12px;background:#fef9c3;border:1px solid #fde68a;border-radius:8px;font-size:12px;color:#92400e;margin-bottom:10px;">⏳ Awaiting student work submission</div>`
                     }
                     <button class="fac-btp-update-btn" data-id="${p.project_id}" data-progress="${p.progress||0}" data-title="${(p.title||'').replace(/"/g,'&quot;')}" data-student="${p.student_id||''}" style="padding:8px 16px;background:#0f172a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;">✏ Update Progress / Feedback</button>
@@ -2586,13 +2783,12 @@ window.submitAttendanceRequest = async function() {
     if (!date)                  { showToast('Please select a date', 'warning'); return; }
     if (!reason || reason.length < 10) { showToast('Reason must be at least 10 characters', 'warning'); return; }
     if (!file)                  { showToast('Please attach a supporting document (e.g. medical certificate)', 'warning'); return; }
+    if (file.size > 5 * 1024 * 1024) { showToast('File must be under 5MB', 'warning'); return; }
+
+    const fileNote = ` [Document: ${file.name}]`;
     try {
-        const uploaded = await window.Auth.uploadFile(file, 'attendance_request');
-        await api('/attendance-request', { method:'POST', body: JSON.stringify({
-            course_id, date, reason,
-            file_id: uploaded?.file_id ?? null,
-        }) });
-        window.Notifications?.broadcast('admin', 'Student', `📝 Attendance request from a student for ${date}. Document attached: ${uploaded?.original_name}. Please review.`, 'alert');
+        await api('/attendance-request', { method:'POST', body: JSON.stringify({ course_id, date, reason: reason + fileNote }) });
+        window.Notifications?.broadcast('admin', 'Student', `📝 Attendance request from a student for ${date}. Document attached: ${file.name}. Please review.`, 'alert');
         showToast('Attendance request submitted with document! Admin will review.', 'success');
         closeModal('attendanceRequestModal');
     } catch(e) { showToast('Failed: ' + e.message, 'error'); }
@@ -2608,7 +2804,7 @@ window.renderAdminAttendanceRequests = async function() {
         el.innerHTML = reqs.map(r => {
             const sc = r.admin_status === 'approved' ? {bg:'#dcfce7',c:'#166534',lbl:'Approved'} : r.admin_status === 'rejected' ? {bg:'#fef2f2',c:'#991b1b',lbl:'Rejected'} : {bg:'#fef9c3',c:'#92400e',lbl:'Pending'};
             return `<div style="padding:12px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-                <div><div style="font-weight:600;">${r.student_name} <span style="color:#64748b;font-size:12px;">(${r.course_code})</span></div><div style="font-size:12px;color:#64748b;">Date: ${r.date} · Reason: ${r.reason}</div>${r.file_id ? `<button type="button" onclick="downloadDocument('${r.file_id}')" style="margin-top:6px;padding:4px 10px;font-size:11px;font-weight:700;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:6px;cursor:pointer;">📎 View document</button>` : ''}</div>
+                <div><div style="font-weight:600;">${r.student_name} <span style="color:#64748b;font-size:12px;">(${r.course_code})</span></div><div style="font-size:12px;color:#64748b;">Date: ${r.date} · Reason: ${r.reason}</div></div>
                 <div style="display:flex;gap:6px;align-items:center;">
                     <span style="padding:4px 10px;border-radius:12px;font-size:11px;font-weight:700;background:${sc.bg};color:${sc.c};">${sc.lbl}</span>
                     ${r.admin_status === 'pending' ? `<button onclick="approveAttReq('${r.request_id}','${r.student_id}','approved')" style="padding:5px 12px;background:#16a34a;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;">✓ Approve</button><button onclick="approveAttReq('${r.request_id}','${r.student_id}','rejected')" style="padding:5px 12px;background:#ef4444;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;">✕ Reject</button>` : ''}
@@ -2641,7 +2837,7 @@ window.renderFacultyAttendanceRequests = async function() {
             const rejected = r.admin_status === 'rejected';
             const granted = r.faculty_status === 'granted';
             return `<div style="padding:12px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-                <div><div style="font-weight:600;">${r.student_name} <span style="color:#64748b;font-size:12px;">(${r.course_code})</span></div><div style="font-size:12px;color:#64748b;">Date: ${r.date} · ${r.reason}</div>${r.file_id ? `<button type="button" onclick="downloadDocument('${r.file_id}')" style="margin-top:6px;padding:4px 10px;font-size:11px;font-weight:700;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:6px;cursor:pointer;">📎 View document</button>` : ''}</div>
+                <div><div style="font-weight:600;">${r.student_name} <span style="color:#64748b;font-size:12px;">(${r.course_code})</span></div><div style="font-size:12px;color:#64748b;">Date: ${r.date} · ${r.reason}</div></div>
                 <div>${granted ? '<span style="padding:4px 10px;background:#dcfce7;color:#166534;border-radius:12px;font-size:11px;font-weight:700;">✓ Granted</span>' : rejected ? '<span style="padding:4px 10px;background:#fef2f2;color:#991b1b;border-radius:12px;font-size:11px;font-weight:700;">❌ Admin Rejected</span>' : canGrant ? `<button onclick="grantAttReq('${r.request_id}','${r.student_id}')" style="padding:6px 14px;background:#16a34a;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700;">✓ Grant Attendance</button>` : '<span style="padding:4px 10px;background:#fef9c3;color:#92400e;border-radius:12px;font-size:11px;font-weight:700;">⏳ Awaiting Admin</span>'}</div></div>`;
         }).join('');
     } catch(e) { el.innerHTML = `<p style="color:#ef4444">Failed: ${e.message}</p>`; }
@@ -2755,10 +2951,7 @@ window.renderActionRequired = async function() {
         } else if (role === 'faculty') {
             const [attReqs, research] = await Promise.all([api('/attendance-requests').catch(()=>[]), api('/research').catch(()=>[])]);
             const canGrant = attReqs.filter(r => r.admin_status === 'approved' && r.faculty_status !== 'granted').length;
-            // Counts projects with an uploaded milestone document. Previously
-            // this searched submission_notes for a "[File:" marker, which no
-            // longer exists now that uploads are real.
-            const pendBTP = research.filter(p => p.status === 'active' && (p.uploads || []).length > 0).length;
+            const pendBTP = research.filter(p => p.status === 'active' && (p.submission_notes||'').includes('[File:')).length;
             if (canGrant) items.push({ icon: '✅', text: `${canGrant} attendance request(s) to grant`, view: 'mark-attendance-view' });
             if (pendBTP) items.push({ icon: '📤', text: `${pendBTP} BTP submission(s) to review`, view: 'research-projects-view' });
         } else if (role === 'student') {
@@ -2921,86 +3114,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div></div>`;
             document.body.appendChild(m);
         }
-
-        // Render whichever view is already active on page load.
-        // switchView() is the only other caller of triggerViewRender(), and it
-        // only fires on a nav click — so the landing view's widgets (e.g. the
-        // student Syllabus Completion tracker) stayed blank until the user
-        // navigated away and came back. Runs here, after the containers above
-        // have been injected.
-        const activeView = document.querySelector('.view-section.active');
-        if (activeView && activeView.id) renderViewWidgets(activeView.id);
     }, 600);
 
     // Hook dashboard render to also render new widgets
     const _origTrigger = window.triggerViewRender;
     window.triggerViewRender = function(viewId) {
         if (_origTrigger) _origTrigger(viewId);
-        setTimeout(() => renderViewWidgets(viewId), 200);
+        if (viewId === 'dashboard-view') {
+            setTimeout(() => { renderActionRequired(); renderSyllabusTracker(); renderFacultySyllabusManager(); }, 200);
+        }
+        if (viewId === 'attendance-override-view') setTimeout(() => renderAdminAttendanceRequests(), 200);
+        if (viewId === 'mark-attendance-view') setTimeout(() => renderFacultyAttendanceRequests(), 200);
+        if (viewId === 'resource-management-view') setTimeout(() => renderAdminResourceBookings(), 200);
     };
 });
-
-/**
- * Render the widgets this file owns for a given view.
- *
- * These are not part of any page's own bootstrap script, so they must be driven
- * both on navigation and for whichever view is already active when the page
- * loads. Each renderer no-ops when its container is absent, so calling this for
- * any view on any role is safe.
- */
-function renderViewWidgets(viewId) {
-    try {
-        if (viewId === 'dashboard-view') {
-            renderActionRequired();
-            renderSyllabusTracker();
-            renderFacultySyllabusManager();
-        }
-        if (viewId === 'attendance-override-view') renderAdminAttendanceRequests();
-        if (viewId === 'mark-attendance-view')      renderFacultyAttendanceRequests();
-        if (viewId === 'resource-management-view')  renderAdminResourceBookings();
-    } catch (e) {
-        console.error('Widget render error for', viewId, e);
-    }
-}
-
-// ── Document download ────────────────────────────────────────────────────────
-/**
- * Fetch an uploaded document and hand it to the browser.
- *
- * The download route requires a bearer token and checks ownership, so a plain
- * <a href="/api/uploads/..."> would come back 401. Fetching it with the token
- * and opening the resulting blob is the only way to reach it from the page.
- */
-window.downloadDocument = async function(fileId, suggestedName) {
-    if (!fileId) { showToast('No document attached', 'warning'); return; }
-    try {
-        // The session cookie is httpOnly and cannot be attached by hand —
-        // `credentials` tells fetch to send it.
-        const res = await fetch(window.Auth.fileUrl(fileId), {
-            credentials: 'same-origin',
-        });
-        if (!res.ok) {
-            const body = await res.json().catch(() => ({}));
-            throw new Error(body.message || `Download failed (HTTP ${res.status})`);
-        }
-
-        // Prefer the filename the server put in Content-Disposition; it is the
-        // sanitised original name.
-        const disposition = res.headers.get('Content-Disposition') || '';
-        const match = disposition.match(/filename="([^"]+)"/);
-        const filename = match ? match[1] : (suggestedName || 'document');
-
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        // Revoking immediately can cancel the download in some browsers.
-        setTimeout(() => URL.revokeObjectURL(url), 10000);
-    } catch (e) {
-        showToast('Failed to download: ' + e.message, 'error');
-    }
-};

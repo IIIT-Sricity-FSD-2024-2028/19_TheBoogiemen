@@ -1,76 +1,85 @@
 /**
  * BarelyPassing – script.js
- * Handles: auth redirects, login form, signup form.
- * ALL rendering is delegated to fixes.js (loaded after this file).
- * DO NOT define render* functions here – they live in fixes.js only.
+ * Handles: auth helper routines, login submission, and signup registration.
+ * Role rendering & dashboard data display is handled by fixes.js & individual portal scripts.
  */
 
-// ─── Auth Redirects ──────────────────────────────────────────────────────────
+// ─── Auth Route Guard ────────────────────────────────────────────────────────
+// If already logged in and on login.html with valid session, allow navigation
 document.addEventListener('DOMContentLoaded', () => {
-    const path = window.location.pathname;
-    if (path.includes('login.html') || path === '/' || path.endsWith('/')) {
-        const user = window.Auth.getUser();
-        if (user) {
-            const role = user.role;
-            if (role === 'superadmin')          window.location.href = 'super-admin.html';
-            else if (role === 'admin' || role === 'head') window.location.href = 'super-user.html';
-            else if (role === 'faculty')         window.location.href = 'faculty.html';
-            else                                 window.location.href = 'student.html';
-        }
-    }
+    // Keep login form ready — no auto-redirects that block the user from logging in
 });
 
-// ─── Login ───────────────────────────────────────────────────────────────────
+// ─── Login Form Submission ───────────────────────────────────────────────────
 async function handleLogin(event) {
-    event.preventDefault();
-    const email    = document.getElementById('email')?.value.trim();
-    const password = document.getElementById('password')?.value.trim();
-    const btn      = document.getElementById('loginBtn');
-    
-    // Email validation
-    if (!email) {
-        if (typeof showToast === 'function') showToast('Email is required', 'error');
-        else alert('Email is required');
-        return;
+    if (event && event.preventDefault) event.preventDefault();
+    const tenantInput = document.getElementById('tenantCode');
+    const emailInput  = document.getElementById('email');
+    const pwInput     = document.getElementById('password');
+
+    const email      = emailInput ? emailInput.value.trim() : '';
+    const password   = pwInput ? pwInput.value : '';
+    const tenantCode = tenantInput ? tenantInput.value.trim().toUpperCase() : '';
+
+    const btn = document.getElementById('loginBtn');
+    const tenantErr = document.getElementById('tenant-error');
+    const pwErr = document.getElementById('password-error');
+
+    let valid = true;
+
+    // Mandatory Tenant Code check
+    if (!tenantCode) {
+        if (tenantInput) tenantInput.classList.add('error');
+        if (tenantErr) {
+            tenantErr.textContent = 'Institute code is required.';
+            tenantErr.style.display = 'block';
+        }
+        valid = false;
+    } else {
+        if (tenantInput) tenantInput.classList.remove('error');
+        if (tenantErr) tenantErr.style.display = 'none';
     }
-    
-    // Email format validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-        if (typeof showToast === 'function') showToast('Please enter a valid email address', 'error');
-        else alert('Please enter a valid email address');
-        return;
+
+    // Email check
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        if (emailInput) emailInput.classList.add('error');
+        valid = false;
+    } else {
+        if (emailInput) emailInput.classList.remove('error');
     }
-    
-    // Password validation
+
+    // Password check
     if (!password) {
-        if (typeof showToast === 'function') showToast('Password is required', 'error');
-        else alert('Password is required');
-        return;
+        if (pwInput) pwInput.classList.add('error');
+        if (pwErr) {
+            pwErr.textContent = 'Password is required.';
+            pwErr.style.display = 'block';
+        }
+        valid = false;
+    } else {
+        if (pwInput) pwInput.classList.remove('error');
+        if (pwErr) pwErr.style.display = 'none';
     }
-    
-    // Password strength validation
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-    if (!passwordRegex.test(password)) {
-        const errorMsg = 'Password must be at least 8 characters with 1 uppercase, 1 lowercase, 1 number, and 1 special character';
-        if (typeof showToast === 'function') showToast(errorMsg, 'error');
-        else alert(errorMsg);
-        return;
-    }
-    
+
+    if (!valid) return;
+
     if (btn) { btn.textContent = 'Signing in…'; btn.disabled = true; }
+
     try {
-        await window.Auth.login(email, password);
+        await window.Auth.login(email, password, tenantCode);
     } catch (err) {
-        if (typeof showToast === 'function') showToast(err.message || 'Login failed', 'error');
-        else alert(err.message || 'Login failed');
+        if (typeof showToast === 'function') {
+            showToast(err.message || 'Login failed. Check your credentials.', 'error');
+        } else {
+            alert(err.message || 'Login failed. Check your credentials.');
+        }
         if (btn) { btn.textContent = 'Sign In'; btn.disabled = false; }
     }
 }
 
-// ─── Sign Up ─────────────────────────────────────────────────────────────────
+// ─── Sign Up Registration ─────────────────────────────────────────────────────
 async function handleSignup(event) {
-    event.preventDefault();
+    if (event && event.preventDefault) event.preventDefault();
     const first_name = document.getElementById('firstName')?.value.trim();
     const last_name  = document.getElementById('lastName')?.value.trim();
     const email      = document.getElementById('email')?.value.trim();
@@ -99,112 +108,27 @@ async function handleSignup(event) {
     }
 }
 
-// ─── Role Selection (Login Page) ─────────────────────────────────────────────
+// ─── Role Selection (Visual Only - Never auto-fills input values) ──────────────
 function selectRole(role) {
     document.querySelectorAll('.role-option').forEach(el => el.classList.remove('active'));
     const opt = document.querySelector(`.role-option[data-role="${role}"]`);
     if (opt) opt.classList.add('active');
-    
-    // Update form based on selected role
+
+    // Update form header based on selected role
     const formTitle = document.getElementById('form-title-text');
     const formSubtitle = document.getElementById('form-subtitle-text');
     const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
-    
-    // Role-specific configurations
+
     const roleConfig = {
-        student: {
-            title: 'Student Login',
-            subtitle: 'Access your academic progress and course materials',
-            emailPlaceholder: 'student@iiits.in',
-            passwordPlaceholder: 'Min 8 chars: 1 uppercase, 1 lowercase, 1 number, 1 special'
-        },
-        faculty: {
-            title: 'Faculty Login',
-            subtitle: 'Manage courses, grades, and student assessments',
-            emailPlaceholder: 'faculty@iiits.in',
-            passwordPlaceholder: 'Min 8 chars: 1 uppercase, 1 lowercase, 1 number, 1 special'
-        },
-        head: {
-            title: 'Academic Head Login',
-            subtitle: 'Oversee institutional performance and user management',
-            emailPlaceholder: 'head@iiits.in',
-            passwordPlaceholder: 'Min 8 chars: 1 uppercase, 1 lowercase, 1 number, 1 special'
-        },
-        superadmin: {
-            title: 'Super Admin Login',
-            subtitle: 'Full system access and administrative control',
-            emailPlaceholder: 'admin@iiits.in',
-            passwordPlaceholder: 'Min 8 chars: 1 uppercase, 1 lowercase, 1 number, 1 special'
-        }
+        student:               { title: 'Student Login',          subtitle: 'Access your academic progress, courses, fees and milestones', email: 'student@iiits.in' },
+        faculty:               { title: 'Faculty Login',          subtitle: 'Mark attendance, enter grades and manage student progress', email: 'faculty@iiits.in' },
+        head:                  { title: 'HOD / Academic Head',    subtitle: 'Manage department course allocations and review faculty reports', email: 'head@iiits.in' },
+        INSTITUTE_SUPER_ADMIN: { title: 'Institute Director',    subtitle: 'Monitor institute performance, departments and academic outcomes', email: 'director@iiits.in' },
+        FINANCE_ADMIN:         { title: 'Finance Officer Login',  subtitle: 'Manage fee structures, dues, payment receipts and compliance', email: 'finance@iiits.in' },
     };
-    
-    const config = roleConfig[role];
-    if (config) {
-        if (formTitle) formTitle.textContent = config.title;
-        if (formSubtitle) formSubtitle.textContent = config.subtitle;
-        if (emailInput) emailInput.placeholder = config.emailPlaceholder;
-        if (passwordInput) passwordInput.placeholder = config.passwordPlaceholder;
-    }
 
-    fillDemoCredentials(role);
+    const config = roleConfig[role] || roleConfig.student;
+    if (formTitle) formTitle.textContent = config.title;
+    if (formSubtitle) formSubtitle.textContent = config.subtitle;
+    if (emailInput) emailInput.placeholder = config.email;
 }
-
-// ─── Dev-only demo credentials ───────────────────────────────────────────────
-//
-// Picking a role fills in that actor's seeded login, so testing is
-// click-role -> Sign In instead of retyping a password every time.
-//
-// DELETE THIS WHOLE BLOCK (and the fillDemoCredentials call above) BEFORE THE
-// APP IS DEPLOYED ANYWHERE REAL.
-//
-// Two things keep it from becoming a credential leak in the meantime:
-//   * it runs only on localhost, and
-//   * the strip is built in JS, so these passwords are never written into
-//     login.html — on any other host the markup does not exist at all.
-//
-// Verified against back-end/data/mock-db.json by bcrypt-comparing each hash.
-// The seeded `admin@example.com` (u3) is deliberately absent: its digest
-// matches no known password, and there is no Admin tab on this page anyway.
-const DEMO_LOGINS = {
-    student:    { email: 'student@example.com', password: 'Student@123' },
-    faculty:    { email: 'faculty@example.com', password: 'Faculty@123' },
-    head:       { email: 'head@example.com',    password: 'Head@123'    },
-    superadmin: { email: 'super@example.com',   password: 'Super@123'   },
-};
-
-// '' covers opening the page as a file:// URL.
-const IS_LOCAL_DEV = ['localhost', '127.0.0.1', ''].includes(location.hostname);
-
-function fillDemoCredentials(role) {
-    if (!IS_LOCAL_DEV) return;
-
-    const creds = DEMO_LOGINS[role];
-    const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
-    if (!creds || !emailInput || !passwordInput) return;
-
-    emailInput.value = creds.email;
-    passwordInput.value = creds.password;
-
-    const strip = document.getElementById('demo-credentials');
-    if (strip) strip.textContent = `DEV · ${creds.email} · ${creds.password}`;
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('loginForm');
-    if (!IS_LOCAL_DEV || !form) return;   // not localhost, or not the login page
-
-    const strip = document.createElement('p');
-    strip.id = 'demo-credentials';
-    strip.style.cssText =
-        'margin:14px 0 0;padding:8px 10px;border:1px dashed #cbd5e1;border-radius:8px;' +
-        'background:#f8fafc;color:#475569;font-size:12px;text-align:center;' +
-        'font-family:ui-monospace,SFMono-Regular,Menlo,monospace;';
-    form.appendChild(strip);
-
-    // The Student tab is marked active in the markup, so selectRole() has not
-    // run yet and the fields would otherwise start empty.
-    const active = document.querySelector('.role-option.active');
-    fillDemoCredentials(active?.dataset.role || 'student');
-});

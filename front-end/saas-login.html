@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BarelyPassing — Platform Support Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: radial-gradient(circle at top right, #e2e8f0, #f8fafc);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            position: relative;
+            color: #0f172a;
+        }
+
+        .login-wrapper {
+            position: relative; z-index: 1;
+            width: 100%; max-width: 440px;
+        }
+
+        /* Internal badge */
+        .internal-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: #e0e7ff; border: 1px solid #c7d2fe;
+            color: #3730a3; font-size: 11px; font-weight: 700;
+            letter-spacing: 1.2px; text-transform: uppercase;
+            padding: 6px 14px; border-radius: 20px;
+            margin-bottom: 20px; box-shadow: 0 2px 6px rgba(99,102,241,0.12);
+        }
+        .internal-badge::before {
+            content: ''; width: 7px; height: 7px; border-radius: 50%;
+            background: #4f46e5;
+            box-shadow: 0 0 8px #4f46e5;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.85); }
+        }
+
+        .card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 25px -5px rgba(15,23,42,0.08), 0 10px 10px -5px rgba(15,23,42,0.04);
+        }
+
+        .brand {
+            display: flex; align-items: center; gap: 12px;
+            margin-bottom: 8px;
+        }
+        .brand-icon {
+            width: 44px; height: 44px; border-radius: 12px;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 14px rgba(15,23,42,0.25);
+        }
+        .brand-icon svg { color: white; }
+        .brand h1 {
+            font-size: 22px; font-weight: 800; color: #0f172a;
+            letter-spacing: -0.5px;
+        }
+
+        .card-subtitle {
+            color: #64748b; font-size: 14px; margin-bottom: 32px;
+            line-height: 1.5;
+        }
+
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block; font-size: 12px; font-weight: 700;
+            color: #475569; text-transform: uppercase; letter-spacing: 0.8px;
+            margin-bottom: 8px;
+        }
+        .form-group input {
+            width: 100%; padding: 12px 16px;
+            background: #ffffff;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 10px; color: #0f172a; font-size: 14px;
+            font-family: inherit; outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-group input:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79,70,229,0.15);
+        }
+        .form-group input::placeholder { color: #94a3b8; }
+
+        .error-msg {
+            display: none; color: #ef4444; font-size: 12px; margin-top: 6px; font-weight: 500;
+        }
+
+        .submit-btn {
+            width: 100%; padding: 13px;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            border: none; border-radius: 10px;
+            color: white; font-size: 15px; font-weight: 700;
+            cursor: pointer; transition: all 0.2s;
+            box-shadow: 0 4px 14px rgba(15,23,42,0.25);
+            font-family: inherit; margin-top: 8px;
+        }
+        .submit-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(15,23,42,0.35);
+        }
+        .submit-btn:active { transform: translateY(0); }
+        .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+        .divider {
+            height: 1px; background: #e2e8f0;
+            margin: 28px 0;
+        }
+
+        .back-link {
+            text-align: center; font-size: 13px; color: #64748b;
+        }
+        .back-link a {
+            color: #4f46e5; text-decoration: none; font-weight: 600;
+        }
+        .back-link a:hover { text-decoration: underline; }
+
+        .toast {
+            position: fixed; bottom: 24px; right: 24px;
+            background: #0f172a; color: #ffffff; padding: 14px 20px; border-radius: 12px;
+            font-size: 14px; z-index: 9999;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            transform: translateY(100px); opacity: 0;
+            transition: all 0.3s ease;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.error { background: #ef4444; }
+    </style>
+</head>
+<body>
+
+    <div class="login-wrapper">
+        <div style="text-align:center;">
+            <span class="internal-badge">Internal Platform Support Access</span>
+        </div>
+
+        <div class="card">
+            <div class="brand">
+                <div class="brand-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                </div>
+                <h1>BarelyPassing</h1>
+            </div>
+            <p class="card-subtitle">Platform administration &amp; support portal. Authorized personnel only.</p>
+
+
+            <form id="saasLoginForm" novalidate onsubmit="handleSaaSLogin(event)">
+
+                <div class="form-group">
+                    <label>Support Email Address</label>
+                    <input type="email" id="saas-email" value="saasadmin@platform.com" placeholder="saasadmin@platform.com" autocomplete="email" required>
+                    <div class="error-msg" id="email-error">Enter a valid email address.</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="saas-password" value="Pass@123" placeholder="Enter your password" required>
+                    <div class="error-msg" id="pw-error">Password is required.</div>
+                </div>
+
+                <button type="submit" class="submit-btn" id="saasLoginBtn">Sign In to SaaS Support Portal</button>
+            </form>
+
+            <div class="divider"></div>
+            <div class="back-link">
+                <a href="onboarding.html">← Back to Onboarding</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="state.js"></script>
+    <script>
+    function fillSaaSRole(email) {
+        document.getElementById('saas-email').value = email;
+        document.getElementById('saas-password').value = 'Pass@123';
+        document.getElementById('email-error').style.display = 'none';
+        document.getElementById('pw-error').style.display = 'none';
+    }
+
+    function showToast(msg, type) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = 'toast show' + (type === 'error' ? ' error' : '');
+        setTimeout(() => { t.className = 'toast'; }, 4000);
+    }
+
+    async function handleSaaSLogin(e) {
+        e.preventDefault();
+        const email    = document.getElementById('saas-email').value.trim();
+        const password = document.getElementById('saas-password').value;
+        const btn      = document.getElementById('saasLoginBtn');
+
+        let ok = true;
+        const emailErr = document.getElementById('email-error');
+        const pwErr    = document.getElementById('pw-error');
+
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            emailErr.style.display = 'block'; ok = false;
+        } else { emailErr.style.display = 'none'; }
+
+        if (!password) {
+            pwErr.style.display = 'block'; ok = false;
+        } else { pwErr.style.display = 'none'; }
+
+        if (!ok) return;
+
+        btn.textContent = 'Authenticating…';
+        btn.disabled = true;
+
+        try {
+            await window.Auth.login(email, password, 'global');
+        } catch (err) {
+            showToast(err.message || 'Login failed. Check your credentials.', 'error');
+            btn.textContent = 'Sign In to SaaS Support Portal';
+            btn.disabled = false;
+        }
+    }
+    </script>
+</body>
+</html>

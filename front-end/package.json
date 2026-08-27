@@ -1,0 +1,22 @@
+{
+  "name": "barelypassing-frontend",
+  "version": "2.0.0",
+  "private": true,
+  "description": "B2B Enterprise EdTech Platform Frontend with React and Redux Toolkit",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@reduxjs/toolkit": "^2.5.0",
+    "lucide-react": "^0.474.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-redux": "^9.2.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^6.0.7"
+  }
+}

@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Institutional Onboarding &amp; Workspace Provisioning | BarelyPassing</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-card: #ffffff;
+            --border: #e2e8f0;
+            --p: #4f46e5;
+            --p-light: #6366f1;
+            --navy: #0f172a;
+            --text: #0f172a;
+            --muted: #64748b;
+            --green: #059669;
+        }
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+        
+        /* Top Navigation */
+        nav {
+            background: #0f172a;
+            padding: 16px 48px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+        .nav-logo {
+            width: 36px; height: 36px; border-radius: 10px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .nav-brand h1 { font-size: 17px; font-weight: 700; color: #ffffff; }
+        .nav-links { display: flex; align-items: center; gap: 20px; }
+        .nav-links a { color: #94a3b8; font-size: 14px; text-decoration: none; transition: color 0.2s; font-weight: 500; }
+        .nav-links a:hover { color: #ffffff; }
+
+        /* Page Container */
+        .page-container {
+            max-width: 1100px;
+            margin: 36px auto;
+            padding: 0 24px;
+            flex: 1;
+            width: 100%;
+        }
+
+        /* Progress Steps */
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        .step-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #94a3b8;
+            transition: all 0.3s;
+        }
+        .step-item.active { color: #4f46e5; }
+        .step-item.done { color: #059669; }
+        .step-circle {
+            width: 34px; height: 34px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            background: #e2e8f0; color: #64748b; font-size: 13px; font-weight: 800;
+            transition: all 0.3s;
+        }
+        .step-item.active .step-circle { background: #4f46e5; color: #fff; box-shadow: 0 0 0 5px rgba(79,70,229,0.15); }
+        .step-item.done .step-circle { background: #059669; color: #fff; }
+        .step-line { width: 60px; height: 2px; background: #e2e8f0; }
+
+        /* Main Form & Summary Grid */
+        .signup-grid {
+            display: grid;
+            grid-template-columns: 1.55fr 1fr;
+            gap: 32px;
+            align-items: start;
+        }
+
+        /* Form Card */
+        .form-card {
+            background: #ffffff;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+            padding: 36px;
+            box-shadow: 0 4px 25px rgba(15,23,42,0.06);
+        }
+        .form-card h2 { font-size: 22px; font-weight: 800; color: #0f172a; margin-bottom: 6px; }
+        .form-card p.subtitle { font-size: 14px; color: #64748b; margin-bottom: 24px; line-height: 1.5; }
+
+        /* Wizard Panels */
+        .wizard-step { display: none; }
+        .wizard-step.active { display: block; animation: fadeIn .3s ease; }
+        @keyframes fadeIn { from { opacity:0; transform: translateY(6px); } to { opacity:1; transform: translateY(0); } }
+
+        /* Form Controls */
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 12px 14px;
+            background: #fff; border: 1.5px solid #cbd5e1;
+            border-radius: 10px; font-size: 14px; color: #0f172a;
+            font-family: inherit; outline: none; transition: border-color 0.2s;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79,70,229,0.12);
+        }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+        /* Plan Tier Grid */
+        .plan-select-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 22px;
+        }
+        .plan-option {
+            border: 2px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 16px 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #f8fafc;
+            position: relative;
+        }
+        .plan-option:hover { border-color: #94a3b8; transform: translateY(-2px); }
+        .plan-option.selected {
+            border-color: #4f46e5;
+            background: #eef2ff;
+            box-shadow: 0 4px 14px rgba(79,70,229,0.18);
+        }
+        .plan-option .name { font-size: 14px; font-weight: 800; color: #0f172a; }
+        .plan-option .price { font-size: 13px; font-weight: 800; color: #4f46e5; margin-top: 4px; }
+        .plan-option .scope { font-size: 11px; color: #64748b; margin-top: 4px; }
+        .plan-badge-top {
+            position: absolute; top: -9px; right: 10px;
+            background: #4f46e5; color: #fff;
+            font-size: 9px; font-weight: 800; text-transform: uppercase;
+            padding: 2px 7px; border-radius: 10px;
+        }
+
+        /* Scope Feature Cards */
+        .scope-features-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 8px;
+        }
+        .scope-card {
+            border: 1.5px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 14px;
+            background: #ffffff;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .scope-icon {
+            width: 32px; height: 32px; border-radius: 8px;
+            background: #dcfce7; color: #166534;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 14px; flex-shrink: 0;
+        }
+        .scope-text h4 { font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 2px; }
+        .scope-text p { font-size: 11px; color: #64748b; line-height: 1.4; }
+
+        /* Buttons & Actions */
+        .btn-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 28px;
+        }
+        .btn-submit {
+            flex: 1;
+            padding: 14px 20px;
+            background: linear-gradient(135deg, #0f172a, #1e1b4b);
+            color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 14px rgba(15,23,42,0.2);
+            text-align: center;
+        }
+        .btn-submit:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(15,23,42,0.3); }
+        .btn-back {
+            padding: 13px 20px;
+            background: #f1f5f9;
+            color: #334155;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-back:hover { background: #e2e8f0; }
+
+        /* Summary Sidebar */
+        .summary-card {
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            border-radius: 20px;
+            padding: 32px;
+            color: #fff;
+            box-shadow: 0 8px 30px rgba(15,23,42,0.25);
+            position: sticky;
+            top: 24px;
+        }
+        .summary-card h3 { font-size: 18px; font-weight: 800; margin-bottom: 12px; }
+        .summary-features { list-style: none; margin: 20px 0; }
+        .summary-features li { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #cbd5e1; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .summary-features li span { color: #10b981; font-weight: 800; }
+        
+        .trust-badge {
+            margin-top: 20px;
+            padding: 14px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            font-size: 12px;
+            color: #94a3b8;
+            line-height: 1.6;
+        }
+
+        /* ── STEP 3: ACTIVATION LAUNCHPAD VIEW ── */
+        .activation-container {
+            display: none;
+            background: #ffffff;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(15,23,42,0.08);
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .activation-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .activation-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: #dcfce7; color: #166534; font-size: 12px; font-weight: 800;
+            padding: 6px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        /* Live Provisioning Terminal Checklist */
+        .provision-terminal {
+            background: #0f172a;
+            border-radius: 12px;
+            padding: 20px;
+            color: #f8fafc;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            line-height: 1.9;
+            margin-bottom: 28px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            border: 1px solid #334155;
+        }
+        .terminal-header {
+            display: flex; align-items: center; gap: 6px; margin-bottom: 12px;
+            padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .term-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .term-green { color: #4ade80; }
+        .term-blue { color: #60a5fa; }
+        .term-dim { color: #94a3b8; }
+
+        /* Credentials Card */
+        .credentials-card {
+            background: #f8fafc;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 28px;
+        }
+        .cred-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 14px;
+        }
+        .cred-item {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .cred-label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; }
+        .cred-val { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; color: #0f172a; }
+        .btn-copy {
+            background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px;
+            padding: 3px 8px; font-size: 11px; font-weight: 700; color: #475569;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .btn-copy:hover { background: #e2e8f0; color: #0f172a; }
+
+        /* Action Launchpad */
+        .launchpad-actions {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .btn-launch-primary {
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #059669, #10b981);
+            color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 800;
+            text-decoration: none;
+            box-shadow: 0 4px 14px rgba(5,150,105,0.3);
+            display: inline-flex; align-items: center; gap: 8px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .btn-launch-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(5,150,105,0.4); }
+
+        .btn-launch-saas {
+            padding: 14px 24px;
+            background: #0f172a;
+            color: #ffffff;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none;
+            box-shadow: 0 4px 14px rgba(15,23,42,0.2);
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-launch-saas:hover { background: #1e293b; }
+
+        .btn-launch-ghost {
+            padding: 14px 20px;
+            background: #ffffff;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+        .btn-launch-ghost:hover { background: #f1f5f9; }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 24px; right: 24px;
+            background: #0f172a; color: #fff;
+            padding: 12px 20px; border-radius: 10px;
+            font-size: 14px; font-weight: 600;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            z-index: 9999; display: none;
+        }
+        .toast.show { display: block; animation: toastIn .3s ease; }
+        .toast.success { background: #059669; }
+        .toast.error { background: #ef4444; }
+        @keyframes toastIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+        @media (max-width: 920px) {
+            .signup-grid { grid-template-columns: 1fr; }
+            .plan-select-grid { grid-template-columns: 1fr; }
+            .cred-grid { grid-template-columns: 1fr; }
+            .scope-features-grid { grid-template-columns: 1fr; }
+            nav { padding: 16px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+    <a class="nav-brand" href="onboarding.html">
+        <div class="nav-logo">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+        </div>
+        <h1>BarelyPassing</h1>
+    </a>
+    <div class="nav-links">
+        <a href="onboarding.html">← Back to Overview</a>
+        <a href="login.html">Campus Login</a>
+        <a href="saas-login.html" style="background:rgba(255,255,255,0.1);padding:6px 12px;border-radius:6px;color:#fff;">🛡️ Platform Support</a>
+    </div>
+</nav>
+
+<div class="page-container">
+
+    <!-- Progress Step Indicators -->
+    <div class="step-indicator">
+        <div class="step-item active" id="step1-ind">
+            <div class="step-circle">1</div>
+            <span>1. Institution Info</span>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-item" id="step2-ind">
+            <div class="step-circle">2</div>
+            <span>2. Campus Scale &amp; Scope</span>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-item" id="step3-ind">
+            <div class="step-circle">3</div>
+            <span>3. Live Activation</span>
+        </div>
+    </div>
+
+    <!-- Main Content Wizard Form -->
+    <div class="signup-grid" id="mainSignupArea">
+        
+        <!-- Wizard Card -->
+        <div class="form-card">
+            
+            <!-- STEP 1: Institution & Administrator Info -->
+            <div class="wizard-step active" id="wizard-step-1">
+                <h2>1. Register Your Institution</h2>
+                <p class="subtitle">Enter your official institutional credentials and primary administrative point of contact.</p>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Institution Name *</label>
+                        <input type="text" id="reg-inst-name" placeholder="e.g., National Institute of Technology" value="NIT Warangal" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Tenant Code / Prefix *</label>
+                        <input type="text" id="reg-inst-code" placeholder="e.g., NITW" value="NITW" style="text-transform:uppercase;" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Primary Administrator Name *</label>
+                        <input type="text" id="reg-admin-name" placeholder="Dr. Rajesh Kumar" value="Dr. Rajesh Kumar" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Administrator Role</label>
+                        <select id="reg-admin-role">
+                            <option value="Director / Vice Chancellor" selected>Director / Vice Chancellor</option>
+                            <option value="Dean of Academics">Dean of Academics</option>
+                            <option value="Head of IT / ERP Lead">Head of IT / ERP Lead</option>
+                            <option value="Department HOD">Department HOD</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Official Institutional Email *</label>
+                        <input type="email" id="reg-email" placeholder="director@institution.ac.in" value="director@nitw.ac.in" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Phone / Contact Number *</label>
+                        <input type="tel" id="reg-phone" placeholder="+91 98765 43210" value="+91 98765 43210" required>
+                    </div>
+                </div>
+
+                <div class="btn-row">
+                    <button type="button" class="btn-submit" onclick="goToStep(2)">Continue to Campus Scale &amp; Scope →</button>
+                </div>
+            </div>
+
+            <!-- STEP 2: Plan & Campus Scope (Redesigned & High-Value) -->
+            <div class="wizard-step" id="wizard-step-2">
+                <h2>2. Campus Scale &amp; Deployment Scope</h2>
+                <p class="subtitle">Select your institutional tier and configure operational parameters for your academic workspace.</p>
+
+                <!-- Plan Choice -->
+                <div class="form-group">
+                    <label>Selected Subscription Tier</label>
+                    <div class="plan-select-grid">
+                        <div class="plan-option" id="opt-starter" onclick="selectSignupPlan('Starter', '₹99,000 / year', 'Up to 500 Students', '1 Department')">
+                            <div class="name">Starter Tier</div>
+                            <div class="price">₹99,000/yr</div>
+                            <div class="scope">Up to 500 Students</div>
+                        </div>
+                        <div class="plan-option selected" id="opt-professional" onclick="selectSignupPlan('Professional', '₹2,40,000 / year', 'Up to 2,000 Students', 'Campus Wide')">
+                            <span class="plan-badge-top">Recommended</span>
+                            <div class="name">Professional</div>
+                            <div class="price">₹2,40,000/yr</div>
+                            <div class="scope">Up to 2,000 Students</div>
+                        </div>
+                        <div class="plan-option" id="opt-enterprise" onclick="selectSignupPlan('Enterprise', 'Custom Pricing', 'Unlimited Students', 'Multi-Campus')">
+                            <div class="name">Enterprise</div>
+                            <div class="price">Custom SLA</div>
+                            <div class="scope">Multi-Campus Scope</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Student Enrollment Volume</label>
+                        <select id="reg-students" onchange="updateSummaryScope()">
+                            <option value="Under 500 students">Under 500 students (Single Department)</option>
+                            <option value="500 – 2,000 students" selected>500 – 2,000 students (Full Institute)</option>
+                            <option value="2,000 – 5,000 students">2,000 – 5,000 students (Large University)</option>
+                            <option value="5,000+ students">5,000+ students (Multi-Campus Federation)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Academic Calendar Structure</label>
+                        <select id="reg-calendar">
+                            <option value="Semester System (Autumn / Spring)" selected>Semester System (2 Terms / Year)</option>
+                            <option value="Trimester System">Trimester System (3 Terms / Year)</option>
+                            <option value="Annual System">Annual Examination System</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Target Go-Live Date</label>
+                        <input type="date" id="reg-golive" value="2026-09-01">
+                    </div>
+                    <div class="form-group">
+                        <label>Deployment Environment</label>
+                        <select id="reg-deployment">
+                            <option value="Cloud Multi-Tenant (Instant Provisioning)" selected>Cloud Multi-Tenant (Instant Provisioning)</option>
+                            <option value="Dedicated VPC Partition">Dedicated VPC Partition</option>
+                            <option value="Hybrid On-Premise Gateway">Hybrid On-Premise Gateway</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- ALL CORE MODULES INCLUDED (Crystal Clear Display) -->
+                <div class="form-group" style="margin-top:12px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                        <label style="margin-bottom:0;">Core Academic Engines Included in Your Plan</label>
+                        <span style="font-size:11px;color:#059669;font-weight:800;background:#dcfce7;padding:2px 8px;border-radius:12px;">✓ 100% Fully Active</span>
+                    </div>
+                    
+                    <div class="scope-features-grid">
+                        <div class="scope-card">
+                            <div class="scope-icon">✓</div>
+                            <div class="scope-text">
+                                <h4>Outcome &amp; CO/PO Engine</h4>
+                                <p>Bloom's Taxonomy, NBA/NAAC attainment rubrics &amp; accreditation export.</p>
+                            </div>
+                        </div>
+
+                        <div class="scope-card">
+                            <div class="scope-icon">✓</div>
+                            <div class="scope-text">
+                                <h4>Clash-Free Timetable</h4>
+                                <p>Auto scheduler with morning tea, 1:00–2:15 lunch, &amp; evening breaks.</p>
+                            </div>
+                        </div>
+
+                        <div class="scope-card">
+                            <div class="scope-icon">✓</div>
+                            <div class="scope-text">
+                                <h4>Finance &amp; Student Dues</h4>
+                                <p>Fee collection, automated due reminder notices, &amp; payment receipts.</p>
+                            </div>
+                        </div>
+
+                        <div class="scope-card">
+                            <div class="scope-icon">✓</div>
+                            <div class="scope-text">
+                                <h4>Research &amp; BTP Milestones</h4>
+                                <p>Capstone project lifecycle, supervisor allocations, &amp; evaluations.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="btn-row">
+                    <button type="button" class="btn-back" onclick="goToStep(1)">← Back</button>
+                    <button type="button" class="btn-submit" id="submitRegBtn" onclick="handleInstitutionalSignup()">Proceed to Live Activation &amp; Provisioning →</button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Summary & Assurance Sidebar -->
+        <div class="summary-card">
+            <div style="font-size:11px;font-weight:700;color:#818cf8;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Workspace Summary</div>
+            <h3 id="summaryPlanName">Professional Plan</h3>
+            <div style="font-size:26px;font-weight:800;color:#fff;margin-bottom:4px;" id="summaryPlanPrice">₹2,40,000 <span style="font-size:13px;font-weight:500;color:#94a3b8;">/ year</span></div>
+            <p style="font-size:13px;color:#94a3b8;" id="summaryPlanScope">500 – 2,000 students · Campus Wide Scope</p>
+
+            <ul class="summary-features">
+                <li><span>✓</span> Full L1–L4 Dual-Tier Role Hierarchy</li>
+                <li><span>✓</span> Automated Timetable Generation Engine</li>
+                <li><span>✓</span> Real-Time Attendance &amp; Shortage Alerts</li>
+                <li><span>✓</span> Finance Department &amp; Fee Receipts</li>
+                <li><span>✓</span> Multi-Tenant Data Isolation &amp; RBAC</li>
+                <li><span>✓</span> Central SaaS Support Channel Access</li>
+            </ul>
+
+            <div class="trust-badge">
+                🔒 <strong>Institutional Compliance:</strong> Includes automated rate limiting, router-level multi-tenant context isolation, disk audit logs, and OWASP security headers.
+            </div>
+
+            <div style="margin-top:20px;text-align:center;font-size:12px;color:#64748b;">
+                Questions? Email <a href="mailto:sales@platform.com" style="color:#818cf8;text-decoration:none;">sales@platform.com</a>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ── STEP 3: ACTIVATION & WORKSPACE LAUNCHPAD ── -->
+    <div class="activation-container" id="activationArea">
+        
+        <div class="activation-header">
+            <span class="activation-badge">🎉 Provisioning Complete · Workspace Active</span>
+            <h2 style="font-size:26px;font-weight:900;color:#0f172a;margin-top:4px;">Your Academic Workspace is Live!</h2>
+            <p style="font-size:14px;color:#64748b;margin-top:6px;">Your institutional database partition and master administrator credentials have been created.</p>
+        </div>
+
+        <!-- Live Provisioning Terminal Checklist -->
+        <div class="provision-terminal">
+            <div class="terminal-header">
+                <span class="term-dot" style="background:#ef4444;"></span>
+                <span class="term-dot" style="background:#f59e0b;"></span>
+                <span class="term-dot" style="background:#10b981;"></span>
+                <span style="font-size:11px;color:#94a3b8;margin-left:8px;">tenant-provisioning-service [v2.0]</span>
+            </div>
+            <div><span class="term-green">[1/5] ✓</span> Initialized Multi-Tenant Database Partition <span class="term-blue">(Schema: <span id="termTenantCode">NITW</span>)</span></div>
+            <div><span class="term-green">[2/5] ✓</span> Provisioned Root Director Master Account <span class="term-blue">(<span id="termAdminEmail">director@nitw.ac.in</span>)</span></div>
+            <div><span class="term-green">[3/5] ✓</span> Seeded Clash-Free Timetable (08:45–17:30) &amp; Bloom's Taxonomy Catalogs</div>
+            <div><span class="term-green">[4/5] ✓</span> Enabled 5-Tier Security Headers, Rate Limiting &amp; Mutation Audit Logging</div>
+            <div><span class="term-green">[5/5] ✓</span> <strong style="color:#fde047;">Notified Central SaaS Support Queue &amp; Logged Lead (Lead ID: <span id="termLeadId">ob_live</span>)</strong></div>
+        </div>
+
+        <!-- Generated Master Credentials Card -->
+        <div class="credentials-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <h3 style="font-size:15px;font-weight:800;color:#0f172a;">🔑 Master Administrative Credentials &amp; Access Keys</h3>
+                <span style="font-size:11px;color:#059669;font-weight:700;background:#dcfce7;padding:2px 8px;border-radius:10px;">Ready to Use</span>
+            </div>
+
+            <div class="cred-grid">
+                <div class="cred-item">
+                    <div>
+                        <div class="cred-label">Dedicated Workspace URL</div>
+                        <div class="cred-val" id="dispUrl">https://nitw.barelypassing.edu</div>
+                    </div>
+                    <button class="btn-copy" onclick="copyText('dispUrl')">Copy</button>
+                </div>
+
+                <div class="cred-item">
+                    <div>
+                        <div class="cred-label">Master Director Login</div>
+                        <div class="cred-val" id="dispEmail">director@nitw.ac.in</div>
+                    </div>
+                    <button class="btn-copy" onclick="copyText('dispEmail')">Copy</button>
+                </div>
+
+                <div class="cred-item">
+                    <div>
+                        <div class="cred-label">Initial Root Password</div>
+                        <div class="cred-val" id="dispPass">Pass@123</div>
+                    </div>
+                    <button class="btn-copy" onclick="copyText('dispPass')">Copy</button>
+                </div>
+
+                <div class="cred-item">
+                    <div>
+                        <div class="cred-label">Tenant Code / Prefix</div>
+                        <div class="cred-val" id="dispCode">NITW</div>
+                    </div>
+                    <button class="btn-copy" onclick="copyText('dispCode')">Copy</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Launchpad Buttons -->
+        <div class="launchpad-actions">
+            <button class="btn-launch-primary" onclick="launchDirectorPortal()">
+                🚀 Launch Director Portal (Instant Sign-In)
+            </button>
+            <a href="saas-login.html" class="btn-launch-saas">
+                🛡️ Inspect in SaaS Platform Queue (Support Login) →
+            </a>
+            <button class="btn-launch-ghost" onclick="window.print()">
+                📄 Print Setup Kit
+            </button>
+            <a href="onboarding.html" class="btn-launch-ghost">
+                Return to Overview
+            </a>
+        </div>
+
+    </div>
+
+</div>
+
+<div class="toast" id="signupToast"></div>
+
+<script src="state.js"></script>
+<script>
+let currentStep = 1;
+let selectedPlan = 'Professional';
+let provisionedTenantData = {};
+
+document.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    const planParam = params.get('plan');
+    if (planParam) {
+        if (planParam.toLowerCase().includes('starter')) selectSignupPlan('Starter', '₹99,000 / year', 'Up to 500 Students', '1 Department');
+        else if (planParam.toLowerCase().includes('enterprise')) selectSignupPlan('Enterprise', 'Custom Pricing', 'Unlimited Students', 'Multi-Campus');
+        else selectSignupPlan('Professional', '₹2,40,000 / year', 'Up to 2,000 Students', 'Campus Wide');
+    }
+});
+
+function goToStep(step) {
+    if (step === 2) {
+        const instName = document.getElementById('reg-inst-name').value.trim();
+        const instCode = document.getElementById('reg-inst-code').value.trim();
+        const adminName = document.getElementById('reg-admin-name').value.trim();
+        const email = document.getElementById('reg-email').value.trim();
+        const phone = document.getElementById('reg-phone').value.trim();
+
+        if (!instName || !instCode || !adminName || !email || !phone) {
+            showToast('Please fill in all mandatory institution fields.', 'error');
+            return;
+        }
+    }
+
+    currentStep = step;
+    document.querySelectorAll('.wizard-step').forEach(el => el.classList.remove('active'));
+    document.getElementById(`wizard-step-${step}`).classList.add('active');
+
+    // Update progress step indicators
+    if (step === 1) {
+        document.getElementById('step1-ind').className = 'step-item active';
+        document.getElementById('step2-ind').className = 'step-item';
+        document.getElementById('step3-ind').className = 'step-item';
+    } else if (step === 2) {
+        document.getElementById('step1-ind').className = 'step-item done';
+        document.getElementById('step2-ind').className = 'step-item active';
+        document.getElementById('step3-ind').className = 'step-item';
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function selectSignupPlan(name, price, scope, depts) {
+    selectedPlan = name;
+    document.querySelectorAll('.plan-option').forEach(el => el.classList.remove('selected'));
+    const target = document.getElementById('opt-' + name.toLowerCase());
+    if (target) target.classList.add('selected');
+
+    document.getElementById('summaryPlanName').textContent = name + ' Plan';
+    document.getElementById('summaryPlanPrice').innerHTML = price.includes('/') ? price.split('/')[0] + `<span style="font-size:13px;font-weight:500;color:#94a3b8;">/ year</span>` : price;
+    updateSummaryScope();
+}
+
+function updateSummaryScope() {
+    const students = document.getElementById('reg-students').value;
+    document.getElementById('summaryPlanScope').textContent = `${students} · Campus Wide Scope`;
+}
+
+function showToast(msg, type = 'success') {
+    const t = document.getElementById('signupToast');
+    t.textContent = msg;
+    t.className = 'toast show ' + type;
+    setTimeout(() => { t.className = 'toast'; }, 3500);
+}
+
+function copyText(elId) {
+    const text = document.getElementById(elId).textContent;
+    navigator.clipboard.writeText(text).then(() => {
+        showToast(`Copied "${text}" to clipboard!`, 'success');
+    });
+}
+
+function handleInstitutionalSignup() {
+    const instName = document.getElementById('reg-inst-name').value.trim();
+    const instCode = document.getElementById('reg-inst-code').value.trim().toUpperCase();
+    const adminName = document.getElementById('reg-admin-name').value.trim();
+    const email = document.getElementById('reg-email').value.trim();
+    const phone = document.getElementById('reg-phone').value.trim();
+    const role = document.getElementById('reg-admin-role').value;
+    const students = document.getElementById('reg-students').value;
+    const calendar = document.getElementById('reg-calendar').value;
+    const deployment = document.getElementById('reg-deployment').value;
+
+    const btn = document.getElementById('submitRegBtn');
+    btn.disabled = true;
+    btn.textContent = 'Provisioning Workspace...';
+
+    const leadId = 'ob_' + Date.now();
+
+    // 1. Store lead in SaaS store
+    if (window.SaaSStore && window.SaaSStore.addLead) {
+        window.SaaSStore.addLead({
+            id: leadId,
+            name: adminName,
+            institution: instName,
+            email: email,
+            phone: phone,
+            role: role,
+            plan: selectedPlan,
+            size: students,
+            tenantCode: instCode,
+            status: 'Provisioned',
+            submitted: 'Just now',
+            notes: `Tenant Code: ${instCode}, Role: ${role}, Calendar: ${calendar}, Deployment: ${deployment}`
+        });
+    }
+
+    // 2. Notify SaaS team
+    if (window.Notifications && window.Notifications.send) {
+        window.Notifications.send(
+            'saasadmin@platform.com',
+            'SaaS Onboarding Engine',
+            `🎉 NEW COLLEGE PROVISIONED: "${instName}" (${instCode}) activated on ${selectedPlan} Plan by ${adminName} (${email}). Workspace live!`,
+            'alert'
+        );
+    }
+
+    // 3. Save provisioned details for instant launch
+    provisionedTenantData = {
+        instName,
+        instCode,
+        adminName,
+        email,
+        plan: selectedPlan,
+        url: `https://${instCode.toLowerCase()}.barelypassing.edu`
+    };
+
+    setTimeout(() => {
+        // Switch to Step 3 Activation Launchpad
+        document.getElementById('mainSignupArea').style.display = 'none';
+        document.getElementById('step1-ind').className = 'step-item done';
+        document.getElementById('step2-ind').className = 'step-item done';
+        document.getElementById('step3-ind').className = 'step-item active';
+
+        // Populate terminal
+        document.getElementById('termTenantCode').textContent = instCode;
+        document.getElementById('termAdminEmail').textContent = email;
+        document.getElementById('termLeadId').textContent = leadId;
+
+        // Populate credentials card
+        document.getElementById('dispUrl').textContent = `https://${instCode.toLowerCase()}.barelypassing.edu`;
+        document.getElementById('dispEmail').textContent = email;
+        document.getElementById('dispPass').textContent = 'Pass@123';
+        document.getElementById('dispCode').textContent = instCode;
+
+        document.getElementById('activationArea').style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 800);
+}
+
+function launchDirectorPortal() {
+    const tenantCode = (provisionedTenantData.instCode || 'NEW').toUpperCase();
+    const instName = provisionedTenantData.instName || 'New Institution';
+    const adminName = provisionedTenantData.adminName || 'Director';
+    const email = provisionedTenantData.email || `director@${tenantCode.toLowerCase()}.edu`;
+
+    // Create a brand-new, unique authenticated Director session for this specific college
+    const user = {
+        user_id: 'u_dir_' + tenantCode.toLowerCase(),
+        name: adminName,
+        first_name: adminName,
+        last_name: '',
+        username: email.split('@')[0],
+        email: email,
+        role: 'INSTITUTE_SUPER_ADMIN',
+        tenant_id: 't_' + tenantCode.toLowerCase(),
+        tenant_code: tenantCode,
+        is_new_onboarding: true
+    };
+    const tenant = {
+        tenant_id: 't_' + tenantCode.toLowerCase(),
+        name: instName,
+        code: tenantCode
+    };
+
+    localStorage.setItem('bp_user', JSON.stringify(user));
+    localStorage.setItem('user', JSON.stringify(user));
+    localStorage.setItem('bp_tenant', JSON.stringify(tenant));
+    localStorage.setItem('tenant', JSON.stringify(tenant));
+    localStorage.setItem('bp_token', 'jwt_dir_' + tenantCode.toLowerCase() + '_' + Date.now());
+
+    // Redirect straight into the Director Portal
+    window.location.href = 'director.html';
+}
+</script>
+
+</body>
+</html>

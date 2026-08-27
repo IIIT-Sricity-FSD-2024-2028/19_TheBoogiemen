@@ -9,6 +9,11 @@
 </head>
 <body class="login-body">
 
+    <!-- Simple Back to Onboarding Link -->
+    <a href="onboarding.html" style="position:fixed;top:20px;left:24px;font-size:13px;color:#475569;text-decoration:none;font-weight:600;display:inline-flex;align-items:center;gap:6px;background:#ffffff;padding:7px 14px;border-radius:8px;border:1px solid #e2e8f0;box-shadow:0 2px 6px rgba(0,0,0,0.05);z-index:999;">
+        ← Back to Onboarding
+    </a>
+
     <!-- Top Branding -->
     <div class="brand-header">
         <div class="logo">
@@ -52,25 +57,36 @@
                     </div>
                 </div>
 
-                <!-- Academic Head Role -->
+                <!-- Academic Head / HOD Role -->
                 <div class="role-option" data-role="head" onclick="selectRole('head')">
                     <div class="role-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><path d="M9 22v-4h6v4"></path><path d="M8 6h.01"></path><path d="M16 6h.01"></path><path d="M12 6h.01"></path><path d="M12 10h.01"></path><path d="M12 14h.01"></path><path d="M16 10h.01"></path><path d="M16 14h.01"></path><path d="M8 10h.01"></path><path d="M8 14h.01"></path></svg>
                     </div>
                     <div class="role-details">
-                        <h3>Academic Head</h3>
-                        <p>Manage students, faculty, and institutional reports</p>
+                        <h3>HOD / Academic Head</h3>
+                        <p>Dept. course allocation and institutional reports</p>
                     </div>
                 </div>
 
-                <!-- Super Admin Role -->
-                <div class="role-option" data-role="superadmin" onclick="selectRole('superadmin')">
+                <!-- Institute Director -->
+                <div class="role-option" data-role="INSTITUTE_SUPER_ADMIN" onclick="selectRole('INSTITUTE_SUPER_ADMIN')">
                     <div class="role-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
                     </div>
                     <div class="role-details">
-                        <h3>Super Admin</h3>
-                        <p>Full system access and user management (no leave management)</p>
+                        <h3>Institute Director</h3>
+                        <p>Monitor institute performance and department activity</p>
+                    </div>
+                </div>
+
+                <!-- Finance Officer -->
+                <div class="role-option" data-role="FINANCE_ADMIN" onclick="selectRole('FINANCE_ADMIN')">
+                    <div class="role-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                    </div>
+                    <div class="role-details">
+                        <h3>Finance Officer</h3>
+                        <p>Manage fee structures, dues, receipts and compliance</p>
                     </div>
                 </div>
             </div>
@@ -89,46 +105,148 @@
             </div>
 
     <form id="loginForm" novalidate onsubmit="handleLogin(event)">
+        <!-- Institute Code (Mandatory B2B Multi-Tenant Field) -->
+        <div class="input-group" id="tenant-code-group">
+            <label class="label-premium">Institute Code *</label>
+            <div class="input-icon-wrapper">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                <input type="text" id="tenantCode" placeholder="Enter institute code (e.g. IIITS)" style="text-transform:uppercase;font-family:monospace;letter-spacing:1.5px;padding-left:42px;" oninput="this.value=this.value.toUpperCase();">
+            </div>
+            <div class="error-msg" id="tenant-error">Institute code is required.</div>
+        </div>
+
         <div class="input-group">
-            <label class="label-premium">Email Address</label>
+            <label class="label-premium">Official Email Address *</label>
             <div class="input-icon-wrapper">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                <input type="email" id="email" placeholder="student@iiits.in" required>
+                <input type="email" id="email" placeholder="Enter your email" required autocomplete="email">
             </div>
-            <div class="error-msg">Please enter a valid institutional email.</div>
+            <div class="error-msg" id="email-error">Please enter a valid institutional email.</div>
         </div>
 
         <div class="input-group">
             <div class="label-row">
-                <label class="label-premium">Password</label>
+                <label class="label-premium">Password *</label>
                 <a href="#" class="forgot-link" onclick="event.preventDefault(); showForgotPassword()">Forgot password?</a>
             </div>
             <div class="input-icon-wrapper">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                <input type="password" id="password" placeholder="Enter your password" required minlength="6">
+                <input type="password" id="password" placeholder="Enter your password" required>
             </div>
-            <div class="error-msg">Password must be at least 6 characters.</div>
+            <div class="error-msg" id="password-error">Password is required.</div>
         </div>
 
-                <div class="checkbox-group">
-                    <input type="checkbox" id="remember">
-                    <label for="remember">Remember me for 30 days</label>
-                </div>
+        <div class="checkbox-group">
+            <input type="checkbox" id="remember">
+            <label for="remember">Remember me for 30 days</label>
+        </div>
 
-                <button type="submit" class="submit-btn" id="loginBtn">Sign In</button>
-            </form>
+        <button type="submit" class="submit-btn" id="loginBtn">Sign In</button>
+    </form>
             
-            <p class="terms">By signing in, you agree to our Terms of Service and Privacy Policy</p>
-        </div>
-    </div>
+    <p class="terms">By signing in, you agree to our Terms of Service and Privacy Policy</p>
+</div>
+</div>
 
     <div class="footer-contact">
-        Need help? Contact <a href="mailto:barely.passing@iiits.in">barely.passing@iiits.in</a>
+        Need help? Contact <a href="mailto:support@barelypassing.in">support@barelypassing.in</a>
+        &nbsp;&nbsp;|&nbsp;&nbsp;
+        <a href="saas-login.html" style="color:#64748b;font-size:12px;">Support &amp; Platform Login →</a>
     </div>
 
     <script src="state.js"></script>
     <script src="script.js"></script>
     <script src="fixes.js"></script>
+    <script>
+    // ── B2B Multi-Tenant Role Selection Helper ──
+    (function() {
+        const roleConfig = {
+            student:               { title: 'Student Login',          subtitle: 'Access your academic progress, courses, fees and milestones',       email: 'student@iiits.in' },
+            faculty:               { title: 'Faculty Login',          subtitle: 'Mark attendance, enter grades and manage student progress',          email: 'faculty@iiits.in' },
+            head:                  { title: 'HOD / Academic Head',    subtitle: 'Manage department course allocations and review faculty reports',   email: 'head@iiits.in' },
+            DEPARTMENT_ADMIN_HOD:  { title: 'HOD Portal',            subtitle: 'Department allocation, faculty mapping and performance tracking',   email: 'head@iiits.in' },
+            INSTITUTE_SUPER_ADMIN: { title: 'Institute Director',    subtitle: 'Monitor institute performance, departments and academic outcomes',  email: 'director@iiits.in' },
+            FINANCE_ADMIN:         { title: 'Finance Officer Login',  subtitle: 'Manage fee structures, dues, payment receipts and compliance',      email: 'finance@iiits.in' },
+        };
+
+        window.selectRole = function(role) {
+            document.querySelectorAll('.role-option').forEach(el => el.classList.remove('active'));
+            const opt = document.querySelector(`.role-option[data-role="${role}"]`);
+            if (opt) opt.classList.add('active');
+
+            const config = roleConfig[role] || roleConfig.student;
+            const titleEl      = document.getElementById('form-title-text');
+            const subtitleEl   = document.getElementById('form-subtitle-text');
+            const emailInput   = document.getElementById('email');
+            if (titleEl)     titleEl.textContent    = config.title;
+            if (subtitleEl)  subtitleEl.textContent  = config.subtitle;
+            if (emailInput)  emailInput.placeholder  = config.email;
+        };
+
+        // Form submit handler with mandatory tenant code check
+        window.handleLogin = async function(event) {
+            if (event && event.preventDefault) event.preventDefault();
+            const tenantInput = document.getElementById('tenantCode');
+            const emailInput  = document.getElementById('email');
+            const pwInput     = document.getElementById('password');
+
+            const tenantCode = (tenantInput ? tenantInput.value : '').trim().toUpperCase();
+            const email      = (emailInput ? emailInput.value : '').trim();
+            const password   = pwInput ? pwInput.value : '';
+
+            const tenantErr = document.getElementById('tenant-error');
+            const emailErr  = document.getElementById('email-error');
+            const pwErr     = document.getElementById('password-error');
+            const btn       = document.getElementById('loginBtn');
+
+            let isValid = true;
+
+            // 1. Mandatory Tenant Code check
+            if (!tenantCode) {
+                if (tenantInput) tenantInput.classList.add('error');
+                if (tenantErr) tenantErr.style.display = 'block';
+                isValid = false;
+            } else {
+                if (tenantInput) tenantInput.classList.remove('error');
+                if (tenantErr) tenantErr.style.display = 'none';
+            }
+
+            // 2. Email check
+            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                if (emailInput) emailInput.classList.add('error');
+                if (emailErr) emailErr.style.display = 'block';
+                isValid = false;
+            } else {
+                if (emailInput) emailInput.classList.remove('error');
+                if (emailErr) emailErr.style.display = 'none';
+            }
+
+            // 3. Password check
+            if (!password) {
+                if (pwInput) pwInput.classList.add('error');
+                if (pwErr) pwErr.style.display = 'block';
+                isValid = false;
+            } else {
+                if (pwInput) pwInput.classList.remove('error');
+                if (pwErr) pwErr.style.display = 'none';
+            }
+
+            if (!isValid) return;
+
+            if (btn) { btn.textContent = 'Authenticating…'; btn.disabled = true; }
+            try {
+                await window.Auth.login(email, password, tenantCode);
+            } catch (err) {
+                if (typeof showToast === 'function') {
+                    showToast(err.message || 'Login failed. Check your credentials.', 'error');
+                } else {
+                    alert(err.message || 'Login failed. Check email, password, and institute code.');
+                }
+                if (btn) { btn.textContent = 'Sign In'; btn.disabled = false; }
+            }
+        };
+    })();
+    </script>
 
 <!-- Forgot Password Modal -->
 <div id="forgotPasswordModal" class="modal-backdrop" style="display:none;">
