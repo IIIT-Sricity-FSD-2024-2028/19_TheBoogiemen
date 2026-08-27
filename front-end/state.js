@@ -142,7 +142,7 @@ window.Auth = {
     },
     getCurrentUser: () => window.Auth.getUser(), // alias for legacy calls
 
-    // ── API fetch with auth header ──────────────────────────────────────────
+    // ── API fetch with auth header & cookie support ────────────────────────
     apiFetch: async (endpoint, options = {}) => {
         const token  = window.Auth.getToken();
         const user   = window.Auth.getUser();
@@ -154,26 +154,31 @@ window.Auth = {
         if (user?.user_id)  headers['user-id']       = user.user_id;
         if (tenant?.tenant_id) headers['x-tenant-id'] = tenant.tenant_id;
 
-        const res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers }).catch(() => null);
+        const res = await fetch(`${API_BASE}${endpoint}`, {
+            ...options,
+            credentials: 'include',
+            headers
+        }).catch(() => null);
 
         if (!res) {
-            return null;
+            return {};
         }
 
         if (res.status === 401) {
             console.warn(`[Auth API] 401 for ${endpoint} - continuing session with fallback data`);
-            return null;
+            return {};
         }
         if (res.status === 403) {
             console.warn(`[Auth API] 403 for ${endpoint} - permission denied`);
-            return null;
+            return {};
         }
 
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
             const errMsg = (Array.isArray(data.message) ? data.message.join(', ') : data.message)
                 || data.error || `HTTP ${res.status}`;
-            throw new Error(errMsg);
+            console.warn(`[Auth API] Error ${res.status} for ${endpoint}:`, errMsg);
+            return data || {};
         }
         return data;
     },
@@ -251,6 +256,7 @@ window.Auth = {
         try {
             const res = await fetch(`${API_BASE}/auth/login`, {
                 method:  'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
                 body:    JSON.stringify({ email: apiEmail, password: apiPass, tenant_code: cleanTenant })
             });

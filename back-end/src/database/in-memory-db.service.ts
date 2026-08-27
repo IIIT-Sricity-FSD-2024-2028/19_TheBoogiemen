@@ -5,7 +5,6 @@ import * as path from 'path';
 
 @Injectable()
 export class InMemoryDbService implements OnModuleInit {
-  private readonly dataPath = path.join(__dirname, '..', '..', '..', 'data', 'mock-db.json');
   private isLoaded = false;
 
   public departments = this.createProxyArray([]);
@@ -34,6 +33,20 @@ export class InMemoryDbService implements OnModuleInit {
     @InjectPinoLogger(InMemoryDbService.name) private readonly logger: PinoLogger,
   ) {}
 
+  public getDataPath(): string {
+    const candidates = [
+      path.join(__dirname, '..', '..', 'data', 'mock-db.json'),
+      path.join(__dirname, '..', '..', '..', 'data', 'mock-db.json'),
+      path.join(__dirname, '..', '..', '..', 'back-end', 'data', 'mock-db.json'),
+      path.resolve(process.cwd(), 'data', 'mock-db.json'),
+      path.resolve(process.cwd(), 'back-end', 'data', 'mock-db.json'),
+    ];
+    for (const c of candidates) {
+      if (fs.existsSync(c)) return c;
+    }
+    return path.join(__dirname, '..', '..', 'data', 'mock-db.json');
+  }
+
   onModuleInit() {
     this.loadData();
   }
@@ -60,9 +73,10 @@ export class InMemoryDbService implements OnModuleInit {
   }
 
   private loadData() {
+    const dataPath = this.getDataPath();
     try {
-      if (fs.existsSync(this.dataPath)) {
-        const rawData = fs.readFileSync(this.dataPath, 'utf8');
+      if (fs.existsSync(dataPath)) {
+        const rawData = fs.readFileSync(dataPath, 'utf8');
         const data = JSON.parse(rawData);
         
         // Disable persistence during bulk load
@@ -77,23 +91,24 @@ export class InMemoryDbService implements OnModuleInit {
         
         this.isLoaded = true;
         this.logger.info(
-          { path: this.dataPath, collections: Object.keys(data).length },
+          { path: dataPath, collections: Object.keys(data).length },
           'Loaded seed data',
         );
       } else {
         this.isLoaded = true;
         this.logger.warn(
-          { path: this.dataPath },
+          { path: dataPath },
           'Seed data file not found — starting with empty collections',
         );
       }
     } catch (error) {
       this.isLoaded = true;
-      this.logger.error({ err: error, path: this.dataPath }, 'Failed to load seed data');
+      this.logger.error({ err: error, path: dataPath }, 'Failed to load seed data');
     }
   }
 
   public persist() {
+    const dataPath = this.getDataPath();
     try {
       const dataToSave = {
         departments: this.departments,
@@ -119,11 +134,9 @@ export class InMemoryDbService implements OnModuleInit {
         resource_bookings: this.resource_bookings,
       };
 
-      fs.writeFileSync(this.dataPath, JSON.stringify(dataToSave, null, 2), 'utf8');
+      fs.writeFileSync(dataPath, JSON.stringify(dataToSave, null, 2), 'utf8');
     } catch (error) {
-      // Persistence failures are silent data loss — this must be an error, not a
-      // warning, and will matter more once this is a real database.
-      this.logger.error({ err: error, path: this.dataPath }, 'Failed to persist data');
+      this.logger.error({ err: error, path: dataPath }, 'Failed to persist data');
     }
   }
 }
