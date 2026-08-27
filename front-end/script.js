@@ -1,44 +1,85 @@
 /**
  * BarelyPassing – script.js
- * Handles: auth redirects, login form, signup form.
- * ALL rendering is delegated to fixes.js (loaded after this file).
- * DO NOT define render* functions here – they live in fixes.js only.
+ * Handles: auth helper routines, login submission, and signup registration.
+ * Role rendering & dashboard data display is handled by fixes.js & individual portal scripts.
  */
 
-// ─── Auth Redirects ──────────────────────────────────────────────────────────
+// ─── Auth Route Guard ────────────────────────────────────────────────────────
+// If already logged in and on login.html with valid session, allow navigation
 document.addEventListener('DOMContentLoaded', () => {
-    const path = window.location.pathname;
-    if (path.includes('login.html') || path === '/' || path.endsWith('/')) {
-        const user = window.Auth.getUser();
-        if (user) {
-            const role = user.role;
-            if (role === 'superadmin')          window.location.href = 'super-admin.html';
-            else if (role === 'admin' || role === 'head') window.location.href = 'super-user.html';
-            else if (role === 'faculty')         window.location.href = 'faculty.html';
-            else                                 window.location.href = 'student.html';
-        }
-    }
+    // Keep login form ready — no auto-redirects that block the user from logging in
 });
 
-// ─── Login ───────────────────────────────────────────────────────────────────
+// ─── Login Form Submission ───────────────────────────────────────────────────
 async function handleLogin(event) {
-    event.preventDefault();
-    const email    = document.getElementById('email')?.value.trim();
-    const password = document.getElementById('password')?.value.trim();
-    const btn      = document.getElementById('loginBtn');
+    if (event && event.preventDefault) event.preventDefault();
+    const tenantInput = document.getElementById('tenantCode');
+    const emailInput  = document.getElementById('email');
+    const pwInput     = document.getElementById('password');
+
+    const email      = emailInput ? emailInput.value.trim() : '';
+    const password   = pwInput ? pwInput.value : '';
+    const tenantCode = tenantInput ? tenantInput.value.trim().toUpperCase() : '';
+
+    const btn = document.getElementById('loginBtn');
+    const tenantErr = document.getElementById('tenant-error');
+    const pwErr = document.getElementById('password-error');
+
+    let valid = true;
+
+    // Mandatory Tenant Code check
+    if (!tenantCode) {
+        if (tenantInput) tenantInput.classList.add('error');
+        if (tenantErr) {
+            tenantErr.textContent = 'Institute code is required.';
+            tenantErr.style.display = 'block';
+        }
+        valid = false;
+    } else {
+        if (tenantInput) tenantInput.classList.remove('error');
+        if (tenantErr) tenantErr.style.display = 'none';
+    }
+
+    // Email check
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        if (emailInput) emailInput.classList.add('error');
+        valid = false;
+    } else {
+        if (emailInput) emailInput.classList.remove('error');
+    }
+
+    // Password check
+    if (!password) {
+        if (pwInput) pwInput.classList.add('error');
+        if (pwErr) {
+            pwErr.textContent = 'Password is required.';
+            pwErr.style.display = 'block';
+        }
+        valid = false;
+    } else {
+        if (pwInput) pwInput.classList.remove('error');
+        if (pwErr) pwErr.style.display = 'none';
+    }
+
+    if (!valid) return;
+
     if (btn) { btn.textContent = 'Signing in…'; btn.disabled = true; }
+
     try {
-        await window.Auth.login(email, password);
+        await window.Auth.login(email, password, tenantCode);
     } catch (err) {
-        if (typeof showToast === 'function') showToast(err.message || 'Login failed', 'error');
-        else alert(err.message || 'Login failed');
+        if (typeof showToast === 'function') {
+            showToast(err.message || 'Login failed. Check your credentials.', 'error');
+        } else {
+            alert(err.message || 'Login failed. Check your credentials.');
+        }
         if (btn) { btn.textContent = 'Sign In'; btn.disabled = false; }
     }
 }
 
-// ─── Sign Up ─────────────────────────────────────────────────────────────────
+// ─── Sign Up Registration ─────────────────────────────────────────────────────
 async function handleSignup(event) {
-    event.preventDefault();
+    if (event && event.preventDefault) event.preventDefault();
     const first_name = document.getElementById('firstName')?.value.trim();
     const last_name  = document.getElementById('lastName')?.value.trim();
     const email      = document.getElementById('email')?.value.trim();
@@ -67,9 +108,27 @@ async function handleSignup(event) {
     }
 }
 
-// ─── Role Selection (Login Page) ─────────────────────────────────────────────
+// ─── Role Selection (Visual Only - Never auto-fills input values) ──────────────
 function selectRole(role) {
     document.querySelectorAll('.role-option').forEach(el => el.classList.remove('active'));
     const opt = document.querySelector(`.role-option[data-role="${role}"]`);
     if (opt) opt.classList.add('active');
+
+    // Update form header based on selected role
+    const formTitle = document.getElementById('form-title-text');
+    const formSubtitle = document.getElementById('form-subtitle-text');
+    const emailInput = document.getElementById('email');
+
+    const roleConfig = {
+        student:               { title: 'Student Login',          subtitle: 'Access your academic progress, courses, fees and milestones', email: 'student@iiits.in' },
+        faculty:               { title: 'Faculty Login',          subtitle: 'Mark attendance, enter grades and manage student progress', email: 'faculty@iiits.in' },
+        head:                  { title: 'HOD / Academic Head',    subtitle: 'Manage department course allocations and review faculty reports', email: 'head@iiits.in' },
+        INSTITUTE_SUPER_ADMIN: { title: 'Institute Director',    subtitle: 'Monitor institute performance, departments and academic outcomes', email: 'director@iiits.in' },
+        FINANCE_ADMIN:         { title: 'Finance Officer Login',  subtitle: 'Manage fee structures, dues, payment receipts and compliance', email: 'finance@iiits.in' },
+    };
+
+    const config = roleConfig[role] || roleConfig.student;
+    if (formTitle) formTitle.textContent = config.title;
+    if (formSubtitle) formSubtitle.textContent = config.subtitle;
+    if (emailInput) emailInput.placeholder = config.email;
 }

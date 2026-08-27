@@ -105,46 +105,48 @@
             </div>
 
     <form id="loginForm" novalidate onsubmit="handleLogin(event)">
-        <!-- Institute Code (B2B Multi-Tenant Field - Optional) -->
+        <!-- Institute Code (Mandatory B2B Multi-Tenant Field) -->
         <div class="input-group" id="tenant-code-group">
-            <label class="label-premium">Institute Code <span style="font-weight:400;font-size:12px;color:#94a3b8;">(optional — defaults to IIITS)</span></label>
+            <label class="label-premium">Institute Code *</label>
             <div class="input-icon-wrapper">
-                <input type="text" id="tenantCode" placeholder="e.g. IIITS, NITW, VIT …" style="text-transform:uppercase;font-family:monospace;letter-spacing:2px;padding-left:14px;" oninput="this.value=this.value.toUpperCase();">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                <input type="text" id="tenantCode" placeholder="Enter institute code (e.g. IIITS)" style="text-transform:uppercase;font-family:monospace;letter-spacing:1.5px;padding-left:42px;" oninput="this.value=this.value.toUpperCase();">
             </div>
-            <div class="error-msg" id="tenant-error" style="display:none;"></div>
+            <div class="error-msg" id="tenant-error">Institute code is required.</div>
         </div>
+
         <div class="input-group">
-            <label class="label-premium">Email Address</label>
+            <label class="label-premium">Official Email Address *</label>
             <div class="input-icon-wrapper">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                <input type="email" id="email" placeholder="student@iiits.in" required autocomplete="email">
+                <input type="email" id="email" placeholder="Enter your email" required autocomplete="email">
             </div>
-            <div class="error-msg">Please enter a valid institutional email.</div>
+            <div class="error-msg" id="email-error">Please enter a valid institutional email.</div>
         </div>
 
         <div class="input-group">
             <div class="label-row">
-                <label class="label-premium">Password</label>
+                <label class="label-premium">Password *</label>
                 <a href="#" class="forgot-link" onclick="event.preventDefault(); showForgotPassword()">Forgot password?</a>
             </div>
             <div class="input-icon-wrapper">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                <input type="password" id="password" placeholder="Enter your password" required minlength="8">
+                <input type="password" id="password" placeholder="Enter your password" required>
             </div>
-            <div class="error-msg" id="password-error">Password must be at least 8 characters with 1 uppercase, 1 number, and 1 special character.</div>
+            <div class="error-msg" id="password-error">Password is required.</div>
         </div>
 
-                <div class="checkbox-group">
-                    <input type="checkbox" id="remember">
-                    <label for="remember">Remember me for 30 days</label>
-                </div>
+        <div class="checkbox-group">
+            <input type="checkbox" id="remember">
+            <label for="remember">Remember me for 30 days</label>
+        </div>
 
-                <button type="submit" class="submit-btn" id="loginBtn">Sign In</button>
-            </form>
+        <button type="submit" class="submit-btn" id="loginBtn">Sign In</button>
+    </form>
             
-            <p class="terms">By signing in, you agree to our Terms of Service and Privacy Policy</p>
-        </div>
-    </div>
+    <p class="terms">By signing in, you agree to our Terms of Service and Privacy Policy</p>
+</div>
+</div>
 
     <div class="footer-contact">
         Need help? Contact <a href="mailto:support@barelypassing.in">support@barelypassing.in</a>
@@ -156,18 +158,17 @@
     <script src="script.js"></script>
     <script src="fixes.js"></script>
     <script>
-    // ── B2B Multi-Tenant Role Selection with email placeholder + form title updates ──
+    // ── B2B Multi-Tenant Role Selection Helper ──
     (function() {
         const roleConfig = {
-            student:               { title: 'Student Login',          subtitle: 'Access your academic progress, courses, fees and milestones',       email: 'student@iiits.in',    tenantCode: 'IIITS' },
-            faculty:               { title: 'Faculty Login',          subtitle: 'Mark attendance, enter grades and manage student progress',          email: 'faculty@iiits.in',    tenantCode: 'IIITS' },
-            head:                  { title: 'HOD / Academic Head',    subtitle: 'Manage department course allocations and review faculty reports',   email: 'head@iiits.in',       tenantCode: 'IIITS' },
-            DEPARTMENT_ADMIN_HOD:  { title: 'HOD Portal',            subtitle: 'Department allocation, faculty mapping and performance tracking',   email: 'head@iiits.in',       tenantCode: 'IIITS' },
-            INSTITUTE_SUPER_ADMIN: { title: 'Institute Director',    subtitle: 'Monitor institute performance, departments and academic outcomes',  email: 'director@iiits.in',   tenantCode: 'IIITS' },
-            FINANCE_ADMIN:         { title: 'Finance Officer Login',  subtitle: 'Manage fee structures, dues, payment receipts and compliance',      email: 'finance@iiits.in',    tenantCode: 'IIITS' },
+            student:               { title: 'Student Login',          subtitle: 'Access your academic progress, courses, fees and milestones',       email: 'student@iiits.in' },
+            faculty:               { title: 'Faculty Login',          subtitle: 'Mark attendance, enter grades and manage student progress',          email: 'faculty@iiits.in' },
+            head:                  { title: 'HOD / Academic Head',    subtitle: 'Manage department course allocations and review faculty reports',   email: 'head@iiits.in' },
+            DEPARTMENT_ADMIN_HOD:  { title: 'HOD Portal',            subtitle: 'Department allocation, faculty mapping and performance tracking',   email: 'head@iiits.in' },
+            INSTITUTE_SUPER_ADMIN: { title: 'Institute Director',    subtitle: 'Monitor institute performance, departments and academic outcomes',  email: 'director@iiits.in' },
+            FINANCE_ADMIN:         { title: 'Finance Officer Login',  subtitle: 'Manage fee structures, dues, payment receipts and compliance',      email: 'finance@iiits.in' },
         };
 
-        // Override the selectRole from script.js
         window.selectRole = function(role) {
             document.querySelectorAll('.role-option').forEach(el => el.classList.remove('active'));
             const opt = document.querySelector(`.role-option[data-role="${role}"]`);
@@ -177,66 +178,72 @@
             const titleEl      = document.getElementById('form-title-text');
             const subtitleEl   = document.getElementById('form-subtitle-text');
             const emailInput   = document.getElementById('email');
-            const tenantInput  = document.getElementById('tenantCode');
             if (titleEl)     titleEl.textContent    = config.title;
             if (subtitleEl)  subtitleEl.textContent  = config.subtitle;
             if (emailInput)  emailInput.placeholder  = config.email;
-            if (tenantInput) tenantInput.placeholder = 'Institute code (e.g. ' + (config.tenantCode || 'IIITS') + ')';
         };
 
-        // ── B2B-aware handleLogin — tenant code is OPTIONAL (defaults to IIITS) ──
-        window.handleLogin = function(event) {
-            event.preventDefault();
+        // Form submit handler with mandatory tenant code check
+        window.handleLogin = async function(event) {
+            if (event && event.preventDefault) event.preventDefault();
             const tenantInput = document.getElementById('tenantCode');
             const emailInput  = document.getElementById('email');
             const pwInput     = document.getElementById('password');
-            const email       = emailInput?.value.trim();
-            const password    = pwInput?.value || '';
-            // Default to IIITS if left blank — tenant code is optional for demo
-            const tenantCode  = (tenantInput?.value || '').trim().toUpperCase() || 'IIITS';
-            const btn         = document.getElementById('loginBtn');
-            const pwError     = document.getElementById('password-error');
 
-            // Hide any previous tenant error
+            const tenantCode = (tenantInput ? tenantInput.value : '').trim().toUpperCase();
+            const email      = (emailInput ? emailInput.value : '').trim();
+            const password   = pwInput ? pwInput.value : '';
+
             const tenantErr = document.getElementById('tenant-error');
-            if (tenantErr) tenantErr.style.display = 'none';
-            if (tenantInput) tenantInput.classList.remove('error');
+            const emailErr  = document.getElementById('email-error');
+            const pwErr     = document.getElementById('password-error');
+            const btn       = document.getElementById('loginBtn');
 
             let isValid = true;
 
-            // 1️⃣ Email validation
-            const emailErrEl = document.querySelector('#loginForm .input-group:nth-child(2) .error-msg');
-            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                emailInput?.classList.add('error');
-                if (emailErrEl) emailErrEl.style.display = 'block';
+            // 1. Mandatory Tenant Code check
+            if (!tenantCode) {
+                if (tenantInput) tenantInput.classList.add('error');
+                if (tenantErr) tenantErr.style.display = 'block';
                 isValid = false;
             } else {
-                emailInput?.classList.remove('error');
-                if (emailErrEl) emailErrEl.style.display = 'none';
+                if (tenantInput) tenantInput.classList.remove('error');
+                if (tenantErr) tenantErr.style.display = 'none';
             }
 
-            // 2️⃣ Password validation (non-empty)
-            if (!password) {
-                pwInput?.classList.add('error');
-                if (pwError) {
-                    pwError.textContent = 'Password is required.';
-                    pwError.style.display = 'block';
-                }
+            // 2. Email check
+            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                if (emailInput) emailInput.classList.add('error');
+                if (emailErr) emailErr.style.display = 'block';
                 isValid = false;
             } else {
-                pwInput?.classList.remove('error');
-                if (pwError) pwError.style.display = 'none';
+                if (emailInput) emailInput.classList.remove('error');
+                if (emailErr) emailErr.style.display = 'none';
+            }
+
+            // 3. Password check
+            if (!password) {
+                if (pwInput) pwInput.classList.add('error');
+                if (pwErr) pwErr.style.display = 'block';
+                isValid = false;
+            } else {
+                if (pwInput) pwInput.classList.remove('error');
+                if (pwErr) pwErr.style.display = 'none';
             }
 
             if (!isValid) return;
 
-            // 3️⃣ Submit to B2B backend
             if (btn) { btn.textContent = 'Authenticating…'; btn.disabled = true; }
-            window.Auth.login(email, password, tenantCode).catch(function(err) {
-                if (typeof showToast === 'function') showToast(err.message || 'Login failed. Check your credentials.', 'error');
-                else alert(err.message || 'Login failed. Check email and password.');
+            try {
+                await window.Auth.login(email, password, tenantCode);
+            } catch (err) {
+                if (typeof showToast === 'function') {
+                    showToast(err.message || 'Login failed. Check your credentials.', 'error');
+                } else {
+                    alert(err.message || 'Login failed. Check email, password, and institute code.');
+                }
                 if (btn) { btn.textContent = 'Sign In'; btn.disabled = false; }
-            });
+            }
         };
     })();
     </script>
