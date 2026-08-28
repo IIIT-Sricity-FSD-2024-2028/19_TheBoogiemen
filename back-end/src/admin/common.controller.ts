@@ -856,7 +856,7 @@ export class CommonController {
   // ── Fees ──────────────────────────────────────────────────────────────────────
 
   @Get('fees')
-  @Roles('admin', 'head', 'superadmin')
+  @Roles('admin', 'head', 'superadmin', 'FINANCE_ADMIN')
   @ApiOperation({ summary: 'Get all fee records with compliance summary' })
   async getFees() {
     return {
@@ -872,7 +872,7 @@ export class CommonController {
   }
 
   @Patch('fees/:id/pay')
-  @Roles('admin', 'head', 'superadmin')
+  @Roles('admin', 'head', 'superadmin', 'FINANCE_ADMIN')
   @ApiOperation({ summary: 'Mark a fee record as paid' })
   async payFee(@Param('id') id: string) {
     const fee = this.db.fees.find(f => f.fee_id === id);
@@ -885,7 +885,7 @@ export class CommonController {
   }
 
   @Post('fees')
-  @Roles('admin', 'head', 'superadmin')
+  @Roles('admin', 'head', 'superadmin', 'FINANCE_ADMIN')
   @ApiOperation({ summary: 'Add a new fee record for a student' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async createFee(@Body() body: any) {
@@ -901,7 +901,7 @@ export class CommonController {
   }
 
   @Put('fees/:id')
-  @Roles('admin', 'head', 'superadmin')
+  @Roles('admin', 'head', 'superadmin', 'FINANCE_ADMIN')
   @ApiOperation({ summary: 'Update an existing fee record' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async updateFee(@Param('id') id: string, @Body() body: any) {

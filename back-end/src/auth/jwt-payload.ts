@@ -9,7 +9,19 @@
  * anything here that the user should not see.
  */
 
-export const ROLES = ['student', 'faculty', 'admin', 'head', 'superadmin'] as const;
+export const ROLES = [
+  'student',
+  'faculty',
+  'admin',
+  'head',
+  'superadmin',
+  'INSTITUTE_SUPER_ADMIN',
+  'DEPARTMENT_ADMIN_HOD',
+  'FINANCE_ADMIN',
+  'PLATFORM_SUPER_ADMIN',
+  'PLATFORM_SALES_SUPPORT',
+  'PLATFORM_TECH_SUPPORT',
+] as const;
 export type Role = typeof ROLES[number];
 
 export function isRole(value: unknown): value is Role {

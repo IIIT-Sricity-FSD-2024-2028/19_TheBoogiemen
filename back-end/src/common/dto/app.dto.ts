@@ -9,6 +9,11 @@ export class LoginDto {
   @ApiProperty({ example: 'password' })
   @IsNotEmpty()
   password: string;
+
+  @ApiPropertyOptional({ example: 'IIITS' })
+  @IsOptional()
+  @IsString()
+  tenant_code?: string;
 }
 
 export class SignupDto {

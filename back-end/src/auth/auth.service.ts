@@ -55,25 +55,46 @@ export class AuthService {
       );
     }
 
-    const student = this.db.students.find((s) => s.user_id === user.user_id);
-    const faculty = this.db.faculty.find((f) => f.user_id === user.user_id);
+    // Canonical profile lookups
+    const lookupId = user.user_id === 'u1_alt' ? 'u1' : user.user_id === 'u2_alt' ? 'u2' : user.user_id === 'u4_alt' ? 'u4' : user.user_id === 'u5_alt' ? 'u5' : user.user_id;
+    const student = this.db.students.find((s) => s.user_id === user.user_id || s.user_id === lookupId || s.email === user.email);
+    const faculty = this.db.faculty.find((f) => f.user_id === user.user_id || f.user_id === lookupId || f.email === user.email);
     const profile = student || faculty;
 
+    let firstName = profile?.first_name;
+    let lastName = profile?.last_name || '';
+    if (!firstName) {
+      if (user.role === 'superadmin' || user.role === 'INSTITUTE_SUPER_ADMIN') {
+        firstName = 'Institute'; lastName = 'Director';
+      } else if (user.role === 'head' || user.role === 'DEPARTMENT_ADMIN_HOD') {
+        firstName = 'Academic'; lastName = 'Head (CSE)';
+      } else if (user.role === 'FINANCE_ADMIN') {
+        firstName = 'Finance'; lastName = 'Officer';
+      } else if (user.role === 'admin') {
+        firstName = 'System'; lastName = 'Admin';
+      } else {
+        firstName = user.username || 'User';
+      }
+    }
+
     const payload: JwtPayload = {
-      sub: user.user_id,
+      sub: lookupId,
       role: user.role as Role,
       email: user.email,
     };
 
+    const fullName = `${firstName} ${lastName}`.trim();
+
     return {
       token: await this.jwtService.signAsync(payload),
       user: {
-        user_id: user.user_id,
+        user_id: lookupId,
         username: user.username,
         email: user.email,
         role: user.role,
-        first_name: profile?.first_name,
-        last_name: profile?.last_name,
+        first_name: firstName,
+        last_name: lastName,
+        name: fullName,
       },
     };
   }

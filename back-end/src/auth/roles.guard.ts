@@ -42,23 +42,39 @@ export class RolesGuard implements CanActivate {
     if (!requiredRoles || requiredRoles.length === 0) return true;
 
     const request = context.switchToHttp().getRequest();
-    const role = request.user?.role;
+    const userRole = request.user?.role;
 
-    if (!role) {
+    if (!userRole) {
       // Should be unreachable: JwtAuthGuard rejects unauthenticated requests first.
       throw new ForbiddenException(
         errorBody(ErrorCode.AUTHENTICATION_REQUIRED, 'No authenticated role on request'),
       );
     }
 
-    if (!requiredRoles.includes(role)) {
+    const normalizedRoles = [userRole];
+    if (userRole === 'superadmin' || userRole === 'admin' || userRole === 'INSTITUTE_SUPER_ADMIN') {
+      normalizedRoles.push('superadmin', 'admin', 'INSTITUTE_SUPER_ADMIN');
+    }
+    if (userRole === 'head' || userRole === 'DEPARTMENT_ADMIN_HOD') {
+      normalizedRoles.push('head', 'DEPARTMENT_ADMIN_HOD');
+    }
+    if (userRole === 'FINANCE_ADMIN' || userRole === 'finance') {
+      normalizedRoles.push('FINANCE_ADMIN', 'finance', 'admin');
+    }
+    if (userRole === 'PLATFORM_SUPER_ADMIN') {
+      normalizedRoles.push('PLATFORM_SUPER_ADMIN', 'superadmin', 'admin', 'head', 'faculty');
+    }
+
+    const hasAccess = requiredRoles.some((r) => normalizedRoles.includes(r));
+
+    if (!hasAccess) {
       // 403, not 401 — the caller is authenticated, just not permitted. The
       // frontend relies on this distinction: 401 signs you out, 403 does not.
       throw new ForbiddenException(
         errorBody(
           ErrorCode.INSUFFICIENT_ROLE,
-          `Requires one of: ${requiredRoles.join(', ')}. Your role is '${role}'.`,
-          { requiredRoles, actualRole: role },
+          `Requires one of: ${requiredRoles.join(', ')}. Your role is '${userRole}'.`,
+          { requiredRoles, actualRole: userRole },
         ),
       );
     }

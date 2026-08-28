@@ -489,7 +489,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!window.location.pathname.includes('student.html')) return;
     const user = window.Auth.requireAuth(['student']);
     if (!user) return;
-    const name = (user.first_name || '') + ' ' + (user.last_name || user.username || '');
+    const name = user.name || [user.first_name, user.last_name].filter(Boolean).join(' ') || user.username || 'John Doe';
     const sn = document.getElementById('sidebar-user-name');
     const wm = document.getElementById('welcome-message');
     if (sn) sn.textContent = name.trim();

@@ -338,10 +338,14 @@
 })();
 
 function finApi(path, opts={}) {
+    if (window.Auth && window.Auth.apiFetch) {
+        return window.Auth.apiFetch(path, opts);
+    }
     const user = JSON.parse(localStorage.getItem('bp_user')||localStorage.getItem('user')||'{}');
     const token = localStorage.getItem('bp_token')||'';
     const tenant = JSON.parse(localStorage.getItem('bp_tenant')||'{}');
-    return fetch('/api'+path, { ...opts, headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+token, 'role':'FINANCE_ADMIN', 'user-id':user.user_id||'u_fin1', 'x-tenant-id':tenant.tenant_id||'t1', ...(opts.headers||{}) } }).then(r=>r.json());
+    const base = (typeof API_BASE !== 'undefined') ? API_BASE : '/api';
+    return fetch(base+path, { ...opts, credentials: 'include', headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+token, 'role':'FINANCE_ADMIN', 'user-id':user.user_id||'u_fin', 'x-tenant-id':tenant.tenant_id||'t1', ...(opts.headers||{}) } }).then(r=>r.json()).catch(()=>[]);
 }
 
 function finToast(msg, type='success') {

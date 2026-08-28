@@ -484,7 +484,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!user) return;
 
     const tenant = window.Auth.getTenant() || {};
-    const name = user.name || (user.first_name || '') + ' ' + (user.last_name || user.username || 'Director');
+    const name = user.name || [user.first_name, user.last_name].filter(Boolean).join(' ') || user.username || 'Institute Director';
     const sn = document.getElementById('sidebar-user-name');
     if (sn) sn.textContent = name.trim();
 

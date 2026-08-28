@@ -302,23 +302,23 @@ window.Auth = {
 
         // 4. Demo Credential Fallback Table
         const DEMO_ACCOUNTS = {
-            'super@example.com':       { user_id: 'u5', name: 'Super Admin', role: 'INSTITUTE_SUPER_ADMIN', dest: 'director.html' },
-            'admin@example.com':       { user_id: 'u3', name: 'Admin',       role: 'INSTITUTE_SUPER_ADMIN', dest: 'director.html' },
-            'director@iiits.in':       { user_id: 'u_dir', name: 'Institute Director', role: 'INSTITUTE_SUPER_ADMIN', dest: 'director.html' },
-            'head@example.com':        { user_id: 'u4', name: 'Academic Head', role: 'head', dest: 'hod.html' },
-            'head@iiits.in':           { user_id: 'u_hod', name: 'Academic Head (CSE)', role: 'head', dest: 'hod.html' },
-            'faculty@example.com':     { user_id: 'u2', name: 'Dr. Jane Smith', role: 'faculty', dest: 'faculty.html' },
-            'faculty2@example.com':    { user_id: 'u7', name: 'Robert Wilson', role: 'faculty', dest: 'faculty.html' },
-            'faculty@iiits.in':        { user_id: 'u_fac', name: 'Faculty (IIITS)', role: 'faculty', dest: 'faculty.html' },
-            'student@example.com':     { user_id: 'u1', name: 'John Doe', role: 'student', dest: 'student.html' },
-            'student2@example.com':    { user_id: 'u6', name: 'Alice Vance', role: 'student', dest: 'student.html' },
-            'student@iiits.in':        { user_id: 'u_stu', name: 'Student (IIITS)', role: 'student', dest: 'student.html' },
-            'finance@iiits.in':        { user_id: 'u_fin', name: 'Finance Officer', role: 'FINANCE_ADMIN', dest: 'finance.html' },
+            'super@example.com':       { user_id: 'u5', name: 'Institute Director', first_name: 'Institute', last_name: 'Director', role: 'INSTITUTE_SUPER_ADMIN', dest: 'director.html' },
+            'admin@example.com':       { user_id: 'u3', name: 'System Admin',       first_name: 'System', last_name: 'Admin', role: 'INSTITUTE_SUPER_ADMIN', dest: 'director.html' },
+            'director@iiits.in':       { user_id: 'u5', name: 'Institute Director', first_name: 'Institute', last_name: 'Director', role: 'INSTITUTE_SUPER_ADMIN', dest: 'director.html' },
+            'head@example.com':        { user_id: 'u4', name: 'Academic Head (CSE)', first_name: 'Academic', last_name: 'Head (CSE)', role: 'head', dest: 'hod.html' },
+            'head@iiits.in':           { user_id: 'u4', name: 'Academic Head (CSE)', first_name: 'Academic', last_name: 'Head (CSE)', role: 'head', dest: 'hod.html' },
+            'faculty@example.com':     { user_id: 'u2', name: 'Dr. Jane Smith',     first_name: 'Jane', last_name: 'Smith', role: 'faculty', dest: 'faculty.html' },
+            'faculty2@example.com':    { user_id: 'u7', name: 'Robert Wilson',      first_name: 'Robert', last_name: 'Wilson', role: 'faculty', dest: 'faculty.html' },
+            'faculty@iiits.in':        { user_id: 'u2', name: 'Dr. Jane Smith',     first_name: 'Jane', last_name: 'Smith', role: 'faculty', dest: 'faculty.html' },
+            'student@example.com':     { user_id: 'u1', name: 'John Doe',           first_name: 'John', last_name: 'Doe', role: 'student', dest: 'student.html' },
+            'student2@example.com':    { user_id: 'u6', name: 'Alice Vance',        first_name: 'Alice', last_name: 'Vance', role: 'student', dest: 'student.html' },
+            'student@iiits.in':        { user_id: 'u1', name: 'John Doe',           first_name: 'John', last_name: 'Doe', role: 'student', dest: 'student.html' },
+            'finance@iiits.in':        { user_id: 'u_fin', name: 'Finance Officer', first_name: 'Finance', last_name: 'Officer', role: 'FINANCE_ADMIN', dest: 'finance.html' },
         };
 
         const acct = DEMO_ACCOUNTS[cleanEmail];
         if (acct) {
-            const user   = { user_id: acct.user_id, name: acct.name, email: cleanEmail, role: acct.role };
+            const user   = { user_id: acct.user_id, name: acct.name, first_name: acct.first_name, last_name: acct.last_name, username: acct.name, email: cleanEmail, role: acct.role };
             const tenant = { tenant_id: 't1', name: cleanTenant === 'NITW' ? 'NIT Warangal' : 'IIIT Sri City', code: cleanTenant };
             localStorage.setItem('bp_token',  'jwt_demo_' + Date.now());
             localStorage.setItem('bp_user',   JSON.stringify(user));

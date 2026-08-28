@@ -478,7 +478,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const user = window.Auth.requireAuth(['head', 'DEPARTMENT_ADMIN_HOD']);
     if (!user) return;
-    const name = (user.first_name || '') + ' ' + (user.last_name || user.username || '');
+    const name = user.name || [user.first_name, user.last_name].filter(Boolean).join(' ') || user.username || 'Academic Head (CSE)';
     const sn = document.getElementById('sidebar-user-name');
     if (sn) sn.textContent = name.trim();
     // Inject notification bell
