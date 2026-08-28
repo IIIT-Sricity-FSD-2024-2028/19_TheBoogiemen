@@ -1,5 +1,14 @@
-import { Module } from '@nestjs/common';
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
+import {
+  AUDIT_EXCLUDED_ROUTES,
+  RequestAuditMiddleware,
+} from './common/middleware/request-audit.middleware';
 import { ConfigModule } from '@nestjs/config';
 import { LoggerModule } from 'nestjs-pino';
 import { buildLoggerConfig } from './config/logger.config';
@@ -54,6 +63,7 @@ import { OutcomeModule } from './modules/outcome/outcome.outcome.module';
   controllers: [AppController],
   providers: [
     AppService,
+    RequestAuditMiddleware,
     // Order matters. JwtAuthGuard must run first: it verifies the token and
     // populates request.user, which RolesGuard then reads. Nest applies
     // APP_GUARD providers in registration order.
@@ -67,4 +77,30 @@ import { OutcomeModule } from './modules/outcome/outcome.outcome.module';
     },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  /**
+   * Router-level middleware, applied across every API route.
+   *
+   * Two details here are load-bearing and both fail silently if changed:
+   *
+   * 1. The path is '*path', not '*'. Express 5 uses path-to-regexp v8, where an
+   *    unnamed wildcard is a syntax error — `app.use('/*')` throws "Missing
+   *    parameter name" at boot. A named wildcard is required.
+   *
+   * 2. Because '*path' is not one of Nest's "simple wildcards" (['*', '/*',
+   *    '/*​/', '(.*)', '/(.*)']), it goes through the prefixed branch of
+   *    RouteInfoPathExtractor and compiles to '/api/*path'. That is exactly the
+   *    scope wanted: every API route, and none of the static frontend that
+   *    express.static serves from the same origin. A bare '*' would skip the
+   *    prefix, cover every .html and .css file too, and audit page loads.
+   *
+   * exclude() runs through the same extractor, so those paths are also written
+   * without 'api/' — see AUDIT_EXCLUDED_ROUTES for the reasoning per route.
+   */
+  configure(consumer: MiddlewareConsumer): void {
+    consumer
+      .apply(RequestAuditMiddleware)
+      .exclude(...AUDIT_EXCLUDED_ROUTES)
+      .forRoutes({ path: '*path', method: RequestMethod.ALL });
+  }
+}
