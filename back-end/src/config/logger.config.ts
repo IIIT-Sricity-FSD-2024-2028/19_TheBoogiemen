@@ -68,7 +68,7 @@ export const LOG_DIR = path.resolve(
 );
 
 /** Escape hatch for CI and for anyone who wants console-only output. */
-const fileLoggingEnabled = () =>
+export const fileLoggingEnabled = () =>
   (process.env.LOG_TO_FILE ?? 'true').trim().toLowerCase() !== 'false';
 
 /**
@@ -85,7 +85,7 @@ const fileLoggingEnabled = () =>
  * on a real schedule, or to delete old files, swap these two targets for
  * `pino-roll` — same shape, one dependency, `frequency: 'daily'`.
  */
-function todayStamp(): string {
+export function todayStamp(): string {
   const now = new Date();
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
