@@ -35,6 +35,7 @@ const VIEW_TITLES = {
     'leave-management-view': 'Leave Management',
     'discussion-forum-view': 'Discussion Forum',
     'research-projects-view': 'Research Projects',
+    'progress-reports-view': 'Progress Reports',
     'mark-attendance-view': 'Mark Attendance',
     'student-overview-view': 'Student Overview',
     'assessment-mapping-view': 'Assessment Mapping',
@@ -45,56 +46,107 @@ const VIEW_TITLES = {
     'institutional-reports-view': 'Institutional Reports',
     'attendance-override-view': 'Attendance Override',
     'settings-view': 'Settings',
+    // Finance-specific views
+    'fee-records-view': 'Fee Records',
+    'dues-view': 'Student Dues',
+    'receipts-view': 'Payment Receipts',
+    'fee-structure-view': 'Fee Structures',
+    'compliance-view': 'Compliance Report',
 };
 
 window.switchView = function(viewId, clickedEl) {
+    // Prevent default anchor jump (href="#") — this is the #1 cause of broken navigation
+    try {
+        if (window.event) { window.event.preventDefault(); window.event.stopPropagation(); }
+    } catch(_) {}
+
+    // Hide ALL view sections
     document.querySelectorAll('.view-section').forEach(el => {
         el.classList.remove('active');
         el.style.display = 'none';
     });
+
+    // Show target section
     const target = document.getElementById(viewId);
-    if (target) { target.classList.add('active'); target.style.display = 'block'; }
+    if (target) {
+        target.classList.add('active');
+        target.style.display = 'block';
+    }
+
+    // Update sidebar active state
     if (clickedEl) {
         document.querySelectorAll('.sidebar-nav .nav-item').forEach(el => el.classList.remove('active'));
         clickedEl.classList.add('active');
     }
-    const titleEl = document.getElementById('page-title');
+
+    // Update page title
+    const titleEl = document.getElementById('page-title') || document.getElementById('finPageTitle');
     if (titleEl && VIEW_TITLES[viewId]) titleEl.textContent = VIEW_TITLES[viewId];
-    setTimeout(() => triggerViewRender(viewId), 80);
+
+    // Trigger view-specific render (after short delay for DOM to settle)
+    setTimeout(() => { try { triggerViewRender(viewId); } catch(e) { console.error('triggerViewRender error:', e); } }, 80);
+
+    // Scroll to top of content area
+    const main = document.querySelector('.main-content');
+    if (main) main.scrollTop = 0;
+
+    return false; // extra safety for onclick="return switchView(...)"
 };
+
+// Also make switchFinView an alias so finance.html sidebar works seamlessly
+window.switchFinView = window.switchView;
 
 function triggerViewRender(viewId) {
     // Detect current role from Auth state so we only call role-appropriate renderers
-    const role = (window.Auth && window.Auth.getUser && window.Auth.getUser())
-        ? (window.Auth.getUser().role || '')
-        : (localStorage.getItem('bp_role') || '');
-    const isStudent = role === 'student';
-    const isFaculty = role === 'faculty';
-    const isAdmin   = ['admin','head','superadmin','INSTITUTE_SUPER_ADMIN','DEPARTMENT_ADMIN_HOD'].includes(role);
+    let role = '';
+    try {
+        const u = window.Auth && window.Auth.getUser && window.Auth.getUser();
+        role = u ? (u.role || '') : (localStorage.getItem('bp_role') || '');
+    } catch(_) {}
+    const isStudent  = role === 'student';
+    const isFaculty  = role === 'faculty';
+    const isFinance  = role === 'FINANCE_ADMIN';
+    const isAdmin    = ['admin','head','superadmin','INSTITUTE_SUPER_ADMIN','DEPARTMENT_ADMIN_HOD'].includes(role);
+
+    const safeCall = (fn) => { try { if (typeof fn === 'function') fn(); } catch(e) { console.error('Render error for ' + viewId + ':', e); } };
 
     const renders = {
-        'settings-view':              () => renderSettings(),
-        'my-profile-view':            () => renderStudentProfile(),
-        'time-table-view':            () => isStudent ? renderStudentTimetable() : renderFacultyTimetable(),
-        'my-courses-view':            () => renderStudentCourses(),
-        'attendance-view':            () => renderStudentAttendance(),
-        'leave-management-view':      () => isStudent ? renderStudentLeave()
-                                                : isFaculty ? renderFacultyLeaveList()
-                                                : renderLeaveManagement(),
-        'discussion-forum-view':      () => renderDiscussions(),
-        'research-projects-view':     () => isStudent ? renderStudentResearch() : renderFacultyResearch(),
-        'mark-attendance-view':       () => renderMarkAttendanceTable(),
-        'student-overview-view':      () => renderFacultyStudents(),
-        'assessment-mapping-view':    () => renderAssessmentList(),
-        'event-scheduler-view':       () => renderEventsTable(),
-        'resource-management-view':   () => renderResourceManagement(),
-        'fee-compliance-view':        () => renderFeeCompliance(),
-        'user-management-view':       () => renderUsersTable(),
-        'institutional-reports-view': () => renderInstitutionalReports(),
-        'attendance-override-view':   () => renderAttendanceOverride(),
-        'dashboard-view':             () => { if (isAdmin) renderReports(); if (isFaculty) renderFacultyDashboard(); if (isStudent) { window.renderStudentMeetings?.(); window.renderPendingSubmissions?.(); } },
+        'settings-view':              () => safeCall(renderSettings),
+        'my-profile-view':            () => safeCall(renderStudentProfile),
+        'time-table-view':            () => safeCall(isStudent ? renderStudentTimetable : renderFacultyTimetable),
+        'my-courses-view':            () => safeCall(renderStudentCourses),
+        'attendance-view':            () => safeCall(renderStudentAttendance),
+        'leave-management-view':      () => {
+            if (isStudent) safeCall(renderStudentLeave);
+            else if (isFaculty) safeCall(renderFacultyLeaveList);
+            else safeCall(typeof renderLeaveManagement === 'function' ? renderLeaveManagement : () => {});
+        },
+        'discussion-forum-view':      () => safeCall(renderDiscussions),
+        'research-projects-view':     () => safeCall(isStudent ? renderStudentResearch : renderFacultyResearch),
+        'progress-reports-view':      () => safeCall(typeof renderProgressReports === 'function' ? renderProgressReports : () => {}),
+        'mark-attendance-view':       () => safeCall(renderMarkAttendanceTable),
+        'student-overview-view':      () => safeCall(renderFacultyStudents),
+        'assessment-mapping-view':    () => safeCall(renderAssessmentList),
+        'event-scheduler-view':       () => safeCall(typeof renderEventsTable === 'function' ? renderEventsTable : () => {}),
+        'resource-management-view':   () => safeCall(typeof renderResourceManagement === 'function' ? renderResourceManagement : () => {}),
+        'fee-compliance-view':        () => safeCall(typeof renderFeeCompliance === 'function' ? renderFeeCompliance : () => {}),
+        'user-management-view':       () => safeCall(typeof renderUsersTable === 'function' ? renderUsersTable : () => {}),
+        'institutional-reports-view': () => safeCall(typeof renderInstitutionalReports === 'function' ? renderInstitutionalReports : () => {}),
+        'attendance-override-view':   () => safeCall(typeof renderAttendanceOverride === 'function' ? renderAttendanceOverride : () => {}),
+        'dashboard-view':             () => {
+            if (isAdmin)   safeCall(typeof renderReports === 'function' ? renderReports : () => {});
+            if (isFaculty) safeCall(typeof renderFacultyDashboard === 'function' ? renderFacultyDashboard : () => {});
+            if (isStudent) { try { window.renderStudentMeetings?.(); } catch(_){} try { window.renderPendingSubmissions?.(); } catch(_){} }
+            if (isFinance && typeof loadDashboard === 'function') safeCall(loadDashboard);
+        },
+        // Finance-specific views
+        'fee-records-view':           () => safeCall(typeof loadFeeRecords === 'function' ? loadFeeRecords : () => {}),
+        'dues-view':                  () => safeCall(typeof loadDues === 'function' ? loadDues : () => {}),
+        'receipts-view':              () => safeCall(typeof loadReceipts === 'function' ? loadReceipts : () => {}),
+        'fee-structure-view':         () => safeCall(typeof renderFeeStructures === 'function' ? renderFeeStructures : () => {}),
+        'compliance-view':            () => safeCall(typeof loadComplianceReport === 'function' ? loadComplianceReport : () => {}),
     };
-    try { if (renders[viewId]) renders[viewId](); } catch(e) { console.error('Render error:', e); }
+    if (renders[viewId]) renders[viewId]();
 }
 
 // ── Student: Profile ─────────────────────────────────────────────────────────
@@ -3135,4 +3187,20 @@ document.addEventListener('DOMContentLoaded', () => {
         if (viewId === 'mark-attendance-view') setTimeout(() => renderFacultyAttendanceRequests(), 200);
         if (viewId === 'resource-management-view') setTimeout(() => renderAdminResourceBookings(), 200);
     };
+
+    // ── Safety net: ensure only the active view is visible on page load ──
+    document.querySelectorAll('.view-section').forEach(el => {
+        if (!el.classList.contains('active')) {
+            el.style.display = 'none';
+        } else {
+            el.style.display = 'block';
+        }
+    });
+
+    // ── Attach click handlers to all sidebar nav-items to prevent default ──
+    document.querySelectorAll('.sidebar-nav a.nav-item[href="#"]').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+        });
+    });
 });
