@@ -231,35 +231,13 @@ window.Auth = {
             return true;
         }
 
-        // 2. Finance Admin Role
-        if (cleanEmail === 'finance@iiits.in' || cleanEmail.startsWith('finance@')) {
-            const user = { user_id: 'u_fin1', name: 'Finance Officer', email: cleanEmail, role: 'FINANCE_ADMIN' };
-            const tenant = { tenant_id: 't1', name: 'IIIT Sri City', code: cleanTenant };
-            localStorage.setItem('bp_token', 'jwt_fin_' + Date.now());
-            localStorage.setItem('bp_user', JSON.stringify(user));
-            localStorage.setItem('bp_tenant', JSON.stringify(tenant));
-            localStorage.setItem('user', JSON.stringify(user));
-            localStorage.setItem('tenant', JSON.stringify(tenant));
-            window.location.href = 'finance.html';
-            return true;
-        }
-
-        // Backend login mapping helper for seamless API authentication
-        let apiEmail = cleanEmail;
-        let apiPass  = cleanPass;
-
-        if (cleanEmail === 'student@iiits.in')  { apiEmail = 'student@example.com'; apiPass = 'Student@123'; }
-        if (cleanEmail === 'faculty@iiits.in')  { apiEmail = 'faculty@example.com'; apiPass = 'Faculty@123'; }
-        if (cleanEmail === 'head@iiits.in')     { apiEmail = 'head@example.com';    apiPass = 'Head@123'; }
-        if (cleanEmail === 'director@iiits.in') { apiEmail = 'super@example.com';   apiPass = 'Super@123'; }
-
-        // 3. Attempt API Authentication with backend
+        // 2. Attempt API Authentication with backend
         try {
             const res = await fetch(`${API_BASE}/auth/login`, {
                 method:  'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify({ email: apiEmail, password: apiPass, tenant_code: cleanTenant })
+                body:    JSON.stringify({ email: cleanEmail, password: cleanPass, tenant_code: cleanTenant })
             });
 
             if (res.ok) {
@@ -291,6 +269,10 @@ window.Auth = {
                 }
                 if (role === 'faculty') {
                     window.location.href = 'faculty.html';
+                    return true;
+                }
+                if (role === 'FINANCE_ADMIN') {
+                    window.location.href = 'finance.html';
                     return true;
                 }
                 window.location.href = 'student.html';

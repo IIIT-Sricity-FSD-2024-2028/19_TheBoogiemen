@@ -55,10 +55,16 @@ const VIEW_TITLES = {
 };
 
 window.switchView = function(viewId, clickedEl) {
-    // Prevent default anchor jump (href="#") — this is the #1 cause of broken navigation
+    if (!viewId) return false;
     try {
-        if (window.event) { window.event.preventDefault(); window.event.stopPropagation(); }
+        if (window.event) { window.event.preventDefault?.(); window.event.stopPropagation?.(); }
     } catch(_) {}
+
+    // Support both 'my-profile' and 'my-profile-view'
+    let resolvedId = viewId;
+    if (!document.getElementById(resolvedId) && document.getElementById(resolvedId + '-view')) {
+        resolvedId = resolvedId + '-view';
+    }
 
     // Hide ALL view sections
     document.querySelectorAll('.view-section').forEach(el => {
@@ -67,28 +73,34 @@ window.switchView = function(viewId, clickedEl) {
     });
 
     // Show target section
-    const target = document.getElementById(viewId);
+    const target = document.getElementById(resolvedId);
     if (target) {
         target.classList.add('active');
         target.style.display = 'block';
     }
 
     // Update sidebar active state
-    if (clickedEl) {
-        document.querySelectorAll('.sidebar-nav .nav-item').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.sidebar-nav .nav-item').forEach(el => el.classList.remove('active'));
+    if (clickedEl && clickedEl.classList) {
         clickedEl.classList.add('active');
+    } else {
+        const navEl = document.querySelector(`.sidebar-nav .nav-item[onclick*="${viewId}"]`) ||
+                      document.querySelector(`.sidebar-nav .nav-item[onclick*="${resolvedId}"]`);
+        if (navEl) navEl.classList.add('active');
     }
 
     // Update page title
     const titleEl = document.getElementById('page-title') || document.getElementById('finPageTitle');
-    if (titleEl && VIEW_TITLES[viewId]) titleEl.textContent = VIEW_TITLES[viewId];
+    if (titleEl && (VIEW_TITLES[resolvedId] || VIEW_TITLES[viewId])) {
+        titleEl.textContent = VIEW_TITLES[resolvedId] || VIEW_TITLES[viewId];
+    }
 
-    // Trigger view-specific render (after short delay for DOM to settle)
-    setTimeout(() => { try { triggerViewRender(viewId); } catch(e) { console.error('triggerViewRender error:', e); } }, 80);
+    // Trigger view-specific render
+    try { triggerViewRender(resolvedId); } catch(e) { console.error('triggerViewRender error:', e); }
 
     // Scroll to top of content area
-    const main = document.querySelector('.main-content');
-    if (main) main.scrollTop = 0;
+    const main = document.querySelector('.main-content') || document.querySelector('main');
+    if (main && main.scrollTop !== undefined) main.scrollTop = 0;
 
     return false; // extra safety for onclick="return switchView(...)"
 };
@@ -2114,6 +2126,7 @@ window.updateLeave = async function(id, status, studentId, studentName) {
 window.renderAttendanceOverride = async function() {
     const el = document.getElementById('h-attendance-override-body');
     if (!el) return;
+    try {
         const leavesRaw = await api('/leave');
         const leaves = Array.isArray(leavesRaw) ? leavesRaw : [];
         const overrides = leaves.filter(l => (l.leave_type || '').toLowerCase() === 'medical' && l.status === 'pending');
