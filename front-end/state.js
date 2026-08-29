@@ -162,6 +162,8 @@ window.Auth = {
                 window.location.href = 'super-user.html';
             } else if (role === 'faculty') {
                 window.location.href = 'faculty.html';
+            } else if (role === 'spoc') {
+                window.location.href = 'spoc.html';
             } else {
                 window.location.href = 'student.html';
             }

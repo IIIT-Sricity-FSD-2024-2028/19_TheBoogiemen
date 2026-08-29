@@ -45,6 +45,7 @@ const VIEW_TITLES = {
     'institutional-reports-view': 'Institutional Reports',
     'attendance-override-view': 'Attendance Override',
     'settings-view': 'Settings',
+    'institutions-view': 'Institutions',
 };
 
 window.switchView = function(viewId, clickedEl) {
@@ -92,6 +93,7 @@ function triggerViewRender(viewId) {
         'user-management-view':       () => renderUsersTable(),
         'institutional-reports-view': () => renderInstitutionalReports(),
         'attendance-override-view':   () => renderAttendanceOverride(),
+        'institutions-view':          () => { renderInstitutions(); renderSupportInbox(); },
         'dashboard-view':             () => { if (isAdmin) renderReports(); if (isFaculty) renderFacultyDashboard(); if (isStudent) { window.renderStudentMeetings?.(); window.renderPendingSubmissions?.(); } },
     };
     try { if (renders[viewId]) renders[viewId](); } catch(e) { console.error('Render error:', e); }
@@ -3004,3 +3006,135 @@ window.downloadDocument = async function(fileId, suggestedName) {
         showToast('Failed to download: ' + e.message, 'error');
     }
 };
+
+// ── Superadmin: Institutions (the vendor cockpit) ─────────────────────────────
+//
+// This is now superadmin's whole dashboard — see super-admin.html's own
+// header comment for why the institute-specific panels moved out entirely
+// rather than staying alongside this one.
+//
+// No "add college" UI action exists here on purpose: a college becomes valid
+// by purchasing a subscription (not yet built), not by a superadmin clicking
+// a button. The provisioning capability this list would have called,
+// POST /billing/colleges, still exists server-side — reachable via Swagger
+// for manual/exceptional onboarding — but nothing in this UI triggers it.
+
+window.renderInstitutions = async function() {
+    const el = document.getElementById('institutions-table-body');
+    if (!el) return;
+    try {
+        const res = await api('/billing/colleges');
+        const colleges = res.data || [];
+        if (!colleges.length) {
+            el.innerHTML = '<p style="color:#64748b;text-align:center;padding:20px;">No colleges registered yet.</p>';
+            return;
+        }
+        el.innerHTML = `<table class="crud-table">
+            <thead><tr><th>College</th><th>SPOC</th><th>Admins</th><th>Students</th><th>Faculty</th></tr></thead>
+            <tbody>${colleges.map(c => `
+                <tr>
+                    <td><strong>${escapeHtmlSafe(c.name)}</strong>${c.city ? `<br><span style="font-size:11px;color:#94a3b8;">${escapeHtmlSafe(c.city)}${c.state ? ', ' + escapeHtmlSafe(c.state) : ''}</span>` : ''}</td>
+                    <td>${c.spoc_email ? escapeHtmlSafe(c.spoc_email) : '<span style="color:#94a3b8;">—</span>'}</td>
+                    <td>${c.admin_count}</td>
+                    <td>${c.student_count}</td>
+                    <td>${c.faculty_count}</td>
+                </tr>`).join('')}
+            </tbody></table>`;
+    } catch (e) {
+        el.innerHTML = `<p style="color:#ef4444;">Failed to load institutions: ${e.message}</p>`;
+    }
+};
+
+// ── Superadmin: Support Inbox ─────────────────────────────────────────────────
+//
+// Modelled on the discussion thread pattern (renderDiscussions / openThread
+// Detail / submitThreadReply above): a list, a detail-and-reply modal, no
+// resolved/status field — replying is what "resolves" a thread here too.
+
+window.renderSupportInbox = async function() {
+    const el = document.getElementById('support-inbox-body');
+    if (!el) return;
+    try {
+        const res = await api('/billing/support/threads');
+        const threads = res.data || [];
+        if (!threads.length) {
+            el.innerHTML = '<p style="color:#64748b;text-align:center;padding:20px;">No support threads yet.</p>';
+            return;
+        }
+        el.innerHTML = threads.map(t => {
+            const when = t.last_message ? new Date(t.last_message.created_at).toLocaleString() : '';
+            const preview = t.last_message ? t.last_message.content.slice(0, 90) : 'No messages yet';
+            const fromUs = t.last_message && t.last_message.sender_role === 'superadmin';
+            return `<div onclick="openSupportThread('${t.thread_id}')" style="padding:16px 24px;border-bottom:1px solid #f1f5f9;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                    <h4 style="margin:0;font-size:14px;font-weight:700;">${escapeHtmlSafe(t.college_name)}</h4>
+                    <small style="color:#94a3b8;">${when}</small>
+                </div>
+                <p style="margin:0;font-size:13px;color:#64748b;">${fromUs ? '<em>You: </em>' : ''}${escapeHtmlSafe(preview)}${preview.length >= 90 ? '…' : ''}</p>
+                <small style="color:#94a3b8;">${t.message_count} message${t.message_count === 1 ? '' : 's'}</small>
+            </div>`;
+        }).join('');
+    } catch (e) {
+        el.innerHTML = `<p style="color:#ef4444;padding:16px;">Failed to load support inbox: ${e.message}</p>`;
+    }
+};
+
+window.openSupportThread = async function(threadId) {
+    try {
+        const res = await api(`/billing/support/threads/${threadId}`);
+        const thread = res.data;
+        document.getElementById('supportThreadId').value = threadId;
+        document.getElementById('supportThreadTitle').textContent = 'Support — ' + (thread.subject || 'Thread');
+        renderSupportMessages(thread.messages || []);
+        document.getElementById('supportReplyContent').value = '';
+        openModal('supportThreadModal');
+    } catch (e) {
+        showToast('Failed to open thread: ' + e.message, 'error');
+    }
+};
+
+window.submitSuperadminReply = async function() {
+    const threadId = document.getElementById('supportThreadId')?.value;
+    const content = document.getElementById('supportReplyContent')?.value.trim();
+    if (!content) { showToast('Please write a reply', 'warning'); return; }
+    try {
+        const res = await api(`/billing/support/threads/${threadId}/reply`, {
+            method: 'POST',
+            body: JSON.stringify({ content }),
+        });
+        renderSupportMessages(res.data.messages || []);
+        document.getElementById('supportReplyContent').value = '';
+        renderSupportInbox();
+    } catch (e) {
+        showToast('Failed: ' + e.message, 'error');
+    }
+};
+
+function renderSupportMessages(messages) {
+    const el = document.getElementById('supportThreadMessages');
+    if (!el) return;
+    if (!messages.length) {
+        el.innerHTML = '<p style="color:#64748b;font-size:13px;">No messages yet.</p>';
+        return;
+    }
+    el.innerHTML = messages.map(m => {
+        const mine = m.sender_role === 'superadmin';
+        const when = m.created_at ? new Date(m.created_at).toLocaleString() : '';
+        return `<div style="align-self:${mine ? 'flex-end' : 'flex-start'};max-width:80%;padding:10px 14px;border-radius:10px;font-size:13px;line-height:1.5;background:${mine ? '#6366f1' : '#f1f5f9'};color:${mine ? '#fff' : '#0f172a'};">
+            ${escapeHtmlSafe(m.content)}
+            <span style="display:block;font-size:11px;opacity:.75;margin-top:4px;">${mine ? 'You' : escapeHtmlSafe(m.sender_name || 'SPOC')} · ${when}</span>
+        </div>`;
+    }).join('');
+    el.style.display = 'flex';
+    el.style.flexDirection = 'column';
+}
+
+/** Every place in this section that renders a server-supplied string uses
+ * this rather than raw template interpolation — new code should not add to
+ * the app's existing 136 unescaped innerHTML sites even though most of
+ * fixes.js still does. */
+function escapeHtmlSafe(s) {
+    const div = document.createElement('div');
+    div.textContent = s ?? '';
+    return div.innerHTML;
+}

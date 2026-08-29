@@ -17,28 +17,32 @@
       "username": "student",
       "email": "student@example.com",
       "role": "student",
-      "password_hash": "$2b$12$JIMrssEhBipbIk6g/yiUM.TE2egkr203VXUXZZiIf4RVbl.qPRn46"
+      "password_hash": "$2b$12$JIMrssEhBipbIk6g/yiUM.TE2egkr203VXUXZZiIf4RVbl.qPRn46",
+      "college_id": "c-default"
     },
     {
       "user_id": "u2",
       "username": "faculty",
       "email": "faculty@example.com",
       "role": "faculty",
-      "password_hash": "$2b$12$81Elh/Ru5pDpKKp6EdmpGObgWsPAT8tbJ1E6PNYB9AuB7OaWmI85G"
+      "password_hash": "$2b$12$81Elh/Ru5pDpKKp6EdmpGObgWsPAT8tbJ1E6PNYB9AuB7OaWmI85G",
+      "college_id": "c-default"
     },
     {
       "user_id": "u3",
       "username": "admin",
       "email": "admin@example.com",
       "role": "admin",
-      "password_hash": "$2b$12$obffwRD1a29Ho5PvugE/kuhARblGZugK7PO5scvegUXv0KQxuO2v."
+      "password_hash": "$2b$12$obffwRD1a29Ho5PvugE/kuhARblGZugK7PO5scvegUXv0KQxuO2v.",
+      "college_id": "c-default"
     },
     {
       "user_id": "u4",
       "username": "head",
       "email": "head@example.com",
       "role": "head",
-      "password_hash": "$2b$12$CZx5Sy33X1haBNV..57Ws.hKe3oBcOZl/ZMvF8cRrv4FYrZAPll9m"
+      "password_hash": "$2b$12$CZx5Sy33X1haBNV..57Ws.hKe3oBcOZl/ZMvF8cRrv4FYrZAPll9m",
+      "college_id": "c-default"
     },
     {
       "user_id": "u5",
@@ -52,14 +56,27 @@
       "username": "student2",
       "email": "student2@example.com",
       "role": "student",
-      "password_hash": "$2b$12$8MaKKerJ8bB0uoFGz3mU.efNWSNH5ynuhJLYVt9MH0eBinWqdswqO"
+      "password_hash": "$2b$12$8MaKKerJ8bB0uoFGz3mU.efNWSNH5ynuhJLYVt9MH0eBinWqdswqO",
+      "college_id": "c-default"
     },
     {
       "user_id": "u7",
       "username": "faculty2",
       "email": "faculty2@example.com",
       "role": "faculty",
-      "password_hash": "$2b$12$qFLRiGff4WC2LAVfOPT5e./z1FSKW0ob.Ls8CfDLApYtYDyKEwZaO"
+      "password_hash": "$2b$12$qFLRiGff4WC2LAVfOPT5e./z1FSKW0ob.Ls8CfDLApYtYDyKEwZaO",
+      "college_id": "c-default"
+    },
+    {
+      "user_id": "u-spoc-demo",
+      "username": "spoc",
+      "first_name": "Priya",
+      "last_name": "Menon",
+      "email": "spoc@example.com",
+      "phone": "",
+      "role": "spoc",
+      "college_id": "col-demo",
+      "password_hash": "$2b$12$OEx78MW2kJr8d2E0CYnN7O1BghW2JiIYqBuW/n3.oQ41DqtPMzf8u"
     }
   ],
   "students": [
@@ -1189,5 +1206,27 @@
       "created_at": "2026-08-18T11:37:28.185Z"
     }
   ],
-  "resource_bookings": []
+  "resource_bookings": [],
+  "colleges": [
+    {
+      "college_id": "c-default",
+      "name": "BarelyPassing Institute",
+      "city": null,
+      "state": null,
+      "type": null,
+      "status": "active",
+      "created_at": "2026-08-29T16:42:07.441Z"
+    },
+    {
+      "college_id": "col-demo",
+      "name": "Northbridge Institute of Technology",
+      "city": "Pune",
+      "state": "Maharashtra",
+      "type": "private",
+      "status": "active",
+      "created_at": "2026-08-29T17:05:02.126Z"
+    }
+  ],
+  "support_threads": [],
+  "support_messages": []
 }

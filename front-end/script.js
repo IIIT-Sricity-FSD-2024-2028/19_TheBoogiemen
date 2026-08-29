@@ -136,6 +136,12 @@ function selectRole(role) {
             subtitle: 'Full system access and administrative control',
             emailPlaceholder: 'admin@iiits.in',
             passwordPlaceholder: 'Min 8 chars: 1 uppercase, 1 lowercase, 1 number, 1 special'
+        },
+        spoc: {
+            title: 'Institution Partner Sign In',
+            subtitle: "Manage your college's subscription and reach our team",
+            emailPlaceholder: 'spoc@yourcollege.edu',
+            passwordPlaceholder: 'Min 8 chars: 1 uppercase, 1 lowercase, 1 number, 1 special'
         }
     };
     
@@ -171,6 +177,7 @@ const DEMO_LOGINS = {
     faculty:    { email: 'faculty@example.com', password: 'Faculty@123' },
     head:       { email: 'head@example.com',    password: 'Head@123'    },
     superadmin: { email: 'super@example.com',   password: 'Super@123'   },
+    spoc:       { email: 'spoc@example.com',    password: 'Spoc@123'    },
 };
 
 // '' covers opening the page as a file:// URL.

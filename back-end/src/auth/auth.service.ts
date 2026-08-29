@@ -60,6 +60,11 @@ export class AuthService {
       sub: user.user_id,
       role: user.role as Role,
       email: user.email,
+      // Absent (not null, not '') when the account has none — superadmin,
+      // and any pre-migration account never backfilled. Every consumer of
+      // this claim (@CurrentUserCollegeId()) already treats "absent" as its
+      // own case rather than assuming a string.
+      ...(user.college_id ? { college_id: user.college_id } : {}),
     };
 
     return {
@@ -69,6 +74,7 @@ export class AuthService {
         username: user.username,
         email: user.email,
         role: user.role,
+        college_id: user.college_id,
         first_name: profile?.first_name,
         last_name: profile?.last_name,
       },

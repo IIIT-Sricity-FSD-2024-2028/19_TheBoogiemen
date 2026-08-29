@@ -15,6 +15,13 @@ export const ROLES = [
   'admin',
   'head',
   'superadmin',
+  // The vendor's own contact at a customer college. Deliberately last and
+  // deliberately never added to ASSIGNABLE_ROLES in common/dto/user.dto.ts —
+  // a SPOC is provisioned only through POST /billing/colleges, never through
+  // POST /users. See roles.guard.ts: every route lists its roles explicitly,
+  // so adding this role grants nothing by itself — a route only opens to
+  // 'spoc' where '@Roles(...,'spoc')' names it outright.
+  'spoc',
 ] as const;
 export type Role = (typeof ROLES)[number];
 
@@ -29,6 +36,19 @@ export interface JwtPayload {
   sub: string;
   role: Role;
   email?: string;
+  /**
+   * The college this principal belongs to. Present for every role except
+   * superadmin (the vendor operator, who belongs to no single college) and,
+   * for now, students/faculty/admin/head created before the multi-college
+   * migration backfilled 'c-default' onto them.
+   *
+   * Baked into the token at login, exactly like `role` — never re-derived
+   * from a per-request database lookup, and never client-suppliable. A route
+   * that needs to scope a query to "my college" reads this claim via
+   * @CurrentUserCollegeId(), the same pattern @CurrentUserId() already
+   * established for `sub`.
+   */
+  college_id?: string;
   /** Issued-at / expiry, populated by the signer. */
   iat?: number;
   exp?: number;

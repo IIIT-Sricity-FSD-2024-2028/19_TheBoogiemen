@@ -35,11 +35,22 @@ export type AssignableRole = (typeof ASSIGNABLE_ROLES)[number];
  *   - Academic Head / Admin — may manage students and faculty only, and
  *     explicitly "cannot add other Academic Heads or Super Admins".
  * Previously nothing enforced this and a `head` could mint a `superadmin`.
+ *
+ * 'spoc' is deliberately absent from this table's keys — a SPOC creates users
+ * through this same POST /users path (so it inherits every existing check:
+ * duplicate-email, password hashing, the works), but 'spoc' itself is not a
+ * value in ASSIGNABLE_ROLES, so it can never appear as a *key* here by being
+ * granted by anyone via this table. It appears below only as the one row
+ * describing what a SPOC may create.
  */
 const ROLE_GRANTS: Record<string, readonly AssignableRole[]> = {
   superadmin: ASSIGNABLE_ROLES,
   admin: ['student', 'faculty'],
   head: ['student', 'faculty'],
+  // The entire "SPOC may hire only admins" rule. Every existing caller of
+  // canAssignRole() — user creation, role changes, password resets — now
+  // correctly refuses a SPOC anything but 'admin', with no new logic.
+  spoc: ['admin'],
 };
 
 export function rolesAssignableBy(
