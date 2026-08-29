@@ -59,6 +59,7 @@
         </form>
 
         <p class="terms">Not a SPOC? <a href="login.html">Go to the main sign-in page</a></p>
+        <p id="demo-credentials" style="display:none;margin:14px 0 0;padding:8px 10px;border:1px dashed #cbd5e1;border-radius:8px;background:#f8fafc;color:#475569;font-size:12px;text-align:center;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;"></p>
     </div>
 </div>
 
@@ -68,6 +69,20 @@
 
 <script src="state.js"></script>
 <script>
+// Dev-only prefill, same guard and reasoning as login.html's role-switcher
+// version: localhost only, built in JS so the credentials never sit in this
+// page's markup on any other host. Delete before deploying anywhere real.
+const DEMO_SPOC = { email: 'spoc@example.com', password: 'Spoc@123' };
+if (['localhost', '127.0.0.1', ''].includes(location.hostname)) {
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('spocEmail').value = DEMO_SPOC.email;
+        document.getElementById('spocPassword').value = DEMO_SPOC.password;
+        const strip = document.getElementById('demo-credentials');
+        strip.textContent = `DEV · ${DEMO_SPOC.email} · ${DEMO_SPOC.password}`;
+        strip.style.display = 'block';
+    });
+}
+
 async function handleSpocLogin(event) {
     event.preventDefault();
     const email = document.getElementById('spocEmail')?.value.trim();

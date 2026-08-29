@@ -3009,10 +3009,15 @@ window.downloadDocument = async function(fileId, suggestedName) {
 
 // ── Superadmin: Institutions (the vendor cockpit) ─────────────────────────────
 //
-// Additive to the existing superadmin panels, not a replacement — this
-// deployment's superadmin still manages its own college through User
-// Management etc. This section is the new, separate concern: every *other*
-// college, as a customer. See SPOC_IMPLEMENTATION_PLAN.md §8.
+// This is now superadmin's whole dashboard — see super-admin.html's own
+// header comment for why the institute-specific panels moved out entirely
+// rather than staying alongside this one.
+//
+// No "add college" UI action exists here on purpose: a college becomes valid
+// by purchasing a subscription (not yet built), not by a superadmin clicking
+// a button. The provisioning capability this list would have called,
+// POST /billing/colleges, still exists server-side — reachable via Swagger
+// for manual/exceptional onboarding — but nothing in this UI triggers it.
 
 window.renderInstitutions = async function() {
     const el = document.getElementById('institutions-table-body');
@@ -3021,7 +3026,7 @@ window.renderInstitutions = async function() {
         const res = await api('/billing/colleges');
         const colleges = res.data || [];
         if (!colleges.length) {
-            el.innerHTML = '<p style="color:#64748b;text-align:center;padding:20px;">No colleges registered yet. Click "+ Add College" to onboard one.</p>';
+            el.innerHTML = '<p style="color:#64748b;text-align:center;padding:20px;">No colleges registered yet.</p>';
             return;
         }
         el.innerHTML = `<table class="crud-table">
@@ -3037,49 +3042,6 @@ window.renderInstitutions = async function() {
             </tbody></table>`;
     } catch (e) {
         el.innerHTML = `<p style="color:#ef4444;">Failed to load institutions: ${e.message}</p>`;
-    }
-};
-
-window.submitCreateCollege = async function() {
-    const name = document.getElementById('ncCollegeName')?.value.trim();
-    const city = document.getElementById('ncCity')?.value.trim();
-    const state = document.getElementById('ncState')?.value.trim();
-    const type = document.getElementById('ncType')?.value;
-    const spocEmail = document.getElementById('ncSpocEmail')?.value.trim();
-    const spocFirst = document.getElementById('ncSpocFirst')?.value.trim();
-    const spocLast = document.getElementById('ncSpocLast')?.value.trim();
-    const spocPassword = document.getElementById('ncSpocPassword')?.value;
-
-    if (!name) { showToast('College name is required', 'warning'); return; }
-    if (!spocEmail) { showToast('SPOC email is required', 'warning'); return; }
-
-    try {
-        const res = await api('/billing/colleges', {
-            method: 'POST',
-            body: JSON.stringify({
-                college: { name, city: city || undefined, state: state || undefined, type: type || undefined },
-                spoc: {
-                    email: spocEmail,
-                    first_name: spocFirst || undefined,
-                    last_name: spocLast || undefined,
-                    password: spocPassword || undefined,
-                },
-            }),
-        });
-        const generated = res?.data?.generated_password;
-        showToast(
-            generated
-                ? `College created. SPOC temporary password: ${generated} (relay this out of band — it will not be shown again)`
-                : 'College and SPOC created successfully',
-            'success',
-        );
-        closeModal('addCollegeModal');
-        ['ncCollegeName','ncCity','ncState','ncSpocFirst','ncSpocLast','ncSpocEmail','ncSpocPassword'].forEach(id => {
-            const f = document.getElementById(id); if (f) f.value = '';
-        });
-        renderInstitutions();
-    } catch (e) {
-        showToast('Failed: ' + e.message, 'error');
     }
 };
 
