@@ -26,6 +26,10 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
             <span>Dashboard</span>
         </a>
+        <a href="#" class="nav-item" onclick="switchView('institutions-view',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/></svg>
+            <span>Institutions</span>
+        </a>
         <a href="#" class="nav-item" onclick="switchView('institutional-reports-view',this)">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
             <span>Institutional Reports</span>
@@ -112,6 +116,29 @@
             </div>
         </div>
 
+
+        <!-- ── Institutions View — the vendor cockpit ──
+             Additive alongside the existing panels, not a replacement: this
+             deployment's superadmin still runs its own college day-to-day
+             through User Management etc. (see SPOC_IMPLEMENTATION_PLAN.md §8
+             and §13 decision 5). This view is the new, separate concern —
+             every *other* college, as a customer. -->
+        <div id="institutions-view" class="view-section" style="display:none;">
+            <div class="stats-card">
+                <div class="stats-card-header">
+                    <div><h3>Registered Institutions</h3><p>Every college with a SPOC account on this platform.</p></div>
+                    <button class="submit-btn" style="width:auto;padding:8px 16px;" onclick="openModal('addCollegeModal')">+ Add College</button>
+                </div>
+                <div class="stats-card-body" id="institutions-table-body" style="padding:24px;">Loading…</div>
+            </div>
+
+            <div class="stats-card">
+                <div class="stats-card-header">
+                    <div><h3>Support Inbox</h3><p>Messages from every SPOC, newest activity first.</p></div>
+                </div>
+                <div class="stats-card-body" id="support-inbox-body" style="padding:0;">Loading…</div>
+            </div>
+        </div>
 
         <!-- ── Institutional Reports View ── -->
         <div id="institutional-reports-view" class="view-section" style="display:none;">
@@ -413,6 +440,51 @@
         <div class="modal-footer">
             <button class="submit-btn" style="flex:1;" onclick="submitEditFee()">&#x1F4BE; Save &amp; Notify Student</button>
             <button class="btn-cancel" onclick="closeModal('editFeeModal')">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Add College + SPOC Modal ──────────────────────────────────────────── -->
+<div id="addCollegeModal" class="modal-backdrop">
+    <div class="modal-window">
+        <div class="modal-header"><h2>&#x1F3EB; Register a College</h2><button class="close-modal" onclick="closeModal('addCollegeModal')">&times;</button></div>
+        <div class="modal-body">
+            <div class="form-group"><label>College Name <span style="color:#ef4444">*</span></label><input type="text" id="ncCollegeName" placeholder="e.g. St. Xavier College of Engineering"></div>
+            <div class="form-row">
+                <div class="form-group"><label>City</label><input type="text" id="ncCity" placeholder="e.g. Mumbai"></div>
+                <div class="form-group"><label>State</label><input type="text" id="ncState" placeholder="e.g. Maharashtra"></div>
+            </div>
+            <div class="form-group"><label>Type</label>
+                <select id="ncType"><option value="">-- Select --</option><option value="government">Government</option><option value="private">Private</option><option value="deemed">Deemed</option></select>
+            </div>
+            <hr style="margin:16px 0;border:none;border-top:1px solid #e2e8f0;">
+            <p style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">SPOC Contact</p>
+            <div class="form-row">
+                <div class="form-group"><label>First Name</label><input type="text" id="ncSpocFirst" placeholder="Anita"></div>
+                <div class="form-group"><label>Last Name</label><input type="text" id="ncSpocLast" placeholder="Rao"></div>
+            </div>
+            <div class="form-group"><label>Email <span style="color:#ef4444">*</span></label><input type="email" id="ncSpocEmail" placeholder="spoc@stxaviers.edu"></div>
+            <div class="form-group"><label>Initial Password</label><input type="password" id="ncSpocPassword" placeholder="Leave blank to auto-generate" minlength="8"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="submit-btn" style="flex:1;" onclick="submitCreateCollege()">&#x2795; Create College &amp; SPOC</button>
+            <button class="btn-cancel" onclick="closeModal('addCollegeModal')">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Support Thread Detail Modal ───────────────────────────────────────── -->
+<div id="supportThreadModal" class="modal-backdrop">
+    <div class="modal-window">
+        <div class="modal-header"><h2 id="supportThreadTitle">Support Thread</h2><button class="close-modal" onclick="closeModal('supportThreadModal')">&times;</button></div>
+        <div class="modal-body">
+            <input type="hidden" id="supportThreadId">
+            <div id="supportThreadMessages" style="max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;margin-bottom:14px;"></div>
+            <div class="form-group"><label>Reply</label><textarea id="supportReplyContent" rows="3" placeholder="Write a reply…" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;box-sizing:border-box;"></textarea></div>
+        </div>
+        <div class="modal-footer">
+            <button class="submit-btn" style="flex:1;" onclick="submitSuperadminReply()">Send Reply</button>
+            <button class="btn-cancel" onclick="closeModal('supportThreadModal')">Close</button>
         </div>
     </div>
 </div>

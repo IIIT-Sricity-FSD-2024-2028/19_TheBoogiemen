@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPOC Dashboard - BarelyPassing</title>
+<link rel="stylesheet" href="style.css">
+<style>
+    /* This page is deliberately not the sidebar+multi-view shell the other
+       four dashboards use. A SPOC has exactly two things to do — check their
+       subscription and talk to us — so a sidebar offering views that do not
+       exist yet would be furniture, not navigation. */
+    .spoc-topbar {
+        display:flex; align-items:center; justify-content:space-between;
+        padding:18px 32px; background:white; border-bottom:1px solid var(--border);
+    }
+    .spoc-topbar .brand { display:flex; align-items:center; gap:12px; }
+    .spoc-topbar .brand h2 { font-size:18px; font-weight:700; color:var(--text-primary); }
+    .spoc-topbar .college-name { font-size:13px; color:var(--text-muted); }
+    .spoc-grid {
+        display:grid; grid-template-columns: 1.1fr 0.9fr; gap:24px;
+        padding:28px 32px; align-items:start;
+    }
+    @media (max-width: 900px) { .spoc-grid { grid-template-columns: 1fr; } }
+    .status-pill { display:inline-block; padding:4px 10px; border-radius:6px; font-size:12px; font-weight:600; }
+    .status-pill.active    { background:#dcfce7; color:#166534; }
+    .status-pill.suspended { background:#fef2f2; color:#991b1b; }
+    .status-pill.expired   { background:#fef9c3; color:#854d0e; }
+    .status-pill.none      { background:#f1f5f9; color:#64748b; }
+    .admin-row { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #f1f5f9; font-size:13px; }
+    .admin-row:last-child { border-bottom:none; }
+    .msg-list { max-height:360px; overflow-y:auto; padding:16px 24px; display:flex; flex-direction:column; gap:10px; }
+    .msg-bubble { max-width:80%; padding:10px 14px; border-radius:10px; font-size:13px; line-height:1.5; }
+    .msg-bubble.mine { align-self:flex-end; background:var(--accent-primary); color:white; }
+    .msg-bubble.theirs { align-self:flex-start; background:#f1f5f9; color:var(--text-primary); }
+    .msg-bubble .meta { display:block; font-size:11px; opacity:.75; margin-top:4px; }
+</style>
+</head>
+<body class="dashboard-body">
+
+<div class="main-content">
+    <div class="spoc-topbar">
+        <div class="brand">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+            <div>
+                <h2>BarelyPassing</h2>
+                <div class="college-name" id="spoc-college-name">Loading…</div>
+            </div>
+        </div>
+        <button class="nav-item" style="color:#ef4444;background:none;border:none;cursor:pointer;font-size:13px;" onclick="window.Auth.logout()">Sign out</button>
+    </div>
+
+    <div class="spoc-grid">
+        <!-- ── Subscription / account panel ─────────────────────────────── -->
+        <div>
+            <div class="stats-card">
+                <div class="stats-card-header">
+                    <div><h3>Your Subscription</h3><p>Status for your college's BarelyPassing licence</p></div>
+                </div>
+                <div class="stats-card-body" style="padding:20px 24px;" id="spoc-subscription-body">
+                    Loading…
+                </div>
+            </div>
+
+            <div class="stats-card">
+                <div class="stats-card-header">
+                    <div><h3>Admins</h3><p>Accounts you have provisioned for your college</p></div>
+                </div>
+                <div class="stats-card-body" style="padding:16px 24px;">
+                    <div id="spoc-admin-list" style="margin-bottom:16px;">Loading…</div>
+                    <form onsubmit="submitHireAdmin(event)" style="display:grid;gap:10px;">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                            <input type="text" id="hireFirstName" placeholder="First name" style="padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;">
+                            <input type="text" id="hireLastName" placeholder="Last name" style="padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;">
+                        </div>
+                        <input type="email" id="hireEmail" placeholder="admin@yourcollege.edu" required style="padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;">
+                        <input type="password" id="hirePassword" placeholder="Initial password (min 8 characters)" required minlength="8" style="padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;">
+                        <button type="submit" class="submit-btn" style="width:auto;padding:9px 18px;font-size:13px;">Add Admin</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Support panel — modelled on the discussion thread pattern ──── -->
+        <div class="stats-card" style="margin-bottom:0;">
+            <div class="stats-card-header">
+                <div><h3>Support</h3><p>Message our team directly — replies land here</p></div>
+                <button onclick="loadSupportThread()" title="Refresh" style="background:none;border:1px solid #e2e8f0;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px;color:#64748b;">↻</button>
+            </div>
+            <div class="msg-list" id="spoc-msg-list">Loading…</div>
+            <form onsubmit="submitSupportMessage(event)" style="display:flex;gap:8px;padding:16px 24px;border-top:1px solid var(--border);">
+                <input type="text" id="spocMsgInput" placeholder="Write a message…" required style="flex:1;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;">
+                <button type="submit" class="submit-btn" style="width:auto;padding:9px 16px;font-size:13px;">Send</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="state.js"></script>
+<script>
+let spocPollTimer = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    const user = window.Auth.requireAuth(['spoc']);
+    if (!user) return;
+    loadSubscriptionAndAdmins();
+    loadSupportThread();
+    // Lightweight polling, not a socket — matches the rest of the app, which
+    // has no realtime infrastructure today. 20s is frequent enough for a
+    // support conversation without hammering the API.
+    spocPollTimer = setInterval(loadSupportThread, 20000);
+});
+window.addEventListener('beforeunload', () => { if (spocPollTimer) clearInterval(spocPollTimer); });
+
+async function loadSubscriptionAndAdmins() {
+    try {
+        const res = await window.Auth.apiFetch('/billing/colleges/me');
+        if (!res) return;
+        const college = res.data;
+        document.getElementById('spoc-college-name').textContent = college.name || 'Institution Partner Portal';
+
+        // Subscriptions, quotes and pricing are not live yet in this
+        // deployment (see SPOC_IMPLEMENTATION_PLAN.md's phased delivery) — an
+        // honest empty state rather than fabricated numbers.
+        document.getElementById('spoc-subscription-body').innerHTML = `
+            <span class="status-pill none">No active plan</span>
+            <p style="margin:12px 0 0;font-size:13px;color:#64748b;line-height:1.6;">
+                Subscription plans, pricing and renewal are not live yet in this
+                deployment. Once available, your seat count, plan modules and
+                renewal date will show here.
+            </p>`;
+
+        renderAdminList(college.admins || []);
+    } catch (e) {
+        showErr('spoc-subscription-body', e);
+    }
+}
+
+function renderAdminList(admins) {
+    const list = document.getElementById('spoc-admin-list');
+    if (!admins.length) {
+        list.innerHTML = '<p style="font-size:13px;color:#64748b;">No admins hired yet — add one below.</p>';
+        return;
+    }
+    list.innerHTML = admins.map(a =>
+        `<div class="admin-row"><span>${escapeHtml(((a.first_name||'') + ' ' + (a.last_name||'')).trim() || a.username || 'Admin')}</span><span style="color:#64748b;">${escapeHtml(a.email)}</span></div>`
+    ).join('');
+}
+
+async function submitHireAdmin(event) {
+    event.preventDefault();
+    const first_name = document.getElementById('hireFirstName').value.trim();
+    const last_name  = document.getElementById('hireLastName').value.trim();
+    const email       = document.getElementById('hireEmail').value.trim();
+    const password    = document.getElementById('hirePassword').value;
+    try {
+        // role is NEVER sent — the server stamps 'admin' and this account's
+        // own college_id itself (ROLE_GRANTS in common/dto/user.dto.ts). A
+        // form field here would be decoration; the ceiling is enforced
+        // server-side regardless of what the client sends.
+        const res = await window.Auth.apiFetch('/users', {
+            method: 'POST',
+            body: JSON.stringify({ role: 'admin', first_name, last_name, email, password }),
+        });
+        if (!res) return; // apiFetch already handled an expired/rejected session
+        event.target.reset();
+        // Re-fetch rather than hand-append a row: /billing/colleges/me is the
+        // single source of truth this page already trusts for the roster.
+        await loadSubscriptionAndAdmins();
+    } catch (e) {
+        alert('Could not add admin: ' + e.message);
+    }
+}
+
+async function loadSupportThread() {
+    try {
+        const res = await window.Auth.apiFetch('/billing/support/thread');
+        if (!res) return;
+        renderMessages(res.data ? res.data.messages : []);
+    } catch (e) {
+        showErr('spoc-msg-list', e);
+    }
+}
+
+async function submitSupportMessage(event) {
+    event.preventDefault();
+    const input = document.getElementById('spocMsgInput');
+    const content = input.value.trim();
+    if (!content) return;
+    try {
+        const res = await window.Auth.apiFetch('/billing/support/messages', {
+            method: 'POST',
+            body: JSON.stringify({ content }),
+        });
+        if (!res) return;
+        input.value = '';
+        renderMessages(res.data.messages);
+    } catch (e) {
+        alert('Could not send message: ' + e.message);
+    }
+}
+
+function renderMessages(messages) {
+    const el = document.getElementById('spoc-msg-list');
+    if (!messages || !messages.length) {
+        el.innerHTML = '<p style="color:#64748b;font-size:13px;text-align:center;padding:20px 0;">No messages yet. Say hello — our team will reply here.</p>';
+        return;
+    }
+    el.innerHTML = messages.map(m => {
+        const mine = m.sender_role === 'spoc';
+        const when = m.created_at ? new Date(m.created_at).toLocaleString() : '';
+        return `<div class="msg-bubble ${mine ? 'mine' : 'theirs'}">
+            ${escapeHtml(m.content)}
+            <span class="meta">${mine ? 'You' : (m.sender_name || 'BarelyPassing Team')} · ${when}</span>
+        </div>`;
+    }).join('');
+    el.scrollTop = el.scrollHeight;
+}
+
+// Every message here is rendered as text, not innerHTML-of-user-content —
+// the one place in this page that touches unescaped user input, escaped
+// deliberately rather than joining the app's existing 136 unescaped sites.
+function escapeHtml(s) {
+    const div = document.createElement('div');
+    div.textContent = s ?? '';
+    return div.innerHTML;
+}
+
+function showErr(elId, e) {
+    const el = document.getElementById(elId);
+    if (el) el.innerHTML = `<p style="color:#ef4444;font-size:13px;">Failed to load: ${e.message}</p>`;
+}
+</script>
+</body>
+</html>
