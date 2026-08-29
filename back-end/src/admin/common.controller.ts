@@ -125,6 +125,7 @@ export class CommonController {
   // ── Courses ──────────────────────────────────────────────────────────────────
 
   @Get('courses')
+  @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Get all courses' })
   @ApiResponse({ status: 200, description: 'Array of all courses' })
   async getCourses() {
@@ -164,6 +165,7 @@ export class CommonController {
   // ── Timetable ────────────────────────────────────────────────────────────────
 
   @Get('timetable')
+  @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Get timetable grid for a section' })
   async getTimetable(@Query('section') section: string = 'A') {
     const slots = this.db.timetable.filter((t) => t.section === section);
@@ -214,6 +216,7 @@ export class CommonController {
   // ── Assessments ──────────────────────────────────────────────────────────────
 
   @Get('assessments')
+  @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({
     summary: 'Get all assessments, optionally filtered by faculty_id',
   })
@@ -303,6 +306,7 @@ export class CommonController {
   // ── Submissions (online assessments) ─────────────────────────────────────────
 
   @Get('submissions')
+  @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({
     summary: 'Get submissions — own for student, all for faculty',
   })
@@ -316,6 +320,7 @@ export class CommonController {
   }
 
   @Post('submissions')
+  @Roles('student')
   @ApiOperation({ summary: 'Student submits work for an online assessment' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async createSubmission(@Body() body: any, @CurrentUserId() userId: string) {
@@ -433,6 +438,7 @@ export class CommonController {
   // ── Discussions ───────────────────────────────────────────────────────────────
 
   @Get('discussions')
+  @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Get all discussion posts with reply counts' })
   async getDiscussions() {
     return this.db.discussion_posts.map((p) => {
@@ -444,6 +450,7 @@ export class CommonController {
   }
 
   @Get('discussions/:postId')
+  @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Get a single discussion post with all replies' })
   async getDiscussionDetail(@Param('postId') postId: string) {
     const post = this.db.discussion_posts.find((p) => p.post_id === postId);
@@ -458,6 +465,7 @@ export class CommonController {
   }
 
   @Post('discussions')
+  @Roles('student', 'faculty')
   @ApiOperation({ summary: 'Create a new discussion post' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async createDiscussion(@Body() body: any, @CurrentUserId() userId: string) {
@@ -487,6 +495,7 @@ export class CommonController {
   }
 
   @Post('discussions/:postId/replies')
+  @Roles('student', 'faculty')
   @ApiOperation({ summary: 'Reply to a discussion post' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async createReply(
@@ -525,6 +534,7 @@ export class CommonController {
   // ── Research ─────────────────────────────────────────────────────────────────
 
   @Get('research')
+  @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Get research projects filtered by role' })
   async getResearch(
     @CurrentUserId() userId: string,
@@ -661,6 +671,7 @@ export class CommonController {
   // ── Events ────────────────────────────────────────────────────────────────────
 
   @Get('events')
+  @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Get all scheduled events' })
   @ApiResponse({ status: 200, description: 'Array of events' })
   async getEvents() {
@@ -715,6 +726,7 @@ export class CommonController {
   // ── Leave ─────────────────────────────────────────────────────────────────────
 
   @Get('leave')
+  @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({
     summary: 'Get leave applications — own for student, all for admin/faculty',
   })
@@ -1116,6 +1128,7 @@ export class CommonController {
   // ── Resources ─────────────────────────────────────────────────────────────────
 
   @Get('resources')
+  @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Get all resources' })
   async getResources() {
     return this.db.resources;
@@ -1287,6 +1300,7 @@ export class CommonController {
   // ── Syllabus Progress ──────────────────────────────────────────────────────────
 
   @Get('syllabus-progress')
+  @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({
     summary: 'Get syllabus completion progress, optionally filtered by section',
   })
