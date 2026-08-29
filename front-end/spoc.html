@@ -6,60 +6,12 @@
 <title>SPOC Dashboard - BarelyPassing</title>
 <link rel="stylesheet" href="style.css">
 <style>
-    /* This page is still deliberately not the sidebar+multi-view shell the
-       four academic dashboards use — a SPOC has exactly three things to look
-       at, not a menu of views, so a sidebar would be furniture, not
-       navigation. What changed from the first pass: the three things now
-       read as three things — a distinct header band standing in for the
-       identity a sidebar would normally carry, and each section built the
-       same way (icon badge, title, one-line purpose) so the eye can tell
-       them apart before reading a word of content. */
-    /* Deliberately not body.dashboard-body — that class is display:flex;
-       flex-direction:row, built for the .sidebar + .main-content pair every
-       other dashboard uses. This page has neither; it's a plain vertical
-       stack (header band, then content), so it needs its own body rule
-       rather than inheriting one shaped for a different layout. Using
-       dashboard-body here was the actual break: the header band and content
-       area were rendering as flex-row siblings — squeezed side by side —
-       instead of stacked top to bottom. */
-    body.spoc-body { background: var(--bg-main); min-height: 100vh; }
-
-    .spoc-header {
-        background: var(--sidebar-bg);
-        padding: 22px 32px;
-        display: flex; align-items: center; justify-content: space-between;
-        color: white;
-    }
-    .spoc-header .identity { display: flex; align-items: center; gap: 14px; }
-    .spoc-header .logo-badge {
-        background: rgba(255,255,255,0.1); border-radius: 12px; padding: 10px; display: flex;
-    }
-    .spoc-header h1 { font-size: 17px; font-weight: 700; }
-    .spoc-header .college-name { font-size: 13px; color: var(--nav-text); margin-top: 2px; }
-    .spoc-header .right { display: flex; align-items: center; gap: 14px; }
-    .spoc-signout {
-        background: rgba(255,255,255,0.08); border: none; color: #fca5a5;
-        padding: 9px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500;
-        display: flex; align-items: center; gap: 6px; transition: background .15s;
-    }
-    .spoc-signout:hover { background: rgba(255,255,255,0.14); }
-
-    .spoc-body-inner { max-width: 1180px; margin: 0 auto; padding: 28px 32px 48px; }
-
-    /* Every section below shares this shape on purpose — same icon-badge
-       header pattern the login form already uses (.form-icon), so a
-       returning visitor recognises "this is a labelled zone" instantly. */
-    .spoc-section { margin-bottom: 32px; }
-    .spoc-section-head { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
-    .spoc-section-icon {
-        background: white; border: 1px solid var(--border); border-radius: 12px;
-        padding: 10px; display: flex; color: var(--accent-primary); box-shadow: var(--shadow-sm);
-        flex-shrink: 0;
-    }
-    .spoc-section-head h2 { font-size: 16px; font-weight: 700; color: var(--text-primary); }
-    .spoc-section-head p { font-size: 12.5px; color: var(--text-muted); margin-top: 1px; }
-    .spoc-section-head .spacer { flex: 1; }
-
+    /* Same sidebar + top-header-bar + content-body shell every other
+       dashboard uses (student/faculty/super-user/super-admin) — this page
+       previously had its own custom header band instead, which was the
+       inconsistency this rewrite fixes. Everything below is scoped to the
+       three panels this page hosts inside that shared shell, not the shell
+       itself. */
     .status-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px; border-radius: 20px; font-size: 12px; font-weight: 600; }
     .status-pill.active    { background: #dcfce7; color: #166534; }
     .status-pill.suspended { background: #fef2f2; color: #991b1b; }
@@ -67,10 +19,16 @@
     .status-pill.none      { background: #f1f5f9; color: #64748b; }
     .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 
-    .roster-row {
-        display: flex; align-items: center; gap: 12px; padding: 12px 4px;
-        border-bottom: 1px solid #f1f5f9;
-    }
+    /* A dedicated class rather than an inline 3-column override on the
+       shared .metrics-grid: an inline style beats the class's own mobile
+       breakpoints (style.css:545-553) by specificity, so overriding inline
+       would quietly stop this row from collapsing on small screens while
+       every other .metrics-grid on the site still does. */
+    .spoc-metrics { grid-template-columns: repeat(3, 1fr); }
+    @media (max-width: 768px) { .spoc-metrics { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 480px) { .spoc-metrics { grid-template-columns: 1fr; } }
+
+    .roster-row { display: flex; align-items: center; gap: 12px; padding: 12px 4px; border-bottom: 1px solid #f1f5f9; }
     .roster-row:last-child { border-bottom: none; }
     .roster-avatar {
         width: 34px; height: 34px; border-radius: 50%; background: var(--accent-primary);
@@ -80,7 +38,7 @@
     .roster-name { font-size: 13.5px; font-weight: 600; color: var(--text-primary); }
     .roster-email { font-size: 12px; color: var(--text-muted); }
 
-    .chat-panel { display: flex; flex-direction: column; height: 420px; }
+    .chat-panel { display: flex; flex-direction: column; height: 480px; }
     .msg-list { flex: 1; overflow-y: auto; padding: 18px 22px; display: flex; flex-direction: column; gap: 4px; }
     .msg-row { display: flex; gap: 8px; align-items: flex-end; margin: 6px 0; }
     .msg-row.mine { flex-direction: row-reverse; }
@@ -95,115 +53,109 @@
     .msg-row.mine .msg-bubble { background: var(--accent-primary); color: white; border-bottom-right-radius: 4px; }
     .msg-row.theirs .msg-bubble { background: #f1f5f9; color: var(--text-primary); border-bottom-left-radius: 4px; }
     .msg-time { display: block; font-size: 10.5px; opacity: .7; margin-top: 4px; }
-    .chat-composer {
-        display: flex; gap: 8px; padding: 14px 18px; border-top: 1px solid var(--border);
-        background: #fbfcfe;
-    }
-    .chat-composer input {
-        flex: 1; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 13.5px;
-    }
+    .chat-composer { display: flex; gap: 8px; padding: 14px 18px; border-top: 1px solid var(--border); background: #fbfcfe; }
+    .chat-composer input { flex: 1; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 13.5px; }
     .chat-composer input:focus { outline: none; border-color: var(--accent-primary); }
 
     .empty-note { color: var(--text-muted); font-size: 13px; text-align: center; padding: 24px 12px; }
-
-    /* A dedicated class rather than an inline 3-column override on the
-       shared .metrics-grid: an inline style beats the class's own mobile
-       breakpoints (style.css:545-553) by specificity, so overriding inline
-       would quietly stop this row from collapsing on small screens while
-       every other .metrics-grid on the site still does. */
-    .spoc-metrics { grid-template-columns: repeat(3, 1fr); }
-    @media (max-width: 768px) { .spoc-metrics { grid-template-columns: 1fr 1fr; } }
-    @media (max-width: 480px) { .spoc-metrics { grid-template-columns: 1fr; } }
 </style>
 </head>
-<body class="spoc-body">
+<body class="dashboard-body">
 
-<div class="spoc-header">
-    <div class="identity">
-        <div class="logo-badge">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
-        </div>
-        <div>
-            <h1>BarelyPassing <span style="font-weight:400;color:var(--nav-text);">· Partner Portal</span></h1>
-            <div class="college-name" id="spoc-college-name">Loading…</div>
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <h2>BarelyPassing</h2>
+        <p>Institution Partner Platform</p>
+    </div>
+    <div class="sidebar-user">
+        <div class="user-avatar" id="sidebar-avatar" style="background:var(--accent-primary);">?</div>
+        <div class="user-info">
+            <h3 id="sidebar-user-name">SPOC</h3>
+            <p id="sidebar-college-name">Loading…</p>
         </div>
     </div>
-    <div class="right">
-        <button class="spoc-signout" onclick="window.Auth.logout()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-            Sign out
+    <nav class="sidebar-nav">
+        <a href="#" class="nav-item active" onclick="switchView('subscription-view',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            <span>Subscription</span>
+        </a>
+        <a href="#" class="nav-item" onclick="switchView('team-view',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>Team</span>
+        </a>
+        <a href="#" class="nav-item" onclick="switchView('support-view',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            <span>Support</span>
+        </a>
+    </nav>
+    <div class="sidebar-footer">
+        <a href="#" class="nav-item" onclick="switchView('settings-view',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+            <span>Settings</span>
+        </a>
+        <button class="nav-item" style="color:#ef4444;" onclick="window.Auth.logout()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+            <span>Logout</span>
         </button>
     </div>
-</div>
+</aside>
 
-<div class="spoc-body-inner">
-
-    <!-- ── Subscription ─────────────────────────────────────────────────── -->
-    <div class="spoc-section">
-        <div class="spoc-section-head">
-            <div class="spoc-section-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-            </div>
-            <div>
-                <h2>Subscription</h2>
-                <p>Your college's licence status, seats and renewal</p>
-            </div>
-        </div>
-        <div class="metrics-grid spoc-metrics" id="spoc-metrics-grid">
-            <div class="metric-card"><div class="label">Plan Status</div><div class="value" style="font-size:16px;margin-top:10px;" id="spoc-status-pill-slot"><span class="status-pill none"><span class="status-dot"></span>Loading…</span></div></div>
-            <div class="metric-card"><div class="label">Seats</div><div class="value" id="spoc-seats-value">—</div><div class="sub">students &amp; faculty enrolled</div></div>
-            <div class="metric-card"><div class="label">Renewal</div><div class="value" id="spoc-renewal-value" style="font-size:16px;margin-top:10px;">—</div></div>
-        </div>
-        <div class="stats-card" style="margin-top:14px;">
-            <div class="stats-card-body" style="padding:16px 24px;" id="spoc-subscription-note">
-                Subscription plans, pricing and renewal are not live yet in this deployment. Once available, this section shows your seat count, plan modules and renewal date.
-            </div>
-        </div>
+<div class="main-content">
+    <div class="top-header-bar">
+        <h1 id="page-title">Subscription</h1>
+        <div class="header-badges"><span class="badge-term">Spring 2026</span></div>
     </div>
 
-    <!-- ── Team ──────────────────────────────────────────────────────────── -->
-    <div class="spoc-section">
-        <div class="spoc-section-head">
-            <div class="spoc-section-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            </div>
-            <div>
-                <h2>Team</h2>
-                <p>Admins you've provisioned — they in turn manage faculty and students</p>
-            </div>
-            <div class="spacer"></div>
-            <button class="page-action-btn" onclick="openModal('hireAdminModal')">+ Hire Admin</button>
-        </div>
-        <div class="stats-card">
-            <div class="stats-card-body" id="spoc-admin-list" style="padding:6px 20px;">Loading…</div>
-        </div>
-    </div>
+    <div class="content-body">
 
-    <!-- ── Support ───────────────────────────────────────────────────────── -->
-    <div class="spoc-section" style="margin-bottom:0;">
-        <div class="spoc-section-head">
-            <div class="spoc-section-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+        <!-- ── Subscription ─────────────────────────────────────────────── -->
+        <div id="subscription-view" class="view-section active">
+            <div class="metrics-grid spoc-metrics" id="spoc-metrics-grid">
+                <div class="metric-card"><div class="label">Plan Status</div><div class="value" style="font-size:16px;margin-top:10px;" id="spoc-status-pill-slot"><span class="status-pill none"><span class="status-dot"></span>Loading…</span></div></div>
+                <div class="metric-card"><div class="label">Seats</div><div class="value" id="spoc-seats-value">—</div><div class="sub">students &amp; faculty enrolled</div></div>
+                <div class="metric-card"><div class="label">Renewal</div><div class="value" id="spoc-renewal-value" style="font-size:16px;margin-top:10px;">—</div></div>
             </div>
-            <div>
-                <h2>Support</h2>
-                <p>Message our team directly — replies land right here</p>
+            <div class="stats-card" style="margin-top:20px;">
+                <div class="stats-card-header"><div><h3>About your plan</h3></div></div>
+                <div class="stats-card-body" style="padding:20px 24px;" id="spoc-subscription-note">
+                    Subscription plans, pricing and renewal are not live yet in this deployment. Once available, this section shows your seat count, plan modules and renewal date.
+                </div>
             </div>
-            <div class="spacer"></div>
-            <button onclick="loadSupportThread()" title="Refresh" style="background:none;border:1px solid var(--border);border-radius:8px;padding:7px 11px;cursor:pointer;color:var(--text-muted);">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-            </button>
         </div>
-        <div class="stats-card chat-panel">
-            <div class="msg-list" id="spoc-msg-list">Loading…</div>
-            <form class="chat-composer" onsubmit="submitSupportMessage(event)">
-                <input type="text" id="spocMsgInput" placeholder="Write a message…" required>
-                <button type="submit" class="submit-btn" style="width:auto;padding:9px 18px;font-size:13px;">Send</button>
-            </form>
-        </div>
-    </div>
 
-</div>
+        <!-- ── Team ──────────────────────────────────────────────────────── -->
+        <div id="team-view" class="view-section" style="display:none;">
+            <div class="stats-card">
+                <div class="stats-card-header">
+                    <div><h3>Admins</h3><p>Accounts you've provisioned — they in turn manage faculty and students</p></div>
+                    <button class="page-action-btn" onclick="openModal('hireAdminModal')">+ Hire Admin</button>
+                </div>
+                <div class="stats-card-body" id="spoc-admin-list" style="padding:6px 20px;">Loading…</div>
+            </div>
+        </div>
+
+        <!-- ── Support ───────────────────────────────────────────────────── -->
+        <div id="support-view" class="view-section" style="display:none;">
+            <div class="stats-card chat-panel">
+                <div class="stats-card-header">
+                    <div><h3>Support</h3><p>Message our team directly — replies land right here</p></div>
+                    <button onclick="loadSupportThread()" title="Refresh" style="background:none;border:1px solid var(--border);border-radius:8px;padding:7px 11px;cursor:pointer;color:var(--text-muted);">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                    </button>
+                </div>
+                <div class="msg-list" id="spoc-msg-list">Loading…</div>
+                <form class="chat-composer" onsubmit="submitSupportMessage(event)">
+                    <input type="text" id="spocMsgInput" placeholder="Write a message…" required>
+                    <button type="submit" class="submit-btn" style="width:auto;padding:9px 18px;font-size:13px;">Send</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- ── Settings View ── -->
+        <div id="settings-view" class="view-section" style="display:none;"></div>
+
+    </div><!-- /content-body -->
+</div><!-- /main-content -->
 
 <!-- ── Hire Admin Modal ─────────────────────────────────────────────────── -->
 <div id="hireAdminModal" class="modal-backdrop">
@@ -232,11 +184,51 @@
 
 <script src="state.js"></script>
 <script>
+// ── View switching ─────────────────────────────────────────────────────────
+//
+// A local copy of fixes.js's window.switchView (same behaviour: hide every
+// .view-section, show the target, mark the clicked nav-item active, update
+// the page title) rather than loading fixes.js itself. That file is 3000+
+// lines built around the five academic roles' render functions — pulling it
+// in for three toggled panels would be a large, unrelated dependency for a
+// ten-line function. VIEW_TITLES is the same idea, scoped to this page.
+const VIEW_TITLES = {
+    'subscription-view': 'Subscription',
+    'team-view': 'Team',
+    'support-view': 'Support',
+    'settings-view': 'Settings',
+};
+
+window.switchView = function(viewId, clickedEl) {
+    document.querySelectorAll('.view-section').forEach(el => {
+        el.classList.remove('active');
+        el.style.display = 'none';
+    });
+    const target = document.getElementById(viewId);
+    if (target) { target.classList.add('active'); target.style.display = 'block'; }
+    if (clickedEl) {
+        document.querySelectorAll('.sidebar-nav .nav-item').forEach(el => el.classList.remove('active'));
+        clickedEl.classList.add('active');
+    }
+    const titleEl = document.getElementById('page-title');
+    if (titleEl && VIEW_TITLES[viewId]) titleEl.textContent = VIEW_TITLES[viewId];
+};
+
+function openModal(id) { const m = document.getElementById(id); if (m) m.style.display = 'flex'; }
+function closeModal(id) { const m = document.getElementById(id); if (m) m.style.display = 'none'; }
+
 let spocPollTimer = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     const user = window.Auth.requireAuth(['spoc']);
     if (!user) return;
+    const name = (user.first_name || '') + ' ' + (user.last_name || user.username || '');
+    const trimmed = name.trim();
+    const sn = document.getElementById('sidebar-user-name');
+    if (sn) sn.textContent = trimmed || 'SPOC';
+    const av = document.getElementById('sidebar-avatar');
+    if (av) av.textContent = (trimmed.charAt(0) || 'S').toUpperCase();
+
     loadSubscriptionAndAdmins();
     loadSupportThread();
     // Lightweight polling, not a socket — matches the rest of the app, which
@@ -246,15 +238,13 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 window.addEventListener('beforeunload', () => { if (spocPollTimer) clearInterval(spocPollTimer); });
 
-function openModal(id) { const m = document.getElementById(id); if (m) m.style.display = 'flex'; }
-function closeModal(id) { const m = document.getElementById(id); if (m) m.style.display = 'none'; }
-
 async function loadSubscriptionAndAdmins() {
     try {
         const res = await window.Auth.apiFetch('/billing/colleges/me');
         if (!res) return;
         const college = res.data;
-        document.getElementById('spoc-college-name').textContent = college.name || 'Institution Partner Portal';
+        const collegeNameEl = document.getElementById('sidebar-college-name');
+        if (collegeNameEl) collegeNameEl.textContent = college.name || 'Institution Partner';
 
         // Subscriptions, quotes and pricing are not live yet in this
         // deployment (see SPOC_IMPLEMENTATION_PLAN.md's phased delivery) — an
