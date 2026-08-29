@@ -11,6 +11,7 @@ import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { AuthService } from './auth.service';
 import { PasswordService } from './password.service';
+import { Roles } from './roles.guard';
 import {
   ApiTags,
   ApiOperation,
@@ -202,6 +203,9 @@ export class AuthController {
   }
 
   @Post('change-password')
+  // Explicit list, not a bare "any authenticated role": a future low-trust
+  // role (a SPOC, say) must not gain this just by existing — see roles.guard.ts.
+  @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Change your own password' })
   @ApiBody({ type: ChangePasswordDto })

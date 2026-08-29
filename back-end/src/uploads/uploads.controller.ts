@@ -33,6 +33,7 @@ import {
   CurrentUserRole,
 } from '../common/decorators/current-user.decorator';
 import { ErrorCode, errorBody } from '../common/errors/error-codes';
+import { Roles } from '../auth/roles.guard';
 import {
   UPLOAD_OPTIONS,
   ALLOWED_EXTENSIONS,
@@ -52,8 +53,11 @@ export class UploadsController {
   constructor(private readonly uploads: UploadsService) {}
 
   @Post()
-  // No @Roles: any authenticated user may attach a document to their own work.
-  // Who can read it back is decided on download, by ownership.
+  // Any current academic role may attach a document to their own work — the
+  // list is explicit (not a bare "any authenticated user") so a future
+  // low-trust role does not inherit upload access just by existing. Who can
+  // read a document back is decided on download, by ownership, not by role.
+  @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
   @UseInterceptors(FileInterceptor('file', UPLOAD_OPTIONS))
   @ApiConsumes('multipart/form-data')
   @ApiOperation({
@@ -121,6 +125,10 @@ export class UploadsController {
   }
 
   @Get(':fileId')
+  // Same reasoning as the upload route above: every current academic role may
+  // attempt a download, and assertCanRead() below is the real gate — ownership,
+  // not role, decides who actually gets the bytes.
+  @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({
     summary: 'Download a document (owner or reviewing staff only)',
   })
