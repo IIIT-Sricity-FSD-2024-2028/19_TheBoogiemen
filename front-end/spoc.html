@@ -14,7 +14,15 @@
        identity a sidebar would normally carry, and each section built the
        same way (icon badge, title, one-line purpose) so the eye can tell
        them apart before reading a word of content. */
-    body.spoc-body { background: var(--bg-main); }
+    /* Deliberately not body.dashboard-body — that class is display:flex;
+       flex-direction:row, built for the .sidebar + .main-content pair every
+       other dashboard uses. This page has neither; it's a plain vertical
+       stack (header band, then content), so it needs its own body rule
+       rather than inheriting one shaped for a different layout. Using
+       dashboard-body here was the actual break: the header band and content
+       area were rendering as flex-row siblings — squeezed side by side —
+       instead of stacked top to bottom. */
+    body.spoc-body { background: var(--bg-main); min-height: 100vh; }
 
     .spoc-header {
         background: var(--sidebar-bg);
@@ -108,7 +116,7 @@
     @media (max-width: 480px) { .spoc-metrics { grid-template-columns: 1fr; } }
 </style>
 </head>
-<body class="dashboard-body spoc-body">
+<body class="spoc-body">
 
 <div class="spoc-header">
     <div class="identity">
