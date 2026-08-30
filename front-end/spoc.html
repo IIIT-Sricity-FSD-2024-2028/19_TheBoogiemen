@@ -111,7 +111,7 @@
         <!-- ── Subscription ─────────────────────────────────────────────── -->
         <div id="subscription-view" class="view-section active">
             <div class="metrics-grid spoc-metrics" id="spoc-metrics-grid">
-                <div class="metric-card"><div class="label">Plan Status</div><div class="value" style="font-size:16px;margin-top:10px;" id="spoc-status-pill-slot"><span class="status-pill none"><span class="status-dot"></span>Loading…</span></div></div>
+                <div class="metric-card"><div class="label">Plan Status</div><div class="value" style="font-size:16px;margin-top:10px;" id="spoc-status-pill-slot"><span class="status-pill none"><span class="status-dot"></span>Loading…</span></div><div class="sub" id="spoc-price-value"></div></div>
                 <div class="metric-card"><div class="label">Student Seats</div><div class="value" id="spoc-student-seats-value">—</div><div class="sub">enrolled / purchased</div></div>
                 <div class="metric-card"><div class="label">Faculty Seats</div><div class="value" id="spoc-faculty-seats-value">—</div><div class="sub">enrolled / purchased</div></div>
                 <div class="metric-card"><div class="label">Renewal</div><div class="value" id="spoc-renewal-value" style="font-size:16px;margin-top:10px;">—</div></div>
@@ -239,6 +239,9 @@ window.addEventListener('beforeunload', () => { if (spocPollTimer) clearInterval
 
 const PLAN_STATUS_LABEL = { active: 'Active', expiring_soon: 'Expiring soon', expired: 'Expired' };
 const MODULE_LABEL = { research: 'Research', fees: 'Fees', forum: 'Discussion Forum', analytics: 'Analytics' };
+function formatRupees(paise) {
+    return '₹' + (paise / 100).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+}
 
 async function loadSubscriptionAndAdmins() {
     try {
@@ -257,12 +260,15 @@ async function loadSubscriptionAndAdmins() {
             // superadmin's manual path) has no subscription row — an honest
             // empty state, not a fabricated one.
             statusSlot.innerHTML = '<span class="status-pill none"><span class="status-dot"></span>No active plan</span>';
+            document.getElementById('spoc-price-value').textContent = '';
             document.getElementById('spoc-student-seats-value').textContent = String(college.student_count || 0);
             document.getElementById('spoc-faculty-seats-value').textContent = String(college.faculty_count || 0);
             document.getElementById('spoc-renewal-value').innerHTML = '<span style="color:var(--text-muted);font-weight:500;">—</span>';
             note.textContent = 'No subscription is on record for your institution. Contact support if this looks wrong.';
         } else {
             statusSlot.innerHTML = `<span class="status-pill ${plan.status}"><span class="status-dot"></span>${PLAN_STATUS_LABEL[plan.status]}</span>`;
+            document.getElementById('spoc-price-value').textContent =
+                plan.payable_paise != null ? `${formatRupees(plan.payable_paise)}/yr` : '';
             document.getElementById('spoc-student-seats-value').textContent = `${college.student_count || 0} / ${plan.student_seats}`;
             document.getElementById('spoc-faculty-seats-value').textContent = `${college.faculty_count || 0} / ${plan.faculty_seats}`;
             const endsOn = new Date(plan.ends_on).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });

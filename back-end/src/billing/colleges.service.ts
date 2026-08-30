@@ -159,6 +159,14 @@ export class CollegesService {
       (u) => u.college_id === college.college_id,
     );
     const sub = getActiveSubscription(this.db, college.college_id);
+    // The price charged is on the quote that produced this subscription, not
+    // the subscription row itself — quotes.breakdown is the one place a
+    // priced number is ever stored (see pricing.service.ts's docstring on
+    // why a preview price and a charged price must share one computation,
+    // not be recomputed here from current rates).
+    const quote = sub
+      ? this.db.quotes.find((q: any) => q.quote_id === sub.quote_id)
+      : null;
     return {
       ...college,
       spoc_email:
@@ -174,6 +182,9 @@ export class CollegesService {
             starts_on: sub.starts_on,
             ends_on: sub.ends_on,
             status: planStatus(sub),
+            // Annual, the same figure computeQuote() priced and payment
+            // captured — null only if the quote row itself is ever missing.
+            payable_paise: quote?.breakdown?.payable_paise ?? null,
           }
         : null,
     };
