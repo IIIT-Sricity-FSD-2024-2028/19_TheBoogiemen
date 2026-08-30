@@ -11,6 +11,7 @@ import {
 } from '../common/academic-rules';
 import { ErrorCode, errorBody } from '../common/errors/error-codes';
 import { isSameCollege, scopeToCollege } from '../common/tenancy/scope-to-college';
+import { sectionsOfCourse } from '../common/course-sections';
 
 @Injectable()
 export class StudentsService {
@@ -74,7 +75,20 @@ export class StudentsService {
     return enrollment
       .map((e) => {
         const course = this.db.courses.find((c) => c.course_id === e.course_id);
-        return { ...course, enrollment_status: e.status, section: e.section };
+        if (!course) return null;
+        // Courses no longer carry one faculty — resolve the faculty teaching
+        // THIS student's own section (a different section of the same
+        // course may have a different faculty).
+        const mySection = sectionsOfCourse(this.db, e.course_id).find(
+          (cs) => cs.section === e.section,
+        );
+        return {
+          ...course,
+          enrollment_status: e.status,
+          section: e.section,
+          faculty_id: mySection?.faculty_id ?? null,
+          faculty_name: mySection?.faculty_name ?? null,
+        };
       })
       .filter(Boolean);
   }
@@ -149,8 +163,23 @@ export class StudentsService {
         errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Course not found'),
       );
 
-    const id = `e${Date.now()}`;
     const student = this.db.students.find((s) => s.user_id === studentId);
+    const section = student?.section || 'A';
+    // A course may exist with zero sections assigned yet (staffed later by a
+    // head) — self-enrolling into a section nobody teaches would create an
+    // enrollment record attendance/marks can never attach a faculty to.
+    const hasFaculty = sectionsOfCourse(this.db, courseId).some(
+      (cs) => cs.section === section,
+    );
+    if (!hasFaculty)
+      throw new BadRequestException(
+        errorBody(
+          ErrorCode.BUSINESS_RULE_VIOLATION,
+          `No faculty is assigned to Section ${section} of this course yet. Contact your academic head.`,
+        ),
+      );
+
+    const id = `e${Date.now()}`;
     const newEnrollment = {
       enrollment_id: id,
       student_id: studentId,

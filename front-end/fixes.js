@@ -88,6 +88,7 @@ function triggerViewRender(viewId) {
         'student-overview-view':      () => renderFacultyStudents(),
         'assessment-mapping-view':    () => renderAssessmentList(),
         'event-scheduler-view':       () => renderEventsTable(),
+        'course-management-view':     () => renderCourseManagement(),
         'resource-management-view':   () => renderResourceManagement(),
         'fee-compliance-view':        () => renderFeeCompliance(),
         'user-management-view':       () => renderUsersTable(),
@@ -939,52 +940,6 @@ window.submitCreateAssessment = async function() {
 };
 
 
-// ── Faculty: Create Course ────────────────────────────────────────────────────
-window.submitCreateCourse = async function() {
-    const name     = document.getElementById('newCourseName')?.value.trim();
-    const code     = document.getElementById('newCourseCode')?.value.trim().toUpperCase();
-    const credits  = Number(document.getElementById('newCourseCredits')?.value);
-    const semester = Number(document.getElementById('newCourseSemester')?.value);
-    if (!name)               { showToast('Course name is required', 'warning'); return; }
-    if (!code)               { showToast('Course code is required', 'warning'); return; }
-    if (!/^[A-Z]{2,4}\d{3,4}$/.test(code)) { showToast('Code format must be like CS301 or AIDS401', 'warning'); return; }
-    if (!credits || credits < 1 || credits > 5)   { showToast('Credits must be between 1 and 5', 'warning'); return; }
-    if (!semester || semester < 1 || semester > 8) { showToast('Semester must be between 1 and 8', 'warning'); return; }
-    try {
-        await api('/courses', { method:'POST', body: JSON.stringify({ course_name: name, course_code: code, credits, semester }) });
-        showToast('Course created successfully!', 'success');
-        closeModal('createCourseModal');
-        document.getElementById('createCourseForm')?.reset();
-        // Refresh all dependent dropdowns so the new course is immediately usable
-        await refreshCoursesDropdowns();
-        renderAssessmentList();
-    } catch(e) { showToast('Failed: ' + e.message, 'error'); }
-};
-
-// Refresh attendance & assessment course dropdowns after any course change
-async function refreshCoursesDropdowns() {
-    try {
-        const courses = await api('/faculty/me/courses');
-        const attSel = document.getElementById('attendance-course-select');
-        if (attSel) {
-            const cur = attSel.value;
-            attSel.innerHTML = '<option value="">— Select Course —</option>' +
-                courses.map(c => `<option value="${c.course_id}">${c.course_code} - ${c.course_name}</option>`).join('');
-            if (cur) attSel.value = cur;
-        }
-        const assSel = document.getElementById('assessCourse');
-        if (assSel) {
-            const cur = assSel.value;
-            assSel.innerHTML = '<option value="">Select course</option>' +
-                courses.map(c => `<option value="${c.course_id}">${c.course_code} – ${c.course_name}</option>`).join('');
-            if (cur) assSel.value = cur;
-        }
-        const enrollSel = document.getElementById('enrollCourseId');
-        if (enrollSel) await populateEnrollmentDropdown();
-    } catch(e) { console.error('refreshCoursesDropdowns:', e); }
-}
-
-
 // ── Faculty: Dashboard (dynamic) ──────────────────────────────────────────────
 window.renderFacultyDashboard = async function() {
     const totalEl   = document.getElementById('f-total-students');
@@ -1561,6 +1516,133 @@ window.deleteEvent = async function(id) {
         showToast('Event deleted!', 'success');
         renderEventsTable();
     } catch(e) { showToast('Failed: ' + e.message, 'error'); }
+};
+
+// ── Admin/Head: Course Management ─────────────────────────────────────────────
+// COURSE_OWNERSHIP_MIGRATION_PLAN.md: course creation, and assigning faculty
+// to a section, moved here from faculty.html. A course can have zero
+// sections at creation — staffed later via "Manage Sections".
+
+let _facultyListCache = null;
+async function getFacultyList() {
+    if (_facultyListCache) return _facultyListCache;
+    try {
+        const users = await api('/admin/users');
+        _facultyListCache = (users || []).filter(u => u.role === 'faculty');
+    } catch(e) { _facultyListCache = []; }
+    return _facultyListCache;
+}
+
+// Appends one repeatable section row (section name + faculty picker) to the
+// given container, optionally pre-filled from an existing course_sections row.
+window.addCourseSectionRow = async function(containerId, prefill) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const row = document.createElement('div');
+    row.className = 'form-row course-section-row';
+    row.style.alignItems = 'flex-end';
+    row.innerHTML = `
+        <div class="form-group"><label>Section</label><input type="text" class="cs-section" placeholder="e.g., A" value="${escapeHtmlSafe(prefill?.section || '')}"></div>
+        <div class="form-group"><label>Faculty</label><select class="cs-faculty"><option value="">Loading…</option></select></div>
+        <button type="button" onclick="this.closest('.course-section-row').remove()" style="padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;cursor:pointer;height:41px;">✕</button>`;
+    container.appendChild(row);
+    const facSel = row.querySelector('.cs-faculty');
+    const faculty = await getFacultyList();
+    facSel.innerHTML = '<option value="">— Select Faculty —</option>' +
+        faculty.map(f => {
+            const name = `${f.first_name||''} ${f.last_name||''}`.trim() || f.username || f.email;
+            return `<option value="${f.user_id}">${escapeHtmlSafe(name)}</option>`;
+        }).join('');
+    if (prefill?.faculty_id) facSel.value = prefill.faculty_id;
+};
+
+// Reads section rows out of a container; returns null (after a toast) if any
+// row has only one of the two fields filled in — an empty row added and left
+// alone is silently skipped, not an error.
+function readCourseSectionRows(containerId) {
+    const sections = [];
+    for (const row of document.querySelectorAll(`#${containerId} .course-section-row`)) {
+        const section = row.querySelector('.cs-section')?.value.trim();
+        const faculty_id = row.querySelector('.cs-faculty')?.value;
+        if (!section && !faculty_id) continue;
+        if (!section || !faculty_id) {
+            showToast('Each section needs both a name and a faculty', 'warning');
+            return null;
+        }
+        sections.push({ section, faculty_id });
+    }
+    return sections;
+}
+
+window.openCreateCourseModal = function() {
+    document.getElementById('createCourseForm')?.reset();
+    document.getElementById('courseSectionRows').innerHTML = '';
+    openModal('courseModal');
+};
+
+window.submitCreateCourse = async function() {
+    const course_name = document.getElementById('courseName')?.value.trim();
+    const course_code = document.getElementById('courseCode')?.value.trim().toUpperCase();
+    const credits  = Number(document.getElementById('courseCredits')?.value) || null;
+    const semester = Number(document.getElementById('courseSemester')?.value) || null;
+    if (!course_name) { showToast('Course name is required', 'warning'); return; }
+    if (!course_code) { showToast('Course code is required', 'warning'); return; }
+    const sections = readCourseSectionRows('courseSectionRows');
+    if (sections === null) return;
+    try {
+        await api('/courses', { method:'POST', body: JSON.stringify({ course_name, course_code, credits, semester, sections }) });
+        showToast('Course created!', 'success');
+        closeModal('courseModal');
+        renderCourseManagement();
+    } catch(e) { showToast('Failed: ' + e.message, 'error'); }
+};
+
+window.openManageSectionsModal = function(courseId, courseName, existingSections) {
+    document.getElementById('sectionsCourseId').value = courseId;
+    document.getElementById('sectionsCourseName').textContent = courseName;
+    const container = document.getElementById('manageSectionRows');
+    container.innerHTML = '';
+    (existingSections || []).forEach(s => addCourseSectionRow('manageSectionRows', s));
+    openModal('sectionsModal');
+};
+
+window.submitCourseSections = async function() {
+    const courseId = document.getElementById('sectionsCourseId')?.value;
+    const sections = readCourseSectionRows('manageSectionRows');
+    if (sections === null) return;
+    try {
+        await api(`/courses/${courseId}/sections`, { method:'PUT', body: JSON.stringify({ sections }) });
+        showToast('Sections updated!', 'success');
+        closeModal('sectionsModal');
+        renderCourseManagement();
+    } catch(e) { showToast('Failed: ' + e.message, 'error'); }
+};
+
+window.renderCourseManagement = async function() {
+    const el = document.getElementById('course-management-body');
+    if (!el) return;
+    try {
+        const courses = await api('/courses');
+        if (!courses.length) { el.innerHTML = '<p style="color:#64748b;text-align:center;">No courses yet.</p>'; return; }
+        el.innerHTML = courses.map(c => {
+            const sections = c.sections || [];
+            const sectionsHtml = sections.length
+                ? sections.map(s => `<span style="display:inline-block;background:#eff6ff;color:#1e40af;padding:3px 10px;border-radius:6px;font-size:12px;margin:2px 6px 2px 0;">Sec ${escapeHtmlSafe(s.section)} — ${escapeHtmlSafe(s.faculty_name || s.faculty_id)}</span>`).join('')
+                : '<span style="color:#b45309;font-size:12px;">No sections assigned yet</span>';
+            const onclickArgs = `${JSON.stringify(c.course_id)}, ${JSON.stringify(c.course_name)}, ${JSON.stringify(sections)}`.replace(/'/g, '&apos;');
+            return `
+            <div style="padding:16px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:12px;">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                    <div style="flex:1;">
+                        <h4 style="margin:0;font-size:15px;">${escapeHtmlSafe(c.course_name)} <span style="color:#64748b;font-weight:500;">(${escapeHtmlSafe(c.course_code)})</span></h4>
+                        <div style="font-size:12px;color:#64748b;margin-top:4px;">${c.credits||'—'} credits &nbsp;&bull;&nbsp; Semester ${c.semester||'—'}</div>
+                        <div style="margin-top:8px;">${sectionsHtml}</div>
+                    </div>
+                    <button onclick='openManageSectionsModal(${onclickArgs})' style="padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid #e2e8f0;border-radius:6px;background:#fff;">Manage Sections</button>
+                </div>
+            </div>`;
+        }).join('');
+    } catch(e) { el.innerHTML = `<p style="color:#ef4444">Failed: ${e.message}</p>`; }
 };
 
 // ── Admin: Resources & Fees ──────────────────────────────────────────────────
@@ -2186,66 +2268,6 @@ window.submitAssignBTP = async function() {
     } catch(e) {
         console.error('submitAssignBTP error:', e);
         showToast('Failed to assign BTP: ' + e.message, 'error');
-    }
-};
-
-// ── Faculty: Enroll Student in Course ─────────────────────────────────────────
-window.openEnrollStudentModal = async function() {
-    const studentSel = document.getElementById('enrollStudentSel');
-    const courseSel  = document.getElementById('enrollCourseSel');
-    if (studentSel) {
-        studentSel.innerHTML = '<option value="">Loading…</option>';
-        try {
-            const [allUsers, profiles] = await Promise.all([
-                api('/admin/users'),
-                api('/faculty/me/students').catch(() => [])
-            ]);
-            const profileMap = {};
-            (profiles||[]).forEach(p => { profileMap[p.user_id] = p; });
-            const students = (allUsers||[]).filter(u => u.role === 'student');
-            studentSel.innerHTML = '<option value="">— Select Student —</option>' +
-                students.map(s => {
-                    const p = profileMap[s.user_id] || {};
-                    const name = `${p.first_name||s.first_name||s.username||''} ${p.last_name||s.last_name||''}`.trim();
-                    return `<option value="${s.user_id}">${name} (${s.user_id})</option>`;
-                }).join('');
-        } catch(e) { studentSel.innerHTML = '<option value="">Error loading students</option>'; }
-    }
-    if (courseSel) {
-        courseSel.innerHTML = '<option value="">Loading…</option>';
-        try {
-            const courses = await api('/faculty/me/courses');
-            courseSel.innerHTML = '<option value="">— Select Course —</option>' +
-                courses.map(c => `<option value="${c.course_id}">${c.course_code} – ${c.course_name}</option>`).join('');
-        } catch(e) { courseSel.innerHTML = '<option value="">Error loading</option>'; }
-    }
-    openModal('enrollStudentModal');
-};
-
-window.submitEnrollStudent = async function() {
-    const student_id = document.getElementById('enrollStudentSel')?.value;
-    const course_id  = document.getElementById('enrollCourseSel')?.value;
-    const studentSel = document.getElementById('enrollStudentSel');
-    const courseSel  = document.getElementById('enrollCourseSel');
-    if (studentSel) studentSel.style.borderColor = '';
-    if (courseSel)  courseSel.style.borderColor  = '';
-    let valid = true;
-    if (!student_id) { if (studentSel) studentSel.style.borderColor = '#ef4444'; showToast('Please select a student', 'warning'); valid = false; }
-    if (!course_id)  { if (courseSel)  courseSel.style.borderColor  = '#ef4444'; showToast('Please select a course', 'warning');  valid = false; }
-    if (!valid) return;
-    try {
-        await api('/enrollment', { method:'POST', body: JSON.stringify({ student_id, course_id }) });
-        const user = window.Auth?.getUser?.();
-        const from = user ? (user.first_name || 'Faculty') : 'Faculty';
-        window.Notifications?.send(student_id, from, `📖 You have been enrolled in a new course by ${from}. Check your "My Courses" section for details.`, 'info');
-        showToast('Student enrolled successfully! Student has been notified. ✅', 'success');
-        closeModal('enrollStudentModal');
-    } catch(e) {
-        if (e.message && e.message.toLowerCase().includes('already')) {
-            showToast('⚠ Student is already enrolled in this course', 'warning');
-        } else {
-            showToast('Failed: ' + e.message, 'error');
-        }
     }
 };
 

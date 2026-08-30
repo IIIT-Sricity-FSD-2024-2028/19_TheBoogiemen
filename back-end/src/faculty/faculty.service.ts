@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { InMemoryDbService } from '../database/in-memory-db.service';
 import {
@@ -14,6 +14,7 @@ import {
   scopeToCollege,
   writeCollegeId,
 } from '../common/tenancy/scope-to-college';
+import { sectionsTaughtBy, sectionTaughtIn } from '../common/course-sections';
 
 @Injectable()
 export class FacultyService {
@@ -38,15 +39,26 @@ export class FacultyService {
   }
 
   async getMyCourses(userId: string) {
-    return this.db.courses.filter((c) => c.faculty_id === userId);
+    const mySections = sectionsTaughtBy(this.db, userId);
+    const courseIds = new Set(mySections.map((cs) => cs.course_id));
+    return this.db.courses
+      .filter((c) => courseIds.has(c.course_id))
+      .map((c) => ({
+        ...c,
+        section: mySections.find((cs) => cs.course_id === c.course_id)?.section,
+      }));
   }
 
   async getFacultyTimetable(userId: string) {
-    const facultyCourseIds = this.db.courses
-      .filter((c) => c.faculty_id === userId)
-      .map((c) => c.course_id);
+    // Section-scoped, not just course-scoped: two sections of the same
+    // course can meet at different times with different faculty, so "my
+    // timetable" must match this faculty's own (course_id, section) pairs,
+    // not every slot that happens to share a course_id.
+    const mySections = sectionsTaughtBy(this.db, userId);
     const slots = this.db.timetable.filter((t) =>
-      facultyCourseIds.includes(t.course_id),
+      mySections.some(
+        (cs) => cs.course_id === t.course_id && cs.section === t.section,
+      ),
     );
     const grid = slots.reduce((acc: any, curr) => {
       if (!acc[curr.day]) acc[curr.day] = {};
@@ -61,11 +73,16 @@ export class FacultyService {
   }
 
   async getMyStudents(facultyId: string) {
-    const facultyCourseIds = this.db.courses
-      .filter((c) => c.faculty_id === facultyId)
-      .map((c) => c.course_id);
+    // Section-scoped: enrollment must match this faculty's own section of
+    // the course, not any section of it — a colleague teaching Section B of
+    // the same course is not "my" roster.
+    const mySections = sectionsTaughtBy(this.db, facultyId);
     const studentIds = this.db.enrollment
-      .filter((e) => facultyCourseIds.includes(e.course_id))
+      .filter((e) =>
+        mySections.some(
+          (cs) => cs.course_id === e.course_id && cs.section === e.section,
+        ),
+      )
       .map((e) => e.student_id);
 
     const uniqueStudentIds = [...new Set(studentIds)];
@@ -113,7 +130,11 @@ export class FacultyService {
       });
   }
 
-  async getTodayAttendance(courseId: string, collegeId: string | null) {
+  async getTodayAttendance(
+    courseId: string,
+    userId: string,
+    collegeId: string | null,
+  ) {
     // course_id is client-supplied (@Param) — without this check a faculty
     // member could read another college's roster by supplying that
     // college's course id.
@@ -123,8 +144,20 @@ export class FacultyService {
         errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Course not found'),
       );
 
+    // Section-scoped: a faculty may only mark attendance for the section of
+    // this course they were actually assigned — see
+    // COURSE_OWNERSHIP_MIGRATION_PLAN.md §3/§5.
+    const mySection = sectionTaughtIn(this.db, userId, courseId);
+    if (!mySection)
+      throw new ForbiddenException(
+        errorBody(
+          ErrorCode.PRIVILEGE_CEILING,
+          'You are not assigned to any section of this course.',
+        ),
+      );
+
     const enrollment = this.db.enrollment.filter(
-      (e) => e.course_id === courseId,
+      (e) => e.course_id === courseId && e.section === mySection,
     );
     const studentIds = enrollment.map((e) => e.student_id);
     const today = new Date().toISOString().split('T')[0];
@@ -142,7 +175,11 @@ export class FacultyService {
     return { students, date: today, course_id: courseId };
   }
 
-  async recordAttendance(data: any, actorCollegeId: string | null) {
+  async recordAttendance(
+    data: any,
+    userId: string,
+    actorCollegeId: string | null,
+  ) {
     const { course_id, date, records } = data;
 
     const course = this.db.courses.find((c) => c.course_id === course_id);
@@ -150,6 +187,25 @@ export class FacultyService {
       throw new NotFoundException(
         errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Course not found'),
       );
+
+    // Section-scoped, same as getTodayAttendance: this faculty may only
+    // mark attendance for their own assigned section, and only for students
+    // actually enrolled in it — a student id from another section must not
+    // be smuggled into the records array.
+    const mySection = sectionTaughtIn(this.db, userId, course_id);
+    if (!mySection)
+      throw new ForbiddenException(
+        errorBody(
+          ErrorCode.PRIVILEGE_CEILING,
+          'You are not assigned to any section of this course.',
+        ),
+      );
+    const myStudentIds = new Set(
+      this.db.enrollment
+        .filter((e) => e.course_id === course_id && e.section === mySection)
+        .map((e) => e.student_id),
+    );
+
     const collegeId = writeCollegeId(actorCollegeId);
 
     // M-01: idempotent per student/course/date — re-submitting a session now
@@ -161,7 +217,7 @@ export class FacultyService {
     let updated = 0;
 
     for (const r of records || []) {
-      if (!r?.student_id) continue;
+      if (!r?.student_id || !myStudentIds.has(r.student_id)) continue;
       const status = normalizeAttendanceStatus(r.status);
       const existing = this.db.attendance_log.find(
         (a) =>
