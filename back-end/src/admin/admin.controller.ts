@@ -26,12 +26,14 @@ export class AdminController {
   }
 
   @Get('timetable')
+  @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Get timetable for a section' })
   async getTimetable(@Query('section') section: string = 'A') {
     return this.adminService.getTimetable(section);
   }
 
   @Get('events')
+  @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Get all events' })
   async getEvents() {
     return this.adminService.getEvents();
@@ -46,6 +48,7 @@ export class AdminController {
   }
 
   @Get('discussions')
+  @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Get all discussion posts' })
   async getDiscussions() {
     return this.adminService.getDiscussions();

@@ -11,6 +11,7 @@ import {
   Req,
   BadRequestException,
   ForbiddenException,
+  InternalServerErrorException,
   NotFoundException,
   UsePipes,
   ValidationPipe,
@@ -19,11 +20,13 @@ import { v4 as uuidv4 } from 'uuid';
 import { InMemoryDbService } from '../database/in-memory-db.service';
 import { Roles } from '../auth/roles.guard';
 import {
+  CurrentUserCollegeId,
   CurrentUserId,
   CurrentUserRole,
 } from '../common/decorators/current-user.decorator';
 import { PasswordService } from '../auth/password.service';
 import { ErrorCode, errorBody } from '../common/errors/error-codes';
+import { DEFAULT_COLLEGE_ID } from '../common/constants/college';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import {
   ATTENDANCE_STATUS,
@@ -125,6 +128,7 @@ export class CommonController {
   // ── Courses ──────────────────────────────────────────────────────────────────
 
   @Get('courses')
+  @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Get all courses' })
   @ApiResponse({ status: 200, description: 'Array of all courses' })
   async getCourses() {
@@ -164,6 +168,7 @@ export class CommonController {
   // ── Timetable ────────────────────────────────────────────────────────────────
 
   @Get('timetable')
+  @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Get timetable grid for a section' })
   async getTimetable(@Query('section') section: string = 'A') {
     const slots = this.db.timetable.filter((t) => t.section === section);
@@ -214,6 +219,7 @@ export class CommonController {
   // ── Assessments ──────────────────────────────────────────────────────────────
 
   @Get('assessments')
+  @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({
     summary: 'Get all assessments, optionally filtered by faculty_id',
   })
@@ -303,6 +309,7 @@ export class CommonController {
   // ── Submissions (online assessments) ─────────────────────────────────────────
 
   @Get('submissions')
+  @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({
     summary: 'Get submissions — own for student, all for faculty',
   })
@@ -316,6 +323,7 @@ export class CommonController {
   }
 
   @Post('submissions')
+  @Roles('student')
   @ApiOperation({ summary: 'Student submits work for an online assessment' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async createSubmission(@Body() body: any, @CurrentUserId() userId: string) {
@@ -433,6 +441,7 @@ export class CommonController {
   // ── Discussions ───────────────────────────────────────────────────────────────
 
   @Get('discussions')
+  @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Get all discussion posts with reply counts' })
   async getDiscussions() {
     return this.db.discussion_posts.map((p) => {
@@ -444,6 +453,7 @@ export class CommonController {
   }
 
   @Get('discussions/:postId')
+  @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Get a single discussion post with all replies' })
   async getDiscussionDetail(@Param('postId') postId: string) {
     const post = this.db.discussion_posts.find((p) => p.post_id === postId);
@@ -458,6 +468,7 @@ export class CommonController {
   }
 
   @Post('discussions')
+  @Roles('student', 'faculty')
   @ApiOperation({ summary: 'Create a new discussion post' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async createDiscussion(@Body() body: any, @CurrentUserId() userId: string) {
@@ -487,6 +498,7 @@ export class CommonController {
   }
 
   @Post('discussions/:postId/replies')
+  @Roles('student', 'faculty')
   @ApiOperation({ summary: 'Reply to a discussion post' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async createReply(
@@ -525,6 +537,7 @@ export class CommonController {
   // ── Research ─────────────────────────────────────────────────────────────────
 
   @Get('research')
+  @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Get research projects filtered by role' })
   async getResearch(
     @CurrentUserId() userId: string,
@@ -661,6 +674,7 @@ export class CommonController {
   // ── Events ────────────────────────────────────────────────────────────────────
 
   @Get('events')
+  @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Get all scheduled events' })
   @ApiResponse({ status: 200, description: 'Array of events' })
   async getEvents() {
@@ -715,6 +729,7 @@ export class CommonController {
   // ── Leave ─────────────────────────────────────────────────────────────────────
 
   @Get('leave')
+  @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({
     summary: 'Get leave applications — own for student, all for admin/faculty',
   })
@@ -821,13 +836,18 @@ export class CommonController {
   }
 
   @Post('users')
-  @Roles('admin', 'superadmin', 'head')
+  // 'spoc' added alongside the existing three. The ceiling check just below
+  // is what actually restricts a SPOC to creating 'admin' accounts — see
+  // ROLE_GRANTS in common/dto/user.dto.ts. Without 'spoc' here, the guard
+  // (roles.guard.ts) would 403 a SPOC before this handler ever ran.
+  @Roles('admin', 'superadmin', 'head', 'spoc')
   @StrictBody()
   @ApiOperation({ summary: 'Create a new system user' })
   @ApiBody({ type: CreateUserDto })
   async createUser(
     @Body() body: CreateUserDto,
     @CurrentUserRole() actorRole: string,
+    @CurrentUserCollegeId() actorCollegeId: string | null,
   ) {
     // C-04: a privilege ceiling now applies. Previously any of admin/head/superadmin
     // could create an account with any role, contradicting the documented rule that
@@ -854,6 +874,32 @@ export class CommonController {
       );
     }
 
+    // The new account's college, resolved server-side — never from the
+    // request body, or a SPOC could plant an admin in a college that is not
+    // theirs. Two cases:
+    //   * A SPOC has a college (enforced at provisioning — see
+    //     colleges.service.ts) — the admin they hire inherits it exactly.
+    //   * admin/head/superadmin creating through this panel in today's
+    //     single-deployment model attribute the new account to their own
+    //     college; superadmin specifically has none of its own (the vendor
+    //     operator), so it falls back to the one college this deployment
+    //     already serves. Onboarding a second college onto this same running
+    //     instance is not yet safe — see the tenancy note in
+    //     SPOC_IMPLEMENTATION_PLAN.md §3 — so that fallback is correct for
+    //     every deployment that exists today.
+    if (actorRole === 'spoc' && !actorCollegeId) {
+      // Unreachable in practice — a SPOC is never provisioned without a
+      // college — but a 500 here is the honest response to a misconfigured
+      // account, not a 403 the caller could mistake for something they did.
+      throw new InternalServerErrorException(
+        errorBody(
+          ErrorCode.MISCONFIGURATION,
+          'This SPOC account has no college on record.',
+        ),
+      );
+    }
+    const collegeId = actorCollegeId ?? DEFAULT_COLLEGE_ID;
+
     const id = `u${Date.now()}`;
     const firstName = body.first_name || body.username || 'New';
     const newUser = {
@@ -864,6 +910,7 @@ export class CommonController {
       email: body.email,
       phone: body.phone || '',
       role: body.role,
+      college_id: collegeId,
       // Hashed, never stored in the clear. The previous default of the literal
       // string 'password' meant any account created without one shipped with a
       // known credential.
@@ -1116,6 +1163,7 @@ export class CommonController {
   // ── Resources ─────────────────────────────────────────────────────────────────
 
   @Get('resources')
+  @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Get all resources' })
   async getResources() {
     return this.db.resources;
@@ -1271,6 +1319,7 @@ export class CommonController {
   // ── Syllabus Progress ──────────────────────────────────────────────────────────
 
   @Get('syllabus-progress')
+  @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({
     summary: 'Get syllabus completion progress, optionally filtered by section',
   })
