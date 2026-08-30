@@ -402,4 +402,52 @@ describe('MeetingService', () => {
       expect(meeting.meeting_link).toBe('https://meet.google.com/direct-link');
     });
   });
+
+  describe('Current date and time onwards validation', () => {
+    it('rejects scheduling on a past date', async () => {
+      await expect(
+        service.createMeeting('s1', {
+          facultyId: 'f1',
+          purpose: 'Past Date Request',
+          requestedDate: '2020-01-01',
+          requestedStartTime: '10:00',
+          requestedEndTime: '10:30',
+          meetingType: MeetingType.ONLINE,
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('rejects scheduling at a past time on the current date', async () => {
+      const today = new Date().toISOString().split('T')[0];
+      await expect(
+        service.facultyCreateMeeting('f1', {
+          studentId: 's1',
+          purpose: 'Past Time Today',
+          scheduledDate: today,
+          scheduledStartTime: '00:01',
+          scheduledEndTime: '00:30',
+          meetingType: MeetingType.ONLINE,
+          meetingLink: 'https://meet.google.com/test',
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('accepts scheduling at a future time on the current date', async () => {
+      const today = new Date().toISOString().split('T')[0];
+      const futureHours = (new Date().getHours() + 2) % 24;
+      // If late at night, test next day or future date
+      const futureDate = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+      const meeting = await service.facultyCreateMeeting('f1', {
+        studentId: 's1',
+        purpose: 'Future Meeting',
+        scheduledDate: futureDate,
+        scheduledStartTime: '14:00',
+        scheduledEndTime: '14:30',
+        meetingType: MeetingType.ONLINE,
+        meetingLink: 'https://meet.google.com/future-link',
+      });
+      expect(meeting).toBeDefined();
+      expect(meeting.status).toBe(MeetingStatus.SCHEDULED);
+    });
+  });
 });

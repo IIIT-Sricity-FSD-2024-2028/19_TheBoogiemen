@@ -52,9 +52,10 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
             <span>Research Projects</span>
         </a>
-        <a href="#" class="nav-item" onclick="switchView('meetings-view', this)">
+        <a href="#" id="nav-faculty-meetings" class="nav-item" onclick="switchView('meetings-view', this)">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
             <span>Meetings</span>
+            <span id="faculty-meetings-nav-badge" style="display:none;margin-left:auto;background:#ef4444;color:#fff;font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px;">0</span>
         </a>
         <a href="#" class="nav-item" onclick="openResourceBookingModal(); return false;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
@@ -91,6 +92,9 @@
 
         <!-- ── Dashboard View ──────────────────────── -->
         <div id="dashboard-view" class="view-section active">
+            <!-- Active Meeting Notifications & Action Alerts -->
+            <div id="faculty-meeting-notifications-container"></div>
+
             <!-- Clickable Metric Cards -->
             <div class="metrics-grid" style="grid-template-columns:1fr 1fr;">
                 <div class="metric-card" onclick="switchView('student-overview-view',document.querySelector('.nav-item[onclick*=student-overview-view]'))" style="cursor:pointer;" title="View students">

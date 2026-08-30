@@ -268,4 +268,89 @@ DB_POOL_MAX=5
 | `npm run db:seed` | Performs schema migration and loads `data/mock-db.json` into Postgres. |
 | `npm run db:reset` | Resets the Postgres database schemas (truncates all tables) and re-seeds. |
 | `npm run lint` / `npm run format` | Validates styles and formats source code. |
-| `npm run test` | Executes Jest test suites. |
+| `npm run test` | Executes Jest unit test suites (68+ tests). |
+| `npm run test:e2e` | Executes end-to-end integration test suites (11+ tests). |
+
+---
+
+## 7. Meeting Scheduling & Management Module (A-to-Z)
+
+The **Meeting Scheduling and Management Module** is a high-availability, role-governed subsystem designed to facilitate structured 1-on-1 academic mentorship, thesis/project reviews, doubts clarification, and performance consultations between **Students** and **Faculty Members**.
+
+### 7.1 Architecture & Role Boundaries
+- **Exclusivity**: Creation, scheduling, rescheduling, and outcome completion are strictly restricted to the `student` and `faculty` roles. Admin/Head accounts have no operational role in direct 1-on-1 meeting scheduling.
+- **Data Isolation**: A student can only view/manage their own meeting requests. A faculty member can only view/manage meetings where they are the designated mentor.
+- **Conflict Engine**: Prevents double-booking by detecting slot overlaps across both student and faculty calendars for all active confirmed meetings.
+
+### 7.2 Meeting Lifecycle State Machine
+
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING: Student submits Request
+    [*] --> SCHEDULED: Faculty direct schedules
+
+    PENDING --> SCHEDULED: Faculty accepts request
+    PENDING --> DENIED: Faculty denies request
+    PENDING --> RESCHEDULE_REQUESTED: Faculty asks to reschedule
+    PENDING --> CANCELLED: Student or Faculty cancels
+
+    RESCHEDULE_REQUESTED --> SCHEDULED: Student accepts faculty proposal / Faculty accepts student proposal
+    RESCHEDULE_REQUESTED --> PENDING: Student declines faculty proposal
+    RESCHEDULE_REQUESTED --> CANCELLED: Cancelled
+
+    SCHEDULED --> RESCHEDULE_REQUESTED: Student requests reschedule
+    SCHEDULED --> SCHEDULED: Faculty direct updates slot
+    SCHEDULED --> COMPLETED: Faculty records minutes & marks complete
+    SCHEDULED --> CANCELLED: Cancelled
+
+    COMPLETED --> [*]
+    DENIED --> [*]
+    CANCELLED --> [*]
+```
+
+### 7.3 Date & Time Scheduling Rules
+1. **Current Date & Time Onwards Only**:
+   - Meetings can **only** be scheduled on today's date from current time onwards, or on future dates.
+   - Any selection where `meetingDate < today` or (`meetingDate === today` and `startTime < currentTime`) is rejected at both frontend validation and backend service layers with a `400 Bad Request` (`BUSINESS_RULE_VIOLATION`).
+2. **Lexicographical Time Boundaries**:
+   - `startTime` must be strictly prior to `endTime` (`startTime < endTime`).
+3. **Grace Window**:
+   - Backend enforces a 60-second transmission grace buffer when evaluating timestamps for network latency.
+
+### 7.4 Recorded Minutes of Discussion & Outcomes
+When faculty completes a meeting session:
+- **Discussion Notes**: Complete minutes and topics discussed.
+- **Outcomes & Decisions**: Actionable conclusions reached during the meeting.
+- **Action Items for Student**: Agreed tasks, deliverables, or follow-ups.
+- **Faculty Remarks**: Qualitative feedback and mentoring guidance.
+- Once marked **`COMPLETED`**, the record is permanently archived under the **`✓ Completed`** tab on both dashboards with formatted minutes boxes.
+
+### 7.5 Real-Time Notifications & Dashboard Alerts
+- **Faculty Dashboard Overview**:
+  - Prominent alert banner on the top of `#dashboard-view` highlighting pending requests (`⏳ Action Required`) and student reschedule requests (`🔄 Awaiting Response`) with 1-click review shortcuts.
+  - Live notification badge on the sidebar **Meetings** link showing total pending action items.
+  - In-app notification bell dispatches instant alerts upon every request or schedule change.
+- **Student Dashboard**:
+  - Instant notification upon meeting confirmation, reschedule proposal, or completion with feedback.
+
+### 7.6 API Reference Table
+
+| Method | Endpoint | Allowed Roles | Description |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/meetings` | `student` | Creates a new meeting request with specified faculty |
+| `POST` | `/api/meetings/faculty-schedule` | `faculty` | Directly creates a confirmed scheduled meeting with student |
+| `GET` | `/api/meetings/my` | `student`, `faculty` | Retrieves all meetings associated with authenticated user |
+| `GET` | `/api/meetings/faculty/requests` | `faculty` | Retrieves pending meeting requests for faculty |
+| `GET` | `/api/meetings/faculty-list` | `student` | Directory of faculty available for meetings |
+| `GET` | `/api/meetings/student-list` | `faculty` | Directory of students available for scheduling |
+| `PATCH` | `/api/meetings/:id/accept` | `faculty` | Confirms student request and establishes schedule & link |
+| `PATCH` | `/api/meetings/:id/ask-reschedule` | `faculty` | Proposes alternative date/time for student review |
+| `PATCH` | `/api/meetings/:id/deny` | `faculty` | Rejects meeting request with denial reason |
+| `PATCH` | `/api/meetings/:id/request-reschedule` | `student` | Requests alternative slot for confirmed meeting |
+| `PATCH` | `/api/meetings/:id/handle-student-reschedule` | `faculty` | Accepts student reschedule or proposes counter-slot |
+| `PATCH` | `/api/meetings/:id/accept-reschedule` | `student` | Accepts faculty proposed reschedule |
+| `PATCH` | `/api/meetings/:id/decline-reschedule` | `student` | Declines faculty proposed reschedule |
+| `PATCH` | `/api/meetings/:id/faculty-reschedule` | `faculty` | Directly updates date, time, or venue of confirmed meeting |
+| `PATCH` | `/api/meetings/:id/complete` | `faculty` | Records minutes, outcomes, action items, and marks completed |
+| `PATCH` | `/api/meetings/:id/cancel` | `student`, `faculty` | Cancels meeting session |
+

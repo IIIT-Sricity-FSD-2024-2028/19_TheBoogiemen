@@ -1348,9 +1348,16 @@ window.submitScheduleMeeting = async function() {
         endTime = `${String(endH).padStart(2,'0')}:${String(endM).padStart(2,'0')}`;
     }
 
-    if (!studentId)  { showToast('Please select a student', 'warning'); return; }
-    if (!date)       { showToast('Meeting date is required', 'warning'); return; }
-    if (date < new Date().toISOString().split('T')[0]) { showToast('Meeting date cannot be in the past', 'warning'); return; }
+    const today = new Date().toISOString().split('T')[0];
+    if (date < today) { showToast('Meeting date cannot be in the past', 'warning'); return; }
+    if (date === today) {
+        const now = new Date();
+        const curTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+        if (startTime < curTime) {
+            showToast(`On today's date, meetings can only be scheduled from current time (${curTime}) onwards`, 'warning');
+            return;
+        }
+    }
     if (!hour || !minute) { showToast('Please select meeting time (hour and minute)', 'warning'); return; }
     if (!mode)       { showToast('Please select a meeting type', 'warning'); return; }
     if (!agenda || agenda.length < 5) { showToast('Please enter a meeting agenda (at least 5 characters)', 'warning'); return; }
@@ -2987,6 +2994,12 @@ function renderViewWidgets(viewId) {
             renderActionRequired();
             renderSyllabusTracker();
             renderFacultySyllabusManager();
+            window.renderFacultyMeetingsAlerts && window.renderFacultyMeetingsAlerts();
+            window.renderFacultyDashboardMeetings && window.renderFacultyDashboardMeetings();
+        }
+        if (viewId === 'meetings-view') {
+            window.renderFacultyDashboardMeetings && window.renderFacultyDashboardMeetings();
+            window.renderStudentMeetings && window.renderStudentMeetings();
         }
         if (viewId === 'attendance-override-view') renderAdminAttendanceRequests();
         if (viewId === 'mark-attendance-view')      renderFacultyAttendanceRequests();

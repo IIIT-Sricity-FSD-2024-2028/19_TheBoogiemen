@@ -77,6 +77,21 @@ export class MeetingService {
     }
   }
 
+  private validateFutureDateTime(dateStr: string, startTimeStr: string): void {
+    if (!dateStr || !startTimeStr) return;
+    const meetingDateTime = new Date(`${dateStr}T${startTimeStr}:00`);
+    const now = new Date();
+    // 60-second grace window to allow for network transmission when selecting current minute
+    if (meetingDateTime.getTime() < now.getTime() - 60000) {
+      throw new BadRequestException(
+        errorBody(
+          ErrorCode.BUSINESS_RULE_VIOLATION,
+          `Cannot schedule meeting in the past (${dateStr} ${startTimeStr}). On the current date, meetings can only be scheduled from current time onwards.`,
+        ),
+      );
+    }
+  }
+
   async getFacultyList() {
     return this.meetingRepo.getFacultyList();
   }
@@ -87,6 +102,7 @@ export class MeetingService {
 
   async facultyCreateMeeting(facultyId: string, dto: FacultyCreateMeetingDto): Promise<MeetingEntity> {
     this.validateTimeRange(dto.scheduledStartTime, dto.scheduledEndTime);
+    this.validateFutureDateTime(dto.scheduledDate, dto.scheduledStartTime);
     this.validateOnlineLink(dto.meetingType, dto.meetingLink);
     this.validateInPersonLocation(dto.meetingType, dto.location);
 
@@ -140,6 +156,7 @@ export class MeetingService {
 
   async createMeeting(studentId: string, dto: CreateMeetingDto): Promise<MeetingEntity> {
     this.validateTimeRange(dto.requestedStartTime, dto.requestedEndTime);
+    this.validateFutureDateTime(dto.requestedDate, dto.requestedStartTime);
 
     const now = new Date().toISOString();
     const newMeeting: MeetingEntity = {
@@ -230,6 +247,7 @@ export class MeetingService {
     }
 
     this.validateTimeRange(dto.scheduledStartTime, dto.scheduledEndTime);
+    this.validateFutureDateTime(dto.scheduledDate, dto.scheduledStartTime);
 
     const meetingType = dto.meetingType || meeting.meeting_type;
     const meetingPlatform = meetingType === MeetingType.ONLINE ? (dto.meetingPlatform || MeetingPlatform.GOOGLE_MEET) : undefined;
@@ -342,6 +360,7 @@ export class MeetingService {
     }
 
     this.validateTimeRange(dto.proposedStartTime, dto.proposedEndTime);
+    this.validateFutureDateTime(dto.proposedDate, dto.proposedStartTime);
 
     const meetingType = dto.meetingType || meeting.meeting_type;
     const meetingPlatform = meetingType === MeetingType.ONLINE ? (dto.meetingPlatform || MeetingPlatform.GOOGLE_MEET) : undefined;
@@ -509,6 +528,7 @@ export class MeetingService {
     }
 
     this.validateTimeRange(dto.proposedStartTime, dto.proposedEndTime);
+    this.validateFutureDateTime(dto.proposedDate, dto.proposedStartTime);
 
     const updated = await this.meetingRepo.update(id, {
       status: MeetingStatus.RESCHEDULE_REQUESTED,
@@ -639,6 +659,7 @@ export class MeetingService {
       }
 
       this.validateTimeRange(dto.proposedStartTime, dto.proposedEndTime);
+      this.validateFutureDateTime(dto.proposedDate, dto.proposedStartTime);
 
       const meetingType = dto.meetingType || meeting.meeting_type;
       const meetingLink = dto.meetingLink || meeting.meeting_link;
@@ -698,6 +719,7 @@ export class MeetingService {
     }
 
     this.validateTimeRange(dto.scheduledStartTime, dto.scheduledEndTime);
+    this.validateFutureDateTime(dto.scheduledDate, dto.scheduledStartTime);
 
     const meetingType = dto.meetingType || meeting.meeting_type;
     const meetingPlatform = meetingType === MeetingType.ONLINE ? (dto.meetingPlatform || MeetingPlatform.GOOGLE_MEET) : undefined;

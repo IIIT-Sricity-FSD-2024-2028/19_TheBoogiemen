@@ -174,6 +174,8 @@
         const pendingCount = currentMeetings.filter(m => m.status === 'PENDING').length;
         const scheduledCount = currentMeetings.filter(m => m.status === 'SCHEDULED').length;
         const reschedCount = currentMeetings.filter(m => m.status === 'RESCHEDULE_REQUESTED').length;
+        const completedCount = currentMeetings.filter(m => m.status === 'COMPLETED').length;
+        const deniedCount = currentMeetings.filter(m => m.status === 'DENIED' || m.status === 'CANCELLED').length;
 
         container.innerHTML = `
             <div style="margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
@@ -192,19 +194,19 @@
                     All (${currentMeetings.length})
                 </button>
                 <button onclick="window.setMeetingTab('scheduled')" style="padding:8px 16px;border:none;background:none;font-weight:700;font-size:14px;cursor:pointer;color:${activeTab==='scheduled'?'#2563eb':'#64748b'};border-bottom:${activeTab==='scheduled'?'2px solid #2563eb':'none'};margin-bottom:-2px;">
-                    Scheduled (${scheduledCount})
+                    📅 Scheduled (${scheduledCount})
                 </button>
                 <button onclick="window.setMeetingTab('pending')" style="padding:8px 16px;border:none;background:none;font-weight:700;font-size:14px;cursor:pointer;color:${activeTab==='pending'?'#2563eb':'#64748b'};border-bottom:${activeTab==='pending'?'2px solid #2563eb':'none'};margin-bottom:-2px;">
-                    Pending Approval (${pendingCount})
+                    ⏳ Pending Approval (${pendingCount})
                 </button>
                 <button onclick="window.setMeetingTab('reschedule')" style="padding:8px 16px;border:none;background:none;font-weight:700;font-size:14px;cursor:pointer;color:${activeTab==='reschedule'?'#2563eb':'#64748b'};border-bottom:${activeTab==='reschedule'?'2px solid #2563eb':'none'};margin-bottom:-2px;">
-                    Reschedule Requests (${reschedCount})
+                    🔄 Reschedule Requests (${reschedCount})
                 </button>
-                <button onclick="window.setMeetingTab('completed')" style="padding:8px 16px;border:none;background:none;font-weight:700;font-size:14px;cursor:pointer;color:${activeTab==='completed'?'#2563eb':'#64748b'};border-bottom:${activeTab==='completed'?'2px solid #2563eb':'none'};margin-bottom:-2px;">
-                    Completed
+                <button onclick="window.setMeetingTab('completed')" style="padding:8px 16px;border:none;background:none;font-weight:700;font-size:14px;cursor:pointer;color:${activeTab==='completed'?'#16a34a':'#64748b'};border-bottom:${activeTab==='completed'?'2px solid #16a34a':'none'};margin-bottom:-2px;">
+                    ✓ Completed (${completedCount})
                 </button>
-                <button onclick="window.setMeetingTab('denied')" style="padding:8px 16px;border:none;background:none;font-weight:700;font-size:14px;cursor:pointer;color:${activeTab==='denied'?'#2563eb':'#64748b'};border-bottom:${activeTab==='denied'?'2px solid #2563eb':'none'};margin-bottom:-2px;">
-                    Denied / Cancelled
+                <button onclick="window.setMeetingTab('denied')" style="padding:8px 16px;border:none;background:none;font-weight:700;font-size:14px;cursor:pointer;color:${activeTab==='denied'?'#dc2626':'#64748b'};border-bottom:${activeTab==='denied'?'2px solid #dc2626':'none'};margin-bottom:-2px;">
+                    ✕ Denied / Cancelled (${deniedCount})
                 </button>
             </div>
 
@@ -317,12 +319,37 @@
 
                 <!-- Completed Outcome Details -->
                 ${isCompleted ? `
-                    <div style="background:#f0fdf4;border:1px solid #bbf7d0;padding:14px;border-radius:8px;margin-bottom:14px;font-size:13px;">
-                        <h4 style="margin:0 0 8px;color:#166534;font-size:14px;">✓ Meeting Outcome & Minutes</h4>
-                        ${m.discussion_notes ? `<div style="margin-bottom:6px;"><strong>Discussion Notes:</strong> <span style="color:#334155;">${m.discussion_notes}</span></div>` : ''}
-                        ${m.outcome ? `<div style="margin-bottom:6px;"><strong>Outcome:</strong> <span style="color:#334155;">${m.outcome}</span></div>` : ''}
-                        ${m.action_items ? `<div style="margin-bottom:6px;"><strong>Action Items:</strong> <span style="color:#334155;">${m.action_items}</span></div>` : ''}
-                        ${m.faculty_remarks ? `<div><strong>Faculty Remarks:</strong> <span style="color:#334155;">${m.faculty_remarks}</span></div>` : ''}
+                    <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:16px;margin-bottom:14px;box-shadow:0 1px 3px rgba(16,185,129,0.1);">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                            <span style="font-size:18px;">✅</span>
+                            <h4 style="margin:0;color:#15803d;font-size:15px;font-weight:700;">Meeting Completed & Recorded Minutes</h4>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr;gap:10px;font-size:13px;">
+                            ${m.faculty_remarks ? `
+                                <div style="background:#fff;border:1px solid #bbf7d0;padding:10px 14px;border-radius:8px;">
+                                    <strong style="color:#166534;display:block;margin-bottom:2px;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">💬 Faculty Remarks & Feedback</strong>
+                                    <span style="color:#1e293b;font-size:14px;line-height:1.5;font-weight:500;">${m.faculty_remarks}</span>
+                                </div>
+                            ` : ''}
+                            ${m.discussion_notes ? `
+                                <div style="background:#fff;border:1px solid #bbf7d0;padding:10px 14px;border-radius:8px;">
+                                    <strong style="color:#166534;display:block;margin-bottom:2px;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">📝 Discussion Notes</strong>
+                                    <span style="color:#334155;line-height:1.5;">${m.discussion_notes}</span>
+                                </div>
+                            ` : ''}
+                            ${m.outcome ? `
+                                <div style="background:#fff;border:1px solid #bbf7d0;padding:10px 14px;border-radius:8px;">
+                                    <strong style="color:#166534;display:block;margin-bottom:2px;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">🎯 Outcomes & Decisions</strong>
+                                    <span style="color:#334155;line-height:1.5;">${m.outcome}</span>
+                                </div>
+                            ` : ''}
+                            ${m.action_items ? `
+                                <div style="background:#fff;border:1px solid #bbf7d0;padding:10px 14px;border-radius:8px;">
+                                    <strong style="color:#166534;display:block;margin-bottom:2px;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">📌 Action Items for Student</strong>
+                                    <span style="color:#334155;line-height:1.5;">${m.action_items}</span>
+                                </div>
+                            ` : ''}
+                        </div>
                     </div>
                 ` : ''}
 
@@ -354,10 +381,115 @@
 
         await fetchMeetings();
 
+        // Render notifications banner on faculty dashboard overview
+        window.renderFacultyMeetingsAlerts();
+
         const container = document.getElementById('meetings-view');
         if (!container) return;
 
         renderFacultyMeetingsPage(container);
+    };
+
+    window.renderFacultyMeetingsAlerts = function () {
+        const user = window.Auth ? window.Auth.getUser() : null;
+        if (!user || user.role !== 'faculty') return;
+
+        const pendingList = currentMeetings.filter(m => m.status === 'PENDING');
+        const reschedList = currentMeetings.filter(m => m.status === 'RESCHEDULE_REQUESTED' && m.reschedule_requested_by === 'STUDENT');
+        const scheduledToday = currentMeetings.filter(m => m.status === 'SCHEDULED' && m.scheduled_date === getTodayDateString());
+
+        // 1. Update Sidebar Nav Badge
+        const navBadge = document.getElementById('faculty-meetings-nav-badge');
+        const totalActionable = pendingList.length + reschedList.length;
+        if (navBadge) {
+            if (totalActionable > 0) {
+                navBadge.textContent = totalActionable;
+                navBadge.style.display = 'inline-block';
+            } else {
+                navBadge.style.display = 'none';
+            }
+        }
+
+        // 2. Render Notifications / Alerts on Faculty Dashboard Overview (#faculty-meeting-notifications-container)
+        const notifContainer = document.getElementById('faculty-meeting-notifications-container');
+        if (!notifContainer) return;
+
+        let html = '';
+
+        // Pending Meeting Requests Alert
+        if (pendingList.length > 0) {
+            html += `
+                <div style="background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1.5px solid #f59e0b;border-radius:12px;padding:16px 20px;margin-bottom:14px;box-shadow:0 2px 8px rgba(245,158,11,0.12);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+                    <div style="display:flex;align-items:center;gap:14px;">
+                        <div style="font-size:26px;background:#fde68a;width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 4px rgba(0,0,0,0.05);">📅</div>
+                        <div>
+                            <div style="font-size:15px;font-weight:700;color:#92400e;display:flex;align-items:center;gap:8px;">
+                                <span>Pending Meeting Requests</span>
+                                <span style="background:#dc2626;color:#fff;font-size:11px;font-weight:800;padding:2px 8px;border-radius:12px;">${pendingList.length} Action Required</span>
+                            </div>
+                            <div style="font-size:13px;color:#78350f;margin-top:3px;">
+                                Latest request: <strong>${pendingList[0].purpose}</strong> from <strong>${pendingList[0].student_name || 'Student'}</strong> (${pendingList[0].student_id}) for <strong>${pendingList[0].requested_date}</strong> at <strong>${pendingList[0].requested_start_time}–${pendingList[0].requested_end_time}</strong>.
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="if(typeof switchView==='function')switchView('meetings-view'); window.setMeetingTab('pending');" style="padding:9px 18px;background:#d97706;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 2px 6px rgba(217,119,6,0.3);transition:background 0.2s;">
+                        Review &amp; Schedule ↗
+                    </button>
+                </div>
+            `;
+        }
+
+        // Student Reschedule Requests Alert
+        if (reschedList.length > 0) {
+            html += `
+                <div style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1.5px solid #3b82f6;border-radius:12px;padding:16px 20px;margin-bottom:14px;box-shadow:0 2px 8px rgba(59,130,246,0.12);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+                    <div style="display:flex;align-items:center;gap:14px;">
+                        <div style="font-size:26px;background:#bfdbfe;width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 4px rgba(0,0,0,0.05);">🔄</div>
+                        <div>
+                            <div style="font-size:15px;font-weight:700;color:#1e40af;display:flex;align-items:center;gap:8px;">
+                                <span>Meeting Reschedule Requests</span>
+                                <span style="background:#2563eb;color:#fff;font-size:11px;font-weight:800;padding:2px 8px;border-radius:12px;">${reschedList.length} Awaiting Response</span>
+                            </div>
+                            <div style="font-size:13px;color:#1e3a8a;margin-top:3px;">
+                                <strong>${reschedList[0].student_name || 'Student'}</strong> proposed new slot on <strong>${reschedList[0].proposed_date}</strong> at <strong>${reschedList[0].proposed_start_time}–${reschedList[0].proposed_end_time}</strong> (${reschedList[0].reschedule_reason || 'Clash with schedule'}).
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="if(typeof switchView==='function')switchView('meetings-view'); window.setMeetingTab('reschedule');" style="padding:9px 18px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 2px 6px rgba(37,99,235,0.3);transition:background 0.2s;">
+                        View &amp; Respond ↗
+                    </button>
+                </div>
+            `;
+        }
+
+        // Today's Scheduled Meetings Banner
+        if (scheduledToday.length > 0) {
+            html += `
+                <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1.5px solid #22c55e;border-radius:12px;padding:16px 20px;margin-bottom:14px;box-shadow:0 2px 8px rgba(34,197,94,0.12);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+                    <div style="display:flex;align-items:center;gap:14px;">
+                        <div style="font-size:26px;background:#bbf7d0;width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 4px rgba(0,0,0,0.05);">📅</div>
+                        <div>
+                            <div style="font-size:15px;font-weight:700;color:#15803d;">Today's Scheduled Meetings (${scheduledToday.length})</div>
+                            <div style="font-size:13px;color:#166534;margin-top:3px;">
+                                ${scheduledToday.map(m => `<strong>${m.purpose}</strong> with <strong>${m.student_name || 'Student'}</strong> at <strong>${m.scheduled_start_time}</strong> (${m.meeting_type === 'ONLINE' ? '🌐 Google Meet' : '📍 ' + (m.location || 'In-Person')})`).join(' &bull; ')}
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        ${scheduledToday[0].meeting_type === 'ONLINE' && scheduledToday[0].meeting_link ? `
+                            <a href="${scheduledToday[0].meeting_link}" target="_blank" rel="noopener noreferrer" style="padding:9px 18px;background:#16a34a;color:#fff;border-radius:8px;text-decoration:none;font-weight:700;font-size:13px;box-shadow:0 2px 6px rgba(22,163,74,0.3);">
+                                🌐 Start Meet ↗
+                            </a>
+                        ` : ''}
+                        <button onclick="if(typeof switchView==='function')switchView('meetings-view'); window.setMeetingTab('scheduled');" style="padding:9px 18px;background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;">
+                            View All
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        notifContainer.innerHTML = html;
     };
 
     function renderFacultyMeetingsPage(container) {
@@ -371,6 +503,8 @@
         const pendingCount = currentMeetings.filter(m => m.status === 'PENDING').length;
         const scheduledCount = currentMeetings.filter(m => m.status === 'SCHEDULED').length;
         const reschedCount = currentMeetings.filter(m => m.status === 'RESCHEDULE_REQUESTED').length;
+        const completedCount = currentMeetings.filter(m => m.status === 'COMPLETED').length;
+        const historyCount = currentMeetings.filter(m => ['COMPLETED', 'DENIED', 'CANCELLED'].includes(m.status)).length;
 
         container.innerHTML = `
             <div style="margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
@@ -389,19 +523,19 @@
                     All (${currentMeetings.length})
                 </button>
                 <button onclick="window.setMeetingTab('pending')" style="padding:8px 16px;border:none;background:none;font-weight:700;font-size:14px;cursor:pointer;color:${activeTab==='pending'?'#2563eb':'#64748b'};border-bottom:${activeTab==='pending'?'2px solid #2563eb':'none'};margin-bottom:-2px;">
-                    Pending Requests (${pendingCount})
+                    ⏳ Pending Requests (${pendingCount})
                 </button>
                 <button onclick="window.setMeetingTab('scheduled')" style="padding:8px 16px;border:none;background:none;font-weight:700;font-size:14px;cursor:pointer;color:${activeTab==='scheduled'?'#2563eb':'#64748b'};border-bottom:${activeTab==='scheduled'?'2px solid #2563eb':'none'};margin-bottom:-2px;">
-                    Scheduled (${scheduledCount})
+                    📅 Scheduled (${scheduledCount})
                 </button>
                 <button onclick="window.setMeetingTab('reschedule')" style="padding:8px 16px;border:none;background:none;font-weight:700;font-size:14px;cursor:pointer;color:${activeTab==='reschedule'?'#2563eb':'#64748b'};border-bottom:${activeTab==='reschedule'?'2px solid #2563eb':'none'};margin-bottom:-2px;">
-                    Reschedule Requests (${reschedCount})
+                    🔄 Reschedule Requests (${reschedCount})
                 </button>
-                <button onclick="window.setMeetingTab('completed')" style="padding:8px 16px;border:none;background:none;font-weight:700;font-size:14px;cursor:pointer;color:${activeTab==='completed'?'#2563eb':'#64748b'};border-bottom:${activeTab==='completed'?'2px solid #2563eb':'none'};margin-bottom:-2px;">
-                    Completed
+                <button onclick="window.setMeetingTab('completed')" style="padding:8px 16px;border:none;background:none;font-weight:700;font-size:14px;cursor:pointer;color:${activeTab==='completed'?'#16a34a':'#64748b'};border-bottom:${activeTab==='completed'?'2px solid #16a34a':'none'};margin-bottom:-2px;">
+                    ✓ Completed (${completedCount})
                 </button>
-                <button onclick="window.setMeetingTab('history')" style="padding:8px 16px;border:none;background:none;font-weight:700;font-size:14px;cursor:pointer;color:${activeTab==='history'?'#2563eb':'#64748b'};border-bottom:${activeTab==='history'?'2px solid #2563eb':'none'};margin-bottom:-2px;">
-                    History / Denied
+                <button onclick="window.setMeetingTab('history')" style="padding:8px 16px;border:none;background:none;font-weight:700;font-size:14px;cursor:pointer;color:${activeTab==='history'?'#64748b':'#64748b'};border-bottom:${activeTab==='history'?'2px solid #64748b':'none'};margin-bottom:-2px;">
+                    History / Denied (${historyCount})
                 </button>
             </div>
 
@@ -509,12 +643,37 @@
 
                 <!-- Completed Outcome Details -->
                 ${isCompleted ? `
-                    <div style="background:#f0fdf4;border:1px solid #bbf7d0;padding:14px;border-radius:8px;margin-bottom:14px;font-size:13px;">
-                        <h4 style="margin:0 0 8px;color:#166534;font-size:14px;">✓ Meeting Minutes & Recorded Outcome</h4>
-                        ${m.discussion_notes ? `<div style="margin-bottom:6px;"><strong>Discussion Notes:</strong> <span style="color:#334155;">${m.discussion_notes}</span></div>` : ''}
-                        ${m.outcome ? `<div style="margin-bottom:6px;"><strong>Outcome:</strong> <span style="color:#334155;">${m.outcome}</span></div>` : ''}
-                        ${m.action_items ? `<div style="margin-bottom:6px;"><strong>Action Items:</strong> <span style="color:#334155;">${m.action_items}</span></div>` : ''}
-                        ${m.faculty_remarks ? `<div><strong>Faculty Remarks:</strong> <span style="color:#334155;">${m.faculty_remarks}</span></div>` : ''}
+                    <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:16px;margin-bottom:14px;box-shadow:0 1px 3px rgba(16,185,129,0.1);">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                            <span style="font-size:18px;">✅</span>
+                            <h4 style="margin:0;color:#15803d;font-size:15px;font-weight:700;">Meeting Minutes & Recorded Outcome</h4>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr;gap:10px;font-size:13px;">
+                            ${m.faculty_remarks ? `
+                                <div style="background:#fff;border:1px solid #bbf7d0;padding:10px 14px;border-radius:8px;">
+                                    <strong style="color:#166534;display:block;margin-bottom:2px;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">💬 Faculty Remarks & Feedback</strong>
+                                    <span style="color:#1e293b;font-size:14px;line-height:1.5;font-weight:500;">${m.faculty_remarks}</span>
+                                </div>
+                            ` : ''}
+                            ${m.discussion_notes ? `
+                                <div style="background:#fff;border:1px solid #bbf7d0;padding:10px 14px;border-radius:8px;">
+                                    <strong style="color:#166534;display:block;margin-bottom:2px;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">📝 Discussion Notes</strong>
+                                    <span style="color:#334155;line-height:1.5;">${m.discussion_notes}</span>
+                                </div>
+                            ` : ''}
+                            ${m.outcome ? `
+                                <div style="background:#fff;border:1px solid #bbf7d0;padding:10px 14px;border-radius:8px;">
+                                    <strong style="color:#166534;display:block;margin-bottom:2px;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">🎯 Outcomes & Conclusions</strong>
+                                    <span style="color:#334155;line-height:1.5;">${m.outcome}</span>
+                                </div>
+                            ` : ''}
+                            ${m.action_items ? `
+                                <div style="background:#fff;border:1px solid #bbf7d0;padding:10px 14px;border-radius:8px;">
+                                    <strong style="color:#166534;display:block;margin-bottom:2px;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">📌 Action Items for Student</strong>
+                                    <span style="color:#334155;line-height:1.5;">${m.action_items}</span>
+                                </div>
+                            ` : ''}
+                        </div>
                     </div>
                 ` : ''}
 
@@ -562,6 +721,45 @@
         }
     };
 
+    function getCurrentTimeString() {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        return `${hours}:${minutes}`;
+    }
+
+    function getTodayDateString() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    function validateMeetingDateTime(date, startTime, endTime) {
+        if (!date || !startTime || !endTime) {
+            notify('Please specify meeting date and time range.', 'warning');
+            return false;
+        }
+        if (startTime >= endTime) {
+            notify('Start time must be strictly before end time.', 'warning');
+            return false;
+        }
+        const today = getTodayDateString();
+        if (date < today) {
+            notify('Meeting date cannot be in the past.', 'warning');
+            return false;
+        }
+        if (date === today) {
+            const curTime = getCurrentTimeString();
+            if (startTime < curTime) {
+                notify(`On today's date, meetings can only be scheduled from current time (${curTime}) onwards.`, 'warning');
+                return false;
+            }
+        }
+        return true;
+    }
+
     // --- Student: Request Meeting Modal ---
     window.openStudentRequestModal = async function () {
         await loadFacultyList();
@@ -572,7 +770,8 @@
         }
         const dateInput = document.getElementById('reqMeetingDate');
         if (dateInput) {
-            dateInput.min = new Date().toISOString().split('T')[0];
+            dateInput.min = getTodayDateString();
+            if (!dateInput.value) dateInput.value = getTodayDateString();
         }
         openM('studentRequestMeetingModal');
     };
@@ -587,18 +786,17 @@
         const meetingType = document.getElementById('reqMeetingType')?.value;
         const location = document.getElementById('reqMeetingLocation')?.value;
 
-        if (!facultyId || !purpose || !requestedDate || !requestedStartTime || !requestedEndTime) {
-            notify('Please fill in all required fields.', 'warning');
+        if (!facultyId || !purpose) {
+            notify('Please select a faculty member and meeting purpose.', 'warning');
             return;
         }
 
-        if (requestedStartTime >= requestedEndTime) {
-            notify('Start time must be before end time.', 'warning');
+        if (!validateMeetingDateTime(requestedDate, requestedStartTime, requestedEndTime)) {
             return;
         }
 
         try {
-            await api('/meetings', {
+            const res = await api('/meetings', {
                 method: 'POST',
                 body: JSON.stringify({
                     facultyId,
@@ -611,6 +809,14 @@
                     location: meetingType === 'IN_PERSON' ? location : undefined,
                 })
             });
+            const curUser = window.Auth ? window.Auth.getUser() : null;
+            const fromName = curUser ? `${curUser.first_name || ''} ${curUser.last_name || ''}`.trim() || 'Student' : 'Student';
+            window.Notifications?.send?.(
+                facultyId,
+                fromName,
+                `📅 New Meeting Request: "${purpose}" on ${requestedDate} at ${requestedStartTime}–${requestedEndTime}. Please review.`,
+                'meeting'
+            );
             notify('Meeting request submitted successfully!');
             closeM('studentRequestMeetingModal');
             window.renderStudentMeetings();
@@ -629,7 +835,8 @@
         }
         const dateInput = document.getElementById('facultyDirectScheduleDate');
         if (dateInput) {
-            dateInput.min = new Date().toISOString().split('T')[0];
+            dateInput.min = getTodayDateString();
+            if (!dateInput.value) dateInput.value = getTodayDateString();
         }
         openM('facultyScheduleMeetingModal');
     };
@@ -646,13 +853,12 @@
         const meetingLink = document.getElementById('facultyDirectMeetLink')?.value;
         const facultyRemarks = document.getElementById('facultyDirectRemarks')?.value;
 
-        if (!studentId || !purpose || !scheduledDate || !scheduledStartTime || !scheduledEndTime) {
-            notify('Please fill in all required fields.', 'warning');
+        if (!studentId || !purpose) {
+            notify('Please select a student and specify meeting purpose.', 'warning');
             return;
         }
 
-        if (scheduledStartTime >= scheduledEndTime) {
-            notify('Start time must be before end time.', 'warning');
+        if (!validateMeetingDateTime(scheduledDate, scheduledStartTime, scheduledEndTime)) {
             return;
         }
 
@@ -715,8 +921,7 @@
         const proposedEndTime = document.getElementById('studentReschedEnd')?.value;
         const rescheduleReason = document.getElementById('studentReschedReason')?.value;
 
-        if (!proposedDate || !proposedStartTime || !proposedEndTime) {
-            notify('Please enter date and times.', 'warning');
+        if (!validateMeetingDateTime(proposedDate, proposedStartTime, proposedEndTime)) {
             return;
         }
 
@@ -730,6 +935,17 @@
                     rescheduleReason,
                 })
             });
+            const curUser = window.Auth ? window.Auth.getUser() : null;
+            const fromName = curUser ? `${curUser.first_name || ''} ${curUser.last_name || ''}`.trim() || 'Student' : 'Student';
+            const m = currentMeetings.find(x => x.meeting_id === currentRescheduleMeetingId);
+            if (m && m.faculty_id) {
+                window.Notifications?.send?.(
+                    m.faculty_id,
+                    fromName,
+                    `🔄 Meeting Reschedule Request: Student requested new slot on ${proposedDate} at ${proposedStartTime}–${proposedEndTime}. Reason: "${rescheduleReason || 'Schedule clash'}".`,
+                    'meeting'
+                );
+            }
             notify('Reschedule request sent to faculty.');
             closeM('studentRescheduleModal');
             window.renderStudentMeetings();
@@ -784,7 +1000,7 @@
         const linkBox = document.getElementById('facultyAcceptLinkBox');
         const locBox = document.getElementById('facultyAcceptLocBox');
 
-        if (d) { d.value = reqDate || ''; d.min = new Date().toISOString().split('T')[0]; }
+        if (d) { d.value = reqDate || ''; d.min = getTodayDateString(); }
         if (s) s.value = reqStart || '';
         if (e) e.value = reqEnd || '';
         if (m) m.value = mode || 'ONLINE';
@@ -805,8 +1021,7 @@
         const location = document.getElementById('facultyAcceptLoc')?.value;
         const facultyRemarks = document.getElementById('facultyAcceptRemarks')?.value;
 
-        if (!scheduledDate || !scheduledStartTime || !scheduledEndTime) {
-            notify('Please specify date and time range.', 'warning');
+        if (!validateMeetingDateTime(scheduledDate, scheduledStartTime, scheduledEndTime)) {
             return;
         }
 
@@ -843,7 +1058,7 @@
         const d = document.getElementById('facultyAskDate');
         const s = document.getElementById('facultyAskStart');
         const e = document.getElementById('facultyAskEnd');
-        if (d) { d.value = reqDate || ''; d.min = new Date().toISOString().split('T')[0]; }
+        if (d) { d.value = reqDate || ''; d.min = getTodayDateString(); }
         if (s) s.value = reqStart || '';
         if (e) e.value = reqEnd || '';
         openM('facultyAskRescheduleModal');
@@ -856,8 +1071,7 @@
         const proposedEndTime = document.getElementById('facultyAskEnd')?.value;
         const rescheduleReason = document.getElementById('facultyAskReason')?.value;
 
-        if (!proposedDate || !proposedStartTime || !proposedEndTime) {
-            notify('Please fill proposed date and time.', 'warning');
+        if (!validateMeetingDateTime(proposedDate, proposedStartTime, proposedEndTime)) {
             return;
         }
 
@@ -937,6 +1151,8 @@
     let currentCounterId = null;
     window.openFacultyCounterProposeModal = function (id) {
         currentCounterId = id;
+        const d = document.getElementById('facultyCounterDate');
+        if (d) d.min = getTodayDateString();
         openM('facultyCounterProposeModal');
     };
 
@@ -947,8 +1163,7 @@
         const proposedEndTime = document.getElementById('facultyCounterEnd')?.value;
         const reason = document.getElementById('facultyCounterReason')?.value;
 
-        if (!proposedDate || !proposedStartTime || !proposedEndTime) {
-            notify('Please fill all date and time fields.', 'warning');
+        if (!validateMeetingDateTime(proposedDate, proposedStartTime, proposedEndTime)) {
             return;
         }
 
@@ -980,7 +1195,7 @@
         const e = document.getElementById('facultyDirectEnd');
         const lk = document.getElementById('facultyDirectLink');
         const lc = document.getElementById('facultyDirectLoc');
-        if (d) { d.value = schedDate || ''; d.min = new Date().toISOString().split('T')[0]; }
+        if (d) { d.value = schedDate || ''; d.min = getTodayDateString(); }
         if (s) s.value = schedStart || '';
         if (e) e.value = schedEnd || '';
         if (lk) lk.value = link || '';
@@ -997,8 +1212,7 @@
         const meetingLink = document.getElementById('facultyDirectLink')?.value;
         const location = document.getElementById('facultyDirectLoc')?.value;
 
-        if (!scheduledDate || !scheduledStartTime || !scheduledEndTime) {
-            notify('Please fill required date and times.', 'warning');
+        if (!validateMeetingDateTime(scheduledDate, scheduledStartTime, scheduledEndTime)) {
             return;
         }
 
