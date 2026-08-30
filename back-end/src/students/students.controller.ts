@@ -7,7 +7,10 @@ import {
 } from '@nestjs/common';
 import { StudentsService } from './students.service';
 import { Roles } from '../auth/roles.guard';
-import { CurrentUserId } from '../common/decorators/current-user.decorator';
+import {
+  CurrentUserCollegeId,
+  CurrentUserId,
+} from '../common/decorators/current-user.decorator';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { ErrorCode, errorBody } from '../common/errors/error-codes';
 
@@ -77,8 +80,11 @@ export class StudentsController {
     status: 200,
     description: 'Weekly timetable grid for student section',
   })
-  async getTimetable(@CurrentUserId() userId: string) {
-    return this.studentsService.getTimetable(userId);
+  async getTimetable(
+    @CurrentUserId() userId: string,
+    @CurrentUserCollegeId() collegeId: string | null,
+  ) {
+    return this.studentsService.getTimetable(userId, collegeId);
   }
 
   @Post('enroll')
@@ -90,12 +96,16 @@ export class StudentsController {
     description: 'Already enrolled or course not found',
   })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async enroll(@Body() body: any, @CurrentUserId() userId: string) {
+  async enroll(
+    @Body() body: any,
+    @CurrentUserId() userId: string,
+    @CurrentUserCollegeId() collegeId: string | null,
+  ) {
     const courseId = body.course_id || body.courseId;
     if (!courseId)
       throw new BadRequestException(
         errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'course_id is required'),
       );
-    return this.studentsService.enroll(userId, courseId);
+    return this.studentsService.enroll(userId, courseId, collegeId);
   }
 }

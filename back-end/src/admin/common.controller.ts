@@ -27,6 +27,11 @@ import {
 import { PasswordService } from '../auth/password.service';
 import { ErrorCode, errorBody } from '../common/errors/error-codes';
 import { DEFAULT_COLLEGE_ID } from '../common/constants/college';
+import {
+  isSameCollege,
+  scopeToCollege,
+  writeCollegeId,
+} from '../common/tenancy/scope-to-college';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import {
   ATTENDANCE_STATUS,
@@ -117,6 +122,14 @@ function sanitizeUser<T extends Record<string, any>>(user: T): Partial<T> {
   return safe as Partial<T>;
 }
 
+/** One message, one code, for every cross-college lookup miss in this file —
+ *  see scope-to-college.ts's isSameCollege() docstring for why this is
+ *  always RESOURCE_NOT_FOUND, never a 403: a caller from another college
+ *  must see an identical response to a genuinely nonexistent id. */
+function notFoundInMyCollege(what: string): never {
+  throw new NotFoundException(errorBody(ErrorCode.RESOURCE_NOT_FOUND, `${what} not found`));
+}
+
 @ApiTags('Admin/Reports')
 @Controller()
 export class CommonController {
@@ -131,15 +144,19 @@ export class CommonController {
   @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Get all courses' })
   @ApiResponse({ status: 200, description: 'Array of all courses' })
-  async getCourses() {
-    return this.db.courses;
+  async getCourses(@CurrentUserCollegeId() collegeId: string | null) {
+    return scopeToCollege(this.db.courses, collegeId);
   }
 
   @Post('courses')
   @Roles('faculty', 'head', 'admin', 'superadmin')
   @ApiOperation({ summary: 'Create a new course' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async createCourse(@Body() body: any, @CurrentUserId() userId: string) {
+  async createCourse(
+    @Body() body: any,
+    @CurrentUserId() userId: string,
+    @CurrentUserCollegeId() actorCollegeId: string | null,
+  ) {
     if (!body.course_name || !body.course_code)
       throw new BadRequestException(
         errorBody(
@@ -147,7 +164,14 @@ export class CommonController {
           'course_name and course_code are required',
         ),
       );
-    if (this.db.courses.find((c) => c.course_code === body.course_code))
+    const collegeId = writeCollegeId(actorCollegeId);
+    // A course code only has to be unique within one college — two colleges
+    // may both legitimately run a "CS201".
+    if (
+      scopeToCollege(this.db.courses, collegeId).find(
+        (c) => c.course_code === body.course_code,
+      )
+    )
       throw new BadRequestException(
         errorBody(ErrorCode.DUPLICATE_RESOURCE, 'Course code already exists'),
       );
@@ -160,6 +184,7 @@ export class CommonController {
       faculty_id: body.faculty_id || userId,
       faculty_name: facultyName,
       ...body,
+      college_id: collegeId,
     };
     this.db.courses.push(newCourse);
     return { success: true, data: newCourse };
@@ -170,50 +195,30 @@ export class CommonController {
   @Get('timetable')
   @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Get timetable grid for a section' })
-  async getTimetable(@Query('section') section: string = 'A') {
-    const slots = this.db.timetable.filter((t) => t.section === section);
-    const grid = slots.reduce((acc: any, curr) => {
-      if (!acc[curr.day]) acc[curr.day] = {};
-      if (!acc[curr.day][curr.time]) acc[curr.day][curr.time] = curr;
-      else {
-        if (!Array.isArray(acc[curr.day][curr.time]))
-          acc[curr.day][curr.time] = [acc[curr.day][curr.time]];
-        acc[curr.day][curr.time].push(curr);
-      }
-      return acc;
-    }, {});
-    return {
-      grid,
-      days: ['MON', 'TUE', 'WED', 'THU', 'FRI'],
-      times: ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00'],
-    };
+  async getTimetable(
+    @Query('section') section: string = 'A',
+    @CurrentUserCollegeId() collegeId: string | null,
+  ) {
+    const slots = scopeToCollege(this.db.timetable, collegeId).filter(
+      (t) => t.section === section,
+    );
+    return { grid: buildTimetableGrid(slots), ...TIMETABLE_AXES };
   }
 
   @Get('timetable/faculty')
   @Roles('faculty')
   @ApiOperation({ summary: 'Get timetable grid for the logged-in faculty' })
-  async getFacultyTimetable(@CurrentUserId() userId: string) {
-    const facultyCourseIds = this.db.courses
+  async getFacultyTimetable(
+    @CurrentUserId() userId: string,
+    @CurrentUserCollegeId() collegeId: string | null,
+  ) {
+    const facultyCourseIds = scopeToCollege(this.db.courses, collegeId)
       .filter((c) => c.faculty_id === userId)
       .map((c) => c.course_id);
-    const slots = this.db.timetable.filter((t) =>
+    const slots = scopeToCollege(this.db.timetable, collegeId).filter((t) =>
       facultyCourseIds.includes(t.course_id),
     );
-    const grid = slots.reduce((acc: any, curr) => {
-      if (!acc[curr.day]) acc[curr.day] = {};
-      if (!acc[curr.day][curr.time]) acc[curr.day][curr.time] = curr;
-      else {
-        if (!Array.isArray(acc[curr.day][curr.time]))
-          acc[curr.day][curr.time] = [acc[curr.day][curr.time]];
-        acc[curr.day][curr.time].push(curr);
-      }
-      return acc;
-    }, {});
-    return {
-      grid,
-      days: ['MON', 'TUE', 'WED', 'THU', 'FRI'],
-      times: ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00'],
-    };
+    return { grid: buildTimetableGrid(slots), ...TIMETABLE_AXES };
   }
 
   // ── Assessments ──────────────────────────────────────────────────────────────
@@ -223,10 +228,14 @@ export class CommonController {
   @ApiOperation({
     summary: 'Get all assessments, optionally filtered by faculty_id',
   })
-  async getAssessments(@Query('faculty_id') facultyId?: string) {
+  async getAssessments(
+    @Query('faculty_id') facultyId: string | undefined,
+    @CurrentUserCollegeId() collegeId: string | null,
+  ) {
+    const scoped = scopeToCollege(this.db.assessments, collegeId);
     const list = facultyId
-      ? this.db.assessments.filter((a) => a.faculty_id === facultyId)
-      : this.db.assessments;
+      ? scoped.filter((a) => a.faculty_id === facultyId)
+      : scoped;
     return list.map((a) => {
       const course = this.db.courses.find((c) => c.course_id === a.course_id);
       return {
@@ -241,13 +250,18 @@ export class CommonController {
   @Roles('faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Create a new assessment' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async createAssessment(@Body() body: any, @CurrentUserId() userId: string) {
+  async createAssessment(
+    @Body() body: any,
+    @CurrentUserId() userId: string,
+    @CurrentUserCollegeId() actorCollegeId: string | null,
+  ) {
     const id = `a${Date.now()}`;
     const newAssessment = {
       assessment_id: id,
       faculty_id: userId,
       weightage: body.weightage || 10,
       ...body,
+      college_id: writeCollegeId(actorCollegeId),
     };
     this.db.assessments.push(newAssessment);
     return { success: true, data: newAssessment };
@@ -260,10 +274,14 @@ export class CommonController {
   @ApiOperation({
     summary: 'Get all marks entries, optionally filtered by assessment_id',
   })
-  async getMarks(@Query('assessment_id') assessmentId?: string) {
+  async getMarks(
+    @Query('assessment_id') assessmentId: string | undefined,
+    @CurrentUserCollegeId() collegeId: string | null,
+  ) {
+    const scoped = scopeToCollege(this.db.marks_entry, collegeId);
     const list = assessmentId
-      ? this.db.marks_entry.filter((m) => m.assessment_id === assessmentId)
-      : this.db.marks_entry;
+      ? scoped.filter((m) => m.assessment_id === assessmentId)
+      : scoped;
     return list.map((m) => {
       const student = this.db.students.find((s) => s.user_id === m.student_id);
       return {
@@ -279,7 +297,10 @@ export class CommonController {
   @Roles('faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Record marks for a student (locked once entered)' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async recordMarks(@Body() body: any) {
+  async recordMarks(
+    @Body() body: any,
+    @CurrentUserCollegeId() actorCollegeId: string | null,
+  ) {
     if (!body.student_id || !body.assessment_id)
       throw new BadRequestException(
         errorBody(
@@ -287,8 +308,12 @@ export class CommonController {
           'student_id and assessment_id required',
         ),
       );
-    // Marks lock: reject if already entered
-    const existing = this.db.marks_entry.find(
+    const collegeId = writeCollegeId(actorCollegeId);
+    // Marks lock: reject if already entered. Scoped so the lock is per
+    // college — the assessment_id namespace is already college-specific by
+    // construction (created scoped, above), but the lock check stays
+    // explicit for the same reason every read here is: uniform, greppable.
+    const existing = scopeToCollege(this.db.marks_entry, collegeId).find(
       (m) =>
         m.student_id === body.student_id &&
         m.assessment_id === body.assessment_id,
@@ -301,7 +326,7 @@ export class CommonController {
         ),
       );
     const id = `m${Date.now()}`;
-    const entry = { entry_id: id, ...body };
+    const entry = { entry_id: id, ...body, college_id: collegeId };
     this.db.marks_entry.push(entry);
     return { success: true, data: entry };
   }
@@ -316,17 +341,22 @@ export class CommonController {
   async getSubmissions(
     @CurrentUserId() userId: string,
     @CurrentUserRole() role: string,
+    @CurrentUserCollegeId() collegeId: string | null,
   ) {
-    if (role === 'student')
-      return this.db.submissions.filter((s) => s.student_id === userId);
-    return this.db.submissions;
+    const scoped = scopeToCollege(this.db.submissions, collegeId);
+    if (role === 'student') return scoped.filter((s) => s.student_id === userId);
+    return scoped;
   }
 
   @Post('submissions')
   @Roles('student')
   @ApiOperation({ summary: 'Student submits work for an online assessment' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async createSubmission(@Body() body: any, @CurrentUserId() userId: string) {
+  async createSubmission(
+    @Body() body: any,
+    @CurrentUserId() userId: string,
+    @CurrentUserCollegeId() actorCollegeId: string | null,
+  ) {
     if (!body.assessment_id)
       throw new BadRequestException(
         errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'assessment_id required'),
@@ -351,6 +381,7 @@ export class CommonController {
       file_id: body.file_id ?? null,
       submitted_at: new Date().toISOString(),
       status: 'submitted',
+      college_id: writeCollegeId(actorCollegeId),
     };
     this.db.submissions.push(newSub as any);
     return { success: true, data: newSub };
@@ -361,10 +392,14 @@ export class CommonController {
   @Get('attendance/today/:courseId')
   @Roles('faculty')
   @ApiOperation({ summary: 'Get enrolled students for today attendance' })
-  async getTodayAttendance(@Param('courseId') courseId: string) {
-    const enrollment = this.db.enrollment.filter(
-      (e) => e.course_id === courseId,
-    );
+  async getTodayAttendance(
+    @Param('courseId') courseId: string,
+    @CurrentUserCollegeId() collegeId: string | null,
+  ) {
+    const course = this.db.courses.find((c) => c.course_id === courseId);
+    if (!isSameCollege(course, collegeId)) notFoundInMyCollege('Course');
+
+    const enrollment = this.db.enrollment.filter((e) => e.course_id === courseId);
     const students = this.db.students
       .filter((s) => enrollment.map((e) => e.student_id).includes(s.user_id))
       .map((s) => ({ ...s, today_status: 'present' }));
@@ -378,7 +413,10 @@ export class CommonController {
       'Record bulk attendance for a course session (idempotent per student/course/date)',
   })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async recordAttendance(@Body() body: any) {
+  async recordAttendance(
+    @Body() body: any,
+    @CurrentUserCollegeId() actorCollegeId: string | null,
+  ) {
     const { course_id, date, records } = body;
     if (!course_id || !date || !records)
       throw new BadRequestException(
@@ -387,6 +425,9 @@ export class CommonController {
           'course_id, date, and records required',
         ),
       );
+    const course = this.db.courses.find((c) => c.course_id === course_id);
+    if (!isSameCollege(course, actorCollegeId)) notFoundInMyCollege('Course');
+    const collegeId = writeCollegeId(actorCollegeId);
 
     // M-01: re-submitting the same session updates the existing rows rather than
     // appending duplicates. A double-click previously logged the same absence
@@ -427,6 +468,7 @@ export class CommonController {
           course_id,
           date,
           status,
+          college_id: collegeId,
         };
         this.db.attendance_log.push(log as any);
         created++;
@@ -443,8 +485,8 @@ export class CommonController {
   @Get('discussions')
   @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Get all discussion posts with reply counts' })
-  async getDiscussions() {
-    return this.db.discussion_posts.map((p) => {
+  async getDiscussions(@CurrentUserCollegeId() collegeId: string | null) {
+    return scopeToCollege(this.db.discussion_posts, collegeId).map((p) => {
       const replies = this.db.discussion_replies.filter(
         (r) => r.post_id === p.post_id,
       );
@@ -455,12 +497,12 @@ export class CommonController {
   @Get('discussions/:postId')
   @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Get a single discussion post with all replies' })
-  async getDiscussionDetail(@Param('postId') postId: string) {
+  async getDiscussionDetail(
+    @Param('postId') postId: string,
+    @CurrentUserCollegeId() collegeId: string | null,
+  ) {
     const post = this.db.discussion_posts.find((p) => p.post_id === postId);
-    if (!post)
-      throw new NotFoundException(
-        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Post not found'),
-      );
+    if (!isSameCollege(post, collegeId)) notFoundInMyCollege('Post');
     const replies = this.db.discussion_replies.filter(
       (r) => r.post_id === postId,
     );
@@ -471,7 +513,11 @@ export class CommonController {
   @Roles('student', 'faculty')
   @ApiOperation({ summary: 'Create a new discussion post' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async createDiscussion(@Body() body: any, @CurrentUserId() userId: string) {
+  async createDiscussion(
+    @Body() body: any,
+    @CurrentUserId() userId: string,
+    @CurrentUserCollegeId() actorCollegeId: string | null,
+  ) {
     const user = this.db.users.find((u) => u.user_id === userId);
     const student = this.db.students.find((s) => s.user_id === userId);
     const faculty = this.db.faculty.find((f) => f.user_id === userId);
@@ -492,6 +538,7 @@ export class CommonController {
       course_id: body.course_id,
       created_at: new Date().toISOString(),
       reply_count: 0,
+      college_id: writeCollegeId(actorCollegeId),
     };
     this.db.discussion_posts.push(newPost as any);
     return newPost;
@@ -505,7 +552,11 @@ export class CommonController {
     @Param('postId') postId: string,
     @Body() body: any,
     @CurrentUserId() userId: string,
+    @CurrentUserCollegeId() actorCollegeId: string | null,
   ) {
+    const post = this.db.discussion_posts.find((p) => p.post_id === postId);
+    if (!isSameCollege(post, actorCollegeId)) notFoundInMyCollege('Post');
+
     const user = this.db.users.find((u) => u.user_id === userId);
     const student = this.db.students.find((s) => s.user_id === userId);
     const faculty = this.db.faculty.find((f) => f.user_id === userId);
@@ -514,11 +565,6 @@ export class CommonController {
       : faculty
         ? `${faculty.first_name} ${faculty.last_name || ''}`.trim()
         : user?.username || 'Anonymous';
-    const post = this.db.discussion_posts.find((p) => p.post_id === postId);
-    if (!post)
-      throw new NotFoundException(
-        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Post not found'),
-      );
     const id = `r${Date.now()}`;
     const newReply = {
       reply_id: id,
@@ -528,6 +574,7 @@ export class CommonController {
       author_role: user?.role,
       content: body.content,
       created_at: new Date().toISOString(),
+      college_id: writeCollegeId(actorCollegeId),
     };
     this.db.discussion_replies.push(newReply as any);
     post.reply_count = (post.reply_count || 0) + 1;
@@ -542,6 +589,7 @@ export class CommonController {
   async getResearch(
     @CurrentUserId() userId: string,
     @CurrentUserRole() role: string,
+    @CurrentUserCollegeId() collegeId: string | null,
   ) {
     const enrich = (p: any) => {
       const sup = this.db.faculty.find((f) => f.user_id === p.supervisor_id);
@@ -561,15 +609,14 @@ export class CommonController {
         students: stuList,
       };
     };
+    const scoped = scopeToCollege(this.db.research_projects, collegeId);
     if (role === 'faculty')
-      return this.db.research_projects
-        .filter((p) => p.supervisor_id === userId)
-        .map(enrich);
+      return scoped.filter((p) => p.supervisor_id === userId).map(enrich);
     if (role === 'student')
-      return this.db.research_projects
+      return scoped
         .filter((p) => p.students.some((s) => s.user_id === userId))
         .map(enrich);
-    return this.db.research_projects.map(enrich);
+    return scoped.map(enrich);
   }
 
   @Patch('research/:id/status')
@@ -579,12 +626,10 @@ export class CommonController {
   async updateResearchStatus(
     @Param('id') id: string,
     @Body() body: { status: string },
+    @CurrentUserCollegeId() collegeId: string | null,
   ) {
     const project = this.db.research_projects.find((p) => p.project_id === id);
-    if (!project)
-      throw new NotFoundException(
-        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Project not found'),
-      );
+    if (!isSameCollege(project, collegeId)) notFoundInMyCollege('Project');
     project.status = body.status;
     return project;
   }
@@ -596,12 +641,13 @@ export class CommonController {
       'Update research project progress, submission notes, or faculty feedback',
   })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async updateResearchProgress(@Param('id') id: string, @Body() body: any) {
+  async updateResearchProgress(
+    @Param('id') id: string,
+    @Body() body: any,
+    @CurrentUserCollegeId() collegeId: string | null,
+  ) {
     const project = this.db.research_projects.find((p) => p.project_id === id);
-    if (!project)
-      throw new NotFoundException(
-        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Project not found'),
-      );
+    if (!isSameCollege(project, collegeId)) notFoundInMyCollege('Project');
     // Only update progress if explicitly provided (don't zero it out)
     if (body.progress !== undefined && body.progress !== null)
       project.progress = Number(body.progress);
@@ -633,7 +679,11 @@ export class CommonController {
     summary: 'Create a new research/BTP project and assign to a student',
   })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async createResearch(@Body() body: any, @CurrentUserId() userId: string) {
+  async createResearch(
+    @Body() body: any,
+    @CurrentUserId() userId: string,
+    @CurrentUserCollegeId() actorCollegeId: string | null,
+  ) {
     if (!body.student_id || !body.title)
       throw new BadRequestException(
         errorBody(
@@ -642,10 +692,11 @@ export class CommonController {
         ),
       );
     const student = this.db.students.find((s) => s.user_id === body.student_id);
-    if (!student)
-      throw new NotFoundException(
-        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Student not found'),
-      );
+    // Same not-found for "no such student" and "that student is not in your
+    // college" — a faculty member must not be able to probe another
+    // college's roster by trying student ids and reading the error shape.
+    if (!isSameCollege(student, actorCollegeId))
+      notFoundInMyCollege('Student');
     const faculty = this.db.faculty.find((f) => f.user_id === userId);
     const supervisorName = faculty
       ? `${faculty.first_name} ${faculty.last_name}`.trim()
@@ -666,6 +717,7 @@ export class CommonController {
       students: [{ user_id: body.student_id, first_name: student.first_name }],
       uploads: [],
       milestones: [],
+      college_id: writeCollegeId(actorCollegeId),
     };
     this.db.research_projects.push(newProject as any);
     return { success: true, data: newProject };
@@ -677,15 +729,18 @@ export class CommonController {
   @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Get all scheduled events' })
   @ApiResponse({ status: 200, description: 'Array of events' })
-  async getEvents() {
-    return this.db.events;
+  async getEvents(@CurrentUserCollegeId() collegeId: string | null) {
+    return scopeToCollege(this.db.events, collegeId);
   }
 
   @Post('events')
   @Roles('admin', 'superadmin', 'head', 'faculty')
   @ApiOperation({ summary: 'Create a new institutional event' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async createEvent(@Body() body: any) {
+  async createEvent(
+    @Body() body: any,
+    @CurrentUserCollegeId() actorCollegeId: string | null,
+  ) {
     if (!body.event_name || !body.date || !body.venue)
       throw new BadRequestException(
         errorBody(
@@ -694,7 +749,7 @@ export class CommonController {
         ),
       );
     const id = `ev${Date.now()}`;
-    const newEvent = { event_id: id, ...body };
+    const newEvent = { event_id: id, ...body, college_id: writeCollegeId(actorCollegeId) };
     this.db.events.push(newEvent);
     return { success: true, data: newEvent };
   }
@@ -703,12 +758,13 @@ export class CommonController {
   @Roles('admin', 'superadmin', 'head', 'faculty')
   @ApiOperation({ summary: 'Update an existing event' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async updateEvent(@Param('id') id: string, @Body() body: any) {
+  async updateEvent(
+    @Param('id') id: string,
+    @Body() body: any,
+    @CurrentUserCollegeId() collegeId: string | null,
+  ) {
     const event = this.db.events.find((e) => e.event_id === id);
-    if (!event)
-      throw new NotFoundException(
-        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Event not found'),
-      );
+    if (!isSameCollege(event, collegeId)) notFoundInMyCollege('Event');
     Object.assign(event, body);
     return { success: true, data: event };
   }
@@ -716,12 +772,13 @@ export class CommonController {
   @Delete('events/:id')
   @Roles('admin', 'superadmin', 'head', 'faculty')
   @ApiOperation({ summary: 'Delete an event' })
-  async deleteEvent(@Param('id') id: string) {
-    const index = this.db.events.findIndex((e) => e.event_id === id);
-    if (index === -1)
-      throw new NotFoundException(
-        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Event not found'),
-      );
+  async deleteEvent(
+    @Param('id') id: string,
+    @CurrentUserCollegeId() collegeId: string | null,
+  ) {
+    const event = this.db.events.find((e) => e.event_id === id);
+    if (!isSameCollege(event, collegeId)) notFoundInMyCollege('Event');
+    const index = this.db.events.indexOf(event);
     this.db.events.splice(index, 1);
     return { success: true, message: 'Event deleted' };
   }
@@ -736,18 +793,23 @@ export class CommonController {
   async getLeaves(
     @CurrentUserId() userId: string,
     @CurrentUserRole() role: string,
+    @CurrentUserCollegeId() collegeId: string | null,
   ) {
-    if (role === 'student')
-      return this.db.leave_applications.filter((l) => l.student_id === userId);
-    // Faculty see ALL student leaves (for approval)
-    return this.db.leave_applications;
+    const scoped = scopeToCollege(this.db.leave_applications, collegeId);
+    if (role === 'student') return scoped.filter((l) => l.student_id === userId);
+    // Faculty/admin/head see all of THEIR college's student leaves (for approval).
+    return scoped;
   }
 
   @Post('leave')
   @Roles('student', 'faculty')
   @ApiOperation({ summary: 'Submit a new leave application' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async applyLeave(@Body() body: any, @CurrentUserId() userId: string) {
+  async applyLeave(
+    @Body() body: any,
+    @CurrentUserId() userId: string,
+    @CurrentUserCollegeId() actorCollegeId: string | null,
+  ) {
     if (
       !body.leave_type ||
       !body.start_date ||
@@ -778,6 +840,7 @@ export class CommonController {
       // while seed data was capitalised ("Medical"), so exact-match filters
       // downstream matched nothing. One vocabulary from here on.
       leave_type: normalizeLeaveType(body.leave_type),
+      college_id: writeCollegeId(actorCollegeId),
     };
     this.db.leave_applications.push(newLeave);
     return { success: true, data: newLeave };
@@ -789,12 +852,14 @@ export class CommonController {
     summary: 'Approve or reject a leave application (syncs excused attendance)',
   })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async updateLeave(@Param('id') id: string, @Body() body: { status: string }) {
+  async updateLeave(
+    @Param('id') id: string,
+    @Body() body: { status: string },
+    @CurrentUserCollegeId() collegeId: string | null,
+  ) {
     const leave = this.db.leave_applications.find((l) => l.leave_id === id);
-    if (!leave)
-      throw new NotFoundException(
-        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Leave application not found'),
-      );
+    if (!isSameCollege(leave, collegeId))
+      notFoundInMyCollege('Leave application');
 
     const status = String(body?.status ?? '')
       .trim()
@@ -824,15 +889,15 @@ export class CommonController {
   @Get('users')
   @Roles('admin', 'superadmin', 'head')
   @ApiOperation({ summary: 'Get all system users' })
-  async getUsers() {
-    return this.db.users.map(sanitizeUser);
+  async getUsers(@CurrentUserCollegeId() collegeId: string | null) {
+    return scopeToCollege(this.db.users, collegeId).map(sanitizeUser);
   }
 
   @Get('admin/users')
   @Roles('admin', 'head', 'superadmin', 'faculty')
   @ApiOperation({ summary: 'Get all users for admin management panel' })
-  async getAllUsers() {
-    return this.db.users.map(sanitizeUser);
+  async getAllUsers(@CurrentUserCollegeId() collegeId: string | null) {
+    return scopeToCollege(this.db.users, collegeId).map(sanitizeUser);
   }
 
   @Post('users')
@@ -861,6 +926,8 @@ export class CommonController {
         ),
       );
     }
+    // Email stays a GLOBAL uniqueness check, not scoped — it is the login
+    // identifier across the whole app, not a per-college one.
     if (this.db.users.find((u) => u.email === body.email))
       throw new BadRequestException(
         errorBody(ErrorCode.DUPLICATE_RESOURCE, 'Email already exists'),
@@ -898,7 +965,7 @@ export class CommonController {
         ),
       );
     }
-    const collegeId = actorCollegeId ?? DEFAULT_COLLEGE_ID;
+    const collegeId = writeCollegeId(actorCollegeId);
 
     const id = `u${Date.now()}`;
     const firstName = body.first_name || body.username || 'New';
@@ -931,6 +998,7 @@ export class CommonController {
         join_date: new Date().toISOString().split('T')[0],
         dob: '2005-01-01',
         phone: body.phone || '',
+        college_id: collegeId,
       });
     } else if (body.role === 'faculty') {
       this.db.faculty.push({
@@ -941,6 +1009,7 @@ export class CommonController {
         department_id: 'dept1',
         email: body.email,
         phone: body.phone || '',
+        college_id: collegeId,
       });
     }
     return { success: true, data: sanitizeUser(newUser) };
@@ -957,6 +1026,7 @@ export class CommonController {
     @Param('id') id: string,
     @Body() body: UpdateUserDto,
     @Req() req: any,
+    @CurrentUserCollegeId() collegeId: string | null,
   ) {
     // C-04: refuse privilege-bearing fields outright. The old
     // `Object.assign(user, body)` let a caller escalate privileges, seize an
@@ -964,10 +1034,7 @@ export class CommonController {
     rejectProtectedFields(req?.body);
 
     const user = this.db.users.find((u) => u.user_id === id);
-    if (!user)
-      throw new NotFoundException(
-        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'User not found'),
-      );
+    if (!isSameCollege(user, collegeId)) notFoundInMyCollege('User');
 
     if (
       body.email &&
@@ -1001,12 +1068,10 @@ export class CommonController {
     @Body() body: UpdateUserRoleDto,
     @CurrentUserRole() actorRole: string,
     @CurrentUserId() actorId: string,
+    @CurrentUserCollegeId() collegeId: string | null,
   ) {
     const user = this.db.users.find((u) => u.user_id === id);
-    if (!user)
-      throw new NotFoundException(
-        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'User not found'),
-      );
+    if (!isSameCollege(user, collegeId)) notFoundInMyCollege('User');
 
     if (actorId && actorId === id) {
       throw new ForbiddenException(
@@ -1051,12 +1116,10 @@ export class CommonController {
     @Param('id') id: string,
     @Body() body: ResetUserPasswordDto,
     @CurrentUserRole() actorRole: string,
+    @CurrentUserCollegeId() collegeId: string | null,
   ) {
     const user = this.db.users.find((u) => u.user_id === id);
-    if (!user)
-      throw new NotFoundException(
-        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'User not found'),
-      );
+    if (!isSameCollege(user, collegeId)) notFoundInMyCollege('User');
     if (!canAssignRole(actorRole, user.role)) {
       throw new ForbiddenException(
         errorBody(
@@ -1092,12 +1155,13 @@ export class CommonController {
   @Delete('users/:id')
   @Roles('admin', 'superadmin', 'head')
   @ApiOperation({ summary: 'Delete a user' })
-  async deleteUser(@Param('id') id: string) {
-    const index = this.db.users.findIndex((u) => u.user_id === id);
-    if (index === -1)
-      throw new NotFoundException(
-        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'User not found'),
-      );
+  async deleteUser(
+    @Param('id') id: string,
+    @CurrentUserCollegeId() collegeId: string | null,
+  ) {
+    const user = this.db.users.find((u) => u.user_id === id);
+    if (!isSameCollege(user, collegeId)) notFoundInMyCollege('User');
+    const index = this.db.users.indexOf(user);
     this.db.users.splice(index, 1);
     return { success: true, message: 'User deleted' };
   }
@@ -1107,19 +1171,23 @@ export class CommonController {
   @Get('reports/overview')
   @Roles('admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Get high-level institutional overview metrics' })
-  async getOverview() {
-    const totalFees = this.db.fees.reduce((s, f) => s + f.amount, 0);
-    const paidFees = this.db.fees
+  async getOverview(@CurrentUserCollegeId() collegeId: string | null) {
+    const fees = scopeToCollege(this.db.fees, collegeId);
+    const students = scopeToCollege(this.db.students, collegeId);
+    const faculty = scopeToCollege(this.db.faculty, collegeId);
+    const courses = scopeToCollege(this.db.courses, collegeId);
+    const research = scopeToCollege(this.db.research_projects, collegeId);
+
+    const totalFees = fees.reduce((s, f) => s + f.amount, 0);
+    const paidFees = fees
       .filter((f) => f.status === 'paid')
       .reduce((s, f) => s + f.amount, 0);
     return {
       summary: {
-        total_students: this.db.students.length,
-        total_faculty: this.db.faculty.length,
-        total_courses: this.db.courses.length,
-        active_research: this.db.research_projects.filter(
-          (p) => p.status === 'active',
-        ).length,
+        total_students: students.length,
+        total_faculty: faculty.length,
+        total_courses: courses.length,
+        active_research: research.filter((p) => p.status === 'active').length,
         overall_attendance: '82%',
         fee_compliance:
           totalFees > 0 ? `${Math.round((paidFees / totalFees) * 100)}%` : '0%',
@@ -1132,12 +1200,12 @@ export class CommonController {
   @Get('reports/at-risk')
   @Roles('admin', 'head', 'superadmin', 'faculty')
   @ApiOperation({ summary: 'Get at-risk students list' })
-  async getAtRisk() {
+  async getAtRisk(@CurrentUserCollegeId() collegeId: string | null) {
     // M-04: uses the shared isAtRisk() predicate. This endpoint previously used
     // `cgpa < 6.5` while the faculty dashboard used `cgpa < 6`, so the same
     // student appeared at-risk on one screen and healthy on the other.
     // M-02: EXCUSED sessions count as attended via summariseAttendance().
-    return this.db.students
+    return scopeToCollege(this.db.students, collegeId)
       .map((s) => {
         const records = this.db.attendance_log.filter(
           (a) => a.student_id === s.user_id,
@@ -1165,17 +1233,25 @@ export class CommonController {
   @Get('resources')
   @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Get all resources' })
-  async getResources() {
-    return this.db.resources;
+  async getResources(@CurrentUserCollegeId() collegeId: string | null) {
+    return scopeToCollege(this.db.resources, collegeId);
   }
 
   @Post('resources')
   @Roles('admin', 'superadmin', 'head')
   @ApiOperation({ summary: 'Add a new resource' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async createResource(@Body() body: any) {
+  async createResource(
+    @Body() body: any,
+    @CurrentUserCollegeId() actorCollegeId: string | null,
+  ) {
     const id = `res${Date.now()}`;
-    const newRes = { resource_id: id, status: 'available', ...body };
+    const newRes = {
+      resource_id: id,
+      status: 'available',
+      ...body,
+      college_id: writeCollegeId(actorCollegeId),
+    };
     this.db.resources.push(newRes);
     return { success: true, data: newRes };
   }
@@ -1184,12 +1260,13 @@ export class CommonController {
   @Roles('admin', 'head', 'superadmin', 'faculty')
   @ApiOperation({ summary: 'Update resource status or details' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async updateResource(@Param('id') id: string, @Body() body: any) {
+  async updateResource(
+    @Param('id') id: string,
+    @Body() body: any,
+    @CurrentUserCollegeId() collegeId: string | null,
+  ) {
     const res = this.db.resources.find((r) => r.resource_id === id);
-    if (!res)
-      throw new NotFoundException(
-        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Resource not found'),
-      );
+    if (!isSameCollege(res, collegeId)) notFoundInMyCollege('Resource');
     Object.assign(res, body);
     return { success: true, data: res };
   }
@@ -1199,15 +1276,18 @@ export class CommonController {
   @Get('fees')
   @Roles('admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Get all fee records with compliance summary' })
-  async getFees() {
+  async getFees(@CurrentUserCollegeId() collegeId: string | null) {
+    const fees = scopeToCollege(this.db.fees, collegeId);
+    const paid = fees.filter((f) => f.status === 'paid').length;
     return {
-      fees: this.db.fees,
+      fees,
       summary: {
-        total: this.db.fees.length,
-        overdue: this.db.fees.filter((f) => f.status === 'overdue').length,
-        paid: this.db.fees.filter((f) => f.status === 'paid').length,
-        pending: this.db.fees.filter((f) => f.status === 'pending').length,
-        compliance_rate: `${Math.round((this.db.fees.filter((f) => f.status === 'paid').length / this.db.fees.length) * 100)}%`,
+        total: fees.length,
+        overdue: fees.filter((f) => f.status === 'overdue').length,
+        paid,
+        pending: fees.filter((f) => f.status === 'pending').length,
+        compliance_rate:
+          fees.length > 0 ? `${Math.round((paid / fees.length) * 100)}%` : '0%',
       },
     };
   }
@@ -1215,12 +1295,12 @@ export class CommonController {
   @Patch('fees/:id/pay')
   @Roles('admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Mark a fee record as paid' })
-  async payFee(@Param('id') id: string) {
+  async payFee(
+    @Param('id') id: string,
+    @CurrentUserCollegeId() collegeId: string | null,
+  ) {
     const fee = this.db.fees.find((f) => f.fee_id === id);
-    if (!fee)
-      throw new NotFoundException(
-        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Fee record not found'),
-      );
+    if (!isSameCollege(fee, collegeId)) notFoundInMyCollege('Fee record');
     fee.status = 'paid';
     fee.paid_date = new Date().toLocaleDateString();
     return { success: true, data: fee };
@@ -1230,7 +1310,10 @@ export class CommonController {
   @Roles('admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Add a new fee record for a student' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async createFee(@Body() body: any) {
+  async createFee(
+    @Body() body: any,
+    @CurrentUserCollegeId() actorCollegeId: string | null,
+  ) {
     if (!body.student_id || !body.fee_type || !body.amount || !body.due_date) {
       throw new BadRequestException(
         errorBody(
@@ -1239,12 +1322,16 @@ export class CommonController {
         ),
       );
     }
+    const student = this.db.students.find((s) => s.user_id === body.student_id);
+    if (!isSameCollege(student, actorCollegeId))
+      notFoundInMyCollege('Student');
     const id = `f${Date.now()}`;
     const newFee = {
       fee_id: id,
       status: 'pending',
       ...body,
       amount: Number(body.amount),
+      college_id: writeCollegeId(actorCollegeId),
     };
     this.db.fees.push(newFee);
     return { success: true, data: newFee };
@@ -1254,12 +1341,13 @@ export class CommonController {
   @Roles('admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Update an existing fee record' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async updateFee(@Param('id') id: string, @Body() body: any) {
+  async updateFee(
+    @Param('id') id: string,
+    @Body() body: any,
+    @CurrentUserCollegeId() collegeId: string | null,
+  ) {
     const fee = this.db.fees.find((f) => f.fee_id === id);
-    if (!fee)
-      throw new NotFoundException(
-        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Fee record not found'),
-      );
+    if (!isSameCollege(fee, collegeId)) notFoundInMyCollege('Fee record');
     Object.assign(fee, { ...body, amount: Number(body.amount || fee.amount) });
     return { success: true, data: fee };
   }
@@ -1272,7 +1360,10 @@ export class CommonController {
     summary: 'Enroll a student in a course (faculty/admin action)',
   })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async enrollStudentByCourse(@Body() body: any) {
+  async enrollStudentByCourse(
+    @Body() body: any,
+    @CurrentUserCollegeId() actorCollegeId: string | null,
+  ) {
     const { student_id, course_id } = body;
     if (!student_id || !course_id)
       throw new BadRequestException(
@@ -1282,15 +1373,10 @@ export class CommonController {
         ),
       );
     const student = this.db.students.find((s) => s.user_id === student_id);
-    if (!student)
-      throw new NotFoundException(
-        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Student not found'),
-      );
+    if (!isSameCollege(student, actorCollegeId))
+      notFoundInMyCollege('Student');
     const course = this.db.courses.find((c) => c.course_id === course_id);
-    if (!course)
-      throw new NotFoundException(
-        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Course not found'),
-      );
+    if (!isSameCollege(course, actorCollegeId)) notFoundInMyCollege('Course');
     const existing = this.db.enrollment.find(
       (e) => e.student_id === student_id && e.course_id === course_id,
     );
@@ -1309,6 +1395,7 @@ export class CommonController {
       year_id: new Date().getFullYear().toString(),
       status: 'active',
       section: student.section || 'A',
+      college_id: writeCollegeId(actorCollegeId),
     };
     this.db.enrollment.push(newEnrollment as any);
     return { success: true, data: newEnrollment };
@@ -1321,6 +1408,8 @@ export class CommonController {
   @ApiOperation({ summary: 'Schedule a meeting with a student' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async scheduleMeeting(@Body() body: any) {
+    // Never persisted (see the original comment this carries forward): a
+    // stub response, so there is no collection here to scope.
     return {
       success: true,
       message: 'Meeting scheduled successfully',
@@ -1339,10 +1428,12 @@ export class CommonController {
   @ApiOperation({
     summary: 'Get syllabus completion progress, optionally filtered by section',
   })
-  async getSyllabusProgress(@Query('section') section?: string) {
-    const list = section
-      ? this.db.syllabus_progress.filter((s) => s.section === section)
-      : this.db.syllabus_progress;
+  async getSyllabusProgress(
+    @Query('section') section: string | undefined,
+    @CurrentUserCollegeId() collegeId: string | null,
+  ) {
+    const scoped = scopeToCollege(this.db.syllabus_progress, collegeId);
+    const list = section ? scoped.filter((s) => s.section === section) : scoped;
     return list.map((sp) => {
       const course = this.db.courses.find((c) => c.course_id === sp.course_id);
       return {
@@ -1360,6 +1451,7 @@ export class CommonController {
   async updateSyllabusProgress(
     @Body() body: any,
     @CurrentUserId() userId: string,
+    @CurrentUserCollegeId() actorCollegeId: string | null,
   ) {
     if (!body.course_id || !body.section || body.progress === undefined)
       throw new BadRequestException(
@@ -1368,6 +1460,9 @@ export class CommonController {
           'course_id, section, and progress required',
         ),
       );
+    const course = this.db.courses.find((c) => c.course_id === body.course_id);
+    if (!isSameCollege(course, actorCollegeId)) notFoundInMyCollege('Course');
+
     const existing = this.db.syllabus_progress.find(
       (s) => s.course_id === body.course_id && s.section === body.section,
     );
@@ -1383,6 +1478,7 @@ export class CommonController {
       progress: Number(body.progress),
       updated_by: userId,
       updated_at: new Date().toISOString().split('T')[0],
+      college_id: writeCollegeId(actorCollegeId),
     };
     this.db.syllabus_progress.push(newEntry as any);
     return { success: true, data: newEntry };
@@ -1397,6 +1493,7 @@ export class CommonController {
   async createAttendanceRequest(
     @Body() body: any,
     @CurrentUserId() userId: string,
+    @CurrentUserCollegeId() actorCollegeId: string | null,
   ) {
     if (!body.course_id || !body.date || !body.reason)
       throw new BadRequestException(
@@ -1414,8 +1511,9 @@ export class CommonController {
           'Attendance requests cannot be made for future dates',
         ),
       );
-    const student = this.db.students.find((s) => s.user_id === userId);
     const course = this.db.courses.find((c) => c.course_id === body.course_id);
+    if (!isSameCollege(course, actorCollegeId)) notFoundInMyCollege('Course');
+    const student = this.db.students.find((s) => s.user_id === userId);
     const id = `ar${Date.now()}`;
     const request = {
       request_id: id,
@@ -1432,6 +1530,7 @@ export class CommonController {
       admin_status: 'pending',
       faculty_status: 'pending',
       created_at: new Date().toISOString(),
+      college_id: writeCollegeId(actorCollegeId),
     };
     this.db.attendance_requests.push(request);
     return { success: true, data: request };
@@ -1443,30 +1542,31 @@ export class CommonController {
   async getAttendanceRequests(
     @CurrentUserId() userId: string,
     @CurrentUserRole() role: string,
+    @CurrentUserCollegeId() collegeId: string | null,
   ) {
-    if (role === 'student')
-      return this.db.attendance_requests.filter((r) => r.student_id === userId);
+    const scoped = scopeToCollege(this.db.attendance_requests, collegeId);
+    if (role === 'student') return scoped.filter((r) => r.student_id === userId);
     if (role === 'faculty') {
       const facultyCourseIds = this.db.courses
         .filter((c) => c.faculty_id === userId)
         .map((c) => c.course_id);
-      return this.db.attendance_requests.filter((r) =>
-        facultyCourseIds.includes(r.course_id),
-      );
+      return scoped.filter((r) => facultyCourseIds.includes(r.course_id));
     }
-    return this.db.attendance_requests;
+    return scoped;
   }
 
   @Patch('attendance-request/:id')
   @Roles('admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Admin approves or rejects an attendance request' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async updateAttendanceRequest(@Param('id') id: string, @Body() body: any) {
+  async updateAttendanceRequest(
+    @Param('id') id: string,
+    @Body() body: any,
+    @CurrentUserCollegeId() collegeId: string | null,
+  ) {
     const req = this.db.attendance_requests.find((r) => r.request_id === id);
-    if (!req)
-      throw new NotFoundException(
-        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Attendance request not found'),
-      );
+    if (!isSameCollege(req, collegeId))
+      notFoundInMyCollege('Attendance request');
     req.admin_status = body.status || 'approved';
     req.admin_reason = body.admin_reason || '';
     return { success: true, data: req };
@@ -1478,12 +1578,11 @@ export class CommonController {
   async markAttendanceRequest(
     @Param('id') id: string,
     @CurrentUserId() userId: string,
+    @CurrentUserCollegeId() actorCollegeId: string | null,
   ) {
     const req = this.db.attendance_requests.find((r) => r.request_id === id);
-    if (!req)
-      throw new NotFoundException(
-        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Attendance request not found'),
-      );
+    if (!isSameCollege(req, actorCollegeId))
+      notFoundInMyCollege('Attendance request');
     if (req.admin_status !== 'approved')
       throw new BadRequestException(
         errorBody(
@@ -1517,6 +1616,7 @@ export class CommonController {
         course_id: req.course_id,
         date: req.date,
         status: ATTENDANCE_STATUS.PRESENT,
+        college_id: writeCollegeId(actorCollegeId),
       } as any);
     }
     this.db.persist();
@@ -1532,6 +1632,7 @@ export class CommonController {
   async createResourceBooking(
     @Body() body: any,
     @CurrentUserId() userId: string,
+    @CurrentUserCollegeId() actorCollegeId: string | null,
   ) {
     if (!body.resource_id || !body.date || !body.purpose)
       throw new BadRequestException(
@@ -1543,6 +1644,8 @@ export class CommonController {
     const resource = this.db.resources.find(
       (r) => r.resource_id === body.resource_id,
     );
+    if (!isSameCollege(resource, actorCollegeId))
+      notFoundInMyCollege('Resource');
     const faculty = this.db.faculty.find((f) => f.user_id === userId);
     const id = `rb${Date.now()}`;
     const booking = {
@@ -1558,6 +1661,7 @@ export class CommonController {
       purpose: body.purpose,
       status: 'pending',
       created_at: new Date().toISOString(),
+      college_id: writeCollegeId(actorCollegeId),
     };
     this.db.resource_bookings.push(booking);
     return { success: true, data: booking };
@@ -1569,22 +1673,24 @@ export class CommonController {
   async getResourceBookings(
     @CurrentUserId() userId: string,
     @CurrentUserRole() role: string,
+    @CurrentUserCollegeId() collegeId: string | null,
   ) {
-    if (role === 'faculty')
-      return this.db.resource_bookings.filter((b) => b.requested_by === userId);
-    return this.db.resource_bookings;
+    const scoped = scopeToCollege(this.db.resource_bookings, collegeId);
+    if (role === 'faculty') return scoped.filter((b) => b.requested_by === userId);
+    return scoped;
   }
 
   @Patch('resource-booking/:id')
   @Roles('admin', 'head', 'superadmin')
   @ApiOperation({ summary: 'Admin approves or rejects a resource booking' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async updateResourceBooking(@Param('id') id: string, @Body() body: any) {
+  async updateResourceBooking(
+    @Param('id') id: string,
+    @Body() body: any,
+    @CurrentUserCollegeId() collegeId: string | null,
+  ) {
     const booking = this.db.resource_bookings.find((b) => b.booking_id === id);
-    if (!booking)
-      throw new NotFoundException(
-        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Booking not found'),
-      );
+    if (!isSameCollege(booking, collegeId)) notFoundInMyCollege('Booking');
     booking.status = body.status || 'approved';
     return { success: true, data: booking };
   }
@@ -1596,29 +1702,39 @@ export class CommonController {
   @ApiOperation({
     summary: 'Get timetable filtered by student enrolled courses',
   })
-  async getStudentTimetable(@CurrentUserId() userId: string) {
+  async getStudentTimetable(
+    @CurrentUserId() userId: string,
+    @CurrentUserCollegeId() collegeId: string | null,
+  ) {
     const student = this.db.students.find((s) => s.user_id === userId);
     const section = student?.section || 'A';
     const enrolledCourseIds = this.db.enrollment
       .filter((e) => e.student_id === userId && e.status === 'active')
       .map((e) => e.course_id);
-    const slots = this.db.timetable.filter(
+    const slots = scopeToCollege(this.db.timetable, collegeId).filter(
       (t) => t.section === section && enrolledCourseIds.includes(t.course_id),
     );
-    const grid = slots.reduce((acc: any, curr) => {
-      if (!acc[curr.day]) acc[curr.day] = {};
-      if (!acc[curr.day][curr.time]) acc[curr.day][curr.time] = curr;
-      else {
-        if (!Array.isArray(acc[curr.day][curr.time]))
-          acc[curr.day][curr.time] = [acc[curr.day][curr.time]];
-        acc[curr.day][curr.time].push(curr);
-      }
-      return acc;
-    }, {});
-    return {
-      grid,
-      days: ['MON', 'TUE', 'WED', 'THU', 'FRI'],
-      times: ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00'],
-    };
+    return { grid: buildTimetableGrid(slots), ...TIMETABLE_AXES };
   }
+}
+
+/** The days/times axis every timetable grid response carries — factored out
+ *  once it stopped being one call site (getTimetable) and became four. */
+const TIMETABLE_AXES = {
+  days: ['MON', 'TUE', 'WED', 'THU', 'FRI'],
+  times: ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00'],
+};
+
+/** Same reshape (flat slots -> day/time grid) every timetable endpoint does. */
+function buildTimetableGrid(slots: any[]) {
+  return slots.reduce((acc: any, curr) => {
+    if (!acc[curr.day]) acc[curr.day] = {};
+    if (!acc[curr.day][curr.time]) acc[curr.day][curr.time] = curr;
+    else {
+      if (!Array.isArray(acc[curr.day][curr.time]))
+        acc[curr.day][curr.time] = [acc[curr.day][curr.time]];
+      acc[curr.day][curr.time].push(curr);
+    }
+    return acc;
+  }, {});
 }

@@ -1,6 +1,6 @@
 /**
  * BarelyPassing – script.js
- * Handles: auth redirects, login form, signup form.
+ * Handles: auth redirects, login form.
  * ALL rendering is delegated to fixes.js (loaded after this file).
  * DO NOT define render* functions here – they live in fixes.js only.
  */
@@ -65,37 +65,6 @@ async function handleLogin(event) {
         if (typeof showToast === 'function') showToast(err.message || 'Login failed', 'error');
         else alert(err.message || 'Login failed');
         if (btn) { btn.textContent = 'Sign In'; btn.disabled = false; }
-    }
-}
-
-// ─── Sign Up ─────────────────────────────────────────────────────────────────
-async function handleSignup(event) {
-    event.preventDefault();
-    const first_name = document.getElementById('firstName')?.value.trim();
-    const last_name  = document.getElementById('lastName')?.value.trim();
-    const email      = document.getElementById('email')?.value.trim();
-    const password   = document.getElementById('password')?.value.trim();
-    const role       = document.getElementById('role')?.value || 'student';
-    const btn        = document.getElementById('signupBtn');
-    if (!first_name || !email || !password) {
-        alert('Please fill all required fields');
-        return;
-    }
-    const username = first_name + (last_name ? ' ' + last_name : '');
-    if (btn) { btn.textContent = 'Creating Account…'; btn.disabled = true; }
-    try {
-        const res = await fetch('/api/auth/signup', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, first_name, last_name, email, password, role })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || 'Registration failed');
-        alert('Account created! Please login.');
-        window.location.href = 'login.html';
-    } catch (err) {
-        alert(err.message);
-        if (btn) { btn.textContent = 'Create Account'; btn.disabled = false; }
     }
 }
 

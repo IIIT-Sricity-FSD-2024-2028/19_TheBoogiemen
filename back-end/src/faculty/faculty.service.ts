@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { InMemoryDbService } from '../database/in-memory-db.service';
 import {
@@ -8,6 +8,12 @@ import {
   riskReasons,
   summariseAttendance,
 } from '../common/academic-rules';
+import { ErrorCode, errorBody } from '../common/errors/error-codes';
+import {
+  isSameCollege,
+  scopeToCollege,
+  writeCollegeId,
+} from '../common/tenancy/scope-to-college';
 
 @Injectable()
 export class FacultyService {
@@ -107,7 +113,16 @@ export class FacultyService {
       });
   }
 
-  async getTodayAttendance(courseId: string) {
+  async getTodayAttendance(courseId: string, collegeId: string | null) {
+    // course_id is client-supplied (@Param) — without this check a faculty
+    // member could read another college's roster by supplying that
+    // college's course id.
+    const course = this.db.courses.find((c) => c.course_id === courseId);
+    if (!isSameCollege(course, collegeId))
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Course not found'),
+      );
+
     const enrollment = this.db.enrollment.filter(
       (e) => e.course_id === courseId,
     );
@@ -127,8 +142,15 @@ export class FacultyService {
     return { students, date: today, course_id: courseId };
   }
 
-  async recordAttendance(data: any) {
+  async recordAttendance(data: any, actorCollegeId: string | null) {
     const { course_id, date, records } = data;
+
+    const course = this.db.courses.find((c) => c.course_id === course_id);
+    if (!isSameCollege(course, actorCollegeId))
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Course not found'),
+      );
+    const collegeId = writeCollegeId(actorCollegeId);
 
     // M-01: idempotent per student/course/date — re-submitting a session now
     // corrects the existing rows instead of stacking duplicate absences.
@@ -168,6 +190,7 @@ export class FacultyService {
           course_id,
           date,
           status,
+          college_id: collegeId,
         };
         this.db.attendance_log.push(log as any);
         created++;
@@ -179,9 +202,13 @@ export class FacultyService {
     return { saved: saved.length, created, updated, records: saved };
   }
 
-  async postMarks(data: any) {
+  async postMarks(data: any, actorCollegeId: string | null) {
     const entryId = `m${Date.now()}`;
-    const newEntry = { entry_id: entryId, ...data };
+    const newEntry = {
+      entry_id: entryId,
+      ...data,
+      college_id: writeCollegeId(actorCollegeId),
+    };
     this.db.marks_entry.push(newEntry);
     return newEntry;
   }
@@ -190,10 +217,10 @@ export class FacultyService {
     return this.db.assessments.filter((a) => a.faculty_id === facultyId);
   }
 
-  async getAtRiskStudents() {
+  async getAtRiskStudents(collegeId: string | null) {
     // M-04: one predicate for every at-risk surface. This previously filtered on
     // `cgpa < 6` alone, so a student failing only on attendance never appeared.
-    return this.db.students
+    return scopeToCollege(this.db.students, collegeId)
       .map((s) => {
         const records = this.db.attendance_log.filter(
           (a) => a.student_id === s.user_id,

@@ -8,7 +8,6 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import type { Response } from 'express';
-import { v4 as uuidv4 } from 'uuid';
 import { AuthService } from './auth.service';
 import { PasswordService } from './password.service';
 import { Roles } from './roles.guard';
@@ -19,7 +18,7 @@ import {
   ApiBody,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { LoginDto, SignupDto, ChangePasswordDto } from '../common/dto/app.dto';
+import { LoginDto, ChangePasswordDto } from '../common/dto/app.dto';
 import { InMemoryDbService } from '../database/in-memory-db.service';
 import { Public } from './public.decorator';
 import { CurrentUserId } from '../common/decorators/current-user.decorator';
@@ -99,108 +98,17 @@ export class AuthController {
     }
   }
 
-  @Post('signup')
-  @Public()
-  @ApiOperation({ summary: 'Student self-registration' })
-  @ApiBody({ type: SignupDto })
-  @ApiResponse({ status: 201, description: 'Registration successful' })
-  @ApiResponse({
-    status: 400,
-    description: 'Invalid input or email already exists',
-  })
-  async signup(@Body() body: SignupDto) {
-    try {
-      // Validate input
-      if (!body.email || !body.password || !body.role) {
-        throw new BadRequestException(
-          errorBody(
-            ErrorCode.BUSINESS_RULE_VIOLATION,
-            'Email, password, and role are required',
-          ),
-        );
-      }
-
-      // Check if email already exists
-      if (this.db.users.find((u) => u.email === body.email)) {
-        throw new BadRequestException(
-          errorBody(ErrorCode.DUPLICATE_RESOURCE, 'Email already registered'),
-        );
-      }
-
-      // Self-registration is limited to students. Faculty accounts confer the
-      // ability to mark attendance and enter grades for real students, so they
-      // must be provisioned by an administrator through POST /users, where the
-      // role privilege ceiling applies.
-      if (body.role !== 'student') {
-        throw new BadRequestException(
-          errorBody(
-            ErrorCode.BUSINESS_RULE_VIOLATION,
-            'Only student accounts can self-register. Faculty and staff accounts are created by an administrator.',
-          ),
-        );
-      }
-
-      // Build user record
-      const username =
-        body.username ||
-        `${body.first_name || ''} ${body.last_name || ''}`.trim() ||
-        body.email.split('@')[0];
-      const id = `u${Date.now()}`;
-      const newUser = {
-        user_id: id,
-        username,
-        first_name: body.first_name || username.split(' ')[0] || 'User',
-        last_name:
-          body.last_name || username.split(' ').slice(1).join(' ') || '',
-        password_hash: await this.passwordService.hash(body.password),
-        email: body.email,
-        role: body.role,
-      };
-
-      this.db.users.push(newUser);
-
-      if (newUser.role === 'student') {
-        this.db.students.push({
-          user_id: id,
-          first_name: newUser.first_name,
-          last_name: newUser.last_name,
-          branch: body.branch || 'CSE',
-          batch: body.batch || '2024-2028',
-          cgpa: 7.0,
-          section: body.section || 'A',
-          email: body.email,
-          join_date: new Date().toISOString().split('T')[0],
-          dob: '2005-01-01',
-          phone: '',
-        });
-        this.db.enrollment.push({
-          // H-07: length-derived ids re-use values that already exist.
-          enrollment_id: uuidv4(),
-          student_id: id,
-          course_id: 'c1',
-          year_id: 'y1',
-          status: 'active',
-          section: body.section || 'A',
-        });
-      }
-      // No faculty branch: self-registration is student-only (see the role check
-      // above). Faculty records are created by POST /users.
-
-      return {
-        success: true,
-        message: 'Registration successful. You can now login.',
-        user_id: id,
-      };
-    } catch (error) {
-      if (error instanceof BadRequestException) throw error;
-      throw new BadRequestException(
-        errorBody(
-          ErrorCode.BUSINESS_RULE_VIOLATION,
-          `Registration failed: ${error.message}`,
-        ),
-      );
-    }
-  }
+  // A `POST /auth/signup` self-registration route used to live here. It
+  // predates multi-tenancy: it had no way to ask which college a new student
+  // belonged to, so a signup left `college_id` unset, which
+  // CurrentUserCollegeId() then reads as `null` — the superadmin "see every
+  // college" exemption. The route was also unreachable in practice (no
+  // linked frontend page called it; front-end/signup.html was dead markup,
+  // removed alongside this) so the fix is deletion, the same call made for
+  // Group D in TENANT_ISOLATION_DIAGNOSIS.md, rather than building a college
+  // picker for a page nothing links to. Real student accounts are created by
+  // an admin via POST /users, which already stamps the admin's own
+  // college_id (see admin/common.controller.ts createUser).
 
   @Post('change-password')
   // Explicit list, not a bare "any authenticated role": a future low-trust

@@ -18,6 +18,7 @@ import * as path from 'path';
 import { InMemoryDbService } from '../database/in-memory-db.service';
 import { ErrorCode, errorBody } from '../common/errors/error-codes';
 import { UPLOAD_DIR, sanitizeOriginalName } from './upload.config';
+import { isSameCollege, writeCollegeId } from '../common/tenancy/scope-to-college';
 import type { Role } from '../auth/jwt-payload';
 
 /** What a document is attached to. Determines who may read it. */
@@ -43,6 +44,7 @@ export interface UploadRecord {
   context: UploadContext;
   uploaded_by: string;
   uploaded_at: string;
+  college_id?: string | null;
 }
 
 /** Staff who may read any document, because reviewing them is their job. */
@@ -66,6 +68,7 @@ export class UploadsService {
     file: Express.Multer.File,
     context: UploadContext,
     userId: string,
+    actorCollegeId: string | null,
   ): UploadRecord {
     const entry: UploadRecord = {
       file_id: randomUUID(),
@@ -76,6 +79,7 @@ export class UploadsService {
       context,
       uploaded_by: userId,
       uploaded_at: new Date().toISOString(),
+      college_id: writeCollegeId(actorCollegeId),
     };
 
     this.records.push(entry);
@@ -146,10 +150,21 @@ export class UploadsService {
    * person who uploaded it". Staff may read any document because approving leave
    * or reviewing a milestone requires seeing the attachment — a student may not
    * read another student's.
+   *
+   * TENANT_ISOLATION_DIAGNOSIS.md Group C: "staff" used to mean any faculty/
+   * admin/head/superadmin at ANY college — a faculty member at college A
+   * could download a medical certificate uploaded by a student at college B,
+   * given only the file_id. The reviewer exemption now also requires the
+   * reviewer's own college to match the document's.
    */
-  assertCanRead(record: UploadRecord, userId: string, role: Role): void {
+  assertCanRead(
+    record: UploadRecord,
+    userId: string,
+    role: Role,
+    collegeId: string | null,
+  ): void {
     if (record.uploaded_by === userId) return;
-    if (REVIEWER_ROLES.includes(role)) return;
+    if (REVIEWER_ROLES.includes(role) && isSameCollege(record, collegeId)) return;
 
     this.logger.warn(
       { fileId: record.file_id, userId, role, owner: record.uploaded_by },

@@ -10,6 +10,7 @@ import {
   summariseAttendance,
 } from '../common/academic-rules';
 import { ErrorCode, errorBody } from '../common/errors/error-codes';
+import { isSameCollege, scopeToCollege } from '../common/tenancy/scope-to-college';
 
 @Injectable()
 export class StudentsService {
@@ -101,10 +102,16 @@ export class StudentsService {
     return this.db.fees.filter((f) => f.student_id === userId);
   }
 
-  async getTimetable(userId: string) {
+  async getTimetable(userId: string, collegeId: string | null) {
     const student = this.db.students.find((s) => s.user_id === userId);
     const section = student?.section || 'A';
-    const slots = this.db.timetable.filter((t) => t.section === section);
+    // Scoped by college, not just section: "Section A" is not a globally
+    // unique name — two colleges may both have one, and without this a
+    // student could be shown another college's slots for a same-named
+    // section (TENANT_ISOLATION_DIAGNOSIS.md §3, Group B).
+    const slots = scopeToCollege(this.db.timetable, collegeId).filter(
+      (t) => t.section === section,
+    );
     const grid = slots.reduce((acc: any, curr) => {
       if (!acc[curr.day]) acc[curr.day] = {};
       acc[curr.day][curr.time] = curr;
@@ -118,7 +125,7 @@ export class StudentsService {
     };
   }
 
-  async enroll(studentId: string, courseId: string) {
+  async enroll(studentId: string, courseId: string, collegeId: string | null) {
     // Check if already enrolled
     const existing = this.db.enrollment.find(
       (e) => e.student_id === studentId && e.course_id === courseId,
@@ -132,9 +139,12 @@ export class StudentsService {
       );
     }
 
-    // Verify course exists
+    // course_id is client-supplied — without this, a student could enroll in
+    // another college's course simply by knowing or guessing its id. Same
+    // NOT_FOUND for "no such course" and "not your college's course": a
+    // student must not be able to tell the two apart by response shape.
     const course = this.db.courses.find((c) => c.course_id === courseId);
-    if (!course)
+    if (!isSameCollege(course, collegeId))
       throw new NotFoundException(
         errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Course not found'),
       );
@@ -148,6 +158,7 @@ export class StudentsService {
       year_id: '2025',
       status: 'active',
       section: student?.section || 'A',
+      college_id: collegeId ?? course!.college_id,
     };
     this.db.enrollment.push(newEnrollment);
     return { success: true, enrollment: newEnrollment, course };
