@@ -1506,6 +1506,29 @@ export class CommonController {
           'Student is already enrolled in this course',
         ),
       );
+
+    // A course can have several sections, each with a different faculty
+    // (COURSE_OWNERSHIP_MIGRATION_PLAN.md) — the head picks which one this
+    // student joins rather than it silently defaulting to their home
+    // section, which may not even be one this course offers. body.section
+    // stays optional for any other caller of this route; when given it must
+    // be a section this course actually has a faculty assigned to.
+    const courseSections = sectionsOfCourse(this.db, course_id);
+    let section: string;
+    if (body.section) {
+      const match = courseSections.find((cs) => cs.section === body.section);
+      if (!match)
+        throw new BadRequestException(
+          errorBody(
+            ErrorCode.BUSINESS_RULE_VIOLATION,
+            `Section "${body.section}" is not offered for this course, or has no faculty assigned yet.`,
+          ),
+        );
+      section = match.section;
+    } else {
+      section = student.section || 'A';
+    }
+
     const id = `e${Date.now()}`;
     const newEnrollment = {
       enrollment_id: id,
@@ -1513,7 +1536,7 @@ export class CommonController {
       course_id,
       year_id: new Date().getFullYear().toString(),
       status: 'active',
-      section: student.section || 'A',
+      section,
       college_id: writeCollegeId(actorCollegeId),
     };
     this.db.enrollment.push(newEnrollment as any);

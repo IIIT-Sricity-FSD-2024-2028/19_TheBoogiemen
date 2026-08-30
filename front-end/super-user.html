@@ -337,7 +337,8 @@
         <div class="modal-header"><h2>📖 Enroll Student in Course</h2><button class="close-modal" onclick="closeModal('enrollStudentModal')">&times;</button></div>
         <div class="modal-body">
             <div class="form-group"><label>Select Student <span style="color:#ef4444">*</span></label><select id="enrollStudentSel"><option value="">Loading…</option></select></div>
-            <div class="form-group"><label>Select Course <span style="color:#ef4444">*</span></label><select id="enrollCourseSel"><option value="">Loading…</option></select></div>
+            <div class="form-group"><label>Select Course <span style="color:#ef4444">*</span></label><select id="enrollCourseSel" onchange="populateEnrollSectionOptions()"><option value="">Loading…</option></select></div>
+            <div class="form-group"><label>Select Section <span style="color:#ef4444">*</span></label><select id="enrollSectionSel"><option value="">— Select a course first —</option></select></div>
         </div>
         <div class="modal-footer">
             <button onclick="submitEnrollStudent()" class="submit-btn" style="flex:1;">Enroll Student</button>

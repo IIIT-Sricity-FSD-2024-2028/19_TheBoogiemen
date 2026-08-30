@@ -1622,9 +1622,13 @@ window.submitCourseSections = async function() {
 // course creation (COURSE_OWNERSHIP_MIGRATION_PLAN.md) — same modal, same
 // POST /enrollment, now backed by /courses (every course in the college)
 // instead of /faculty/me/courses (a faculty member's own).
+let _enrollCoursesCache = [];
+
 window.openEnrollStudentModal = async function() {
     const studentSel = document.getElementById('enrollStudentSel');
     const courseSel  = document.getElementById('enrollCourseSel');
+    const sectionSel = document.getElementById('enrollSectionSel');
+    if (sectionSel) sectionSel.innerHTML = '<option value="">— Select a course first —</option>';
     if (studentSel) {
         studentSel.innerHTML = '<option value="">Loading…</option>';
         try {
@@ -1640,27 +1644,47 @@ window.openEnrollStudentModal = async function() {
     if (courseSel) {
         courseSel.innerHTML = '<option value="">Loading…</option>';
         try {
-            const courses = await api('/courses');
+            _enrollCoursesCache = await api('/courses');
             courseSel.innerHTML = '<option value="">— Select Course —</option>' +
-                courses.map(c => `<option value="${c.course_id}">${escapeHtmlSafe(c.course_code)} – ${escapeHtmlSafe(c.course_name)}</option>`).join('');
+                _enrollCoursesCache.map(c => `<option value="${c.course_id}">${escapeHtmlSafe(c.course_code)} – ${escapeHtmlSafe(c.course_name)}</option>`).join('');
         } catch(e) { courseSel.innerHTML = '<option value="">Error loading</option>'; }
     }
     openModal('enrollStudentModal');
 };
 
+// A course's sections (and who teaches them) differ per course — re-derived
+// from the cached /courses list every time the course dropdown changes.
+window.populateEnrollSectionOptions = function() {
+    const courseId = document.getElementById('enrollCourseSel')?.value;
+    const sectionSel = document.getElementById('enrollSectionSel');
+    if (!sectionSel) return;
+    const course = _enrollCoursesCache.find(c => c.course_id === courseId);
+    const sections = course?.sections || [];
+    if (!sections.length) {
+        sectionSel.innerHTML = '<option value="">No sections have a faculty assigned yet</option>';
+        return;
+    }
+    sectionSel.innerHTML = '<option value="">— Select Section —</option>' +
+        sections.map(s => `<option value="${escapeHtmlSafe(s.section)}">Section ${escapeHtmlSafe(s.section)} — ${escapeHtmlSafe(s.faculty_name || s.faculty_id)}</option>`).join('');
+};
+
 window.submitEnrollStudent = async function() {
     const student_id = document.getElementById('enrollStudentSel')?.value;
     const course_id  = document.getElementById('enrollCourseSel')?.value;
+    const section     = document.getElementById('enrollSectionSel')?.value;
     const studentSel = document.getElementById('enrollStudentSel');
     const courseSel  = document.getElementById('enrollCourseSel');
+    const sectionSel = document.getElementById('enrollSectionSel');
     if (studentSel) studentSel.style.borderColor = '';
     if (courseSel)  courseSel.style.borderColor  = '';
+    if (sectionSel) sectionSel.style.borderColor = '';
     let valid = true;
     if (!student_id) { if (studentSel) studentSel.style.borderColor = '#ef4444'; showToast('Please select a student', 'warning'); valid = false; }
     if (!course_id)  { if (courseSel)  courseSel.style.borderColor  = '#ef4444'; showToast('Please select a course', 'warning');  valid = false; }
+    if (!section)     { if (sectionSel) sectionSel.style.borderColor = '#ef4444'; showToast('Please select a section', 'warning'); valid = false; }
     if (!valid) return;
     try {
-        await api('/enrollment', { method:'POST', body: JSON.stringify({ student_id, course_id }) });
+        await api('/enrollment', { method:'POST', body: JSON.stringify({ student_id, course_id, section }) });
         const user = window.Auth?.getUser?.();
         const from = user ? (user.first_name || 'Academic Head') : 'Academic Head';
         window.Notifications?.send(student_id, from, `📖 You have been enrolled in a new course by ${from}. Check your "My Courses" section for details.`, 'info');
