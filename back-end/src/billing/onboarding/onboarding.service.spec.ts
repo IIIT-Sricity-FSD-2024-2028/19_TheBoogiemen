@@ -211,7 +211,8 @@ describe('OnboardingService — the full pipeline', () => {
       expect(sub.status).toBe('active');
       expect(sub.college_id).toBe(db.colleges[0].college_id);
       expect(sub.quote_id).toBe(quote.quote_id);
-      expect(sub.seats_purchased).toBe(METRICS.student_count + METRICS.faculty_count);
+      expect(sub.student_seats).toBe(METRICS.student_count);
+      expect(sub.faculty_seats).toBe(METRICS.faculty_count);
 
       const payment = db.payments.find((p: any) => p.quote_id === quote.quote_id);
       expect(payment.status).toBe('captured');

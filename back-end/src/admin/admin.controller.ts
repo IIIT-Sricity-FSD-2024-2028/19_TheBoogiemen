@@ -2,6 +2,7 @@ import { Controller, Get, Post, Put, Body, Query, Param } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { Roles } from '../auth/roles.guard';
 import { CurrentUserCollegeId } from '../common/decorators/current-user.decorator';
+import { RequiresModule } from '../common/guards/requires-module.guard';
 import { ApiTags, ApiOperation, ApiBody } from '@nestjs/swagger';
 
 @ApiTags('Admin')
@@ -57,6 +58,7 @@ export class AdminController {
 
   @Get('discussions')
   @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
+  @RequiresModule('forum')
   @ApiOperation({ summary: 'Get all discussion posts' })
   async getDiscussions(@CurrentUserCollegeId() collegeId: string | null) {
     return this.adminService.getDiscussions(collegeId);

@@ -210,7 +210,6 @@ export class OnboardingService {
       spocPasswordHash: draft.password_hash,
     });
 
-    const seats = quote.metrics.student_count + quote.metrics.faculty_count;
     const startsOn = new Date();
     const endsOn = new Date(startsOn);
     endsOn.setFullYear(endsOn.getFullYear() + quote.metrics.term_years);
@@ -220,7 +219,12 @@ export class OnboardingService {
       subscription_id: subscriptionId,
       college_id: college.college_id,
       quote_id: quote.quote_id,
-      seats_purchased: seats,
+      // Split pool: students and faculty are separately capped, matching what
+      // the quote actually priced them as (rate-card.ts bands the two
+      // differently — a combined pool would let one role burn the other's
+      // seats). See SPOC_BILLING_ENFORCEMENT_DIAGNOSIS.md §5.1.
+      student_seats: quote.metrics.student_count,
+      faculty_seats: quote.metrics.faculty_count,
       modules: quote.metrics.modules,
       status: 'active',
       starts_on: startsOn.toISOString().split('T')[0],
