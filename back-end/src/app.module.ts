@@ -35,6 +35,7 @@ import { ForumModule } from './modules/forum/forum.forum.module';
 import { LeaveModule } from './modules/leave/leave.leave.module';
 import { AssessmentModule } from './modules/assessment/assessment.assessment.module';
 import { OutcomeModule } from './modules/outcome/outcome.outcome.module';
+import { MeetingModule } from './modules/meeting/meeting.meeting.module';
 
 @Module({
   imports: [
@@ -61,6 +62,7 @@ import { OutcomeModule } from './modules/outcome/outcome.outcome.module';
     LeaveModule,
     AssessmentModule,
     OutcomeModule,
+    MeetingModule,
   ],
   controllers: [AppController],
   providers: [

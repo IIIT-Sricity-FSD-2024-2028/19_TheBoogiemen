@@ -50,6 +50,10 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
             <span>Research Projects</span>
         </a>
+        <a href="#" class="nav-item" onclick="switchView('meetings-view',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span>Meetings</span>
+        </a>
     </nav>
     <div class="sidebar-footer">
         <a href="#" class="nav-item" onclick="switchView('settings-view',this)">
@@ -207,6 +211,8 @@
                 </div>
             </div>
         </div>
+        <!-- Meetings View -->
+        <div id="meetings-view" class="view-section" style="display:none;"></div>
 
     </div>
 </div>
@@ -435,6 +441,7 @@
 
 <script src="script.js"></script>
 <script src="fixes.js"></script>
+<script src="meetings.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     if (!window.location.pathname.includes('student.html')) return;

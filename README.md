@@ -94,6 +94,7 @@ Passwords are stored as bcrypt hashes, never in plaintext.
 - ✅ Time Table View
 - ✅ Discussion Forum
 - ✅ Research Projects with File Upload
+- ✅ **1-on-1 Meeting Scheduling & Tracking** (Request meetings, manage status, reschedule, view minutes & faculty remarks)
 - ✅ Settings & Password Change
 
 ### Faculty Dashboard
@@ -105,6 +106,7 @@ Passwords are stored as bcrypt hashes, never in plaintext.
 - ✅ Discussion Forum
 - ✅ Leave Management
 - ✅ Event Scheduler
+- ✅ **Meeting Management Module** (Direct scheduling, approve/deny requests, reschedule, conflict detection, record minutes & remarks, dashboard alert banners)
 - ✅ Settings & Password Change
 
 ### Admin/Head Dashboard
@@ -116,6 +118,29 @@ Passwords are stored as bcrypt hashes, never in plaintext.
 - ✅ Leave Request Approval
 - ✅ Attendance Override
 - ✅ Settings & Password Change
+
+---
+
+## 📅 Meeting Scheduling & Management Module
+
+A comprehensive 1-on-1 academic mentoring, consultation, and progress tracking system:
+
+### Key Capabilities
+- **Student-Initiated Requests**: Students request meetings with faculty by selecting purpose, agenda, date, time slot, and mode (`Online (Google Meet)` or `In-Person`).
+- **Faculty Direct Scheduling**: Faculty can directly schedule meetings with enrolled students.
+- **Strict Time Validation**: Meetings can only be scheduled from the current time onwards on today's date or on future dates; past dates and past times are automatically rejected.
+- **Conflict Prevention**: Intelligent conflict detection rejects overlapping scheduled meetings for both students and faculty.
+- **Bi-Directional Rescheduling**:
+  - Faculty can propose alternative slots when reviewing student requests.
+  - Students can request rescheduling of confirmed meetings with justification.
+  - Faculty can counter-propose or accept student reschedule requests.
+- **Completion & Minutes of Discussion**:
+  - Faculty records discussion notes, conclusions/outcomes, agreed action items for the student, and faculty remarks.
+  - Completed meetings with full minutes and remarks remain permanently accessible to the student under the **`✓ Completed`** tab.
+- **Real-Time Dashboard Alerts & Notifications**:
+  - Live notification cards on the Faculty Dashboard overview highlight pending requests and student reschedule requests with instant 1-click review buttons.
+  - Sidebar badge displays actionable item counts.
+  - Notification bell delivers instant in-app alerts.
 
 ---
 
