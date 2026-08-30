@@ -1287,6 +1287,18 @@ window.renderFacultyResearch = async function() {
 };
 
 window.openMeetingModal = async function(studentId, name) {
+    const user = window.Auth ? window.Auth.getUser() : null;
+    if (user && user.role === 'student') {
+        if (typeof window.openStudentRequestModal === 'function') {
+            window.openStudentRequestModal();
+            return;
+        }
+    }
+    if (typeof window.openFacultyScheduleModal === 'function') {
+        window.openFacultyScheduleModal(studentId);
+        return;
+    }
+
     const sel = document.getElementById('meetingStudent');
     if (sel) {
         if (studentId) {
@@ -1294,7 +1306,8 @@ window.openMeetingModal = async function(studentId, name) {
         } else {
             sel.innerHTML = '<option value="">Loading students…</option>';
             try {
-                const students = await api('/faculty/me/students');
+                const res = await api('/meetings/student-list');
+                const students = (res && res.data) ? res.data : [];
                 sel.innerHTML = '<option value="">— Select Student —</option>' +
                     students.map(s => `<option value="${s.user_id}">${s.first_name} ${s.last_name||''} (${s.user_id})</option>`).join('');
             } catch(e) { sel.innerHTML = '<option value="">Error loading students</option>'; }
@@ -1308,7 +1321,6 @@ window.openMeetingModal = async function(studentId, name) {
 window.submitScheduleMeeting = async function() {
     const sel         = document.getElementById('meetingStudent');
     const studentId   = sel?.value;
-    const studentName = sel?.selectedOptions?.[0]?.text || '';
     const date        = document.getElementById('meetingDate')?.value;
     const hour        = document.getElementById('meetingHour')?.value;
     const minute      = document.getElementById('meetingMinute')?.value;
@@ -1316,15 +1328,23 @@ window.submitScheduleMeeting = async function() {
     const mode        = document.getElementById('meetingMode')?.value;
     const agenda      = document.getElementById('meetingAgenda')?.value?.trim();
 
-    // Compute 24h time string from dropdowns
-    let time = '';
+    // Compute 24h start and end time
+    let startTime = '';
+    let endTime = '';
     if (hour && minute) {
         let h = parseInt(hour, 10);
         if (period === 'PM' && h !== 12) h += 12;
         if (period === 'AM' && h === 12) h = 0;
-        time = `${String(h).padStart(2,'0')}:${minute}`;
+        startTime = `${String(h).padStart(2,'0')}:${minute}`;
+        // Default 30 min duration
+        let endH = h;
+        let endM = parseInt(minute, 10) + 30;
+        if (endM >= 60) {
+            endH = (endH + 1) % 24;
+            endM -= 60;
+        }
+        endTime = `${String(endH).padStart(2,'0')}:${String(endM).padStart(2,'0')}`;
     }
-    const timeDisplay = hour && minute ? `${hour}:${minute} ${period}` : '';
 
     if (!studentId)  { showToast('Please select a student', 'warning'); return; }
     if (!date)       { showToast('Meeting date is required', 'warning'); return; }
@@ -1332,16 +1352,27 @@ window.submitScheduleMeeting = async function() {
     if (!hour || !minute) { showToast('Please select meeting time (hour and minute)', 'warning'); return; }
     if (!mode)       { showToast('Please select a meeting type', 'warning'); return; }
     if (!agenda || agenda.length < 5) { showToast('Please enter a meeting agenda (at least 5 characters)', 'warning'); return; }
+
     try {
-        await api('/meetings', { method:'POST', body: JSON.stringify({ student_id: studentId, date, time, agenda, mode }) });
-        const user = window.Auth?.getUser?.();
-        const from = user ? (user.first_name || 'Faculty') : 'Faculty';
-        const modeLabel = mode === 'online' ? 'Online (Google Meet)' : 'In-Person (Faculty Cabin)';
-        window.Notifications?.send(studentId, from,
-            `\uD83D\uDCC5 Meeting scheduled: ${date} at ${timeDisplay} \u2014 ${modeLabel}. Agenda: ${agenda}`, 'meeting');
-        showToast('Meeting scheduled! Student has been notified. \u2705', 'success');
+        await api('/meetings/faculty-schedule', {
+            method: 'POST',
+            body: JSON.stringify({
+                studentId,
+                purpose: agenda,
+                scheduledDate: date,
+                scheduledStartTime: startTime,
+                scheduledEndTime: endTime,
+                meetingType: mode === 'online' ? 'ONLINE' : 'IN_PERSON',
+                meetingLink: mode === 'online' ? 'https://meet.google.com/' : undefined,
+                location: mode !== 'online' ? 'Faculty Cabin' : undefined,
+            })
+        });
+        showToast('Meeting scheduled! Student has been notified. ✅', 'success');
         closeModal('meetingModal');
         document.getElementById('meetingForm')?.reset();
+        if (typeof window.renderFacultyDashboardMeetings === 'function') {
+            window.renderFacultyDashboardMeetings();
+        }
     } catch(e) { showToast('Failed: ' + e.message, 'error'); }
 };
 

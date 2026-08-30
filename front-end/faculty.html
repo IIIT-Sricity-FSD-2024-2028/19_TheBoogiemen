@@ -52,6 +52,10 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
             <span>Research Projects</span>
         </a>
+        <a href="#" class="nav-item" onclick="switchView('meetings-view', this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span>Meetings</span>
+        </a>
         <a href="#" class="nav-item" onclick="openResourceBookingModal(); return false;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
             <span>Request Resources</span>
@@ -285,6 +289,9 @@
         <div id="settings-view" class="view-section" style="display:none;">
             <!-- Content Injected by script.js -->
         </div>
+
+        <!-- ── Meetings View ──────────────────────── -->
+        <div id="meetings-view" class="view-section" style="display:none;"></div>
 
     </div><!-- /content-body -->
 </div><!-- /main-content -->
@@ -641,6 +648,7 @@
 <script src="state.js"></script>
 <script src="script.js"></script>
 <script src="fixes.js"></script>
+<script src="meetings.js"></script>
 
 <!-- Assign BTP Modal -->
 <div id="assignBTPModal" class="modal-backdrop">
@@ -745,6 +753,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.renderFacultyLeaveList && window.renderFacultyLeaveList(),
         window.renderFacultyEventsTable && window.renderFacultyEventsTable(),
         window.renderAssessmentList && window.renderAssessmentList(),
+        window.renderFacultyDashboardMeetings && window.renderFacultyDashboardMeetings(),
     ]);
 });
 

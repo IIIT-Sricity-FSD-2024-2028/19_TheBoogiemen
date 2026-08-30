@@ -1266,23 +1266,7 @@ export class CommonController {
     return { success: true, data: newEnrollment };
   }
 
-  // ── Meetings ──────────────────────────────────────────────────────────────────
 
-  @Post('meetings')
-  @Roles('faculty', 'admin', 'head')
-  @ApiOperation({ summary: 'Schedule a meeting with a student' })
-  @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async scheduleMeeting(@Body() body: any) {
-    return {
-      success: true,
-      message: 'Meeting scheduled successfully',
-      meeting: {
-        meeting_id: `mt${Date.now()}`,
-        ...body,
-        created_at: new Date().toISOString(),
-      },
-    };
-  }
 
   // ── Syllabus Progress ──────────────────────────────────────────────────────────
 
