@@ -128,8 +128,12 @@
 
         <!-- Resource Management -->
         <div id="resource-management-view" class="view-section" style="display:none;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                <div><h2 style="font-size:22px;font-weight:700;">Resource Allocation</h2></div>
+                <button class="page-action-btn" onclick="openModal('resourceModal')">+ Add Resource</button>
+            </div>
             <div class="stats-card">
-                <div class="stats-card-header"><h3>Resource Allocation</h3></div>
+                <div class="stats-card-header"><h3>Resources</h3></div>
                 <div class="stats-card-body" style="padding:24px;"><div id="h-resources-body"></div></div>
             </div>
         </div>
@@ -283,6 +287,34 @@
     </div>
 </div>
 
+
+<div id="resourceModal" class="modal-backdrop">
+    <div class="modal-window">
+        <div class="modal-header"><h2>Add Resource</h2><button class="close-modal" onclick="closeModal('resourceModal')">&times;</button></div>
+        <form id="createResourceForm" onsubmit="event.preventDefault(); submitCreateResource();">
+            <div class="modal-body">
+                <div class="form-group"><label>Name <span style="color:#ef4444">*</span></label><input type="text" id="resourceName" placeholder="e.g., Computing Lab 3" required></div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Type <span style="color:#ef4444">*</span></label>
+                        <select id="resourceType" required>
+                            <option value="Lab">Lab</option>
+                            <option value="Hall">Hall</option>
+                            <option value="Room">Room</option>
+                            <option value="Equipment">Equipment</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Capacity</label><input type="number" id="resourceCapacity" min="1" placeholder="e.g., 60"></div>
+                </div>
+                <div class="form-group"><label>Location</label><input type="text" id="resourceLocation" placeholder="e.g., Block C, 2nd Floor"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="submit-btn" style="flex:1;">Add Resource</button>
+                <button type="button" class="btn-cancel" onclick="closeModal('resourceModal')">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
 
 <!-- ── Add Fee Record Modal ──────────────────────────────────────────────── -->
 <div id="addFeeModal" class="modal-backdrop">
