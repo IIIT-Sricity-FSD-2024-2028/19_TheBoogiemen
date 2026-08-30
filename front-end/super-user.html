@@ -134,7 +134,10 @@
         <div id="course-management-view" class="view-section" style="display:none;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
                 <div><h2 style="font-size:22px;font-weight:700;">Course Management</h2></div>
-                <button class="page-action-btn" onclick="openCreateCourseModal()">+ Add Course</button>
+                <div style="display:flex;gap:10px;">
+                    <button onclick="openEnrollStudentModal()" style="padding:9px 18px;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">📖 Enroll Student</button>
+                    <button class="page-action-btn" onclick="openCreateCourseModal()">+ Add Course</button>
+                </div>
             </div>
             <div class="stats-card">
                 <div class="stats-card-header"><h3>Courses</h3></div>
@@ -326,6 +329,20 @@
                 <button type="button" class="btn-cancel" onclick="closeModal('courseModal')">Cancel</button>
             </div>
         </form>
+    </div>
+</div>
+
+<div id="enrollStudentModal" class="modal-backdrop">
+    <div class="modal-window">
+        <div class="modal-header"><h2>📖 Enroll Student in Course</h2><button class="close-modal" onclick="closeModal('enrollStudentModal')">&times;</button></div>
+        <div class="modal-body">
+            <div class="form-group"><label>Select Student <span style="color:#ef4444">*</span></label><select id="enrollStudentSel"><option value="">Loading…</option></select></div>
+            <div class="form-group"><label>Select Course <span style="color:#ef4444">*</span></label><select id="enrollCourseSel"><option value="">Loading…</option></select></div>
+        </div>
+        <div class="modal-footer">
+            <button onclick="submitEnrollStudent()" class="submit-btn" style="flex:1;">Enroll Student</button>
+            <button type="button" class="btn-cancel" onclick="closeModal('enrollStudentModal')">Cancel</button>
+        </div>
     </div>
 </div>
 

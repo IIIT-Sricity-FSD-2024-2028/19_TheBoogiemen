@@ -1618,6 +1618,63 @@ window.submitCourseSections = async function() {
     } catch(e) { showToast('Failed: ' + e.message, 'error'); }
 };
 
+// Enrolling a student into a course moved here from faculty.html along with
+// course creation (COURSE_OWNERSHIP_MIGRATION_PLAN.md) — same modal, same
+// POST /enrollment, now backed by /courses (every course in the college)
+// instead of /faculty/me/courses (a faculty member's own).
+window.openEnrollStudentModal = async function() {
+    const studentSel = document.getElementById('enrollStudentSel');
+    const courseSel  = document.getElementById('enrollCourseSel');
+    if (studentSel) {
+        studentSel.innerHTML = '<option value="">Loading…</option>';
+        try {
+            const users = await api('/admin/users');
+            const students = (users || []).filter(u => u.role === 'student');
+            studentSel.innerHTML = '<option value="">— Select Student —</option>' +
+                students.map(s => {
+                    const name = `${s.first_name||s.username||''} ${s.last_name||''}`.trim();
+                    return `<option value="${s.user_id}">${escapeHtmlSafe(name)} (${s.user_id})</option>`;
+                }).join('');
+        } catch(e) { studentSel.innerHTML = '<option value="">Error loading students</option>'; }
+    }
+    if (courseSel) {
+        courseSel.innerHTML = '<option value="">Loading…</option>';
+        try {
+            const courses = await api('/courses');
+            courseSel.innerHTML = '<option value="">— Select Course —</option>' +
+                courses.map(c => `<option value="${c.course_id}">${escapeHtmlSafe(c.course_code)} – ${escapeHtmlSafe(c.course_name)}</option>`).join('');
+        } catch(e) { courseSel.innerHTML = '<option value="">Error loading</option>'; }
+    }
+    openModal('enrollStudentModal');
+};
+
+window.submitEnrollStudent = async function() {
+    const student_id = document.getElementById('enrollStudentSel')?.value;
+    const course_id  = document.getElementById('enrollCourseSel')?.value;
+    const studentSel = document.getElementById('enrollStudentSel');
+    const courseSel  = document.getElementById('enrollCourseSel');
+    if (studentSel) studentSel.style.borderColor = '';
+    if (courseSel)  courseSel.style.borderColor  = '';
+    let valid = true;
+    if (!student_id) { if (studentSel) studentSel.style.borderColor = '#ef4444'; showToast('Please select a student', 'warning'); valid = false; }
+    if (!course_id)  { if (courseSel)  courseSel.style.borderColor  = '#ef4444'; showToast('Please select a course', 'warning');  valid = false; }
+    if (!valid) return;
+    try {
+        await api('/enrollment', { method:'POST', body: JSON.stringify({ student_id, course_id }) });
+        const user = window.Auth?.getUser?.();
+        const from = user ? (user.first_name || 'Academic Head') : 'Academic Head';
+        window.Notifications?.send(student_id, from, `📖 You have been enrolled in a new course by ${from}. Check your "My Courses" section for details.`, 'info');
+        showToast('Student enrolled successfully! Student has been notified. ✅', 'success');
+        closeModal('enrollStudentModal');
+    } catch(e) {
+        if (e.message && e.message.toLowerCase().includes('already')) {
+            showToast('⚠ Student is already enrolled in this course', 'warning');
+        } else {
+            showToast('Failed: ' + e.message, 'error');
+        }
+    }
+};
+
 window.renderCourseManagement = async function() {
     const el = document.getElementById('course-management-body');
     if (!el) return;
