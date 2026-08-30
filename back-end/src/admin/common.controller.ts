@@ -32,6 +32,8 @@ import {
   scopeToCollege,
   writeCollegeId,
 } from '../common/tenancy/scope-to-college';
+import { assertSeatAvailable } from '../common/billing/subscription';
+import { RequiresModule } from '../common/guards/requires-module.guard';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import {
   ATTENDANCE_STATUS,
@@ -484,6 +486,7 @@ export class CommonController {
 
   @Get('discussions')
   @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
+  @RequiresModule('forum')
   @ApiOperation({ summary: 'Get all discussion posts with reply counts' })
   async getDiscussions(@CurrentUserCollegeId() collegeId: string | null) {
     return scopeToCollege(this.db.discussion_posts, collegeId).map((p) => {
@@ -496,6 +499,7 @@ export class CommonController {
 
   @Get('discussions/:postId')
   @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
+  @RequiresModule('forum')
   @ApiOperation({ summary: 'Get a single discussion post with all replies' })
   async getDiscussionDetail(
     @Param('postId') postId: string,
@@ -511,6 +515,7 @@ export class CommonController {
 
   @Post('discussions')
   @Roles('student', 'faculty')
+  @RequiresModule('forum')
   @ApiOperation({ summary: 'Create a new discussion post' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async createDiscussion(
@@ -546,6 +551,7 @@ export class CommonController {
 
   @Post('discussions/:postId/replies')
   @Roles('student', 'faculty')
+  @RequiresModule('forum')
   @ApiOperation({ summary: 'Reply to a discussion post' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async createReply(
@@ -585,6 +591,7 @@ export class CommonController {
 
   @Get('research')
   @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
+  @RequiresModule('research')
   @ApiOperation({ summary: 'Get research projects filtered by role' })
   async getResearch(
     @CurrentUserId() userId: string,
@@ -621,6 +628,7 @@ export class CommonController {
 
   @Patch('research/:id/status')
   @Roles('faculty', 'admin', 'head', 'superadmin')
+  @RequiresModule('research')
   @ApiOperation({ summary: 'Update research project status' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async updateResearchStatus(
@@ -636,6 +644,7 @@ export class CommonController {
 
   @Patch('research/:id/progress')
   @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
+  @RequiresModule('research')
   @ApiOperation({
     summary:
       'Update research project progress, submission notes, or faculty feedback',
@@ -675,6 +684,7 @@ export class CommonController {
 
   @Post('research')
   @Roles('faculty', 'admin', 'head', 'superadmin')
+  @RequiresModule('research')
   @ApiOperation({
     summary: 'Create a new research/BTP project and assign to a student',
   })
@@ -944,16 +954,14 @@ export class CommonController {
     // The new account's college, resolved server-side — never from the
     // request body, or a SPOC could plant an admin in a college that is not
     // theirs. Two cases:
-    //   * A SPOC has a college (enforced at provisioning — see
-    //     colleges.service.ts) — the admin they hire inherits it exactly.
-    //   * admin/head/superadmin creating through this panel in today's
-    //     single-deployment model attribute the new account to their own
-    //     college; superadmin specifically has none of its own (the vendor
-    //     operator), so it falls back to the one college this deployment
-    //     already serves. Onboarding a second college onto this same running
-    //     instance is not yet safe — see the tenancy note in
-    //     SPOC_IMPLEMENTATION_PLAN.md §3 — so that fallback is correct for
-    //     every deployment that exists today.
+    //   * A SPOC, admin or head has a college — every one of those roles is
+    //     scoped to exactly one (see TENANT_ISOLATION_DIAGNOSIS.md) — and the
+    //     account they create inherits it exactly.
+    //   * superadmin has none of its own (the vendor operator, not tied to
+    //     any college), so writeCollegeId() below falls back to
+    //     DEFAULT_COLLEGE_ID. Superadmin normally provisions a college
+    //     through POST /billing/colleges, not this route; the fallback only
+    //     matters for a manual account creation outside that flow.
     if (actorRole === 'spoc' && !actorCollegeId) {
       // Unreachable in practice — a SPOC is never provisioned without a
       // college — but a 500 here is the honest response to a misconfigured
@@ -966,6 +974,13 @@ export class CommonController {
       );
     }
     const collegeId = writeCollegeId(actorCollegeId);
+
+    // SPOC_BILLING_ENFORCEMENT_DIAGNOSIS.md bug 2: the plan's seat cap was
+    // never consulted here. Only student/faculty accounts are seats —
+    // admin/head/spoc/superadmin are staff, not something the plan meters.
+    if (body.role === 'student' || body.role === 'faculty') {
+      assertSeatAvailable(this.db, collegeId, body.role);
+    }
 
     const id = `u${Date.now()}`;
     const firstName = body.first_name || body.username || 'New';
@@ -1275,6 +1290,7 @@ export class CommonController {
 
   @Get('fees')
   @Roles('admin', 'head', 'superadmin')
+  @RequiresModule('fees')
   @ApiOperation({ summary: 'Get all fee records with compliance summary' })
   async getFees(@CurrentUserCollegeId() collegeId: string | null) {
     const fees = scopeToCollege(this.db.fees, collegeId);
@@ -1294,6 +1310,7 @@ export class CommonController {
 
   @Patch('fees/:id/pay')
   @Roles('admin', 'head', 'superadmin')
+  @RequiresModule('fees')
   @ApiOperation({ summary: 'Mark a fee record as paid' })
   async payFee(
     @Param('id') id: string,
@@ -1308,6 +1325,7 @@ export class CommonController {
 
   @Post('fees')
   @Roles('admin', 'head', 'superadmin')
+  @RequiresModule('fees')
   @ApiOperation({ summary: 'Add a new fee record for a student' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async createFee(
@@ -1339,6 +1357,7 @@ export class CommonController {
 
   @Put('fees/:id')
   @Roles('admin', 'head', 'superadmin')
+  @RequiresModule('fees')
   @ApiOperation({ summary: 'Update an existing fee record' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async updateFee(

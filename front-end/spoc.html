@@ -13,10 +13,10 @@
        three panels this page hosts inside that shared shell, not the shell
        itself. */
     .status-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-    .status-pill.active    { background: #dcfce7; color: #166534; }
-    .status-pill.suspended { background: #fef2f2; color: #991b1b; }
-    .status-pill.expired   { background: #fef9c3; color: #854d0e; }
-    .status-pill.none      { background: #f1f5f9; color: #64748b; }
+    .status-pill.active         { background: #dcfce7; color: #166534; }
+    .status-pill.expiring_soon  { background: #fef9c3; color: #854d0e; }
+    .status-pill.expired        { background: #fef2f2; color: #991b1b; }
+    .status-pill.none           { background: #f1f5f9; color: #64748b; }
     .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 
     /* A dedicated class rather than an inline 3-column override on the
@@ -112,14 +112,13 @@
         <div id="subscription-view" class="view-section active">
             <div class="metrics-grid spoc-metrics" id="spoc-metrics-grid">
                 <div class="metric-card"><div class="label">Plan Status</div><div class="value" style="font-size:16px;margin-top:10px;" id="spoc-status-pill-slot"><span class="status-pill none"><span class="status-dot"></span>Loading…</span></div></div>
-                <div class="metric-card"><div class="label">Seats</div><div class="value" id="spoc-seats-value">—</div><div class="sub">students &amp; faculty enrolled</div></div>
+                <div class="metric-card"><div class="label">Student Seats</div><div class="value" id="spoc-student-seats-value">—</div><div class="sub">enrolled / purchased</div></div>
+                <div class="metric-card"><div class="label">Faculty Seats</div><div class="value" id="spoc-faculty-seats-value">—</div><div class="sub">enrolled / purchased</div></div>
                 <div class="metric-card"><div class="label">Renewal</div><div class="value" id="spoc-renewal-value" style="font-size:16px;margin-top:10px;">—</div></div>
             </div>
             <div class="stats-card" style="margin-top:20px;">
                 <div class="stats-card-header"><div><h3>About your plan</h3></div></div>
-                <div class="stats-card-body" style="padding:20px 24px;" id="spoc-subscription-note">
-                    Subscription plans, pricing and renewal are not live yet in this deployment. Once available, this section shows your seat count, plan modules and renewal date.
-                </div>
+                <div class="stats-card-body" style="padding:20px 24px;" id="spoc-subscription-note">Loading…</div>
             </div>
         </div>
 
@@ -238,6 +237,9 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 window.addEventListener('beforeunload', () => { if (spocPollTimer) clearInterval(spocPollTimer); });
 
+const PLAN_STATUS_LABEL = { active: 'Active', expiring_soon: 'Expiring soon', expired: 'Expired' };
+const MODULE_LABEL = { research: 'Research', fees: 'Fees', forum: 'Discussion Forum', analytics: 'Analytics' };
+
 async function loadSubscriptionAndAdmins() {
     try {
         const res = await window.Auth.apiFetch('/billing/colleges/me');
@@ -246,14 +248,33 @@ async function loadSubscriptionAndAdmins() {
         const collegeNameEl = document.getElementById('sidebar-college-name');
         if (collegeNameEl) collegeNameEl.textContent = college.name || 'Institution Partner';
 
-        // Subscriptions, quotes and pricing are not live yet in this
-        // deployment (see SPOC_IMPLEMENTATION_PLAN.md's phased delivery) — an
-        // honest empty state in every metric slot rather than fabricated numbers.
-        document.getElementById('spoc-status-pill-slot').innerHTML =
-            '<span class="status-pill none"><span class="status-dot"></span>No active plan</span>';
-        document.getElementById('spoc-seats-value').textContent =
-            (college.student_count + college.faculty_count) || '0';
-        document.getElementById('spoc-renewal-value').innerHTML = '<span style="color:var(--text-muted);font-weight:500;">—</span>';
+        const plan = college.plan;
+        const statusSlot = document.getElementById('spoc-status-pill-slot');
+        const note = document.getElementById('spoc-subscription-note');
+
+        if (!plan) {
+            // A college provisioned outside the self-service pipeline (the
+            // superadmin's manual path) has no subscription row — an honest
+            // empty state, not a fabricated one.
+            statusSlot.innerHTML = '<span class="status-pill none"><span class="status-dot"></span>No active plan</span>';
+            document.getElementById('spoc-student-seats-value').textContent = String(college.student_count || 0);
+            document.getElementById('spoc-faculty-seats-value').textContent = String(college.faculty_count || 0);
+            document.getElementById('spoc-renewal-value').innerHTML = '<span style="color:var(--text-muted);font-weight:500;">—</span>';
+            note.textContent = 'No subscription is on record for your institution. Contact support if this looks wrong.';
+        } else {
+            statusSlot.innerHTML = `<span class="status-pill ${plan.status}"><span class="status-dot"></span>${PLAN_STATUS_LABEL[plan.status]}</span>`;
+            document.getElementById('spoc-student-seats-value').textContent = `${college.student_count || 0} / ${plan.student_seats}`;
+            document.getElementById('spoc-faculty-seats-value').textContent = `${college.faculty_count || 0} / ${plan.faculty_seats}`;
+            const endsOn = new Date(plan.ends_on).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+            document.getElementById('spoc-renewal-value').textContent = plan.status === 'expired' ? `Expired ${endsOn}` : endsOn;
+            const moduleNames = plan.modules.length
+                ? plan.modules.map(m => MODULE_LABEL[m] || m).join(', ')
+                : 'none beyond the core dashboard';
+            const expiryNote = plan.status === 'expired'
+                ? ' Your plan has expired — hiring new staff/students and the modules below are on hold until you renew.'
+                : plan.status === 'expiring_soon' ? ' Your plan renews soon — contact support to keep it active.' : '';
+            note.textContent = `Seats: ${plan.student_seats} students, ${plan.faculty_seats} faculty. Modules included: ${moduleNames}.${expiryNote}`;
+        }
 
         renderAdminList(college.admins || []);
     } catch (e) {

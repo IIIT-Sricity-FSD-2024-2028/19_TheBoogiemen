@@ -42,11 +42,11 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
             <span>Leave Management</span>
         </a>
-        <a href="#" class="nav-item" onclick="switchView('discussion-forum-view',this)">
+        <a href="#" class="nav-item" data-module="forum" onclick="switchView('discussion-forum-view',this)">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             <span>Discussion Forum</span>
         </a>
-        <a href="#" class="nav-item" onclick="switchView('research-projects-view',this)">
+        <a href="#" class="nav-item" data-module="research" onclick="switchView('research-projects-view',this)">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
             <span>Research Projects</span>
         </a>
@@ -459,6 +459,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ]);
     // Inject notification bell
     window.Notifications?.injectBell?.();
+    applyModuleGating();
 });
 
 </script>

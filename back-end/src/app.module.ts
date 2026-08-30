@@ -17,6 +17,7 @@ import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
 import { RolesGuard } from './auth/roles.guard';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
+import { RequiresModuleGuard } from './common/guards/requires-module.guard';
 import { AuthModule } from './auth/auth.module';
 import { StudentsModule } from './students/students.module';
 import { FacultyModule } from './faculty/faculty.module';
@@ -53,6 +54,15 @@ import { BillingModule } from './billing/billing.module';
     {
       provide: APP_GUARD,
       useClass: RolesGuard,
+    },
+    // Runs after RolesGuard — a caller must already be permitted by role
+    // before whether their college's plan includes the module even matters.
+    // A no-op on the vast majority of routes: only @RequiresModule() ones
+    // (forum/research/fees — see SPOC_BILLING_ENFORCEMENT_DIAGNOSIS.md §4)
+    // trigger a check at all.
+    {
+      provide: APP_GUARD,
+      useClass: RequiresModuleGuard,
     },
   ],
 })

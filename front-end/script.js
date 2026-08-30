@@ -20,6 +20,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// ─── Module Gating ───────────────────────────────────────────────────────────
+// Hides nav items whose data-module isn't in the caller's college's licensed
+// module set (SPOC_BILLING_ENFORCEMENT_DIAGNOSIS.md bug 3). The real gate is
+// RequiresModuleGuard on the actual API routes — this only keeps the UI from
+// offering a link that would 403, so it fails open on error rather than
+// hiding navigation over a transient network issue.
+async function applyModuleGating() {
+    const items = document.querySelectorAll('.nav-item[data-module]');
+    if (!items.length) return;
+    try {
+        const res = await window.Auth.apiFetch('/billing/colleges/me/modules');
+        const modules = res?.data?.modules || [];
+        items.forEach(el => {
+            if (!modules.includes(el.dataset.module)) el.style.display = 'none';
+        });
+    } catch (e) {
+        console.warn('[ModuleGating] Could not load licensed modules', e);
+    }
+}
+
 // ─── Login ───────────────────────────────────────────────────────────────────
 async function handleLogin(event) {
     event.preventDefault();

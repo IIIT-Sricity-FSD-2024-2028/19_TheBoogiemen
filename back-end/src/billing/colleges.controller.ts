@@ -69,6 +69,19 @@ export class CollegesController {
     return { success: true, data: await this.colleges.findOne(collegeId) };
   }
 
+  // Literal path, same reasoning as 'me' above. Open to every academic role,
+  // not just spoc — a student/faculty dashboard needs this to hide a nav
+  // item for a module their college never licensed
+  // (SPOC_BILLING_ENFORCEMENT_DIAGNOSIS.md bug 3). The server-side gate is
+  // RequiresModuleGuard on the actual routes; this is only what lets the UI
+  // avoid offering a link that would 403.
+  @Get('me/modules')
+  @Roles('student', 'faculty', 'admin', 'head', 'spoc', 'superadmin')
+  @ApiOperation({ summary: "The caller's own college's licensed modules" })
+  async myModules(@CurrentUserCollegeId() collegeId: string | null) {
+    return { success: true, data: { modules: await this.colleges.getMyModules(collegeId) } };
+  }
+
   @Get(':id')
   @Roles('superadmin')
   @ApiOperation({ summary: 'One college in full: SPOC, admins, basic counts' })

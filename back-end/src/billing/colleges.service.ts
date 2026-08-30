@@ -14,6 +14,8 @@ import { InMemoryDbService } from '../database/in-memory-db.service';
 import { PasswordService } from '../auth/password.service';
 import { ErrorCode, errorBody } from '../common/errors/error-codes';
 import { CreateCollegeDto } from './dto/create-college.dto';
+import { PRICED_MODULES, PricedModule } from './dto/estimate.dto';
+import { getActiveSubscription, isExpired, planStatus } from '../common/billing/subscription';
 
 export function sanitizeUser<T extends Record<string, any>>(user: T): Partial<T> {
   const { password, password_hash, ...safe } = user ?? {};
@@ -147,11 +149,16 @@ export class CollegesService {
     return { ...this.withStats(college), admins, spoc };
   }
 
-  /** Cheap, read-only rollups — no subscription/revenue numbers yet (§13 of the plan). */
+  /** Cheap, read-only rollups, plus the plan/renewal fields the SPOC
+   *  dashboard reads (SPOC_BILLING_ENFORCEMENT_DIAGNOSIS.md bug 1). `plan` is
+   *  null for a college with no subscription row — the superadmin manual
+   *  path (§5.2) — same "no subscription = unlimited" convention every other
+   *  billing call site uses. */
   private withStats(college: any) {
     const collegeUsers = this.db.users.filter(
       (u) => u.college_id === college.college_id,
     );
+    const sub = getActiveSubscription(this.db, college.college_id);
     return {
       ...college,
       spoc_email:
@@ -159,7 +166,29 @@ export class CollegesService {
       admin_count: collegeUsers.filter((u) => u.role === 'admin').length,
       student_count: collegeUsers.filter((u) => u.role === 'student').length,
       faculty_count: collegeUsers.filter((u) => u.role === 'faculty').length,
+      plan: sub
+        ? {
+            student_seats: sub.student_seats,
+            faculty_seats: sub.faculty_seats,
+            modules: sub.modules,
+            starts_on: sub.starts_on,
+            ends_on: sub.ends_on,
+            status: planStatus(sub),
+          }
+        : null,
     };
+  }
+
+  /** The caller's own college's licensed modules — for hiding nav items a
+   *  student/faculty dashboard has no server-side access to anyway. The
+   *  real gate is RequiresModuleGuard on each route; this only avoids
+   *  offering a link that would 403. Unlimited (all modules) for a null
+   *  collegeId (superadmin) or a college with no subscription row, matching
+   *  assertModuleEnabled()'s own convention. An expired plan licenses none. */
+  async getMyModules(collegeId: string | null): Promise<PricedModule[]> {
+    const sub = getActiveSubscription(this.db, collegeId);
+    if (!sub) return [...PRICED_MODULES];
+    return isExpired(sub) ? [] : sub.modules;
   }
 }
 

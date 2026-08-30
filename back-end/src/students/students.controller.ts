@@ -13,6 +13,7 @@ import {
 } from '../common/decorators/current-user.decorator';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { ErrorCode, errorBody } from '../common/errors/error-codes';
+import { RequiresModule } from '../common/guards/requires-module.guard';
 
 @ApiTags('Students')
 @Controller('students')
@@ -65,6 +66,7 @@ export class StudentsController {
 
   @Get('me/fees')
   @Roles('student')
+  @RequiresModule('fees')
   @ApiOperation({ summary: 'Get fee records for current student' })
   @ApiResponse({ status: 200, description: 'Student fee records' })
   async getFees(@CurrentUserId() userId: string) {
