@@ -15,9 +15,27 @@ import { PasswordService } from '../auth/password.service';
 import { ErrorCode, errorBody } from '../common/errors/error-codes';
 import { CreateCollegeDto } from './dto/create-college.dto';
 
-function sanitizeUser<T extends Record<string, any>>(user: T): Partial<T> {
+export function sanitizeUser<T extends Record<string, any>>(user: T): Partial<T> {
   const { password, password_hash, ...safe } = user ?? {};
   return safe as Partial<T>;
+}
+
+export interface CreateCollegeAndSpocParams {
+  collegeName: string;
+  city?: string | null;
+  state?: string | null;
+  type?: string | null;
+  spocEmail: string;
+  spocFirstName?: string;
+  spocLastName?: string;
+  spocPhone?: string;
+  /**
+   * Already hashed — this function never hashes a password itself. The two
+   * callers hash under different circumstances (one generates a password if
+   * none was given, one already has a hash sitting in a draft session) and
+   * neither should be duplicated here just to keep this signature uniform.
+   */
+  spocPasswordHash: string;
 }
 
 @Injectable()
@@ -29,8 +47,16 @@ export class CollegesService {
     private readonly logger: PinoLogger,
   ) {}
 
-  async create(dto: CreateCollegeDto) {
-    if (this.db.users.find((u) => u.email === dto.spoc.email)) {
+  /**
+   * The one place "create a college and its SPOC" happens. Two callers:
+   * this.create() below (superadmin, manual/exceptional onboarding) and
+   * OnboardingService's payment-fulfillment step (self-service, the primary
+   * path per ONBOARDING_PIPELINE_PLAN.md). Factored out specifically so
+   * those two paths cannot drift — a bug fixed in one is fixed in both,
+   * because there is only one implementation to fix.
+   */
+  async createCollegeAndSpoc(params: CreateCollegeAndSpocParams) {
+    if (this.db.users.find((u) => u.email === params.spocEmail)) {
       throw new BadRequestException(
         errorBody(ErrorCode.DUPLICATE_RESOURCE, 'Email already exists'),
       );
@@ -39,35 +65,27 @@ export class CollegesService {
     const collegeId = `col${Date.now()}`;
     const college = {
       college_id: collegeId,
-      name: dto.college.name,
-      city: dto.college.city ?? null,
-      state: dto.college.state ?? null,
-      type: dto.college.type ?? null,
+      name: params.collegeName,
+      city: params.city ?? null,
+      state: params.state ?? null,
+      type: params.type ?? null,
       status: 'active' as const,
       created_at: new Date().toISOString(),
     };
     this.db.colleges.push(college);
 
-    // No delivery channel exists for this credential yet (NotificationService
-    // is a logged stub — see its own docstring). A generated password is
-    // returned once, in this response only, exactly like the admin-creation
-    // flow already returns nothing sensitive back but here there is no other
-    // way to hand the SPOC their first password during the demo phase.
-    const generated = !dto.spoc.password;
-    const password = dto.spoc.password ?? randomTempPassword();
-
     const userId = `u${Date.now()}s`;
-    const firstName = dto.spoc.first_name || dto.spoc.email.split('@')[0];
+    const firstName = params.spocFirstName || params.spocEmail.split('@')[0];
     const spocUser = {
       user_id: userId,
       username: firstName,
       first_name: firstName,
-      last_name: dto.spoc.last_name || '',
-      email: dto.spoc.email,
-      phone: dto.spoc.phone || '',
+      last_name: params.spocLastName || '',
+      email: params.spocEmail,
+      phone: params.spocPhone || '',
       role: 'spoc' as const,
       college_id: collegeId,
-      password_hash: await this.passwordService.hash(password),
+      password_hash: params.spocPasswordHash,
     };
     this.db.users.push(spocUser);
 
@@ -75,6 +93,30 @@ export class CollegesService {
       { collegeId, spocUserId: userId },
       'College and SPOC provisioned',
     );
+
+    return { college, spocUser };
+  }
+
+  /** Superadmin-driven provisioning — manual/exceptional onboarding, no payment involved. */
+  async create(dto: CreateCollegeDto) {
+    // No delivery channel exists for this credential yet (NotificationService
+    // is a logged stub — see its own docstring). A generated password is
+    // returned once, in this response only — there is no other way to hand
+    // the SPOC their first password during the demo phase.
+    const generated = !dto.spoc.password;
+    const password = dto.spoc.password ?? randomTempPassword();
+
+    const { college, spocUser } = await this.createCollegeAndSpoc({
+      collegeName: dto.college.name,
+      city: dto.college.city,
+      state: dto.college.state,
+      type: dto.college.type,
+      spocEmail: dto.spoc.email,
+      spocFirstName: dto.spoc.first_name,
+      spocLastName: dto.spoc.last_name,
+      spocPhone: dto.spoc.phone,
+      spocPasswordHash: await this.passwordService.hash(password),
+    });
 
     return {
       college,
