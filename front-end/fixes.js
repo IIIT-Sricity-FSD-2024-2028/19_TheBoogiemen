@@ -1530,46 +1530,6 @@ window.submitScheduleEvent = async function() {
     } catch(e) { showToast('Failed: ' + e.message, 'error'); }
 };
 
-window.renderResourceManagement = async function() {
-    const el = document.getElementById('h-resources-body') || document.getElementById('resources-body');
-    if (!el) return;
-    try {
-        const [res, events] = await Promise.all([
-            api('/resources'),
-            api('/events').catch(() => [])
-        ]);
-        if (!res.length) { el.innerHTML = '<p style="color:#64748b;text-align:center;">No resources found.</p>'; return; }
-        el.innerHTML = res.map(r => {
-            // Match events using this resource venue
-            const linked = events.filter(e =>
-                e.venue && (e.venue.toLowerCase().includes(r.name.toLowerCase().split(' ')[0]) ||
-                (r.location || '').toLowerCase().includes((e.venue || '').toLowerCase().split(' ')[0]))
-            );
-            const evHtml = linked.length
-                ? `<div style="margin-top:6px;font-size:11px;color:#6366f1;">📅 
-                    ${linked.map(e => `<span style="background:#eff6ff;padding:2px 6px;border-radius:4px;margin-right:4px;">${e.event_name} (${e.date})</span>`).join('')}
-                  </div>`
-                : '';
-            const statusColor = r.status === 'available' ? '#166534,#dcfce7' : r.status === 'maintenance' ? '#713f12,#fef9c3' : '#991b1b,#fef2f2';
-            const [fc, bg] = statusColor.split(',');
-            return `
-            <div style="padding:16px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:12px;">
-                <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-                    <div style="flex:1;">
-                        <h4 style="margin:0;font-size:15px;">${r.name}</h4>
-                        <div style="font-size:12px;color:#64748b;margin-top:4px;">${r.type} &nbsp;&bull;&nbsp; Cap: ${r.capacity||'N/A'} &nbsp;&bull;&nbsp; ${r.location||'N/A'}</div>
-                        ${evHtml}
-                    </div>
-                    <div style="display:flex;align-items:center;gap:8px;margin-left:12px;">
-                        <span style="padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;background:${bg};color:${fc};">${r.status}</span>
-                        <button onclick="toggleResource('${r.resource_id}', '${r.status}')" style="padding:4px 10px;font-size:11px;cursor:pointer;border:1px solid #e2e8f0;border-radius:6px;background:#fff;">Toggle</button>
-                    </div>
-                </div>
-            </div>`;
-        }).join('');
-    } catch(e) { el.innerHTML = `<p style="color:#ef4444">Failed: ${e.message}</p>`; }
-};
-
 window.openEditEvent = function(ev) {
     document.getElementById('editEventId').value = ev.event_id;
     document.getElementById('editEventName').value = ev.event_name;
@@ -1633,6 +1593,24 @@ window.toggleResource = async function(id, current, name) {
         window.Notifications?.broadcastAll(from, `🏢 Resource "${name||'Facility'}" is ${label}.`, 'info');
         renderResourceManagement();
     } catch(e) { showToast('Failed', 'error'); }
+};
+window.submitCreateResource = async function() {
+    const name     = document.getElementById('resourceName')?.value.trim();
+    const type     = document.getElementById('resourceType')?.value;
+    const capacity = document.getElementById('resourceCapacity')?.value;
+    const location = document.getElementById('resourceLocation')?.value.trim();
+    if (!name || name.length < 2) { showToast('Resource name is required', 'warning'); return; }
+    if (!type) { showToast('Please select a resource type', 'warning'); return; }
+    try {
+        await api('/resources', {
+            method: 'POST',
+            body: JSON.stringify({ name, type, capacity: capacity ? Number(capacity) : null, location: location || null }),
+        });
+        showToast('Resource added!', 'success');
+        closeModal('resourceModal');
+        document.getElementById('createResourceForm')?.reset();
+        renderResourceManagement();
+    } catch(e) { showToast('Failed: ' + e.message, 'error'); }
 };
 
 window.renderFeeCompliance = async function() {
