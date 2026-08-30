@@ -15,10 +15,11 @@
  * a decorator for what is one Map lookup here. A fixed window in memory is the
  * right size for a single-process application.
  *
- * ponytail: in-process Map, so the window is per-process and resets on restart.
- * Fine for one server. If this is ever load-balanced across instances, the
- * counter has to move to Redis or the limit is silently multiplied by the
- * number of instances.
+ * The counting core (the Map, the window bookkeeping) lives in
+ * FixedWindowLimiter (common/rate-limit/fixed-window-limiter.ts), shared
+ * with onboarding-rate-limit.middleware.ts. This class owns only what is
+ * specific to auth: counting failures alone, never successes (see the
+ * comment on `use()` below), and this module's own env var names.
  */
 
 import {
@@ -30,6 +31,7 @@ import {
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import type { NextFunction, Request, Response } from 'express';
 import { ErrorCode, errorBody } from '../errors/error-codes';
+import { FixedWindowLimiter } from '../rate-limit/fixed-window-limiter';
 
 /** Failed attempts allowed from one client before the window closes. */
 const MAX_FAILURES = Number(process.env.AUTH_RATE_LIMIT_MAX ?? 10);
@@ -38,22 +40,11 @@ const MAX_FAILURES = Number(process.env.AUTH_RATE_LIMIT_MAX ?? 10);
 const WINDOW_MS = Number(process.env.AUTH_RATE_LIMIT_WINDOW_MS ?? 15 * 60 * 1000);
 
 /**
- * Sweep expired entries once the table grows past this. Bounds memory without
- * paying for a timer or a scan on every request.
- */
-const PRUNE_THRESHOLD = 5_000;
-
-interface Window {
-  count: number;
-  resetAt: number;
-}
-
-/**
  * Module-scoped, not instance-scoped: Nest may construct the middleware more
  * than once, and the counter has to be shared across those instances or the
  * limit means nothing.
  */
-const failures = new Map<string, Window>();
+const limiter = new FixedWindowLimiter(MAX_FAILURES, WINDOW_MS);
 
 /**
  * Who is being limited.
@@ -65,12 +56,6 @@ const failures = new Map<string, Window>();
  */
 function clientKey(req: Request): string {
   return req.ip || req.socket?.remoteAddress || 'unknown';
-}
-
-function prune(now: number): void {
-  for (const [key, window] of failures) {
-    if (now >= window.resetAt) failures.delete(key);
-  }
 }
 
 @Injectable()
@@ -86,15 +71,13 @@ export class AuthRateLimitMiddleware implements NestMiddleware {
    */
   use(req: Request, res: Response, next: NextFunction): void {
     const key = clientKey(req);
-    const now = Date.now();
-    const window = failures.get(key);
+    const retryAfterSec = limiter.retryAfterSeconds(key);
 
-    if (window && now < window.resetAt && window.count >= MAX_FAILURES) {
-      const retryAfterSec = Math.ceil((window.resetAt - now) / 1000);
+    if (retryAfterSec !== null) {
       res.setHeader('Retry-After', String(retryAfterSec));
 
       this.logger.warn(
-        { ip: key, path: req.originalUrl, failures: window.count, retryAfterSec },
+        { ip: key, path: req.originalUrl, retryAfterSec },
         'Auth rate limit hit',
       );
 
@@ -124,30 +107,14 @@ export class AuthRateLimitMiddleware implements NestMiddleware {
      */
     res.on('finish', () => {
       if (res.statusCode !== HttpStatus.UNAUTHORIZED) return;
-      this.recordFailure(key);
+      limiter.record(key);
     });
 
     next();
-  }
-
-  private recordFailure(key: string): void {
-    const now = Date.now();
-    const existing = failures.get(key);
-
-    if (existing && now < existing.resetAt) {
-      existing.count++;
-      return;
-    }
-
-    // Opening a new window is the only path that can grow the table, so it is
-    // the only place that needs to check the size.
-    if (failures.size >= PRUNE_THRESHOLD) prune(now);
-
-    failures.set(key, { count: 1, resetAt: now + WINDOW_MS });
   }
 }
 
 /** Exposed for tests, which need a clean table between cases. */
 export function __resetRateLimitState(): void {
-  failures.clear();
+  limiter.clear();
 }
