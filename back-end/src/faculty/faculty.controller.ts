@@ -8,7 +8,10 @@ import {
 } from '@nestjs/common';
 import { FacultyService } from './faculty.service';
 import { Roles } from '../auth/roles.guard';
-import { CurrentUserId } from '../common/decorators/current-user.decorator';
+import {
+  CurrentUserCollegeId,
+  CurrentUserId,
+} from '../common/decorators/current-user.decorator';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { ErrorCode, errorBody } from '../common/errors/error-codes';
 
@@ -71,8 +74,8 @@ export class FacultyController {
     status: 200,
     description: 'List of at-risk students with attendance data',
   })
-  async getAtRisk() {
-    return this.facultyService.getAtRiskStudents();
+  async getAtRisk(@CurrentUserCollegeId() collegeId: string | null) {
+    return this.facultyService.getAtRiskStudents(collegeId);
   }
 
   @Get('me/assessments')
@@ -87,8 +90,11 @@ export class FacultyController {
   @ApiOperation({
     summary: 'Get students for today attendance marking for a course',
   })
-  async getTodayAttendance(@Param('courseId') courseId: string) {
-    return this.facultyService.getTodayAttendance(courseId);
+  async getTodayAttendance(
+    @Param('courseId') courseId: string,
+    @CurrentUserCollegeId() collegeId: string | null,
+  ) {
+    return this.facultyService.getTodayAttendance(courseId, collegeId);
   }
 
   @Post('attendance')
@@ -97,7 +103,10 @@ export class FacultyController {
   @ApiResponse({ status: 201, description: 'Attendance recorded successfully' })
   @ApiResponse({ status: 400, description: 'Invalid request body' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async recordAttendance(@Body() body: any) {
+  async recordAttendance(
+    @Body() body: any,
+    @CurrentUserCollegeId() collegeId: string | null,
+  ) {
     if (!body.course_id || !body.date || !body.records) {
       throw new BadRequestException(
         errorBody(
@@ -106,7 +115,7 @@ export class FacultyController {
         ),
       );
     }
-    return this.facultyService.recordAttendance(body);
+    return this.facultyService.recordAttendance(body, collegeId);
   }
 
   @Post('marks')
@@ -114,7 +123,10 @@ export class FacultyController {
   @ApiOperation({ summary: 'Record marks for a student assessment' })
   @ApiResponse({ status: 201, description: 'Marks recorded successfully' })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async postMarks(@Body() body: any) {
-    return this.facultyService.postMarks(body);
+  async postMarks(
+    @Body() body: any,
+    @CurrentUserCollegeId() collegeId: string | null,
+  ) {
+    return this.facultyService.postMarks(body, collegeId);
   }
 }

@@ -2,8 +2,7 @@
  * onboarding-session.guard.ts — proves continuity across the onboarding
  * wizard's steps, without ever granting real access to anything.
  *
- * Route-scoped via @UseGuards(), exactly like EnvGuard already is
- * (common/guards/env.guard.ts) — this is not a global guard, because it
+ * Route-scoped via @UseGuards() — this is not a global guard, because it
  * applies to exactly four routes, not the whole application.
  *
  * Why a signed token with no `sub`/`role` claim is the real safety

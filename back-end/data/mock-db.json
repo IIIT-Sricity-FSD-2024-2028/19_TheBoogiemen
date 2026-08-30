@@ -3,12 +3,14 @@
     {
       "department_id": "dept1",
       "department_name": "Computer Science",
-      "department_code": "CS"
+      "department_code": "CS",
+      "college_id": "c-default"
     },
     {
       "department_id": "dept2",
       "department_name": "Electronics",
-      "department_code": "ECE"
+      "department_code": "ECE",
+      "college_id": "c-default"
     }
   ],
   "users": [
@@ -91,7 +93,8 @@
       "dob": "2004-05-15",
       "phone": "9876543210",
       "join_date": "2022-08-01",
-      "email": "student@example.com"
+      "email": "student@example.com",
+      "college_id": "c-default"
     },
     {
       "user_id": "u6",
@@ -104,7 +107,8 @@
       "dob": "2004-06-20",
       "phone": "9876543211",
       "join_date": "2022-08-01",
-      "email": "student2@example.com"
+      "email": "student2@example.com",
+      "college_id": "c-default"
     }
   ],
   "faculty": [
@@ -115,7 +119,8 @@
       "designation": "Assistant Professor",
       "department_id": "dept1",
       "email": "faculty@example.com",
-      "phone": "9000000001"
+      "phone": "9000000001",
+      "college_id": "c-default"
     },
     {
       "user_id": "u7",
@@ -124,7 +129,8 @@
       "designation": "Associate Professor",
       "department_id": "dept1",
       "email": "faculty2@example.com",
-      "phone": "9000000002"
+      "phone": "9000000002",
+      "college_id": "c-default"
     }
   ],
   "courses": [
@@ -135,7 +141,8 @@
       "credits": 4,
       "semester": 3,
       "faculty_id": "u2",
-      "faculty_name": "Jane Smith"
+      "faculty_name": "Jane Smith",
+      "college_id": "c-default"
     },
     {
       "course_id": "c2",
@@ -144,7 +151,8 @@
       "credits": 4,
       "semester": 3,
       "faculty_id": "u2",
-      "faculty_name": "Jane Smith"
+      "faculty_name": "Jane Smith",
+      "college_id": "c-default"
     },
     {
       "course_id": "c3",
@@ -153,7 +161,8 @@
       "credits": 4,
       "semester": 4,
       "faculty_id": "u7",
-      "faculty_name": "Robert Wilson"
+      "faculty_name": "Robert Wilson",
+      "college_id": "c-default"
     },
     {
       "course_id": "c4",
@@ -162,7 +171,8 @@
       "credits": 3,
       "semester": 4,
       "faculty_id": "u7",
-      "faculty_name": "Robert Wilson"
+      "faculty_name": "Robert Wilson",
+      "college_id": "c-default"
     },
     {
       "course_id": "c5",
@@ -171,7 +181,8 @@
       "credits": 4,
       "semester": 5,
       "faculty_id": "u2",
-      "faculty_name": "Jane Smith"
+      "faculty_name": "Jane Smith",
+      "college_id": "c-default"
     },
     {
       "course_id": "c6",
@@ -180,7 +191,8 @@
       "credits": 4,
       "semester": 5,
       "faculty_id": "u7",
-      "faculty_name": "Robert Wilson"
+      "faculty_name": "Robert Wilson",
+      "college_id": "c-default"
     },
     {
       "course_id": "c7",
@@ -189,7 +201,8 @@
       "credits": 4,
       "semester": 5,
       "faculty_id": "u2",
-      "faculty_name": "Jane Smith"
+      "faculty_name": "Jane Smith",
+      "college_id": "c-default"
     },
     {
       "course_id": "c8",
@@ -198,7 +211,8 @@
       "credits": 4,
       "semester": 6,
       "faculty_id": "u7",
-      "faculty_name": "Robert Wilson"
+      "faculty_name": "Robert Wilson",
+      "college_id": "c-default"
     }
   ],
   "enrollment": [
@@ -208,7 +222,8 @@
       "course_id": "c1",
       "year_id": "2024",
       "status": "active",
-      "section": "A"
+      "section": "A",
+      "college_id": "c-default"
     },
     {
       "enrollment_id": "e2",
@@ -216,7 +231,8 @@
       "course_id": "c2",
       "year_id": "2024",
       "status": "active",
-      "section": "A"
+      "section": "A",
+      "college_id": "c-default"
     },
     {
       "enrollment_id": "e5",
@@ -224,7 +240,8 @@
       "course_id": "c5",
       "year_id": "2024",
       "status": "active",
-      "section": "A"
+      "section": "A",
+      "college_id": "c-default"
     },
     {
       "enrollment_id": "e6",
@@ -232,7 +249,8 @@
       "course_id": "c7",
       "year_id": "2024",
       "status": "active",
-      "section": "A"
+      "section": "A",
+      "college_id": "c-default"
     },
     {
       "enrollment_id": "e3",
@@ -240,7 +258,8 @@
       "course_id": "c1",
       "year_id": "2024",
       "status": "active",
-      "section": "B"
+      "section": "B",
+      "college_id": "c-default"
     },
     {
       "enrollment_id": "e4",
@@ -248,7 +267,8 @@
       "course_id": "c3",
       "year_id": "2025",
       "status": "active",
-      "section": "B"
+      "section": "B",
+      "college_id": "c-default"
     }
   ],
   "attendance_log": [
@@ -257,49 +277,56 @@
       "student_id": "u1",
       "course_id": "c1",
       "date": "2026-04-10",
-      "status": "present"
+      "status": "present",
+      "college_id": "c-default"
     },
     {
       "log_id": "al2",
       "student_id": "u1",
       "course_id": "c1",
       "date": "2026-04-12",
-      "status": "present"
+      "status": "present",
+      "college_id": "c-default"
     },
     {
       "log_id": "al3",
       "student_id": "u1",
       "course_id": "c1",
       "date": "2026-04-14",
-      "status": "absent"
+      "status": "absent",
+      "college_id": "c-default"
     },
     {
       "log_id": "al4",
       "student_id": "u6",
       "course_id": "c1",
       "date": "2026-04-10",
-      "status": "absent"
+      "status": "absent",
+      "college_id": "c-default"
     },
     {
       "log_id": "al5",
       "student_id": "u6",
       "course_id": "c1",
       "date": "2026-04-12",
-      "status": "absent"
+      "status": "absent",
+      "college_id": "c-default"
     },
     {
       "log_id": "74102416-72e7-4f4d-9cec-74a8203d3fa9",
       "student_id": "u1",
       "course_id": "c1",
       "date": "2026-08-27",
-      "status": "absent"
+      "status": "absent",
+      "college_id": "c-default"
     },
     {
       "log_id": "393fb55c-cd87-4eb5-9b3a-6837802e30b4",
       "student_id": "u6",
       "course_id": "c1",
       "date": "2026-08-27",
-      "status": "present"
+      "status": "present",
+      "college_id": "c-default"
     },
     {
       "log_id": "b1b860dc-7d38-420b-ad59-50e24f4cff03",
@@ -307,7 +334,8 @@
       "course_id": "c1",
       "date": "2026-05-10",
       "status": "excused",
-      "source": "leave:l2"
+      "source": "leave:l2",
+      "college_id": "c-default"
     },
     {
       "log_id": "84b15521-2ae3-4398-b788-de27d88a1482",
@@ -315,7 +343,8 @@
       "course_id": "c3",
       "date": "2026-05-10",
       "status": "excused",
-      "source": "leave:l2"
+      "source": "leave:l2",
+      "college_id": "c-default"
     },
     {
       "log_id": "e67c11b9-7e6a-42d9-93fd-9f7c8914d258",
@@ -323,7 +352,8 @@
       "course_id": "c1",
       "date": "2026-05-11",
       "status": "excused",
-      "source": "leave:l2"
+      "source": "leave:l2",
+      "college_id": "c-default"
     },
     {
       "log_id": "f9a8a832-ce91-4b37-acf8-32ff6c7d4754",
@@ -331,7 +361,8 @@
       "course_id": "c3",
       "date": "2026-05-11",
       "status": "excused",
-      "source": "leave:l2"
+      "source": "leave:l2",
+      "college_id": "c-default"
     },
     {
       "log_id": "31a8a690-f37b-4c34-96ad-fe416531c846",
@@ -339,7 +370,8 @@
       "course_id": "c1",
       "date": "2026-05-12",
       "status": "excused",
-      "source": "leave:l2"
+      "source": "leave:l2",
+      "college_id": "c-default"
     },
     {
       "log_id": "3b2bcac0-8a98-45a2-b35d-dc5d33bfa96b",
@@ -347,7 +379,8 @@
       "course_id": "c3",
       "date": "2026-05-12",
       "status": "excused",
-      "source": "leave:l2"
+      "source": "leave:l2",
+      "college_id": "c-default"
     },
     {
       "log_id": "8bafa1da-ec3a-4a04-a6c0-b64d3f61e25c",
@@ -355,7 +388,8 @@
       "course_id": "c1",
       "date": "2026-06-01",
       "status": "excused",
-      "source": "leave:l3"
+      "source": "leave:l3",
+      "college_id": "c-default"
     },
     {
       "log_id": "0eace3bb-0d27-4d3e-844c-eda4d39ab858",
@@ -363,7 +397,8 @@
       "course_id": "c2",
       "date": "2026-06-01",
       "status": "excused",
-      "source": "leave:l3"
+      "source": "leave:l3",
+      "college_id": "c-default"
     },
     {
       "log_id": "f69d7328-1f36-49c2-affd-a4083257410a",
@@ -371,7 +406,8 @@
       "course_id": "c5",
       "date": "2026-06-01",
       "status": "excused",
-      "source": "leave:l3"
+      "source": "leave:l3",
+      "college_id": "c-default"
     },
     {
       "log_id": "b113a45e-cebb-4da0-9163-167688c43ee7",
@@ -379,7 +415,8 @@
       "course_id": "c7",
       "date": "2026-06-01",
       "status": "excused",
-      "source": "leave:l3"
+      "source": "leave:l3",
+      "college_id": "c-default"
     },
     {
       "log_id": "4dd7a0f6-1657-4c9c-a07e-25fc4a7d0ae9",
@@ -387,7 +424,8 @@
       "course_id": "c1",
       "date": "2026-06-02",
       "status": "excused",
-      "source": "leave:l3"
+      "source": "leave:l3",
+      "college_id": "c-default"
     },
     {
       "log_id": "c8928d88-fc18-47ff-9766-a44bee840be2",
@@ -395,7 +433,8 @@
       "course_id": "c2",
       "date": "2026-06-02",
       "status": "excused",
-      "source": "leave:l3"
+      "source": "leave:l3",
+      "college_id": "c-default"
     },
     {
       "log_id": "8981212b-789d-418b-8310-389fb0c4309a",
@@ -403,7 +442,8 @@
       "course_id": "c5",
       "date": "2026-06-02",
       "status": "excused",
-      "source": "leave:l3"
+      "source": "leave:l3",
+      "college_id": "c-default"
     },
     {
       "log_id": "2544ee42-e24d-4ba6-9261-4bc0f285c991",
@@ -411,7 +451,8 @@
       "course_id": "c7",
       "date": "2026-06-02",
       "status": "excused",
-      "source": "leave:l3"
+      "source": "leave:l3",
+      "college_id": "c-default"
     }
   ],
   "assessments": [
@@ -423,7 +464,8 @@
       "max_marks": 50,
       "weightage": 20,
       "faculty_id": "u2",
-      "date": "2026-03-15"
+      "date": "2026-03-15",
+      "college_id": "c-default"
     },
     {
       "assessment_id": "a2",
@@ -433,7 +475,8 @@
       "max_marks": 20,
       "weightage": 10,
       "faculty_id": "u2",
-      "date": "2026-03-20"
+      "date": "2026-03-20",
+      "college_id": "c-default"
     }
   ],
   "marks_entry": [
@@ -445,7 +488,8 @@
       "marks_obtained": 42,
       "max_marks": 50,
       "grade": "S",
-      "feedback_text": "Excellent"
+      "feedback_text": "Excellent",
+      "college_id": "c-default"
     },
     {
       "entry_id": "m2",
@@ -455,7 +499,8 @@
       "marks_obtained": 22,
       "max_marks": 50,
       "grade": "C",
-      "feedback_text": "Needs improvement"
+      "feedback_text": "Needs improvement",
+      "college_id": "c-default"
     },
     {
       "entry_id": "m3",
@@ -465,7 +510,8 @@
       "marks_obtained": 18,
       "max_marks": 20,
       "grade": "A",
-      "feedback_text": "Good work"
+      "feedback_text": "Good work",
+      "college_id": "c-default"
     },
     {
       "entry_id": "m4",
@@ -475,7 +521,8 @@
       "marks_obtained": 10,
       "max_marks": 20,
       "grade": "C",
-      "feedback_text": "Needs effort"
+      "feedback_text": "Needs effort",
+      "college_id": "c-default"
     }
   ],
   "leave_applications": [
@@ -488,7 +535,8 @@
       "end_date": "2026-05-03",
       "reason": "Fever",
       "status": "approved",
-      "applied_on": "2026-04-15"
+      "applied_on": "2026-04-15",
+      "college_id": "c-default"
     },
     {
       "leave_id": "l2",
@@ -499,7 +547,8 @@
       "end_date": "2026-05-12",
       "reason": "Sister wedding",
       "status": "approved",
-      "applied_on": "2026-04-17"
+      "applied_on": "2026-04-17",
+      "college_id": "c-default"
     },
     {
       "leave_id": "l3",
@@ -510,7 +559,8 @@
       "end_date": "2026-06-02",
       "reason": "Family function",
       "status": "approved",
-      "applied_on": "2026-05-20"
+      "applied_on": "2026-05-20",
+      "college_id": "c-default"
     }
   ],
   "research_projects": [
@@ -543,7 +593,8 @@
           "date": "2026-04-15",
           "status": "in-progress"
         }
-      ]
+      ],
+      "college_id": "c-default"
     },
     {
       "project_id": "rp2",
@@ -563,7 +614,8 @@
         }
       ],
       "uploads": [],
-      "milestones": []
+      "milestones": [],
+      "college_id": "c-default"
     }
   ],
   "discussion_posts": [
@@ -577,7 +629,8 @@
       "content": "Can someone explain the complexity of build-heap?",
       "tag": "help",
       "reply_count": 1,
-      "created_at": "2026-04-16T10:00:00Z"
+      "created_at": "2026-04-16T10:00:00Z",
+      "college_id": "c-default"
     },
     {
       "post_id": "p2",
@@ -589,7 +642,8 @@
       "content": "Please review the SQL standard document attached.",
       "tag": "general",
       "reply_count": 0,
-      "created_at": "2026-04-17T09:00:00Z"
+      "created_at": "2026-04-17T09:00:00Z",
+      "college_id": "c-default"
     },
     {
       "post_id": "p3",
@@ -601,7 +655,8 @@
       "content": "The mini-project submission deadline has been extended to May 30th.",
       "tag": "announcement",
       "reply_count": 0,
-      "created_at": "2026-04-20T08:00:00Z"
+      "created_at": "2026-04-20T08:00:00Z",
+      "college_id": "c-default"
     },
     {
       "post_id": "p1778508033996",
@@ -613,7 +668,8 @@
       "tag": "help",
       "course_id": "CS301",
       "created_at": "2026-05-11T14:00:33.996Z",
-      "reply_count": 0
+      "reply_count": 0,
+      "college_id": "c-default"
     },
     {
       "post_id": "p1787053076227",
@@ -625,7 +681,8 @@
       "tag": "help",
       "course_id": "CS101",
       "created_at": "2026-08-18T11:37:56.227Z",
-      "reply_count": 0
+      "reply_count": 0,
+      "college_id": "c-default"
     }
   ],
   "discussion_replies": [
@@ -636,7 +693,8 @@
       "author_name": "Jane Smith",
       "author_role": "faculty",
       "content": "It is O(n) because of the summation of the geometric series.",
-      "created_at": "2026-04-16T14:00:00Z"
+      "created_at": "2026-04-16T14:00:00Z",
+      "college_id": "c-default"
     },
     {
       "reply_id": "r1778508061365",
@@ -645,7 +703,8 @@
       "author_name": "John Doe",
       "author_role": "student",
       "content": "idk man tbh",
-      "created_at": "2026-05-11T14:01:01.365Z"
+      "created_at": "2026-05-11T14:01:01.365Z",
+      "college_id": "c-default"
     },
     {
       "reply_id": "r1787053099530",
@@ -654,7 +713,8 @@
       "author_name": "John Doe",
       "author_role": "student",
       "content": "wassup",
-      "created_at": "2026-08-18T11:38:19.530Z"
+      "created_at": "2026-08-18T11:38:19.530Z",
+      "college_id": "c-default"
     }
   ],
   "events": [
@@ -663,35 +723,40 @@
       "event_name": "Placement Drive: Google",
       "date": "2026-06-15",
       "venue": "Block C Auditorium",
-      "description": "Mandatory for final year students."
+      "description": "Mandatory for final year students.",
+      "college_id": "c-default"
     },
     {
       "event_id": "ev2",
       "event_name": "Cricket Finals",
       "date": "2026-05-20",
       "venue": "University Ground",
-      "description": "CS vs ECE."
+      "description": "CS vs ECE.",
+      "college_id": "c-default"
     },
     {
       "event_id": "ev3",
       "event_name": "Hackathon 2026",
       "date": "2026-05-25",
       "venue": "Block A Lab",
-      "description": "24-hour coding competition with prizes."
+      "description": "24-hour coding competition with prizes.",
+      "college_id": "c-default"
     },
     {
       "event_id": "ev4",
       "event_name": "Faculty Development Workshop",
       "date": "2026-04-25",
       "venue": "Conference Room A",
-      "description": "Advanced teaching methodologies training."
+      "description": "Advanced teaching methodologies training.",
+      "college_id": "c-default"
     },
     {
       "event_id": "ev5",
       "event_name": "Student Orientation",
       "date": "2026-05-10",
       "venue": "Main Hall",
-      "description": "Welcome session for new students."
+      "description": "Welcome session for new students.",
+      "college_id": "c-default"
     }
   ],
   "resources": [
@@ -701,7 +766,8 @@
       "type": "Lab",
       "capacity": 50,
       "location": "Block A, 1st Floor",
-      "status": "available"
+      "status": "available",
+      "college_id": "c-default"
     },
     {
       "resource_id": "res2",
@@ -709,7 +775,8 @@
       "type": "Lab",
       "capacity": 50,
       "location": "Block A, 1st Floor",
-      "status": "booked"
+      "status": "booked",
+      "college_id": "c-default"
     },
     {
       "resource_id": "res3",
@@ -717,7 +784,8 @@
       "type": "Hall",
       "capacity": 20,
       "location": "Admin Block",
-      "status": "available"
+      "status": "available",
+      "college_id": "c-default"
     },
     {
       "resource_id": "res4",
@@ -725,7 +793,8 @@
       "type": "Hall",
       "capacity": 100,
       "location": "Block B Ground Floor",
-      "status": "available"
+      "status": "available",
+      "college_id": "c-default"
     },
     {
       "resource_id": "res5",
@@ -733,7 +802,8 @@
       "type": "Equipment",
       "capacity": 1,
       "location": "Admin Store",
-      "status": "available"
+      "status": "available",
+      "college_id": "c-default"
     },
     {
       "resource_id": "res6",
@@ -741,7 +811,8 @@
       "type": "Equipment",
       "capacity": 1,
       "location": "Block A",
-      "status": "maintenance"
+      "status": "maintenance",
+      "college_id": "c-default"
     }
   ],
   "fees": [
@@ -753,7 +824,8 @@
       "type": "Semester Fee",
       "amount": 150000,
       "due_date": "2026-06-01",
-      "status": "pending"
+      "status": "pending",
+      "college_id": "c-default"
     },
     {
       "fee_id": "f2",
@@ -763,7 +835,8 @@
       "type": "Semester Fee",
       "amount": 150000,
       "due_date": "2026-06-01",
-      "status": "overdue"
+      "status": "overdue",
+      "college_id": "c-default"
     },
     {
       "fee_id": "f3",
@@ -773,7 +846,8 @@
       "type": "Library Fee",
       "amount": 5000,
       "due_date": "2026-05-15",
-      "status": "paid"
+      "status": "paid",
+      "college_id": "c-default"
     },
     {
       "fee_id": "f4",
@@ -783,7 +857,8 @@
       "type": "Lab Fee",
       "amount": 8000,
       "due_date": "2026-05-20",
-      "status": "pending"
+      "status": "pending",
+      "college_id": "c-default"
     }
   ],
   "submissions": [],
@@ -797,7 +872,8 @@
       "course_name": "Data Structures",
       "room": "101",
       "type": "lecture",
-      "section": "A"
+      "section": "A",
+      "college_id": "c-default"
     },
     {
       "slot_id": "t2",
@@ -808,7 +884,8 @@
       "course_name": "Data Structures",
       "room": "101",
       "type": "lecture",
-      "section": "A"
+      "section": "A",
+      "college_id": "c-default"
     },
     {
       "slot_id": "t3",
@@ -819,7 +896,8 @@
       "course_name": "Data Structures",
       "room": "101",
       "type": "lecture",
-      "section": "A"
+      "section": "A",
+      "college_id": "c-default"
     },
     {
       "slot_id": "t4",
@@ -830,7 +908,8 @@
       "course_name": "Data Structures",
       "room": "Lab 1",
       "type": "lab",
-      "section": "A"
+      "section": "A",
+      "college_id": "c-default"
     },
     {
       "slot_id": "t5",
@@ -841,7 +920,8 @@
       "course_name": "Database Systems",
       "room": "102",
       "type": "lecture",
-      "section": "A"
+      "section": "A",
+      "college_id": "c-default"
     },
     {
       "slot_id": "t6",
@@ -852,7 +932,8 @@
       "course_name": "Database Systems",
       "room": "102",
       "type": "lecture",
-      "section": "A"
+      "section": "A",
+      "college_id": "c-default"
     },
     {
       "slot_id": "t7",
@@ -863,7 +944,8 @@
       "course_name": "Database Systems",
       "room": "102",
       "type": "lecture",
-      "section": "A"
+      "section": "A",
+      "college_id": "c-default"
     },
     {
       "slot_id": "t8",
@@ -874,7 +956,8 @@
       "course_name": "Database Systems",
       "room": "Lab 1",
       "type": "lab",
-      "section": "A"
+      "section": "A",
+      "college_id": "c-default"
     },
     {
       "slot_id": "t9",
@@ -885,7 +968,8 @@
       "course_name": "Computer Networks",
       "room": "103",
       "type": "lecture",
-      "section": "A"
+      "section": "A",
+      "college_id": "c-default"
     },
     {
       "slot_id": "t10",
@@ -896,7 +980,8 @@
       "course_name": "Computer Networks",
       "room": "103",
       "type": "lecture",
-      "section": "A"
+      "section": "A",
+      "college_id": "c-default"
     },
     {
       "slot_id": "t11",
@@ -907,7 +992,8 @@
       "course_name": "Computer Networks",
       "room": "103",
       "type": "lecture",
-      "section": "A"
+      "section": "A",
+      "college_id": "c-default"
     },
     {
       "slot_id": "t12",
@@ -918,7 +1004,8 @@
       "course_name": "Computer Networks",
       "room": "Lab 2",
       "type": "lab",
-      "section": "A"
+      "section": "A",
+      "college_id": "c-default"
     },
     {
       "slot_id": "t13",
@@ -929,7 +1016,8 @@
       "course_name": "Advanced DSA",
       "room": "104",
       "type": "lecture",
-      "section": "A"
+      "section": "A",
+      "college_id": "c-default"
     },
     {
       "slot_id": "t14",
@@ -940,7 +1028,8 @@
       "course_name": "Advanced DSA",
       "room": "104",
       "type": "lecture",
-      "section": "A"
+      "section": "A",
+      "college_id": "c-default"
     },
     {
       "slot_id": "t15",
@@ -951,7 +1040,8 @@
       "course_name": "Advanced DSA",
       "room": "104",
       "type": "lecture",
-      "section": "A"
+      "section": "A",
+      "college_id": "c-default"
     },
     {
       "slot_id": "t16",
@@ -962,7 +1052,8 @@
       "course_name": "Advanced DSA",
       "room": "Lab 2",
       "type": "lab",
-      "section": "A"
+      "section": "A",
+      "college_id": "c-default"
     },
     {
       "slot_id": "t17",
@@ -973,7 +1064,8 @@
       "course_name": "Data Structures",
       "room": "201",
       "type": "lecture",
-      "section": "B"
+      "section": "B",
+      "college_id": "c-default"
     },
     {
       "slot_id": "t18",
@@ -984,7 +1076,8 @@
       "course_name": "Data Structures",
       "room": "201",
       "type": "lecture",
-      "section": "B"
+      "section": "B",
+      "college_id": "c-default"
     },
     {
       "slot_id": "t19",
@@ -995,7 +1088,8 @@
       "course_name": "Data Structures",
       "room": "201",
       "type": "lecture",
-      "section": "B"
+      "section": "B",
+      "college_id": "c-default"
     },
     {
       "slot_id": "t20",
@@ -1006,7 +1100,8 @@
       "course_name": "Data Structures",
       "room": "Lab 1",
       "type": "lab",
-      "section": "B"
+      "section": "B",
+      "college_id": "c-default"
     },
     {
       "slot_id": "t21",
@@ -1017,7 +1112,8 @@
       "course_name": "Algorithms",
       "room": "202",
       "type": "lecture",
-      "section": "B"
+      "section": "B",
+      "college_id": "c-default"
     },
     {
       "slot_id": "t22",
@@ -1028,7 +1124,8 @@
       "course_name": "Algorithms",
       "room": "202",
       "type": "lecture",
-      "section": "B"
+      "section": "B",
+      "college_id": "c-default"
     },
     {
       "slot_id": "t23",
@@ -1039,7 +1136,8 @@
       "course_name": "Algorithms",
       "room": "202",
       "type": "lecture",
-      "section": "B"
+      "section": "B",
+      "college_id": "c-default"
     },
     {
       "slot_id": "t24",
@@ -1050,7 +1148,8 @@
       "course_name": "Algorithms",
       "room": "Lab 2",
       "type": "lab",
-      "section": "B"
+      "section": "B",
+      "college_id": "c-default"
     }
   ],
   "syllabus_progress": [
@@ -1081,7 +1180,8 @@
           "name": "Module 5 – Hashing",
           "progress": 45
         }
-      ]
+      ],
+      "college_id": "c-default"
     },
     {
       "course_id": "c1",
@@ -1110,7 +1210,8 @@
           "name": "Module 5 – Hashing",
           "progress": 30
         }
-      ]
+      ],
+      "college_id": "c-default"
     },
     {
       "course_id": "c2",
@@ -1139,7 +1240,8 @@
           "name": "Module 5 – NoSQL",
           "progress": 50
         }
-      ]
+      ],
+      "college_id": "c-default"
     },
     {
       "course_id": "c5",
@@ -1164,7 +1266,8 @@
           "name": "Module 4 – Security",
           "progress": 20
         }
-      ]
+      ],
+      "college_id": "c-default"
     },
     {
       "course_id": "c7",
@@ -1189,7 +1292,8 @@
           "name": "Module 4 – Backtracking",
           "progress": 0
         }
-      ]
+      ],
+      "college_id": "c-default"
     }
   ],
   "attendance_requests": [
@@ -1203,7 +1307,8 @@
       "reason": "43f343434g5g [Document: Class_Zero (1) (1).pdf]",
       "admin_status": "pending",
       "faculty_status": "pending",
-      "created_at": "2026-08-18T11:37:28.185Z"
+      "created_at": "2026-08-18T11:37:28.185Z",
+      "college_id": "c-default"
     }
   ],
   "resource_bookings": [],

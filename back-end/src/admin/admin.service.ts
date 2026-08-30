@@ -7,20 +7,29 @@ import { v4 as uuidv4 } from 'uuid';
 import { InMemoryDbService } from '../database/in-memory-db.service';
 import { syncLeaveAttendance } from '../common/leave-attendance.sync';
 import { ErrorCode, errorBody } from '../common/errors/error-codes';
+import {
+  isSameCollege,
+  scopeToCollege,
+  writeCollegeId,
+} from '../common/tenancy/scope-to-college';
 
 @Injectable()
 export class AdminService {
   constructor(private db: InMemoryDbService) {}
 
-  async getLeaves() {
-    return this.db.leave_applications;
+  async getLeaves(collegeId: string | null) {
+    return scopeToCollege(this.db.leave_applications, collegeId);
   }
 
-  async updateLeaveStatus(leaveId: string, status: string) {
+  async updateLeaveStatus(
+    leaveId: string,
+    status: string,
+    collegeId: string | null,
+  ) {
     const leave = this.db.leave_applications.find(
       (l) => l.leave_id === leaveId,
     );
-    if (!leave)
+    if (!isSameCollege(leave, collegeId))
       throw new NotFoundException(
         errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Leave application not found'),
       );
@@ -47,8 +56,10 @@ export class AdminService {
     return leave;
   }
 
-  async getTimetable(section: string) {
-    const grid = this.db.timetable.filter((t) => t.section === section);
+  async getTimetable(section: string, collegeId: string | null) {
+    const grid = scopeToCollege(this.db.timetable, collegeId).filter(
+      (t) => t.section === section,
+    );
     return {
       grid,
       days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
@@ -56,18 +67,22 @@ export class AdminService {
     };
   }
 
-  async getEvents() {
-    return this.db.events;
+  async getEvents(collegeId: string | null) {
+    return scopeToCollege(this.db.events, collegeId);
   }
 
-  async createEvent(data: any) {
+  async createEvent(data: any, actorCollegeId: string | null) {
     // H-07: length-derived ids collide as soon as anything is deleted.
-    const newEvent = { event_id: uuidv4(), ...data };
+    const newEvent = {
+      event_id: uuidv4(),
+      ...data,
+      college_id: writeCollegeId(actorCollegeId),
+    };
     this.db.events.push(newEvent);
     return newEvent;
   }
 
-  async getDiscussions() {
-    return this.db.discussion_posts;
+  async getDiscussions(collegeId: string | null) {
+    return scopeToCollege(this.db.discussion_posts, collegeId);
   }
 }

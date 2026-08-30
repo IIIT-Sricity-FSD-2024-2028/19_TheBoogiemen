@@ -2425,19 +2425,6 @@ window.Validator = {
         form.querySelectorAll('.field-error').forEach(e => e.remove());
         form.querySelectorAll('input, select, textarea').forEach(e => { e.style.borderColor = ''; e.style.background = ''; });
     },
-    // Validate signup form — returns true if valid
-    handleRegistration(form) {
-        const fn  = document.getElementById('firstName')?.value.trim();
-        const ln  = document.getElementById('lastName')?.value.trim();
-        const em  = document.getElementById('email')?.value.trim();
-        const pw  = document.getElementById('password')?.value;
-        let ok = true;
-        if (!fn)             { this.setError('firstName', 'First name is required'); ok = false; } else this.setError('firstName', '');
-        if (!ln)             { this.setError('lastName',  'Last name is required');  ok = false; } else this.setError('lastName', '');
-        if (!em || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) { this.setError('email', 'Enter a valid email'); ok = false; } else this.setError('email', '');
-        if (!pw || pw.length < 6) { this.setError('password', 'Minimum 6 characters'); ok = false; } else this.setError('password', '');
-        if (ok) handleSignup({ preventDefault: () => {} });
-    },
     // Validate leave application
     validateLeave(typeId, startId, endId, reasonId) {
         const type   = document.getElementById(typeId)?.value;

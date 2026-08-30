@@ -29,6 +29,7 @@ import {
 } from '@nestjs/swagger';
 import type { Response } from 'express';
 import {
+  CurrentUserCollegeId,
   CurrentUserId,
   CurrentUserRole,
 } from '../common/decorators/current-user.decorator';
@@ -86,6 +87,7 @@ export class UploadsController {
     @UploadedFile() file: Express.Multer.File | undefined,
     @Query('context') context: string,
     @CurrentUserId() userId: string,
+    @CurrentUserCollegeId() collegeId: string | null,
   ) {
     if (!file) {
       throw new BadRequestException(
@@ -110,7 +112,12 @@ export class UploadsController {
       );
     }
 
-    const record = this.uploads.record(file, context as UploadContext, userId);
+    const record = this.uploads.record(
+      file,
+      context as UploadContext,
+      userId,
+      collegeId,
+    );
 
     return {
       success: true,
@@ -139,10 +146,11 @@ export class UploadsController {
     @Param('fileId') fileId: string,
     @CurrentUserId() userId: string,
     @CurrentUserRole() role: string,
+    @CurrentUserCollegeId() collegeId: string | null,
     @Res() res: Response,
   ) {
     const record = this.uploads.findById(fileId);
-    this.uploads.assertCanRead(record, userId, role as Role);
+    this.uploads.assertCanRead(record, userId, role as Role, collegeId);
     const filePath = this.uploads.resolvePath(record);
 
     // Always an attachment, never inline: a stored HTML or SVG file rendered

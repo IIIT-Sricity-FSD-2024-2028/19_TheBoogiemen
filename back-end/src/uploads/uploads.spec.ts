@@ -104,6 +104,7 @@ describe('UploadsService access control', () => {
     context: 'leave',
     uploaded_by: 'u1',
     uploaded_at: '2026-01-01T00:00:00.000Z',
+    college_id: 'college-a',
     ...over,
   });
 
@@ -115,30 +116,54 @@ describe('UploadsService access control', () => {
 
   it('lets the uploader read their own document', () => {
     expect(() =>
-      service().assertCanRead(record(), 'u1', 'student'),
+      service().assertCanRead(record(), 'u1', 'student', 'college-a'),
     ).not.toThrow();
   });
 
   it('blocks a student reading another student document', () => {
     // The realistic case: leave attachments are medical certificates.
     expect(() =>
-      service().assertCanRead(record({ uploaded_by: 'u1' }), 'u6', 'student'),
+      service().assertCanRead(
+        record({ uploaded_by: 'u1' }),
+        'u6',
+        'student',
+        'college-a',
+      ),
     ).toThrow(ForbiddenException);
   });
 
-  it('lets reviewing staff read any document', () => {
+  it('lets reviewing staff at the SAME college read any document', () => {
     for (const role of ['faculty', 'admin', 'head', 'superadmin'] as const) {
       expect(() =>
-        service().assertCanRead(record(), 'someone-else', role),
+        service().assertCanRead(record(), 'someone-else', role, 'college-a'),
       ).not.toThrow();
     }
+  });
+
+  it('blocks reviewing staff at a DIFFERENT college — the cross-tenant leak this closes', () => {
+    // TENANT_ISOLATION_DIAGNOSIS.md Group C: before this, any reviewer role
+    // at any college could read any document, given only the file_id.
+    for (const role of ['faculty', 'admin', 'head', 'superadmin'] as const) {
+      expect(() =>
+        service().assertCanRead(record(), 'someone-else', role, 'college-b'),
+      ).toThrow(ForbiddenException);
+    }
+  });
+
+  it('superadmin (no college_id claim) can still read across colleges', () => {
+    // null is the superadmin case (jwt-payload.ts) — the one actor meant to
+    // see across every college, same exemption ROLE_GRANTS.superadmin
+    // already gets for user management.
+    expect(() =>
+      service().assertCanRead(record(), 'someone-else', 'superadmin', null),
+    ).not.toThrow();
   });
 
   it('404s an unknown file id rather than revealing whether it exists', () => {
     expect(() => service().findById('nope')).toThrow(NotFoundException);
   });
 
-  it('records metadata and persists it', () => {
+  it('records metadata, the uploader\'s college, and persists it', () => {
     const db: any = { uploads: [], persist: jest.fn() };
     const svc = new UploadsService(db, {
       info: jest.fn(),
@@ -155,11 +180,13 @@ describe('UploadsService access control', () => {
       } as any,
       'leave',
       'u1',
+      'college-a',
     );
 
     expect(saved.original_name).toBe('evil name.pdf'); // sanitised
     expect(saved.stored_name).toBe('uuid-1.pdf'); // on-disk name untouched
     expect(saved.file_id).not.toBe(saved.stored_name); // id is not the path
+    expect(saved.college_id).toBe('college-a');
     expect(db.uploads).toHaveLength(1);
     expect(db.persist).toHaveBeenCalled();
   });
