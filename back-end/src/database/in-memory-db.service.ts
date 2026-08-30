@@ -20,6 +20,10 @@ export class InMemoryDbService implements OnModuleInit {
   public students = this.createProxyArray([]);
   public faculty = this.createProxyArray([]);
   public courses = this.createProxyArray([]);
+  // COURSE_OWNERSHIP_MIGRATION_PLAN.md: one row per (course, section) —
+  // courses.faculty_id/faculty_name are gone, a course's faculty now lives
+  // here so more than one section of a course can have a different one.
+  public course_sections = this.createProxyArray([]);
   public enrollment = this.createProxyArray([]);
   public attendance_log = this.createProxyArray([]);
   public assessments = this.createProxyArray([]);
@@ -137,6 +141,7 @@ export class InMemoryDbService implements OnModuleInit {
         students: this.students,
         faculty: this.faculty,
         courses: this.courses,
+        course_sections: this.course_sections,
         enrollment: this.enrollment,
         attendance_log: this.attendance_log,
         assessments: this.assessments,

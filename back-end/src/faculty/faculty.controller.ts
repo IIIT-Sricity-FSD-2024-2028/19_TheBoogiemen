@@ -92,9 +92,10 @@ export class FacultyController {
   })
   async getTodayAttendance(
     @Param('courseId') courseId: string,
+    @CurrentUserId() userId: string,
     @CurrentUserCollegeId() collegeId: string | null,
   ) {
-    return this.facultyService.getTodayAttendance(courseId, collegeId);
+    return this.facultyService.getTodayAttendance(courseId, userId, collegeId);
   }
 
   @Post('attendance')
@@ -105,6 +106,7 @@ export class FacultyController {
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async recordAttendance(
     @Body() body: any,
+    @CurrentUserId() userId: string,
     @CurrentUserCollegeId() collegeId: string | null,
   ) {
     if (!body.course_id || !body.date || !body.records) {
@@ -115,7 +117,7 @@ export class FacultyController {
         ),
       );
     }
-    return this.facultyService.recordAttendance(body, collegeId);
+    return this.facultyService.recordAttendance(body, userId, collegeId);
   }
 
   @Post('marks')

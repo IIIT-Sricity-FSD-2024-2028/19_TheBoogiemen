@@ -33,6 +33,11 @@ import {
   writeCollegeId,
 } from '../common/tenancy/scope-to-college';
 import { assertSeatAvailable } from '../common/billing/subscription';
+import {
+  courseIdsTaughtBy,
+  sectionsOfCourse,
+  sectionsTaughtBy,
+} from '../common/course-sections';
 import { RequiresModule } from '../common/guards/requires-module.guard';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import {
@@ -144,19 +149,28 @@ export class CommonController {
 
   @Get('courses')
   @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
-  @ApiOperation({ summary: 'Get all courses' })
+  @ApiOperation({ summary: 'Get all courses, each with its section/faculty assignments' })
   @ApiResponse({ status: 200, description: 'Array of all courses' })
   async getCourses(@CurrentUserCollegeId() collegeId: string | null) {
-    return scopeToCollege(this.db.courses, collegeId);
+    // COURSE_OWNERSHIP_MIGRATION_PLAN.md: a course no longer carries its own
+    // faculty_id — sections does, so every reader (the head's course list,
+    // a student's "my courses", a faculty member browsing electives) needs
+    // it folded back in here rather than re-deriving it at each call site.
+    return scopeToCollege(this.db.courses, collegeId).map((c) => ({
+      ...c,
+      sections: sectionsOfCourse(this.db, c.course_id),
+    }));
   }
 
   @Post('courses')
-  @Roles('faculty', 'head', 'admin', 'superadmin')
-  @ApiOperation({ summary: 'Create a new course' })
+  @Roles('head', 'admin', 'superadmin')
+  @ApiOperation({
+    summary:
+      'Create a new course, optionally with sections and their assigned faculty',
+  })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async createCourse(
     @Body() body: any,
-    @CurrentUserId() userId: string,
     @CurrentUserCollegeId() actorCollegeId: string | null,
   ) {
     if (!body.course_name || !body.course_code)
@@ -177,19 +191,104 @@ export class CommonController {
       throw new BadRequestException(
         errorBody(ErrorCode.DUPLICATE_RESOURCE, 'Course code already exists'),
       );
-    const faculty = this.db.faculty.find((f) => f.user_id === userId);
-    const facultyName = faculty
-      ? `${faculty.first_name} ${faculty.last_name}`.trim()
-      : 'Faculty';
+
+    // A course no longer carries faculty_id/faculty_name (COURSE_OWNERSHIP_
+    // MIGRATION_PLAN.md §4) — strip any stray value a client sends for
+    // either, and never trust a client-supplied `sections` shape beyond
+    // what replaceCourseSections() below validates field by field.
+    const { sections, faculty_id, faculty_name, ...courseFields } = body;
+    const courseId = `c${Date.now()}`;
     const newCourse = {
-      course_id: `c${Date.now()}`,
-      faculty_id: body.faculty_id || userId,
-      faculty_name: facultyName,
-      ...body,
+      course_id: courseId,
+      ...courseFields,
       college_id: collegeId,
     };
     this.db.courses.push(newCourse);
-    return { success: true, data: newCourse };
+    // Confirmed: a course may be created with zero sections and staffed
+    // later via PUT /courses/:id/sections — sections is optional here.
+    const createdSections = this.replaceCourseSections(
+      courseId,
+      sections,
+      collegeId,
+    );
+    return { success: true, data: { ...newCourse, sections: createdSections } };
+  }
+
+  @Put('courses/:id/sections')
+  @Roles('head', 'admin', 'superadmin')
+  @ApiOperation({
+    summary:
+      "Replace a course's section/faculty assignments (add, reassign, or drop a section)",
+  })
+  @ApiBody({ schema: { type: 'object', additionalProperties: true } })
+  async updateCourseSections(
+    @Param('id') id: string,
+    @Body() body: { sections?: any[] },
+    @CurrentUserCollegeId() actorCollegeId: string | null,
+  ) {
+    const course = this.db.courses.find((c) => c.course_id === id);
+    if (!isSameCollege(course, actorCollegeId)) notFoundInMyCollege('Course');
+    const collegeId = writeCollegeId(actorCollegeId);
+    const sections = this.replaceCourseSections(id, body.sections, collegeId);
+    return { success: true, data: { ...course, sections } };
+  }
+
+  /**
+   * Full-replace, not incremental add/remove: one call sets a course's
+   * entire section list, matching how PUT already works elsewhere in this
+   * file rather than adding a CRUD sprawl for a small sub-resource. Used by
+   * both createCourse() (initial sections, may be empty) and
+   * updateCourseSections() (later reassignment).
+   */
+  private replaceCourseSections(
+    courseId: string,
+    rawSections: any,
+    collegeId: string | null,
+  ): any[] {
+    const requested = Array.isArray(rawSections) ? rawSections : [];
+    const seenSections = new Set<string>();
+    const rows = requested.map((s: any) => {
+      const section = String(s?.section ?? '').trim();
+      if (!section || !s?.faculty_id)
+        throw new BadRequestException(
+          errorBody(
+            ErrorCode.BUSINESS_RULE_VIOLATION,
+            'Each section requires a section name and a faculty_id',
+          ),
+        );
+      if (seenSections.has(section))
+        throw new BadRequestException(
+          errorBody(
+            ErrorCode.DUPLICATE_RESOURCE,
+            `Section "${section}" is listed more than once`,
+          ),
+        );
+      seenSections.add(section);
+      // faculty_id is client-supplied — same not-found-not-403 discipline as
+      // every other cross-college foreign id in this file: a head must not
+      // be able to tell "no such user" apart from "that user is not a
+      // faculty member at your college" by response shape.
+      const faculty = this.db.users.find(
+        (u) => u.user_id === s.faculty_id && u.role === 'faculty',
+      );
+      if (!isSameCollege(faculty, collegeId))
+        notFoundInMyCollege('Faculty member');
+      return {
+        course_section_id: uuidv4(),
+        course_id: courseId,
+        section,
+        faculty_id: faculty.user_id,
+        faculty_name: `${faculty.first_name} ${faculty.last_name || ''}`.trim(),
+        college_id: collegeId,
+      };
+    });
+
+    for (let i = this.db.course_sections.length - 1; i >= 0; i--) {
+      if (this.db.course_sections[i].course_id === courseId)
+        this.db.course_sections.splice(i, 1);
+    }
+    if (rows.length) this.db.course_sections.push(...rows);
+    return rows;
   }
 
   // ── Timetable ────────────────────────────────────────────────────────────────
@@ -214,11 +313,12 @@ export class CommonController {
     @CurrentUserId() userId: string,
     @CurrentUserCollegeId() collegeId: string | null,
   ) {
-    const facultyCourseIds = scopeToCollege(this.db.courses, collegeId)
-      .filter((c) => c.faculty_id === userId)
-      .map((c) => c.course_id);
+    // Section-scoped — see faculty.service.ts's copy of this same fix for why.
+    const mySections = sectionsTaughtBy(this.db, userId);
     const slots = scopeToCollege(this.db.timetable, collegeId).filter((t) =>
-      facultyCourseIds.includes(t.course_id),
+      mySections.some(
+        (cs) => cs.course_id === t.course_id && cs.section === t.section,
+      ),
     );
     return { grid: buildTimetableGrid(slots), ...TIMETABLE_AXES };
   }
@@ -1374,9 +1474,9 @@ export class CommonController {
   // ── Enrollment (Faculty assigns student to course) ─────────────────────────
 
   @Post('enrollment')
-  @Roles('faculty', 'admin', 'head', 'superadmin')
+  @Roles('head', 'admin', 'superadmin')
   @ApiOperation({
-    summary: 'Enroll a student in a course (faculty/admin action)',
+    summary: 'Enroll a student in a course (academic head/admin action)',
   })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async enrollStudentByCourse(
@@ -1406,6 +1506,29 @@ export class CommonController {
           'Student is already enrolled in this course',
         ),
       );
+
+    // A course can have several sections, each with a different faculty
+    // (COURSE_OWNERSHIP_MIGRATION_PLAN.md) — the head picks which one this
+    // student joins rather than it silently defaulting to their home
+    // section, which may not even be one this course offers. body.section
+    // stays optional for any other caller of this route; when given it must
+    // be a section this course actually has a faculty assigned to.
+    const courseSections = sectionsOfCourse(this.db, course_id);
+    let section: string;
+    if (body.section) {
+      const match = courseSections.find((cs) => cs.section === body.section);
+      if (!match)
+        throw new BadRequestException(
+          errorBody(
+            ErrorCode.BUSINESS_RULE_VIOLATION,
+            `Section "${body.section}" is not offered for this course, or has no faculty assigned yet.`,
+          ),
+        );
+      section = match.section;
+    } else {
+      section = student.section || 'A';
+    }
+
     const id = `e${Date.now()}`;
     const newEnrollment = {
       enrollment_id: id,
@@ -1413,7 +1536,7 @@ export class CommonController {
       course_id,
       year_id: new Date().getFullYear().toString(),
       status: 'active',
-      section: student.section || 'A',
+      section,
       college_id: writeCollegeId(actorCollegeId),
     };
     this.db.enrollment.push(newEnrollment as any);
@@ -1566,9 +1689,7 @@ export class CommonController {
     const scoped = scopeToCollege(this.db.attendance_requests, collegeId);
     if (role === 'student') return scoped.filter((r) => r.student_id === userId);
     if (role === 'faculty') {
-      const facultyCourseIds = this.db.courses
-        .filter((c) => c.faculty_id === userId)
-        .map((c) => c.course_id);
+      const facultyCourseIds = courseIdsTaughtBy(this.db, userId);
       return scoped.filter((r) => facultyCourseIds.includes(r.course_id));
     }
     return scoped;

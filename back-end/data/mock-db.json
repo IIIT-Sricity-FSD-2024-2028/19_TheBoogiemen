@@ -140,8 +140,6 @@
       "course_code": "CS201",
       "credits": 4,
       "semester": 3,
-      "faculty_id": "u2",
-      "faculty_name": "Jane Smith",
       "college_id": "c-default"
     },
     {
@@ -150,8 +148,6 @@
       "course_code": "CS202",
       "credits": 4,
       "semester": 3,
-      "faculty_id": "u2",
-      "faculty_name": "Jane Smith",
       "college_id": "c-default"
     },
     {
@@ -160,8 +156,6 @@
       "course_code": "CS301",
       "credits": 4,
       "semester": 4,
-      "faculty_id": "u7",
-      "faculty_name": "Robert Wilson",
       "college_id": "c-default"
     },
     {
@@ -170,8 +164,6 @@
       "course_code": "CS302",
       "credits": 3,
       "semester": 4,
-      "faculty_id": "u7",
-      "faculty_name": "Robert Wilson",
       "college_id": "c-default"
     },
     {
@@ -180,8 +172,6 @@
       "course_code": "CS401",
       "credits": 4,
       "semester": 5,
-      "faculty_id": "u2",
-      "faculty_name": "Jane Smith",
       "college_id": "c-default"
     },
     {
@@ -190,8 +180,6 @@
       "course_code": "CS402",
       "credits": 4,
       "semester": 5,
-      "faculty_id": "u7",
-      "faculty_name": "Robert Wilson",
       "college_id": "c-default"
     },
     {
@@ -200,8 +188,6 @@
       "course_code": "CS403",
       "credits": 4,
       "semester": 5,
-      "faculty_id": "u2",
-      "faculty_name": "Jane Smith",
       "college_id": "c-default"
     },
     {
@@ -210,8 +196,6 @@
       "course_code": "CS404",
       "credits": 4,
       "semester": 6,
-      "faculty_id": "u7",
-      "faculty_name": "Robert Wilson",
       "college_id": "c-default"
     }
   ],
@@ -1337,5 +1321,71 @@
   "onboarding_sessions": [],
   "quotes": [],
   "payments": [],
-  "subscriptions": []
+  "subscriptions": [],
+  "course_sections": [
+    {
+      "course_section_id": "cs-c1",
+      "course_id": "c1",
+      "section": "A",
+      "faculty_id": "u2",
+      "faculty_name": "Jane Smith",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "cs-c2",
+      "course_id": "c2",
+      "section": "A",
+      "faculty_id": "u2",
+      "faculty_name": "Jane Smith",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "cs-c3",
+      "course_id": "c3",
+      "section": "A",
+      "faculty_id": "u7",
+      "faculty_name": "Robert Wilson",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "cs-c4",
+      "course_id": "c4",
+      "section": "A",
+      "faculty_id": "u7",
+      "faculty_name": "Robert Wilson",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "cs-c5",
+      "course_id": "c5",
+      "section": "A",
+      "faculty_id": "u2",
+      "faculty_name": "Jane Smith",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "cs-c6",
+      "course_id": "c6",
+      "section": "A",
+      "faculty_id": "u7",
+      "faculty_name": "Robert Wilson",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "cs-c7",
+      "course_id": "c7",
+      "section": "A",
+      "faculty_id": "u2",
+      "faculty_name": "Jane Smith",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "cs-c8",
+      "course_id": "c8",
+      "section": "A",
+      "faculty_id": "u7",
+      "faculty_name": "Robert Wilson",
+      "college_id": "c-default"
+    }
+  ]
 }
