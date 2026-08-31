@@ -2632,19 +2632,32 @@ window.renderFacultySyllabusManager = async function() {
     const el = document.getElementById('faculty-syllabus-body');
     if (!el) return;
     try {
-        const [courses, allProgress] = await Promise.all([api('/faculty/me/courses'), api('/syllabus-progress')]);
-        const sections = ['A','B'];
+        const myUserId = window.Auth?.getUser?.()?.user_id;
+        // /courses (not /faculty/me/courses) because it carries every
+        // section's own faculty_id — /faculty/me/courses only ever attaches
+        // one section per course, which breaks if this faculty teaches more
+        // than one section of the same course.
+        const [courses, allProgress] = await Promise.all([api('/courses'), api('/syllabus-progress')]);
         let html = '<div style="font-size:13px;color:#64748b;margin-bottom:12px;">Update syllabus completion % per course and section</div>';
+        let hasAny = false;
         courses.forEach(c => {
+            // Only the sections THIS faculty actually teaches — this used to
+            // be a hardcoded ['A','B'] for every course, so a faculty saw
+            // (and could try to save progress for) a section that wasn't
+            // theirs, and any section beyond B never showed up at all even
+            // when it was.
+            const mySections = (c.sections || []).filter(s => s.faculty_id === myUserId).map(s => s.section);
+            if (!mySections.length) return;
+            hasAny = true;
             html += `<div style="padding:12px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:10px;"><div style="font-weight:700;font-size:14px;margin-bottom:8px;">${c.course_code} – ${c.course_name}</div>`;
-            sections.forEach(sec => {
+            mySections.forEach(sec => {
                 const sp = allProgress.find(p => p.course_id === c.course_id && p.section === sec);
                 const val = sp ? sp.progress : 0;
                 html += `<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;"><span style="font-size:12px;font-weight:600;width:70px;">Sec ${sec}:</span><input type="range" min="0" max="100" value="${val}" id="syl_${c.course_id}_${sec}" style="flex:1;" oninput="document.getElementById('sylLbl_${c.course_id}_${sec}').textContent=this.value+'%'"><span id="sylLbl_${c.course_id}_${sec}" style="font-size:13px;font-weight:700;width:40px;">${val}%</span><button onclick="updateSyllabus('${c.course_id}','${sec}')" style="padding:4px 10px;font-size:11px;background:#6366f1;color:#fff;border:none;border-radius:6px;cursor:pointer;">Save</button></div>`;
             });
             html += '</div>';
         });
-        el.innerHTML = html;
+        el.innerHTML = hasAny ? html : '<p style="color:#64748b;text-align:center;">No sections assigned to you yet.</p>';
     } catch(e) { el.innerHTML = `<p style="color:#ef4444">Failed: ${e.message}</p>`; }
 };
 window.updateSyllabus = async function(courseId, section) {
@@ -2709,21 +2722,28 @@ window.renderAdminAttendanceRequests = async function() {
         el.innerHTML = reqs.map(r => {
             const sc = r.admin_status === 'approved' ? {bg:'#dcfce7',c:'#166534',lbl:'Approved'} : r.admin_status === 'rejected' ? {bg:'#fef2f2',c:'#991b1b',lbl:'Rejected'} : {bg:'#fef9c3',c:'#92400e',lbl:'Pending'};
             return `<div style="padding:12px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-                <div><div style="font-weight:600;">${r.student_name} <span style="color:#64748b;font-size:12px;">(${r.course_code})</span></div><div style="font-size:12px;color:#64748b;">Date: ${r.date} · Reason: ${r.reason}</div>${r.file_id ? `<button type="button" onclick="downloadDocument('${r.file_id}')" style="margin-top:6px;padding:4px 10px;font-size:11px;font-weight:700;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:6px;cursor:pointer;">📎 View document</button>` : ''}</div>
+                <div><div style="font-weight:600;">${r.student_name} <span style="color:#64748b;font-size:12px;">(${r.course_code}${r.section ? ' · Sec ' + escapeHtmlSafe(r.section) : ''})</span></div><div style="font-size:12px;color:#64748b;">Date: ${r.date} · Reason: ${r.reason}${r.faculty_name ? ' · Faculty: ' + escapeHtmlSafe(r.faculty_name) : ''}</div>${r.file_id ? `<button type="button" onclick="downloadDocument('${r.file_id}')" style="margin-top:6px;padding:4px 10px;font-size:11px;font-weight:700;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:6px;cursor:pointer;">📎 View document</button>` : ''}</div>
                 <div style="display:flex;gap:6px;align-items:center;">
                     <span style="padding:4px 10px;border-radius:12px;font-size:11px;font-weight:700;background:${sc.bg};color:${sc.c};">${sc.lbl}</span>
-                    ${r.admin_status === 'pending' ? `<button onclick="approveAttReq('${r.request_id}','${r.student_id}','approved')" style="padding:5px 12px;background:#16a34a;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;">✓ Approve</button><button onclick="approveAttReq('${r.request_id}','${r.student_id}','rejected')" style="padding:5px 12px;background:#ef4444;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;">✕ Reject</button>` : ''}
+                    ${r.admin_status === 'pending' ? `<button onclick="approveAttReq('${r.request_id}','${r.student_id}','approved','${r.faculty_id||''}')" style="padding:5px 12px;background:#16a34a;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;">✓ Approve</button><button onclick="approveAttReq('${r.request_id}','${r.student_id}','rejected','${r.faculty_id||''}')" style="padding:5px 12px;background:#ef4444;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;">✕ Reject</button>` : ''}
                 </div></div>`;
         }).join('');
     } catch(e) { el.innerHTML = `<p style="color:#ef4444">Failed: ${e.message}</p>`; }
 };
-window.approveAttReq = async function(id, studentId, status) {
+window.approveAttReq = async function(id, studentId, status, facultyId) {
     try {
         await api(`/attendance-request/${id}`, { method:'PATCH', body: JSON.stringify({ status }) });
         const user = window.Auth?.getUser?.();
         const from = user ? (user.first_name || 'Admin') : 'Admin';
         window.Notifications?.send(studentId, from, status === 'approved' ? '✅ Your attendance request has been APPROVED. Faculty can now mark your attendance.' : '❌ Your attendance request was REJECTED.', status === 'approved' ? 'info' : 'alert');
-        window.Notifications?.broadcast('faculty', from, `📝 Attendance request ${status} for student. ${status === 'approved' ? 'You can now grant attendance.' : ''}`, 'info');
+        // Targeted at the one faculty who actually teaches this student's
+        // section — was broadcast('faculty', ...), which put every faculty
+        // account's notification bell up for a request that wasn't theirs.
+        // No faculty assigned to that section yet (facultyId empty) means
+        // nobody to notify, not everybody.
+        if (facultyId) {
+            window.Notifications?.send(facultyId, from, `📝 Attendance request ${status} for your student. ${status === 'approved' ? 'You can now grant attendance.' : ''}`, 'info');
+        }
         window.Notifications?.broadcast('head', from, `📝 Attendance request ${status} for student.`, 'info');
         showToast(`Request ${status}! Student & Faculty notified.`, 'success');
         renderAdminAttendanceRequests();

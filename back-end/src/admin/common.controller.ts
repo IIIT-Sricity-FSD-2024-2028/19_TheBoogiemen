@@ -34,9 +34,9 @@ import {
 } from '../common/tenancy/scope-to-college';
 import { assertSeatAvailable } from '../common/billing/subscription';
 import {
-  courseIdsTaughtBy,
   sectionsOfCourse,
   sectionsTaughtBy,
+  sectionTaughtIn,
 } from '../common/course-sections';
 import { RequiresModule } from '../common/guards/requires-module.guard';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
@@ -1735,6 +1735,7 @@ export class CommonController {
   async updateSyllabusProgress(
     @Body() body: any,
     @CurrentUserId() userId: string,
+    @CurrentUserRole() actorRole: string,
     @CurrentUserCollegeId() actorCollegeId: string | null,
   ) {
     if (!body.course_id || !body.section || body.progress === undefined)
@@ -1746,6 +1747,23 @@ export class CommonController {
       );
     const course = this.db.courses.find((c) => c.course_id === body.course_id);
     if (!isSameCollege(course, actorCollegeId)) notFoundInMyCollege('Course');
+
+    // A course can have several sections, each with a different faculty —
+    // without this a faculty could update completion for a section they
+    // don't teach at all, which is exactly what the frontend slider let
+    // happen (it offered every section of every course, not just theirs).
+    // Admin/head/superadmin aren't teaching a section, so they aren't held
+    // to this — same exemption createAssessment() already makes.
+    if (
+      actorRole === 'faculty' &&
+      sectionTaughtIn(this.db, userId, body.course_id) !== body.section
+    )
+      throw new ForbiddenException(
+        errorBody(
+          ErrorCode.PRIVILEGE_CEILING,
+          `You are not assigned to Section ${body.section} of this course.`,
+        ),
+      );
 
     const existing = this.db.syllabus_progress.find(
       (s) => s.course_id === body.course_id && s.section === body.section,
@@ -1829,12 +1847,45 @@ export class CommonController {
     @CurrentUserCollegeId() collegeId: string | null,
   ) {
     const scoped = scopeToCollege(this.db.attendance_requests, collegeId);
-    if (role === 'student') return scoped.filter((r) => r.student_id === userId);
+    // Every caller gets the request enriched with the section the request
+    // is actually about and who teaches it — previously undiscoverable
+    // (attendance_requests carries no section of its own), and what the fix
+    // below needs to know who is actually concerned.
+    const enriched = scoped.map((r) => ({
+      ...r,
+      ...this.concernedFacultyFor(r),
+    }));
+    if (role === 'student')
+      return enriched.filter((r) => r.student_id === userId);
     if (role === 'faculty') {
-      const facultyCourseIds = courseIdsTaughtBy(this.db, userId);
-      return scoped.filter((r) => facultyCourseIds.includes(r.course_id));
+      // Was "any request for any course this faculty teaches ANY section
+      // of" (courseIdsTaughtBy) — a faculty teaching Section A saw, and
+      // could grant, requests from Section B students taught by someone
+      // else entirely. Now matched to the specific faculty teaching the
+      // requesting student's own enrolled section.
+      return enriched.filter((r) => r.faculty_id === userId);
     }
-    return scoped;
+    return enriched;
+  }
+
+  /** Which section an attendance request's course actually concerns, and
+   *  who teaches it — derived from the student's own enrollment, since
+   *  attendance_requests itself carries no section. Shared by
+   *  getAttendanceRequests() and markAttendanceRequest() so "who is
+   *  concerned" is answered identically by both. */
+  private concernedFacultyFor(req: { student_id: string; course_id: string }) {
+    const enrollment = this.db.enrollment.find(
+      (e) => e.student_id === req.student_id && e.course_id === req.course_id,
+    );
+    if (!enrollment) return {};
+    const courseSection = sectionsOfCourse(this.db, req.course_id).find(
+      (cs) => cs.section === enrollment.section,
+    );
+    return {
+      section: enrollment.section,
+      faculty_id: courseSection?.faculty_id ?? null,
+      faculty_name: courseSection?.faculty_name ?? null,
+    };
   }
 
   @Patch('attendance-request/:id')
@@ -1865,6 +1916,16 @@ export class CommonController {
     const req = this.db.attendance_requests.find((r) => r.request_id === id);
     if (!isSameCollege(req, actorCollegeId))
       notFoundInMyCollege('Attendance request');
+    // Same gap as the list endpoint above, on the write side: previously
+    // any faculty in the college could grant any request, not just one for
+    // a student they actually teach.
+    if (this.concernedFacultyFor(req).faculty_id !== userId)
+      throw new ForbiddenException(
+        errorBody(
+          ErrorCode.PRIVILEGE_CEILING,
+          'You do not teach this student for this course.',
+        ),
+      );
     if (req.admin_status !== 'approved')
       throw new BadRequestException(
         errorBody(
