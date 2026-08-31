@@ -37,7 +37,6 @@ import {
   courseIdsTaughtBy,
   sectionsOfCourse,
   sectionsTaughtBy,
-  sectionTaughtIn,
 } from '../common/course-sections';
 import { RequiresModule } from '../common/guards/requires-module.guard';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
@@ -390,18 +389,45 @@ export class CommonController {
     // create an assessment for a course they don't teach any section of —
     // and it would then apply to every section's students, not just theirs.
     // Admin/head/superadmin aren't teaching a section, so they aren't held
-    // to this — they may set up an assessment on a faculty member's behalf.
+    // to this — they may set up an assessment on a faculty member's behalf,
+    // and pass `section` explicitly if it matters which one.
     let section: string | undefined = body.section;
     if (actorRole === 'faculty') {
-      const mySection = sectionTaughtIn(this.db, userId, body.course_id);
-      if (!mySection)
+      const mySectionsForCourse = sectionsTaughtBy(this.db, userId).filter(
+        (cs) => cs.course_id === body.course_id,
+      );
+      if (!mySectionsForCourse.length)
         throw new ForbiddenException(
           errorBody(
             ErrorCode.PRIVILEGE_CEILING,
             'You are not assigned to any section of this course.',
           ),
         );
-      section = mySection;
+      if (body.section) {
+        // Client-supplied — must be one this faculty actually teaches, not
+        // just any section of the course.
+        if (!mySectionsForCourse.some((cs) => cs.section === body.section))
+          throw new ForbiddenException(
+            errorBody(
+              ErrorCode.PRIVILEGE_CEILING,
+              `You are not assigned to Section ${body.section} of this course.`,
+            ),
+          );
+        section = body.section;
+      } else if (mySectionsForCourse.length === 1) {
+        // Only one section to mean — safe to default, same as before this
+        // faculty was ever assigned a second one.
+        section = mySectionsForCourse[0].section;
+      } else {
+        // Teaches more than one section of this course — which one this
+        // assessment is for is not something the server can guess.
+        throw new BadRequestException(
+          errorBody(
+            ErrorCode.BUSINESS_RULE_VIOLATION,
+            `You teach more than one section of this course (${mySectionsForCourse.map((cs) => cs.section).join(', ')}). Specify which section this assessment is for.`,
+          ),
+        );
+      }
     }
     const id = `a${Date.now()}`;
     const newAssessment = {
