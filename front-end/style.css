@@ -55,6 +55,12 @@ body.login-body {
     align-items: center; justify-content: center;
     min-height: 100vh; padding: 20px;
 }
+.back-home-link {
+    position:fixed; top:20px; left:20px;
+    display:flex; align-items:center; gap:6px;
+    font-size:13px; font-weight:600; color:var(--text-muted); text-decoration:none;
+}
+.back-home-link:hover { color:var(--accent-primary); }
 .brand-header { display:flex; align-items:center; gap:14px; margin-bottom:12px; }
 .logo { 
     background: var(--accent-primary); 
