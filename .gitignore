@@ -1,10 +1,12 @@
 # Dependencies
 node_modules/
 back-end/node_modules/
+front-end/node_modules/
 
 # Build output
 back-end/dist/
 back-end/docs/swagger.json
+dist/
 
 # OS files
 .DS_Store
@@ -17,6 +19,7 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+back-end/logs/
 
 # Env
 .env
@@ -26,3 +29,6 @@ npm-debug.log*
 Videos/
 FFSD_CoursePlan_S2026.pdf
 *.zip
+
+# Uploaded documents (bytes live on disk, metadata in the store)
+back-end/uploads/

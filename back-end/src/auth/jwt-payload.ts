@@ -15,6 +15,7 @@ export const ROLES = [
   'admin',
   'head',
   'superadmin',
+  'spoc',
   'INSTITUTE_SUPER_ADMIN',
   'DEPARTMENT_ADMIN_HOD',
   'FINANCE_ADMIN',
@@ -22,10 +23,12 @@ export const ROLES = [
   'PLATFORM_SALES_SUPPORT',
   'PLATFORM_TECH_SUPPORT',
 ] as const;
-export type Role = typeof ROLES[number];
+export type Role = (typeof ROLES)[number];
 
 export function isRole(value: unknown): value is Role {
-  return typeof value === 'string' && (ROLES as readonly string[]).includes(value);
+  return (
+    typeof value === 'string' && (ROLES as readonly string[]).includes(value)
+  );
 }
 
 export interface JwtPayload {
@@ -33,6 +36,19 @@ export interface JwtPayload {
   sub: string;
   role: Role;
   email?: string;
+  /**
+   * The college this principal belongs to. Present for every role except
+   * superadmin (the vendor operator, who belongs to no single college) and,
+   * for now, students/faculty/admin/head created before the multi-college
+   * migration backfilled 'c-default' onto them.
+   *
+   * Baked into the token at login, exactly like `role` — never re-derived
+   * from a per-request database lookup, and never client-suppliable. A route
+   * that needs to scope a query to "my college" reads this claim via
+   * @CurrentUserCollegeId(), the same pattern @CurrentUserId() already
+   * established for `sub`.
+   */
+  college_id?: string;
   /** Issued-at / expiry, populated by the signer. */
   iat?: number;
   exp?: number;

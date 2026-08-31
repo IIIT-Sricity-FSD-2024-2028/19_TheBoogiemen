@@ -30,6 +30,10 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
             <span>Event Scheduler</span>
         </a>
+        <a href="#" class="nav-item" onclick="switchView('course-management-view',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            <span>Course Management</span>
+        </a>
         <a href="#" class="nav-item" onclick="switchView('resource-management-view',this)">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
             <span>Resources</span>
@@ -126,10 +130,29 @@
             </div>
         </div>
 
+        <!-- Course Management -->
+        <div id="course-management-view" class="view-section" style="display:none;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                <div><h2 style="font-size:22px;font-weight:700;">Course Management</h2></div>
+                <div style="display:flex;gap:10px;">
+                    <button onclick="openEnrollStudentModal()" style="padding:9px 18px;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">📖 Enroll Student</button>
+                    <button class="page-action-btn" onclick="openCreateCourseModal()">+ Add Course</button>
+                </div>
+            </div>
+            <div class="stats-card">
+                <div class="stats-card-header"><h3>Courses</h3></div>
+                <div class="stats-card-body" style="padding:24px;"><div id="course-management-body">Loading…</div></div>
+            </div>
+        </div>
+
         <!-- Resource Management -->
         <div id="resource-management-view" class="view-section" style="display:none;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                <div><h2 style="font-size:22px;font-weight:700;">Resource Allocation</h2></div>
+                <button class="page-action-btn" onclick="openModal('resourceModal')">+ Add Resource</button>
+            </div>
             <div class="stats-card">
-                <div class="stats-card-header"><h3>Resource Allocation</h3></div>
+                <div class="stats-card-header"><h3>Resources</h3></div>
                 <div class="stats-card-body" style="padding:24px;"><div id="h-resources-body"></div></div>
             </div>
         </div>
@@ -283,6 +306,92 @@
     </div>
 </div>
 
+
+<div id="courseModal" class="modal-backdrop">
+    <div class="modal-window">
+        <div class="modal-header"><h2>Add Course</h2><button class="close-modal" onclick="closeModal('courseModal')">&times;</button></div>
+        <form id="createCourseForm" onsubmit="event.preventDefault(); submitCreateCourse();">
+            <div class="modal-body">
+                <div class="form-group"><label>Course Name <span style="color:#ef4444">*</span></label><input type="text" id="courseName" placeholder="e.g., Cloud Computing" required></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Course Code <span style="color:#ef4444">*</span></label><input type="text" id="courseCode" placeholder="e.g., CS501" required></div>
+                    <div class="form-group"><label>Credits</label><input type="number" id="courseCredits" min="1" max="6" value="4"></div>
+                </div>
+                <div class="form-group"><label>Semester</label><input type="number" id="courseSemester" min="1" max="8" value="1"></div>
+                <div class="form-group">
+                    <label>Sections <span style="font-size:11px;color:#64748b;">(optional — staff them now or assign faculty later)</span></label>
+                    <div id="courseSectionRows"></div>
+                    <button type="button" class="btn-cancel" style="margin-top:8px;" onclick="addCourseSectionRow('courseSectionRows')">+ Add Section</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="submit-btn" style="flex:1;">Create Course</button>
+                <button type="button" class="btn-cancel" onclick="closeModal('courseModal')">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="enrollStudentModal" class="modal-backdrop">
+    <div class="modal-window">
+        <div class="modal-header"><h2>📖 Enroll Student in Course</h2><button class="close-modal" onclick="closeModal('enrollStudentModal')">&times;</button></div>
+        <div class="modal-body">
+            <div class="form-group"><label>Select Student <span style="color:#ef4444">*</span></label><select id="enrollStudentSel"><option value="">Loading…</option></select></div>
+            <div class="form-group"><label>Select Course <span style="color:#ef4444">*</span></label><select id="enrollCourseSel" onchange="populateEnrollSectionOptions()"><option value="">Loading…</option></select></div>
+            <div class="form-group"><label>Select Section <span style="color:#ef4444">*</span></label><select id="enrollSectionSel"><option value="">— Select a course first —</option></select></div>
+        </div>
+        <div class="modal-footer">
+            <button onclick="submitEnrollStudent()" class="submit-btn" style="flex:1;">Enroll Student</button>
+            <button type="button" class="btn-cancel" onclick="closeModal('enrollStudentModal')">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div id="sectionsModal" class="modal-backdrop">
+    <div class="modal-window">
+        <div class="modal-header"><h2>Manage Sections</h2><button class="close-modal" onclick="closeModal('sectionsModal')">&times;</button></div>
+        <form id="courseSectionsForm" onsubmit="event.preventDefault(); submitCourseSections();">
+            <input type="hidden" id="sectionsCourseId">
+            <div class="modal-body">
+                <p id="sectionsCourseName" style="font-weight:600;margin:0 0 12px;"></p>
+                <div id="manageSectionRows"></div>
+                <button type="button" class="btn-cancel" style="margin-top:8px;" onclick="addCourseSectionRow('manageSectionRows')">+ Add Section</button>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="submit-btn" style="flex:1;">Save Sections</button>
+                <button type="button" class="btn-cancel" onclick="closeModal('sectionsModal')">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="resourceModal" class="modal-backdrop">
+    <div class="modal-window">
+        <div class="modal-header"><h2>Add Resource</h2><button class="close-modal" onclick="closeModal('resourceModal')">&times;</button></div>
+        <form id="createResourceForm" onsubmit="event.preventDefault(); submitCreateResource();">
+            <div class="modal-body">
+                <div class="form-group"><label>Name <span style="color:#ef4444">*</span></label><input type="text" id="resourceName" placeholder="e.g., Computing Lab 3" required></div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Type <span style="color:#ef4444">*</span></label>
+                        <select id="resourceType" required>
+                            <option value="Lab">Lab</option>
+                            <option value="Hall">Hall</option>
+                            <option value="Room">Room</option>
+                            <option value="Equipment">Equipment</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Capacity</label><input type="number" id="resourceCapacity" min="1" placeholder="e.g., 60"></div>
+                </div>
+                <div class="form-group"><label>Location</label><input type="text" id="resourceLocation" placeholder="e.g., Block C, 2nd Floor"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="submit-btn" style="flex:1;">Add Resource</button>
+                <button type="button" class="btn-cancel" onclick="closeModal('resourceModal')">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
 
 <!-- ── Add Fee Record Modal ──────────────────────────────────────────────── -->
 <div id="addFeeModal" class="modal-backdrop">

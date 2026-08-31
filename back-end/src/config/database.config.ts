@@ -23,7 +23,9 @@ export class DatabaseConfigError extends Error {}
 export function getDataStore(env: NodeJS.ProcessEnv = process.env): DataStore {
   const raw = (env.DATA_STORE ?? 'memory').trim().toLowerCase();
   if (raw !== 'memory' && raw !== 'postgres') {
-    throw new DatabaseConfigError(`DATA_STORE must be "memory" or "postgres" (got "${raw}")`);
+    throw new DatabaseConfigError(
+      `DATA_STORE must be "memory" or "postgres" (got "${raw}")`,
+    );
   }
   return raw;
 }
@@ -31,29 +33,35 @@ export function getDataStore(env: NodeJS.ProcessEnv = process.env): DataStore {
 const isProduction = (env: NodeJS.ProcessEnv) =>
   (env.NODE_ENV ?? '').trim().toLowerCase() === 'production';
 
-export function buildPoolConfig(env: NodeJS.ProcessEnv = process.env): PoolConfig {
+export function buildPoolConfig(
+  env: NodeJS.ProcessEnv = process.env,
+): PoolConfig {
   const connectionString = (env.DATABASE_URL ?? '').trim();
 
   if (!connectionString) {
     throw new DatabaseConfigError(
       'DATABASE_URL is not set but DATA_STORE=postgres.\n' +
-      '  Set it in back-end/.env — see .env.example for the Aiven connection format.',
+        '  Set it in back-end/.env — see .env.example for the Aiven connection format.',
     );
   }
 
   // A local docker/dev instance has no CA and is not reachable from outside the
   // machine. Anything else must present a certificate we can verify.
-  const isLocal = /@(localhost|127\.0\.0\.1|host\.docker\.internal)[:/]/.test(connectionString);
+  const isLocal = /@(localhost|127\.0\.0\.1|host\.docker\.internal)[:/]/.test(
+    connectionString,
+  );
   const caPath = (env.PGSSLROOTCERT ?? '').trim();
 
   let ssl: PoolConfig['ssl'];
 
   if (caPath) {
-    const resolved = path.isAbsolute(caPath) ? caPath : path.join(process.cwd(), caPath);
+    const resolved = path.isAbsolute(caPath)
+      ? caPath
+      : path.join(process.cwd(), caPath);
     if (!fs.existsSync(resolved)) {
       throw new DatabaseConfigError(
         `PGSSLROOTCERT points at "${resolved}" but no such file exists.\n` +
-        '  Download ca.pem from the Aiven service overview page.',
+          '  Download ca.pem from the Aiven service overview page.',
       );
     }
     ssl = { rejectUnauthorized: true, ca: fs.readFileSync(resolved, 'utf8') };
@@ -67,17 +75,21 @@ export function buildPoolConfig(env: NodeJS.ProcessEnv = process.env): PoolConfi
     // app sends.
     throw new DatabaseConfigError(
       'A remote DATABASE_URL requires PGSSLROOTCERT pointing at the Aiven CA certificate.\n' +
-      '  Download ca.pem from the service overview page and set PGSSLROOTCERT=./certs/ca.pem.\n' +
-      '  Do not disable certificate verification to work around this.',
+        '  Download ca.pem from the service overview page and set PGSSLROOTCERT=./certs/ca.pem.\n' +
+        '  Do not disable certificate verification to work around this.',
     );
   }
 
   const max = Number(env.DB_POOL_MAX ?? 5);
   if (!Number.isInteger(max) || max < 1 || max > 20) {
-    throw new DatabaseConfigError('DB_POOL_MAX must be an integer between 1 and 20.');
+    throw new DatabaseConfigError(
+      'DB_POOL_MAX must be an integer between 1 and 20.',
+    );
   }
   if (isProduction(env) && !ssl) {
-    throw new DatabaseConfigError('TLS is required in production. Set PGSSLROOTCERT.');
+    throw new DatabaseConfigError(
+      'TLS is required in production. Set PGSSLROOTCERT.',
+    );
   }
 
   return {

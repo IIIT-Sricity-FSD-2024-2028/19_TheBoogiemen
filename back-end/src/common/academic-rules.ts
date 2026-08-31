@@ -19,9 +19,12 @@ export const ATTENDANCE_STATUS = {
 
 /** Coerce any stored/incoming value to a known status. Unknown values are treated as absent. */
 export function normalizeAttendanceStatus(raw: any): AttendanceStatus {
-  const v = String(raw ?? '').trim().toLowerCase();
+  const v = String(raw ?? '')
+    .trim()
+    .toLowerCase();
   if (v === 'present' || v === 'p') return ATTENDANCE_STATUS.PRESENT;
-  if (v === 'excused' || v === 'leave' || v === 'on_leave') return ATTENDANCE_STATUS.EXCUSED;
+  if (v === 'excused' || v === 'leave' || v === 'on_leave')
+    return ATTENDANCE_STATUS.EXCUSED;
   return ATTENDANCE_STATUS.ABSENT;
 }
 
@@ -47,7 +50,12 @@ export interface AttendanceSummary {
 /** Summarise a set of attendance rows. Returns percentage 0 when there is no data. */
 export function summariseAttendance(records: any[]): AttendanceSummary {
   const summary: AttendanceSummary = {
-    present: 0, absent: 0, excused: 0, total: 0, attended: 0, percentage: 0,
+    present: 0,
+    absent: 0,
+    excused: 0,
+    total: 0,
+    attended: 0,
+    percentage: 0,
   };
   for (const r of records || []) {
     const status = normalizeAttendanceStatus(r?.status);
@@ -57,9 +65,10 @@ export function summariseAttendance(records: any[]): AttendanceSummary {
     else summary.absent++;
   }
   summary.attended = summary.present + summary.excused;
-  summary.percentage = summary.total > 0
-    ? Math.round((summary.attended / summary.total) * 100)
-    : 0;
+  summary.percentage =
+    summary.total > 0
+      ? Math.round((summary.attended / summary.total) * 100)
+      : 0;
   return summary;
 }
 
@@ -82,42 +91,61 @@ export interface RiskInput {
 }
 
 export function isAtRisk({ cgpa, attendancePct }: RiskInput): boolean {
-  const lowCgpa = typeof cgpa === 'number' && !Number.isNaN(cgpa)
-    && cgpa < RISK_THRESHOLDS.MIN_CGPA;
-  const lowAttendance = typeof attendancePct === 'number' && !Number.isNaN(attendancePct)
-    && attendancePct < RISK_THRESHOLDS.MIN_ATTENDANCE_PCT;
+  const lowCgpa =
+    typeof cgpa === 'number' &&
+    !Number.isNaN(cgpa) &&
+    cgpa < RISK_THRESHOLDS.MIN_CGPA;
+  const lowAttendance =
+    typeof attendancePct === 'number' &&
+    !Number.isNaN(attendancePct) &&
+    attendancePct < RISK_THRESHOLDS.MIN_ATTENDANCE_PCT;
   return lowCgpa || lowAttendance;
 }
 
 /** Human-readable reasons, so the UI can explain why a student was flagged. */
 export function riskReasons({ cgpa, attendancePct }: RiskInput): string[] {
   const reasons: string[] = [];
-  if (typeof cgpa === 'number' && !Number.isNaN(cgpa) && cgpa < RISK_THRESHOLDS.MIN_CGPA) {
+  if (
+    typeof cgpa === 'number' &&
+    !Number.isNaN(cgpa) &&
+    cgpa < RISK_THRESHOLDS.MIN_CGPA
+  ) {
     reasons.push(`CGPA ${cgpa} below ${RISK_THRESHOLDS.MIN_CGPA}`);
   }
-  if (typeof attendancePct === 'number' && !Number.isNaN(attendancePct)
-      && attendancePct < RISK_THRESHOLDS.MIN_ATTENDANCE_PCT) {
-    reasons.push(`Attendance ${attendancePct}% below ${RISK_THRESHOLDS.MIN_ATTENDANCE_PCT}%`);
+  if (
+    typeof attendancePct === 'number' &&
+    !Number.isNaN(attendancePct) &&
+    attendancePct < RISK_THRESHOLDS.MIN_ATTENDANCE_PCT
+  ) {
+    reasons.push(
+      `Attendance ${attendancePct}% below ${RISK_THRESHOLDS.MIN_ATTENDANCE_PCT}%`,
+    );
   }
   return reasons;
 }
 
 // ── Leave types (M-09) ───────────────────────────────────────────────────────
 
-export const LEAVE_TYPES = ['Medical', 'Personal', 'Event', 'Family Event', 'Other'] as const;
-export type LeaveType = typeof LEAVE_TYPES[number];
+export const LEAVE_TYPES = [
+  'Medical',
+  'Personal',
+  'Event',
+  'Family Event',
+  'Other',
+] as const;
+export type LeaveType = (typeof LEAVE_TYPES)[number];
 
 const LEAVE_TYPE_ALIASES: Record<string, LeaveType> = {
-  'medical': 'Medical',
+  medical: 'Medical',
   'medical leave': 'Medical',
-  'sick': 'Medical',
-  'personal': 'Personal',
+  sick: 'Medical',
+  personal: 'Personal',
   'personal leave': 'Personal',
-  'event': 'Event',
+  event: 'Event',
   'event participation': 'Event',
   'family event': 'Family Event',
-  'family': 'Family Event',
-  'other': 'Other',
+  family: 'Family Event',
+  other: 'Other',
 };
 
 /**
@@ -126,7 +154,9 @@ const LEAVE_TYPE_ALIASES: Record<string, LeaveType> = {
  * capitalised ("Medical"), so exact-match filters silently matched nothing.
  */
 export function normalizeLeaveType(raw: any): LeaveType {
-  const v = String(raw ?? '').trim().toLowerCase();
+  const v = String(raw ?? '')
+    .trim()
+    .toLowerCase();
   return LEAVE_TYPE_ALIASES[v] || 'Other';
 }
 
@@ -144,10 +174,15 @@ export const MAX_LEAVE_DAYS = 60;
  * Inclusive list of ISO (YYYY-MM-DD) dates between start and end.
  * Returns [] for invalid input and truncates at MAX_LEAVE_DAYS.
  */
-export function eachDateInRange(start: string, end: string, maxDays = MAX_LEAVE_DAYS): string[] {
+export function eachDateInRange(
+  start: string,
+  end: string,
+  maxDays = MAX_LEAVE_DAYS,
+): string[] {
   const from = new Date(`${String(start).slice(0, 10)}T00:00:00Z`);
   const to = new Date(`${String(end).slice(0, 10)}T00:00:00Z`);
-  if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime()) || to < from) return [];
+  if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime()) || to < from)
+    return [];
 
   const dates: string[] = [];
   const cursor = new Date(from);

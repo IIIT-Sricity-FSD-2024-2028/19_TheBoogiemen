@@ -55,13 +55,16 @@ const CONSTRAINT_MESSAGES: Record<string, string> = {
     'Attendance for this student, course and date has already been recorded.',
   marks_entry_student_id_assessment_id_key:
     'Marks for this student and assessment have already been entered.',
-  enrollment_student_id_course_id_key: 'This student is already enrolled in this course.',
+  enrollment_student_id_course_id_key:
+    'This student is already enrolled in this course.',
   users_email_key: 'That email address is already registered.',
   courses_course_code_key: 'That course code is already in use.',
   departments_department_code_key: 'That department code is already in use.',
   users_role_check: 'That is not a valid role.',
-  attendance_log_status_check: 'Attendance status must be present, absent or excused.',
-  leave_applications_status_check: 'Leave status must be pending, approved or rejected.',
+  attendance_log_status_check:
+    'Attendance status must be present, absent or excused.',
+  leave_applications_status_check:
+    'Leave status must be pending, approved or rejected.',
   syllabus_progress_progress_check: 'Progress must be between 0 and 100.',
 };
 
@@ -105,7 +108,9 @@ export function mapDatabaseError(err: unknown): HttpException | null {
       return new BadRequestException(
         errorBody(
           ErrorCode.VALIDATION_FAILED,
-          err.column ? `"${err.column}" is required.` : 'A required field is missing.',
+          err.column
+            ? `"${err.column}" is required.`
+            : 'A required field is missing.',
           err.column ? { field: err.column } : undefined,
         ),
       );
@@ -121,7 +126,11 @@ export function mapDatabaseError(err: unknown): HttpException | null {
 
     case '23P01': // exclusion_violation
       return new ConflictException(
-        errorBody(ErrorCode.CONSTRAINT_VIOLATION, 'That record conflicts with an existing one.', details),
+        errorBody(
+          ErrorCode.CONSTRAINT_VIOLATION,
+          'That record conflicts with an existing one.',
+          details,
+        ),
       );
 
     // ── Malformed input: wrong type, too long, bad datetime ─────────────────
@@ -129,17 +138,26 @@ export function mapDatabaseError(err: unknown): HttpException | null {
     case '22007': // invalid_datetime_format
     case '22008': // datetime_field_overflow
       return new BadRequestException(
-        errorBody(ErrorCode.MALFORMED_REQUEST, 'One of the supplied values has the wrong format.'),
+        errorBody(
+          ErrorCode.MALFORMED_REQUEST,
+          'One of the supplied values has the wrong format.',
+        ),
       );
 
     case '22001': // string_data_right_truncation
       return new BadRequestException(
-        errorBody(ErrorCode.VALIDATION_FAILED, 'One of the supplied values is too long.'),
+        errorBody(
+          ErrorCode.VALIDATION_FAILED,
+          'One of the supplied values is too long.',
+        ),
       );
 
     case '22003': // numeric_value_out_of_range
       return new BadRequestException(
-        errorBody(ErrorCode.VALIDATION_FAILED, 'A numeric value is out of range.'),
+        errorBody(
+          ErrorCode.VALIDATION_FAILED,
+          'A numeric value is out of range.',
+        ),
       );
 
     // ── Contention: retryable, and genuinely a conflict ──────────────────────
@@ -154,29 +172,45 @@ export function mapDatabaseError(err: unknown): HttpException | null {
 
     case '57014': // query_canceled (statement timeout)
       return new RequestTimeoutException(
-        errorBody(ErrorCode.DATABASE_ERROR, 'The request took too long and was cancelled.'),
+        errorBody(
+          ErrorCode.DATABASE_ERROR,
+          'The request took too long and was cancelled.',
+        ),
       );
 
     // ── Availability: our problem, but transient — 503 invites a retry ───────
     case '53300': // too_many_connections — the Aiven free-tier ceiling is 20
     case '53400': // configuration_limit_exceeded
       return new ServiceUnavailableException(
-        errorBody(ErrorCode.DATABASE_UNAVAILABLE, 'The service is busy. Please try again shortly.'),
+        errorBody(
+          ErrorCode.DATABASE_UNAVAILABLE,
+          'The service is busy. Please try again shortly.',
+        ),
       );
 
     case '57P01': // admin_shutdown
     case '57P02': // crash_shutdown
     case '57P03': // cannot_connect_now
       return new ServiceUnavailableException(
-        errorBody(ErrorCode.DATABASE_UNAVAILABLE, 'The database is unavailable. Please try again shortly.'),
+        errorBody(
+          ErrorCode.DATABASE_UNAVAILABLE,
+          'The database is unavailable. Please try again shortly.',
+        ),
       );
 
     default:
       // Class 08 (connection), 53 (insufficient resources), 58 (system) are all
       // transient infrastructure faults rather than caller mistakes.
-      if (code.startsWith('08') || code.startsWith('53') || code.startsWith('58')) {
+      if (
+        code.startsWith('08') ||
+        code.startsWith('53') ||
+        code.startsWith('58')
+      ) {
         return new ServiceUnavailableException(
-          errorBody(ErrorCode.DATABASE_UNAVAILABLE, 'The database is unavailable. Please try again shortly.'),
+          errorBody(
+            ErrorCode.DATABASE_UNAVAILABLE,
+            'The database is unavailable. Please try again shortly.',
+          ),
         );
       }
       // Class 42 (syntax / undefined table / undefined column) means we shipped

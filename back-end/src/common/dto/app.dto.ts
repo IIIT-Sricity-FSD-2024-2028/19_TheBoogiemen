@@ -16,61 +16,6 @@ export class LoginDto {
   tenant_code?: string;
 }
 
-export class SignupDto {
-  @ApiProperty({ example: 'student@example.com' })
-  @IsEmail()
-  email: string;
-
-  @ApiProperty({ example: 'password' })
-  @IsNotEmpty()
-  @MinLength(4)
-  password: string;
-
-  @ApiProperty({ example: 'student', enum: ['student', 'faculty'] })
-  @IsNotEmpty()
-  role: string;
-
-  @ApiPropertyOptional({ example: 'John' })
-  @IsOptional()
-  @IsString()
-  first_name?: string;
-
-  @ApiPropertyOptional({ example: 'Doe' })
-  @IsOptional()
-  @IsString()
-  last_name?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  username?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  branch?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  batch?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  section?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  designation?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  department?: string;
-}
-
 /**
  * The login form refuses any password that is not 8+ characters with an
  * uppercase letter, a lowercase letter, a digit and a special character. The
@@ -78,7 +23,8 @@ export class SignupDto {
  * successfully and then be permanently unable to sign in. The rule below is the
  * same one the login form applies, enforced server-side.
  */
-export const PASSWORD_POLICY = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+export const PASSWORD_POLICY =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 export const PASSWORD_POLICY_MESSAGE =
   'Password must be at least 8 characters and include an uppercase letter, a lowercase letter, a number and a special character (@$!%*?&)';
 

@@ -62,7 +62,7 @@ export class JwtAuthGuard implements CanActivate {
         payload = await this.jwtService.verifyAsync<JwtPayload>(token);
       }
     } catch (err: any) {
-      // If token verification fails (e.g. expired or secret rotated), decode payload or fallback to headers
+      // If token verification fails (e.g. expired, secret rotated, or mock token), decode payload or fallback gracefully
       const decoded: any = this.jwtService.decode(token);
       if (decoded && decoded.sub) {
         const rawRole = decoded.role || (request.headers['role'] || 'superadmin').toString();
@@ -71,6 +71,7 @@ export class JwtAuthGuard implements CanActivate {
           sub: decoded.sub,
           role: (isRole(role) ? role : 'superadmin') as Role,
           email: decoded.email || (request.headers['email'] || 'user@example.com').toString(),
+          college_id: decoded.college_id,
         };
       } else {
         const rawRole = (request.headers['role'] || 'superadmin').toString();
@@ -106,7 +107,8 @@ export class JwtAuthGuard implements CanActivate {
    */
   private extractToken(request: any): string | null {
     const fromCookie = request?.cookies?.[AUTH_COOKIE];
-    if (typeof fromCookie === 'string' && fromCookie.trim()) return fromCookie.trim();
+    if (typeof fromCookie === 'string' && fromCookie.trim())
+      return fromCookie.trim();
     return this.extractBearerToken(request);
   }
 

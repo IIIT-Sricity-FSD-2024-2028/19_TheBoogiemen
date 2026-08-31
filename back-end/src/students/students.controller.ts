@@ -1,9 +1,19 @@
-import { Controller, Get, Post, Body, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  BadRequestException,
+} from '@nestjs/common';
 import { StudentsService } from './students.service';
 import { Roles } from '../auth/roles.guard';
-import { CurrentUserId } from '../common/decorators/current-user.decorator';
-import { ApiTags, ApiOperation, ApiResponse , ApiBody} from '@nestjs/swagger';
+import {
+  CurrentUserCollegeId,
+  CurrentUserId,
+} from '../common/decorators/current-user.decorator';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { ErrorCode, errorBody } from '../common/errors/error-codes';
+import { RequiresModule } from '../common/guards/requires-module.guard';
 
 @ApiTags('Students')
 @Controller('students')
@@ -21,8 +31,13 @@ export class StudentsController {
 
   @Get('me/attendance')
   @Roles('student')
-  @ApiOperation({ summary: 'Get attendance summary and records for current student' })
-  @ApiResponse({ status: 200, description: 'Attendance records and per-course summary' })
+  @ApiOperation({
+    summary: 'Get attendance summary and records for current student',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Attendance records and per-course summary',
+  })
   async getAttendance(@CurrentUserId() userId: string) {
     return this.studentsService.getAttendance(userId);
   }
@@ -30,7 +45,10 @@ export class StudentsController {
   @Get('me/courses')
   @Roles('student')
   @ApiOperation({ summary: 'Get enrolled courses for current student' })
-  @ApiResponse({ status: 200, description: 'List of enrolled courses with enrollment status' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of enrolled courses with enrollment status',
+  })
   async getCourses(@CurrentUserId() userId: string) {
     return this.studentsService.getCourses(userId);
   }
@@ -38,13 +56,17 @@ export class StudentsController {
   @Get('me/marks')
   @Roles('student')
   @ApiOperation({ summary: 'Get marks/assessments for current student' })
-  @ApiResponse({ status: 200, description: 'Marks with assessment and course details' })
+  @ApiResponse({
+    status: 200,
+    description: 'Marks with assessment and course details',
+  })
   async getMarks(@CurrentUserId() userId: string) {
     return this.studentsService.getMarks(userId);
   }
 
   @Get('me/fees')
   @Roles('student')
+  @RequiresModule('fees')
   @ApiOperation({ summary: 'Get fee records for current student' })
   @ApiResponse({ status: 200, description: 'Student fee records' })
   async getFees(@CurrentUserId() userId: string) {
@@ -53,23 +75,39 @@ export class StudentsController {
 
   @Get('me/timetable')
   @Roles('student')
-  @ApiOperation({ summary: 'Get timetable for current student (based on their section)' })
-  @ApiResponse({ status: 200, description: 'Weekly timetable grid for student section' })
-  async getTimetable(@CurrentUserId() userId: string) {
-    return this.studentsService.getTimetable(userId);
+  @ApiOperation({
+    summary: 'Get timetable for current student (based on their section)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Weekly timetable grid for student section',
+  })
+  async getTimetable(
+    @CurrentUserId() userId: string,
+    @CurrentUserCollegeId() collegeId: string | null,
+  ) {
+    return this.studentsService.getTimetable(userId, collegeId);
   }
 
   @Post('enroll')
   @Roles('student')
   @ApiOperation({ summary: 'Enroll in a course' })
   @ApiResponse({ status: 201, description: 'Enrollment successful' })
-  @ApiResponse({ status: 400, description: 'Already enrolled or course not found' })
+  @ApiResponse({
+    status: 400,
+    description: 'Already enrolled or course not found',
+  })
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async enroll(@Body() body: any, @CurrentUserId() userId: string) {
+  async enroll(
+    @Body() body: any,
+    @CurrentUserId() userId: string,
+    @CurrentUserCollegeId() collegeId: string | null,
+  ) {
     const courseId = body.course_id || body.courseId;
-    if (!courseId) throw new BadRequestException(
-      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'course_id is required'),
-    );
-    return this.studentsService.enroll(userId, courseId);
+    if (!courseId)
+      throw new BadRequestException(
+        errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'course_id is required'),
+      );
+    return this.studentsService.enroll(userId, courseId, collegeId);
   }
 }

@@ -1,7 +1,16 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InMemoryDbService } from '../database/in-memory-db.service';
-import { ATTENDANCE_STATUS, normalizeAttendanceStatus, summariseAttendance } from '../common/academic-rules';
+import { summariseAttendance } from '../common/academic-rules';
 import { ErrorCode, errorBody } from '../common/errors/error-codes';
+import {
+  isSameCollege,
+  scopeToCollege,
+} from '../common/tenancy/scope-to-college';
+import { sectionsOfCourse } from '../common/course-sections';
 
 @Injectable()
 export class StudentsService {
@@ -9,9 +18,10 @@ export class StudentsService {
 
   async getProfile(userId: string) {
     const student = this.db.students.find((s) => s.user_id === userId);
-    if (!student) throw new NotFoundException(
-      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Student not found'),
-    );
+    if (!student)
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Student not found'),
+      );
     return student;
   }
 
@@ -41,12 +51,14 @@ export class StudentsService {
 
     // Group by course to create summary
     const byCourse: Record<string, any[]> = {};
-    records.forEach(r => {
+    records.forEach((r) => {
       (byCourse[r.course_id] ||= []).push(r);
     });
 
     const summary = Object.entries(byCourse).map(([course_id, rows]) => {
-      const c = this.db.courses.find(course => course.course_id === course_id);
+      const c = this.db.courses.find(
+        (course) => course.course_id === course_id,
+      );
       const stats = summariseAttendance(rows);
       return {
         course_id,
@@ -73,7 +85,10 @@ export class StudentsService {
   }
 
   async getCourses(userId: string) {
-    const enrollment = this.db.enrollment.filter((e) => e.student_id === userId);
+    const enrollment = this.db.enrollment.filter(
+      (e) => e.student_id === userId,
+    );
+
     const syllabusCourseMap: Record<string, { progress: number; modules: any[] }> = {
       c1: { progress: 85, modules: [{ name: 'Arrays, Stacks & Queues', progress: 100 }, { name: 'Trees & Balanced Search Trees', progress: 90 }, { name: 'Graph Algorithms & Dynamic Programming', progress: 65 }] },
       c2: { progress: 78, modules: [{ name: 'Relational Algebra & SQL', progress: 100 }, { name: 'Schema Normalization (3NF/BCNF)', progress: 85 }, { name: 'Transactions & ACID Properties', progress: 50 }] },
@@ -85,59 +100,82 @@ export class StudentsService {
       c8: { progress: 85, modules: [{ name: 'State Space Search & A* Algorithm', progress: 100 }, { name: 'Knowledge Representation & Logic', progress: 90 }, { name: 'Introduction to Neural Networks', progress: 65 }] },
     };
 
-    return enrollment.map(e => {
-      const course = this.db.courses.find(c => c.course_id === e.course_id);
-      if (!course) return null;
+    return enrollment
+      .map((e) => {
+        const course = this.db.courses.find((c) => c.course_id === e.course_id);
+        if (!course) return null;
 
-      // Calculate attendance for this course
-      const courseRecords = this.db.attendance_log.filter(a => a.student_id === userId && a.course_id === e.course_id);
-      const attStats = summariseAttendance(courseRecords);
-      const attendance_pct = courseRecords.length > 0 ? attStats.percentage : 88;
+        // Courses section-scoped faculty lookup
+        const mySection = sectionsOfCourse(this.db, e.course_id).find(
+          (cs) => cs.section === e.section,
+        );
 
-      // Get syllabus progress
-      const syllInfo = syllabusCourseMap[e.course_id] || {
-        progress: 75,
-        modules: [
-          { name: 'Unit 1: Fundamentals', progress: 100 },
-          { name: 'Unit 2: Core Concepts', progress: 75 },
-          { name: 'Unit 3: Applied Topics', progress: 50 },
-        ],
-      };
+        // Calculate attendance for this course
+        const courseRecords = this.db.attendance_log.filter(
+          (a) => a.student_id === userId && a.course_id === e.course_id,
+        );
+        const attStats = summariseAttendance(courseRecords);
+        const attendance_pct = courseRecords.length > 0 ? attStats.percentage : 88;
 
-      // Get faculty details
-      const faculty = this.db.faculty.find(f => f.user_id === course.faculty_id);
-      const faculty_name = course.faculty_name || (faculty ? `${faculty.first_name} ${faculty.last_name}` : 'Dr. Jane Smith');
+        // Get syllabus progress
+        const syllInfo = syllabusCourseMap[e.course_id] || {
+          progress: 75,
+          modules: [
+            { name: 'Unit 1: Fundamentals', progress: 100 },
+            { name: 'Unit 2: Core Concepts', progress: 75 },
+            { name: 'Unit 3: Applied Topics', progress: 50 },
+          ],
+        };
 
-      return {
-        ...course,
-        faculty_name,
-        enrollment_status: e.status || 'active',
-        section: e.section || 'A',
-        attendance_pct,
-        syllabus_progress: syllInfo.progress,
-        modules: syllInfo.modules,
-      };
-    }).filter(Boolean);
+        const faculty_name = mySection?.faculty_name || course.faculty_name || 'Dr. Jane Smith';
+
+        return {
+          ...course,
+          enrollment_status: e.status || 'active',
+          section: e.section || 'A',
+          faculty_id: mySection?.faculty_id ?? null,
+          faculty_name,
+          attendance_pct,
+          syllabus_progress: syllInfo.progress,
+          modules: syllInfo.modules,
+        };
+      })
+      .filter(Boolean);
   }
 
   async getMarks(userId: string) {
     return this.db.marks_entry
       .filter((m) => m.student_id === userId)
-      .map(m => {
-        const assessment = this.db.assessments.find(a => a.assessment_id === m.assessment_id);
-        const course = assessment ? this.db.courses.find(c => c.course_id === assessment.course_id) : null;
-        return { ...m, assessment_name: assessment?.name, course_name: course?.course_name, course_code: m.course_code };
+      .map((m) => {
+        const assessment = this.db.assessments.find(
+          (a) => a.assessment_id === m.assessment_id,
+        );
+        const course = assessment
+          ? this.db.courses.find((c) => c.course_id === assessment.course_id)
+          : null;
+        return {
+          ...m,
+          assessment_name: assessment?.name,
+          course_name: course?.course_name,
+          course_code: m.course_code,
+        };
       });
   }
 
   async getFees(userId: string) {
-    return this.db.fees.filter(f => f.student_id === userId);
+    return this.db.fees.filter((f) => f.student_id === userId);
   }
 
-  async getTimetable(userId: string) {
-    const student = this.db.students.find(s => s.user_id === userId);
+  async getTimetable(userId: string, collegeId: string | null) {
+    const student = this.db.students.find((s) => s.user_id === userId);
     const section = student?.section || 'A';
-    const slots = this.db.timetable.filter(t => t.section === section);
+    // Scoped by college, not just section: "Section A" is not a globally
+    // unique name — two colleges may both have one, and without this a
+    // student could be shown another college's slots for a same-named
+    // section (TENANT_ISOLATION_DIAGNOSIS.md §3, Group B).
+    const slots = scopeToCollege(this.db.timetable, collegeId).filter(
+      (t) => t.section === section,
+    );
     const grid = slots.reduce((acc: any, curr) => {
       if (!acc[curr.day]) acc[curr.day] = {};
       acc[curr.day][curr.time] = curr;
@@ -151,25 +189,47 @@ export class StudentsService {
     };
   }
 
-  async enroll(studentId: string, courseId: string) {
+  async enroll(studentId: string, courseId: string, collegeId: string | null) {
     // Check if already enrolled
     const existing = this.db.enrollment.find(
-      e => e.student_id === studentId && e.course_id === courseId
+      (e) => e.student_id === studentId && e.course_id === courseId,
     );
     if (existing) {
       throw new BadRequestException(
-      errorBody(ErrorCode.DUPLICATE_RESOURCE, 'Already enrolled in this course'),
-    );
+        errorBody(
+          ErrorCode.DUPLICATE_RESOURCE,
+          'Already enrolled in this course',
+        ),
+      );
     }
 
-    // Verify course exists
-    const course = this.db.courses.find(c => c.course_id === courseId);
-    if (!course) throw new NotFoundException(
-      errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Course not found'),
+    // course_id is client-supplied — without this, a student could enroll in
+    // another college's course simply by knowing or guessing its id. Same
+    // NOT_FOUND for "no such course" and "not your college's course": a
+    // student must not be able to tell the two apart by response shape.
+    const course = this.db.courses.find((c) => c.course_id === courseId);
+    if (!isSameCollege(course, collegeId))
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Course not found'),
+      );
+
+    const student = this.db.students.find((s) => s.user_id === studentId);
+    const section = student?.section || 'A';
+    // A course may exist with zero sections assigned yet (staffed later by a
+    // head) — self-enrolling into a section nobody teaches would create an
+    // enrollment record attendance/marks can never attach a faculty to.
+    const hasFaculty = sectionsOfCourse(this.db, courseId).some(
+      (cs) => cs.section === section,
     );
+    if (!hasFaculty)
+      throw new BadRequestException(
+        errorBody(
+          ErrorCode.BUSINESS_RULE_VIOLATION,
+          `No faculty is assigned to Section ${section} of this course yet. Contact your academic head.`,
+        ),
+      );
 
     const id = `e${Date.now()}`;
-    const student = this.db.students.find(s => s.user_id === studentId);
     const newEnrollment = {
       enrollment_id: id,
       student_id: studentId,
@@ -177,6 +237,7 @@ export class StudentsService {
       year_id: '2025',
       status: 'active',
       section: student?.section || 'A',
+      college_id: collegeId ?? course!.college_id,
     };
     this.db.enrollment.push(newEnrollment);
     return { success: true, enrollment: newEnrollment, course };

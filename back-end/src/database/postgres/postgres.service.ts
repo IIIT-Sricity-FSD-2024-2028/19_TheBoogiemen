@@ -11,9 +11,15 @@ import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { Pool, PoolClient, QueryResultRow } from 'pg';
 import * as fs from 'fs';
 import * as path from 'path';
-import { buildPoolConfig, describeConnection } from '../../config/database.config';
+import {
+  buildPoolConfig,
+  describeConnection,
+} from '../../config/database.config';
 import { applyPgTypeParsers } from './pg-types';
-import { isPgError, mapDatabaseError } from '../../common/errors/database-error.mapper';
+import {
+  isPgError,
+  mapDatabaseError,
+} from '../../common/errors/database-error.mapper';
 
 @Injectable()
 export class PostgresService implements OnModuleInit, OnModuleDestroy {
@@ -38,7 +44,9 @@ export class PostgresService implements OnModuleInit, OnModuleDestroy {
 
     const target = describeConnection(String(config.connectionString));
     const started = Date.now();
-    const { rows } = await this.pool.query<{ version: string }>('SELECT version()');
+    const { rows } = await this.pool.query<{ version: string }>(
+      'SELECT version()',
+    );
     this.logger.info(
       {
         target,
@@ -57,7 +65,10 @@ export class PostgresService implements OnModuleInit, OnModuleDestroy {
   }
 
   /** Parameterised query. Never interpolate values into SQL — always use $1, $2, … */
-  async query<T extends QueryResultRow = any>(text: string, params: any[] = []): Promise<T[]> {
+  async query<T extends QueryResultRow = any>(
+    text: string,
+    params: any[] = [],
+  ): Promise<T[]> {
     const started = Date.now();
     try {
       const result = await this.pool.query<T>(text, params);
@@ -65,9 +76,15 @@ export class PostgresService implements OnModuleInit, OnModuleDestroy {
       // Surfacing slow queries early is most of the value of having a real
       // database; the threshold is deliberately low for a dataset this small.
       if (durationMs > 200) {
-        this.logger.warn({ durationMs, rows: result.rowCount, sql: text.slice(0, 200) }, 'Slow query');
+        this.logger.warn(
+          { durationMs, rows: result.rowCount, sql: text.slice(0, 200) },
+          'Slow query',
+        );
       } else {
-        this.logger.debug({ durationMs, rows: result.rowCount, sql: text.slice(0, 200) }, 'Query');
+        this.logger.debug(
+          { durationMs, rows: result.rowCount, sql: text.slice(0, 200) },
+          'Query',
+        );
       }
       return result.rows;
     } catch (err) {
@@ -79,7 +96,11 @@ export class PostgresService implements OnModuleInit, OnModuleDestroy {
           err,
           sql: text.slice(0, 500),
           ...(isPgError(err)
-            ? { sqlstate: err.code, constraint: err.constraint, table: err.table }
+            ? {
+                sqlstate: err.code,
+                constraint: err.constraint,
+                table: err.table,
+              }
             : {}),
         },
         'Query failed',
@@ -92,7 +113,10 @@ export class PostgresService implements OnModuleInit, OnModuleDestroy {
   }
 
   /** Single row or null — the common lookup shape. */
-  async queryOne<T extends QueryResultRow = any>(text: string, params: any[] = []): Promise<T | null> {
+  async queryOne<T extends QueryResultRow = any>(
+    text: string,
+    params: any[] = [],
+  ): Promise<T | null> {
     const rows = await this.query<T>(text, params);
     return rows[0] ?? null;
   }
@@ -138,11 +162,17 @@ export class PostgresService implements OnModuleInit, OnModuleDestroy {
     `);
 
     const applied = new Set(
-      (await this.query<{ filename: string }>('SELECT filename FROM schema_migrations'))
-        .map((r) => r.filename),
+      (
+        await this.query<{ filename: string }>(
+          'SELECT filename FROM schema_migrations',
+        )
+      ).map((r) => r.filename),
     );
 
-    const files = fs.readdirSync(dir).filter((f) => f.endsWith('.sql')).sort();
+    const files = fs
+      .readdirSync(dir)
+      .filter((f) => f.endsWith('.sql'))
+      .sort();
     let count = 0;
 
     for (const filename of files) {
@@ -151,7 +181,10 @@ export class PostgresService implements OnModuleInit, OnModuleDestroy {
 
       await this.transaction(async (client) => {
         await client.query(sql);
-        await client.query('INSERT INTO schema_migrations (filename) VALUES ($1)', [filename]);
+        await client.query(
+          'INSERT INTO schema_migrations (filename) VALUES ($1)',
+          [filename],
+        );
       });
 
       this.logger.info({ filename }, 'Applied migration');

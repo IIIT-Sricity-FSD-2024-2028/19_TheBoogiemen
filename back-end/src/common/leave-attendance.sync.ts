@@ -12,7 +12,11 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import { ATTENDANCE_STATUS, eachDateInRange, normalizeAttendanceStatus } from './academic-rules';
+import {
+  ATTENDANCE_STATUS,
+  eachDateInRange,
+  normalizeAttendanceStatus,
+} from './academic-rules';
 
 export interface LeaveSyncResult {
   created: number;
@@ -22,8 +26,13 @@ export interface LeaveSyncResult {
   skipped: number;
 }
 
-const emptyResult = (): LeaveSyncResult =>
-  ({ created: 0, converted: 0, restored: 0, removed: 0, skipped: 0 });
+const emptyResult = (): LeaveSyncResult => ({
+  created: 0,
+  converted: 0,
+  restored: 0,
+  removed: 0,
+  skipped: 0,
+});
 
 const sourceTag = (leaveId: string) => `leave:${leaveId}`;
 
@@ -33,13 +42,16 @@ const sourceTag = (leaveId: string) => `leave:${leaveId}`;
  */
 export function applyLeaveToAttendance(db: any, leave: any): LeaveSyncResult {
   const result = emptyResult();
-  if (!leave?.student_id || !leave?.start_date || !leave?.end_date) return result;
+  if (!leave?.student_id || !leave?.start_date || !leave?.end_date)
+    return result;
 
   const dates = eachDateInRange(leave.start_date, leave.end_date);
   if (!dates.length) return result;
 
   const courseIds = db.enrollment
-    .filter((e: any) => e.student_id === leave.student_id && e.status === 'active')
+    .filter(
+      (e: any) => e.student_id === leave.student_id && e.status === 'active',
+    )
     .map((e: any) => e.course_id);
   if (!courseIds.length) return result;
 
@@ -48,7 +60,10 @@ export function applyLeaveToAttendance(db: any, leave: any): LeaveSyncResult {
   for (const date of dates) {
     for (const course_id of courseIds) {
       const existing = db.attendance_log.find(
-        (a: any) => a.student_id === leave.student_id && a.course_id === course_id && a.date === date,
+        (a: any) =>
+          a.student_id === leave.student_id &&
+          a.course_id === course_id &&
+          a.date === date,
       );
 
       if (!existing) {
@@ -112,8 +127,14 @@ export function revokeLeaveAttendance(db: any, leave: any): LeaveSyncResult {
  * Drive the sync from a leave's new status. Approved leave excuses attendance;
  * any other status (pending / rejected) reverses it.
  */
-export function syncLeaveAttendance(db: any, leave: any, newStatus: string): LeaveSyncResult {
-  const status = String(newStatus ?? '').trim().toLowerCase();
+export function syncLeaveAttendance(
+  db: any,
+  leave: any,
+  newStatus: string,
+): LeaveSyncResult {
+  const status = String(newStatus ?? '')
+    .trim()
+    .toLowerCase();
   return status === 'approved'
     ? applyLeaveToAttendance(db, leave)
     : revokeLeaveAttendance(db, leave);

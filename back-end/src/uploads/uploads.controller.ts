@@ -19,12 +19,32 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import type { Response } from 'express';
-import { CurrentUserId, CurrentUserRole } from '../common/decorators/current-user.decorator';
+import {
+  CurrentUserCollegeId,
+  CurrentUserId,
+  CurrentUserRole,
+} from '../common/decorators/current-user.decorator';
 import { ErrorCode, errorBody } from '../common/errors/error-codes';
-import { UPLOAD_OPTIONS, ALLOWED_EXTENSIONS, MAX_FILE_BYTES } from './upload.config';
-import { UploadContext, UPLOAD_CONTEXTS, UploadsService } from './uploads.service';
+import { Roles } from '../auth/roles.guard';
+import {
+  UPLOAD_OPTIONS,
+  ALLOWED_EXTENSIONS,
+  MAX_FILE_BYTES,
+} from './upload.config';
+import {
+  UploadContext,
+  UPLOAD_CONTEXTS,
+  UploadsService,
+} from './uploads.service';
 import type { Role } from '../auth/jwt-payload';
 
 @ApiTags('Documents')
@@ -34,11 +54,16 @@ export class UploadsController {
   constructor(private readonly uploads: UploadsService) {}
 
   @Post()
-  // No @Roles: any authenticated user may attach a document to their own work.
-  // Who can read it back is decided on download, by ownership.
+  // Any current academic role may attach a document to their own work — the
+  // list is explicit (not a bare "any authenticated user") so a future
+  // low-trust role does not inherit upload access just by existing. Who can
+  // read a document back is decided on download, by ownership, not by role.
+  @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
   @UseInterceptors(FileInterceptor('file', UPLOAD_OPTIONS))
   @ApiConsumes('multipart/form-data')
-  @ApiOperation({ summary: 'Upload a document and receive a file_id to attach' })
+  @ApiOperation({
+    summary: 'Upload a document and receive a file_id to attach',
+  })
   @ApiBody({
     schema: {
       type: 'object',
@@ -49,13 +74,20 @@ export class UploadsController {
       },
     },
   })
-  @ApiResponse({ status: 201, description: 'Stored — returns file_id, original_name and size' })
-  @ApiResponse({ status: 400, description: 'Missing file, disallowed type, or unknown context' })
+  @ApiResponse({
+    status: 201,
+    description: 'Stored — returns file_id, original_name and size',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Missing file, disallowed type, or unknown context',
+  })
   @ApiResponse({ status: 413, description: 'File exceeds the size limit' })
   async upload(
     @UploadedFile() file: Express.Multer.File | undefined,
     @Query('context') context: string,
     @CurrentUserId() userId: string,
+    @CurrentUserCollegeId() collegeId: string | null,
   ) {
     if (!file) {
       throw new BadRequestException(
@@ -80,7 +112,12 @@ export class UploadsController {
       );
     }
 
-    const record = this.uploads.record(file, context as UploadContext, userId);
+    const record = this.uploads.record(
+      file,
+      context as UploadContext,
+      userId,
+      collegeId,
+    );
 
     return {
       success: true,
@@ -95,7 +132,13 @@ export class UploadsController {
   }
 
   @Get(':fileId')
-  @ApiOperation({ summary: 'Download a document (owner or reviewing staff only)' })
+  // Same reasoning as the upload route above: every current academic role may
+  // attempt a download, and assertCanRead() below is the real gate — ownership,
+  // not role, decides who actually gets the bytes.
+  @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
+  @ApiOperation({
+    summary: 'Download a document (owner or reviewing staff only)',
+  })
   @ApiResponse({ status: 200, description: 'The file, as an attachment' })
   @ApiResponse({ status: 403, description: 'Not the owner and not staff' })
   @ApiResponse({ status: 404, description: 'No such document' })
@@ -103,10 +146,11 @@ export class UploadsController {
     @Param('fileId') fileId: string,
     @CurrentUserId() userId: string,
     @CurrentUserRole() role: string,
+    @CurrentUserCollegeId() collegeId: string | null,
     @Res() res: Response,
   ) {
     const record = this.uploads.findById(fileId);
-    this.uploads.assertCanRead(record, userId, role as Role);
+    this.uploads.assertCanRead(record, userId, role as Role, collegeId);
     const filePath = this.uploads.resolvePath(record);
 
     // Always an attachment, never inline: a stored HTML or SVG file rendered

@@ -1,9 +1,10 @@
-import { Global, Module } from '@nestjs/common';
+import { Global, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { PasswordService } from './password.service';
 import { loadAuthConfig } from '../config/auth.config';
+import { AuthRateLimitMiddleware } from '../common/middleware/rate-limit.middleware';
 
 /**
  * Global so that JwtService and PasswordService are injectable wherever they are
@@ -30,7 +31,26 @@ import { loadAuthConfig } from '../config/auth.config';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, PasswordService],
+  providers: [AuthService, PasswordService, AuthRateLimitMiddleware],
   exports: [AuthService, PasswordService, JwtModule],
 })
-export class AuthModule {}
+export class AuthModule implements NestModule {
+  /**
+   * Bind the rate limiter to this module's routes only.
+   *
+   * `forRoutes(AuthController)` rather than a path string: Nest reads the
+   * controller's own route metadata, so the binding already accounts for the
+   * global 'api' prefix and does not silently stop matching if a route is
+   * renamed. A hardcoded 'auth/login' would have to be kept in step by hand,
+   * and a stale one fails open — the limiter would simply never run.
+   *
+   * Scoping is what keeps this cheap. Registered here instead of app.use(), the
+   * middleware is absent from the stack for every non-auth route.
+   *
+   * Only failed sign-ins accrue, so covering the whole controller is safe:
+   * logout (204) and a successful login (200) never count against anyone.
+   */
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(AuthRateLimitMiddleware).forRoutes(AuthController);
+  }
+}

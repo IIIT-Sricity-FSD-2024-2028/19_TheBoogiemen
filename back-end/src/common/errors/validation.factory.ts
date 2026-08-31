@@ -25,7 +25,9 @@ function flatten(errors: ValidationError[], parentPath = ''): FieldErrors {
   const out: FieldErrors = {};
 
   for (const error of errors) {
-    const path = parentPath ? `${parentPath}.${error.property}` : error.property;
+    const path = parentPath
+      ? `${parentPath}.${error.property}`
+      : error.property;
 
     // A parent of nested errors has an empty `constraints` object. Emitting it
     // would put `{"address": []}` next to `{"address.city": [...]}`, so a client
@@ -34,7 +36,9 @@ function flatten(errors: ValidationError[], parentPath = ''): FieldErrors {
       out[path] = Object.values(error.constraints);
     }
     if (error.children?.length) {
-      for (const [childPath, messages] of Object.entries(flatten(error.children, path))) {
+      for (const [childPath, messages] of Object.entries(
+        flatten(error.children, path),
+      )) {
         out[childPath] = [...(out[childPath] ?? []), ...messages];
       }
     }
@@ -50,15 +54,20 @@ function flatten(errors: ValidationError[], parentPath = ''): FieldErrors {
  * those are surfaced separately as `rejectedFields` because the fix is different
  * — the caller should stop sending the field, not correct its value.
  */
-export function validationExceptionFactory(errors: ValidationError[]): BadRequestException {
+export function validationExceptionFactory(
+  errors: ValidationError[],
+): BadRequestException {
   const fields = flatten(errors);
 
   const rejectedFields = Object.entries(fields)
-    .filter(([, messages]) => messages.some((m) => m.includes('should not exist')))
+    .filter(([, messages]) =>
+      messages.some((m) => m.includes('should not exist')),
+    )
     .map(([field]) => field);
 
   const summary =
-    rejectedFields.length && rejectedFields.length === Object.keys(fields).length
+    rejectedFields.length &&
+    rejectedFields.length === Object.keys(fields).length
       ? `Unexpected field(s): ${rejectedFields.join(', ')}`
       : `Validation failed for ${Object.keys(fields).length} field(s)`;
 

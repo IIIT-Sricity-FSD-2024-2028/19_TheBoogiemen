@@ -15,7 +15,8 @@ import { getDataStore } from '../config/database.config';
  * With DATA_STORE=memory (the default) no connection is opened at all, so the
  * app still runs with no database configured.
  */
-const postgresProviders = getDataStore() === 'postgres' ? [PostgresService] : [];
+const postgresProviders =
+  getDataStore() === 'postgres' ? [PostgresService] : [];
 
 @Global()
 @Module({

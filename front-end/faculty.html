@@ -44,11 +44,11 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             <span>Student Overview</span>
         </a>
-        <a href="#" class="nav-item" onclick="switchView('discussion-forum-view', this)">
+        <a href="#" class="nav-item" data-module="forum" onclick="switchView('discussion-forum-view', this)">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             <span>Discussion Forum</span>
         </a>
-        <a href="#" class="nav-item" onclick="switchView('research-projects-view', this)">
+        <a href="#" class="nav-item" data-module="research" onclick="switchView('research-projects-view', this)">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
             <span>Research Projects</span>
         </a>
@@ -118,7 +118,6 @@
         <div id="assessment-mapping-view" class="view-section" style="display:none;">
             <div style="display:flex;justify-content:flex-end;gap:12px;margin-bottom:16px;">
                 <button class="page-action-btn" onclick="openModal('assessmentModal')" style="background:#1e293b;">+ Create Assessment</button>
-                <button class="page-action-btn" onclick="openModal('createCourseModal')">+ Create Course</button>
             </div>
             <div id="assessmentListContainer"></div>
         </div>
@@ -243,7 +242,6 @@
             <!-- Quick Actions -->
             <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
                 <button onclick="openMeetingModal()" style="padding:10px 18px;background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;">📅 Schedule Meeting</button>
-                <button onclick="openEnrollStudentModal()" style="padding:10px 18px;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;">📖 Enroll Student in Course</button>
                 <button onclick="openAssignBTPModal()" style="padding:10px 18px;background:#faf5ff;color:#7c3aed;border:1px solid #e9d5ff;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;">📚 Assign BTP Project</button>
             </div>
             <!-- Student list -->
@@ -462,44 +460,6 @@
     </div>
 </div>
 
-<!-- Create Course Modal -->
-<div id="createCourseModal" class="modal-backdrop">
-    <div class="modal-window">
-        <div class="modal-header">
-            <h2>Create New Course</h2>
-            <button class="close-modal" onclick="closeModal('createCourseModal')">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            </button>
-        </div>
-        <form id="createCourseForm" onsubmit="event.preventDefault(); submitCreateCourse();">
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>Course Name</label>
-                    <input type="text" id="newCourseName" placeholder="e.g., Cloud Computing" required>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Course Code</label>
-                        <input type="text" id="newCourseCode" placeholder="CS501" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Credits</label>
-                        <input type="number" id="newCourseCredits" min="1" max="5" value="4" required>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Semester</label>
-                    <input type="number" id="newCourseSemester" min="1" max="8" value="6" required>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="submit" class="submit-btn" style="flex:1;">Create Course</button>
-                <button type="button" class="btn-cancel" onclick="closeModal('createCourseModal')">Cancel</button>
-            </div>
-        </form>
-    </div>
-</div>
-
 <!-- Apply for Leave Modal -->
 <div id="fLeaveModal" class="modal-backdrop">
     <div class="modal-window">
@@ -660,21 +620,6 @@
     </div>
 </div>
 
-<!-- Enroll Student in Course Modal -->
-<div id="enrollStudentModal" class="modal-backdrop">
-    <div class="modal-window">
-        <div class="modal-header"><h2>📖 Enroll Student in Course</h2><button class="close-modal" onclick="closeModal('enrollStudentModal')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
-        <div class="modal-body">
-            <div class="form-group"><label>Select Student <span style="color:#ef4444">*</span></label><select id="enrollStudentSel"><option value="">Loading…</option></select></div>
-            <div class="form-group"><label>Select Course <span style="color:#ef4444">*</span></label><select id="enrollCourseSel"><option value="">Loading…</option></select></div>
-        </div>
-        <div class="modal-footer">
-            <button onclick="submitEnrollStudent()" class="submit-btn" style="flex:1;">Enroll Student</button>
-            <button type="button" class="btn-cancel" onclick="closeModal('enrollStudentModal')">Cancel</button>
-        </div>
-    </div>
-</div>
-
 <!-- Faculty BTP Progress Update Modal -->
 <div id="facultyBTPModal" class="modal-backdrop">
     <div class="modal-window">
@@ -722,6 +667,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (sn) sn.textContent = name.trim();
     // Inject notification bell
     window.Notifications?.injectBell?.();
+    applyModuleGating();
     // Populate attendance & assessment course dropdowns on load
     api('/faculty/me/courses').then(courses => {
         const attSel = document.getElementById('attendance-course-select');

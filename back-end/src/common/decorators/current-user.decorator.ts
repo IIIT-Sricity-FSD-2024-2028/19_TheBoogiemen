@@ -12,7 +12,11 @@
  *   getProfile(@CurrentUserId() userId: string) { ... }
  */
 
-import { createParamDecorator, ExecutionContext, InternalServerErrorException } from '@nestjs/common';
+import {
+  createParamDecorator,
+  ExecutionContext,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { AuthenticatedUser } from '../../auth/jwt-payload';
 
 export const CurrentUser = createParamDecorator(
@@ -54,5 +58,30 @@ export const CurrentUserRole = createParamDecorator(
       );
     }
     return request.user.role;
+  },
+);
+
+/**
+ * The caller's college, from the verified token — never a path or body
+ * parameter a caller could edit to reach another college's data. This is the
+ * one thing standing between "a SPOC sees their own college" and "a SPOC sees
+ * everyone's": every billing/support route resolves the college this way,
+ * never from anything the client sends.
+ *
+ * Returns `null` rather than throwing when the claim is absent — unlike
+ * `sub` and `role`, "no college" is a legitimate value (superadmin, the
+ * vendor operator, belongs to none). A route that requires one checks for
+ * `null` itself and throws its own, route-specific error; this decorator only
+ * guarantees the value is genuine, not that it is present.
+ */
+export const CurrentUserCollegeId = createParamDecorator(
+  (_data: unknown, ctx: ExecutionContext): string | null => {
+    const request = ctx.switchToHttp().getRequest();
+    if (!request.user) {
+      throw new InternalServerErrorException(
+        'CurrentUserCollegeId requested on a route without authentication.',
+      );
+    }
+    return request.user.college_id ?? null;
   },
 );

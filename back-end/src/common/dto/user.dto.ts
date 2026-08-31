@@ -9,10 +9,25 @@
  */
 
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEmail, IsIn, IsNotEmpty, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsIn,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
-export const ASSIGNABLE_ROLES = ['student', 'faculty', 'admin', 'head', 'superadmin'] as const;
-export type AssignableRole = typeof ASSIGNABLE_ROLES[number];
+export const ASSIGNABLE_ROLES = [
+  'student',
+  'faculty',
+  'admin',
+  'head',
+  'superadmin',
+] as const;
+export type AssignableRole = (typeof ASSIGNABLE_ROLES)[number];
 
 /**
  * Privilege ceiling. Mirrors the policy documented in README.md:
@@ -20,19 +35,42 @@ export type AssignableRole = typeof ASSIGNABLE_ROLES[number];
  *   - Academic Head / Admin — may manage students and faculty only, and
  *     explicitly "cannot add other Academic Heads or Super Admins".
  * Previously nothing enforced this and a `head` could mint a `superadmin`.
+ *
+ * 'spoc' is deliberately absent from this table's keys — a SPOC creates users
+ * through this same POST /users path (so it inherits every existing check:
+ * duplicate-email, password hashing, the works), but 'spoc' itself is not a
+ * value in ASSIGNABLE_ROLES, so it can never appear as a *key* here by being
+ * granted by anyone via this table. It appears below only as the one row
+ * describing what a SPOC may create.
  */
 const ROLE_GRANTS: Record<string, readonly AssignableRole[]> = {
   superadmin: ASSIGNABLE_ROLES,
   admin: ['student', 'faculty'],
   head: ['student', 'faculty'],
+  // The entire "SPOC may hire only admins" rule. Every existing caller of
+  // canAssignRole() — user creation, role changes, password resets — now
+  // correctly refuses a SPOC anything but 'admin', with no new logic.
+  spoc: ['admin'],
 };
 
-export function rolesAssignableBy(actorRole: string): readonly AssignableRole[] {
-  return ROLE_GRANTS[String(actorRole ?? '').trim().toLowerCase()] ?? [];
+export function rolesAssignableBy(
+  actorRole: string,
+): readonly AssignableRole[] {
+  return (
+    ROLE_GRANTS[
+      String(actorRole ?? '')
+        .trim()
+        .toLowerCase()
+    ] ?? []
+  );
 }
 
 export function canAssignRole(actorRole: string, targetRole: string): boolean {
-  return rolesAssignableBy(actorRole).includes(String(targetRole ?? '').trim().toLowerCase() as AssignableRole);
+  return rolesAssignableBy(actorRole).includes(
+    String(targetRole ?? '')
+      .trim()
+      .toLowerCase() as AssignableRole,
+  );
 }
 
 /** Fields a user administrator may change on an existing account. */
@@ -101,7 +139,9 @@ export class CreateUserDto {
   @MaxLength(20)
   phone?: string;
 
-  @ApiPropertyOptional({ description: 'Initial password. Minimum 8 characters.' })
+  @ApiPropertyOptional({
+    description: 'Initial password. Minimum 8 characters.',
+  })
   @IsOptional()
   @IsString()
   @MinLength(8)
@@ -120,12 +160,19 @@ export class UpdateUserRoleDto {
 
 /** Admin-initiated password reset — separate from the self-service change-password flow. */
 export class ResetUserPasswordDto {
-  @ApiProperty({ description: 'New password. Minimum 8 characters with upper, lower, digit and special.' })
+  @ApiProperty({
+    description:
+      'New password. Minimum 8 characters with upper, lower, digit and special.',
+  })
   @IsNotEmpty()
   @IsString()
   @MinLength(8)
-  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/, {
-    message: 'Password must be at least 8 characters and include an uppercase letter, a lowercase letter, a number and a special character (@$!%*?&)',
-  })
+  @Matches(
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+    {
+      message:
+        'Password must be at least 8 characters and include an uppercase letter, a lowercase letter, a number and a special character (@$!%*?&)',
+    },
+  )
   new_password: string;
 }

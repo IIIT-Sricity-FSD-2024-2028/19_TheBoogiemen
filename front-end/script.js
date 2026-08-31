@@ -1,14 +1,23 @@
 /**
  * BarelyPassing – script.js
- * Handles: auth helper routines, login submission, and signup registration.
- * Role rendering & dashboard data display is handled by fixes.js & individual portal scripts.
+ * Handles: auth redirects, module gating, login and signup forms.
+ * ALL rendering is delegated to fixes.js (loaded after this file).
  */
 
-// ─── Auth Route Guard ────────────────────────────────────────────────────────
-// If already logged in and on login.html with valid session, allow navigation
-document.addEventListener('DOMContentLoaded', () => {
-    // Keep login form ready — no auto-redirects that block the user from logging in
-});
+// ─── Module Gating ───────────────────────────────────────────────────────────
+async function applyModuleGating() {
+    const items = document.querySelectorAll('.nav-item[data-module]');
+    if (!items.length) return;
+    try {
+        const res = await window.Auth?.apiFetch?.('/billing/colleges/me/modules');
+        const modules = res?.data?.modules || [];
+        items.forEach(el => {
+            if (!modules.includes(el.dataset.module)) el.style.display = 'none';
+        });
+    } catch (e) {
+        console.warn('[ModuleGating] Could not load licensed modules', e);
+    }
+}
 
 // ─── Login Form Submission ───────────────────────────────────────────────────
 async function handleLogin(event) {
@@ -108,7 +117,7 @@ async function handleSignup(event) {
     }
 }
 
-// ─── Role Selection (Visual Only - Never auto-fills input values) ──────────────
+// ─── Role Selection (Login Page) ─────────────────────────────────────────────
 function selectRole(role) {
     document.querySelectorAll('.role-option').forEach(el => el.classList.remove('active'));
     const opt = document.querySelector(`.role-option[data-role="${role}"]`);
@@ -124,11 +133,13 @@ function selectRole(role) {
         faculty:               { title: 'Faculty Login',          subtitle: 'Mark attendance, enter grades and manage student progress', email: 'faculty@iiits.in' },
         head:                  { title: 'HOD / Academic Head',    subtitle: 'Manage department course allocations and review faculty reports', email: 'head@iiits.in' },
         INSTITUTE_SUPER_ADMIN: { title: 'Institute Director',    subtitle: 'Monitor institute performance, departments and academic outcomes', email: 'director@iiits.in' },
+        superadmin:            { title: 'Institute Director',    subtitle: 'Monitor institute performance, departments and academic outcomes', email: 'director@iiits.in' },
         FINANCE_ADMIN:         { title: 'Finance Officer Login',  subtitle: 'Manage fee structures, dues, payment receipts and compliance', email: 'finance@iiits.in' },
+        spoc:                  { title: 'Institution Partner Sign In', subtitle: "Manage your college's subscription and reach our team", email: 'spoc@example.com' }
     };
 
     const config = roleConfig[role] || roleConfig.student;
     if (formTitle) formTitle.textContent = config.title;
     if (formSubtitle) formSubtitle.textContent = config.subtitle;
-    if (emailInput) emailInput.placeholder = config.email;
+    if (emailInput && config.email) emailInput.placeholder = config.email;
 }

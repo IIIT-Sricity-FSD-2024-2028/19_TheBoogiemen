@@ -1,583 +1,384 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BarelyPassing — Academic Outcome & Institutional Management Platform</title>
-    <meta name="description" content="Transform academic outcome tracking, clash-free timetables, digital attendance, and multi-tenant university management.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Institution Onboarding - BarelyPassing</title>
+<link rel="stylesheet" href="style.css">
+<style>
+    /* Light, dashboard-adjacent visual language — same family as
+       login.html/signup.html, not index.html's dark marketing page. This is
+       a form flow to be completed carefully, not a pitch to be scanned. */
+    body.onboard-body {
+        background: radial-gradient(circle at top right, #e2e8f0, #f8fafc);
+        min-height: 100vh; padding: 32px 20px 60px; display: flex; flex-direction: column; align-items: center;
+    }
+    .onboard-shell { width: 100%; max-width: 720px; }
+    .onboard-steps {
+        display: flex; justify-content: space-between; margin: 28px 0 32px; padding: 0 4px;
+    }
+    .onboard-step-dot {
+        display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; position: relative;
+    }
+    .onboard-step-dot .circle {
+        width: 28px; height: 28px; border-radius: 50%; background: white; border: 2px solid var(--border);
+        display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--text-muted);
+        z-index: 1;
+    }
+    .onboard-step-dot .label { font-size: 11px; color: var(--text-muted); font-weight: 600; text-align: center; }
+    .onboard-step-dot::after {
+        content: ''; position: absolute; top: 13px; left: 50%; width: 100%; height: 2px; background: var(--border); z-index: 0;
+    }
+    .onboard-step-dot:last-child::after { display: none; }
+    .onboard-step-dot.done .circle { background: var(--accent-primary); border-color: var(--accent-primary); color: white; }
+    .onboard-step-dot.done::after { background: var(--accent-primary); }
+    .onboard-step-dot.active .circle { border-color: var(--accent-primary); color: var(--accent-primary); }
 
-        :root {
-            --bg:      #f8fafc;
-            --s1:      #ffffff;
-            --s2:      #f1f5f9;
-            --border:  #e2e8f0;
-            --p:       #4f46e5;
-            --p2:      #6366f1;
-            --navy:    #0f172a;
-            --text:    #0f172a;
-            --muted:   #475569;
-            --dim:     #64748b;
-            --green:   #059669;
-        }
+    .onboard-card {
+        background: white; border-radius: 20px; border: 1px solid var(--border); box-shadow: var(--shadow-premium);
+        padding: 36px 40px;
+    }
+    .onboard-card h2 { font-size: 20px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
+    .onboard-card > p.sub { font-size: 13.5px; color: var(--text-muted); margin-bottom: 26px; }
+    .onboard-panel { display: none; }
+    .onboard-panel.active { display: block; }
 
-        html { scroll-behavior: smooth; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
+    .module-row {
+        display: flex; align-items: center; justify-content: space-between; padding: 12px 14px;
+        border: 1.5px solid var(--border); border-radius: 10px; margin-bottom: 10px; cursor: pointer; transition: border-color .15s;
+    }
+    .module-row:has(input:checked) { border-color: var(--accent-primary); background: #f5f3ff; }
+    .module-row .name { font-size: 13.5px; font-weight: 600; color: var(--text-primary); }
+    .module-row .desc { font-size: 11.5px; color: var(--text-muted); }
+    .module-row .weight { font-size: 12px; font-weight: 700; color: var(--accent-primary); }
 
-        /* ── Nav (Navy Blue Header) ── */
-        nav {
-            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 16px 60px;
-            background: #0f172a;
-            box-shadow: 0 4px 20px rgba(15,23,42,0.15);
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-        .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-        .nav-logo {
-            width: 36px; height: 36px; border-radius: 10px;
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            display: flex; align-items: center; justify-content: center;
-        }
-        .nav-brand h1 { font-size: 17px; font-weight: 700; color: #ffffff; }
-        .nav-links { display: flex; align-items: center; gap: 28px; }
-        .nav-links a { color: #cbd5e1; font-size: 14px; text-decoration: none; transition: color 0.2s; font-weight: 500; }
-        .nav-links a:hover { color: #ffffff; }
-        .nav-cta {
-            background: linear-gradient(135deg, var(--p), var(--p2));
-            color: white !important; padding: 9px 20px; border-radius: 8px;
-            font-size: 14px; font-weight: 600; text-decoration: none;
-            transition: all 0.2s;
-            box-shadow: 0 2px 12px rgba(99,102,241,0.3);
-        }
-        .nav-cta:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(99,102,241,0.4); }
+    .price-live {
+        margin-top: 20px; padding: 18px 20px; border-radius: 12px; background: #0f172a; color: white;
+        display: flex; justify-content: space-between; align-items: baseline;
+    }
+    .price-live .amount { font-size: 26px; font-weight: 800; }
+    .price-live .caption { font-size: 11.5px; color: #94a3b8; }
 
-        /* ── Hero ── */
-        .hero {
-            min-height: 92vh;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            text-align: center; padding: 130px 24px 70px;
-            position: relative; overflow: hidden;
-            background: radial-gradient(circle at top center, #e0e7ff 0%, #f8fafc 65%);
-        }
+    .breakdown-line { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid #f1f5f9; font-size: 13.5px; }
+    .breakdown-line:last-of-type { border-bottom: none; }
+    .breakdown-line.negative .amt { color: #16a34a; }
+    .breakdown-line.total { border-top: 2px solid var(--border); margin-top: 8px; padding-top: 14px; font-size: 16px; font-weight: 700; }
 
-        .hero-tag {
-            display: inline-flex; align-items: center; gap: 8px;
-            background: #e0e7ff; border: 1px solid #c7d2fe;
-            color: #3730a3; font-size: 13px; font-weight: 700;
-            padding: 6px 18px; border-radius: 20px; margin-bottom: 24px;
-            box-shadow: 0 2px 8px rgba(99,102,241,0.1);
-        }
+    .mock-checkout {
+        border: 2px dashed #f59e0b; background: #fffbeb; border-radius: 14px; padding: 24px; text-align: center;
+    }
+    .mock-checkout .badge {
+        display: inline-block; background: #f59e0b; color: white; font-size: 11px; font-weight: 700;
+        padding: 3px 10px; border-radius: 20px; margin-bottom: 14px; text-transform: uppercase; letter-spacing: .5px;
+    }
+    .mock-checkout .amount { font-size: 32px; font-weight: 800; color: var(--text-primary); margin: 6px 0 4px; }
+    .mock-checkout .order-id { font-size: 11.5px; color: var(--text-muted); font-family: ui-monospace, monospace; margin-bottom: 20px; }
 
-        h1.hero-title {
-            font-size: clamp(36px, 5.5vw, 64px);
-            font-weight: 900; line-height: 1.12;
-            color: #0f172a;
-            letter-spacing: -1.5px;
-            max-width: 860px;
-        }
-        h1.hero-title span {
-            background: linear-gradient(135deg, #0f172a 20%, #4f46e5 100%);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        }
-
-        .hero-subtitle {
-            font-size: 18px; color: #475569; max-width: 640px;
-            margin: 20px auto 36px; line-height: 1.7;
-        }
-
-        .hero-btns { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
-        .btn-hero-primary {
-            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-            color: white; padding: 14px 30px; border-radius: 10px;
-            font-size: 15px; font-weight: 700; text-decoration: none;
-            box-shadow: 0 4px 18px rgba(15,23,42,0.25);
-            transition: all 0.2s;
-        }
-        .btn-hero-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(15,23,42,0.35); }
-        .btn-hero-secondary {
-            background: #ffffff; color: #0f172a;
-            padding: 14px 30px; border-radius: 10px;
-            font-size: 15px; font-weight: 700; text-decoration: none;
-            border: 1.5px solid #cbd5e1; transition: all 0.2s;
-            box-shadow: 0 2px 8px rgba(15,23,42,0.05);
-        }
-        .btn-hero-secondary:hover { border-color: #0f172a; }
-
-        /* Trust bar */
-        .trust-bar {
-            background: #ffffff; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
-            padding: 24px 60px; text-align: center;
-        }
-        .trust-bar p { font-size: 12px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 14px; }
-        .trust-logos { display: flex; justify-content: center; gap: 48px; flex-wrap: wrap; align-items: center; }
-        .trust-logo { font-size: 15px; font-weight: 800; color: #334155; opacity: 0.85; }
-
-        /* Sections General */
-        section { max-width: 1200px; margin: 0 auto; padding: 90px 40px; }
-        .section-label {
-            font-size: 12px; font-weight: 800; color: #4f46e5;
-            text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; text-align: center;
-        }
-        .section-title { font-size: clamp(28px, 3.5vw, 42px); font-weight: 800; text-align: center; color: #0f172a; letter-spacing: -0.8px; }
-        .section-sub { font-size: 16px; color: #64748b; text-align: center; max-width: 600px; margin: 12px auto 50px; line-height: 1.6; }
-
-        /* Features */
-        .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-        .feature-card {
-            background: #ffffff; border: 1px solid var(--border);
-            border-radius: 16px; padding: 28px;
-            box-shadow: 0 2px 10px rgba(15,23,42,0.04);
-            transition: all 0.25s;
-        }
-        .feature-card:hover { transform: translateY(-4px); border-color: #cbd5e1; box-shadow: 0 12px 24px rgba(15,23,42,0.08); }
-        .feature-icon {
-            width: 48px; height: 48px; border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 22px; margin-bottom: 18px;
-        }
-        .feature-card h3 { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
-        .feature-card p { font-size: 13.5px; color: var(--muted); line-height: 1.7; }
-
-        /* ── Middleware Architecture Section ── */
-        .middleware-section {
-            background: linear-gradient(180deg, #0f172a 0%, #1e1b4b 100%);
-            border-radius: 24px; padding: 60px 48px; color: #fff;
-            margin: 40px auto; max-width: 1140px; box-shadow: 0 12px 40px rgba(15,23,42,0.25);
-        }
-        .mw-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 36px; }
-        .mw-card {
-            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 14px; padding: 20px; transition: all 0.2s;
-        }
-        .mw-card:hover { background: rgba(255,255,255,0.09); border-color: #818cf8; }
-        .mw-card .icon { font-size: 24px; margin-bottom: 10px; }
-        .mw-card h4 { font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 6px; }
-        .mw-card p { font-size: 12.5px; color: #94a3b8; line-height: 1.6; }
-
-        /* ── Role Hierarchy ── */
-        .role-hierarchy-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-top: 36px; }
-        .role-box {
-            background: #ffffff; border: 1.5px solid var(--border); border-radius: 14px;
-            padding: 24px 20px; transition: all 0.2s;
-        }
-        .role-box:hover { border-color: #4f46e5; transform: translateY(-3px); box-shadow: 0 8px 20px rgba(79,70,229,0.1); }
-        .role-badge { display: inline-block; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 6px; margin-bottom: 12px; }
-        .role-box h4 { font-size: 15px; font-weight: 800; color: #0f172a; margin-bottom: 6px; }
-        .role-box p { font-size: 12.5px; color: #64748b; line-height: 1.6; }
-
-        /* ── Interactive Pricing ── */
-        .pricing-toggle {
-            display: flex; align-items: center; justify-content: center; gap: 12px;
-            margin: 0 auto 36px;
-        }
-        .toggle-btn {
-            background: #e2e8f0; border: none; padding: 8px 18px; border-radius: 20px;
-            font-size: 13px; font-weight: 700; color: #475569; cursor: pointer; transition: all 0.2s;
-        }
-        .toggle-btn.active { background: #0f172a; color: #ffffff; }
-
-        .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 10px; }
-        .plan-card {
-            background: #ffffff; border: 2px solid #e2e8f0;
-            border-radius: 20px; padding: 36px 30px; position: relative;
-            cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 12px rgba(15,23,42,0.04);
-            display: flex; flex-direction: column;
-        }
-        .plan-card:hover {
-            transform: translateY(-6px);
-            border-color: #94a3b8;
-            box-shadow: 0 16px 32px rgba(15,23,42,0.1);
-        }
-        .plan-card.selected {
-            border-color: #4f46e5 !important;
-            background: linear-gradient(180deg, #f5f3ff 0%, #ffffff 100%) !important;
-            box-shadow: 0 16px 36px rgba(79, 70, 229, 0.2) !important;
-        }
-        .plan-badge {
-            position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
-            background: linear-gradient(135deg, #0f172a, #1e1b4b);
-            color: white; font-size: 11px; font-weight: 800;
-            padding: 4px 14px; border-radius: 20px; white-space: nowrap;
-            box-shadow: 0 4px 12px rgba(15,23,42,0.25);
-        }
-        .plan-name { font-size: 16px; font-weight: 800; color: #4f46e5; margin-bottom: 8px; }
-        .plan-price { font-size: 38px; font-weight: 900; color: #0f172a; }
-        .plan-price span { font-size: 14px; font-weight: 500; color: #64748b; }
-        .plan-desc { font-size: 13px; color: #475569; margin: 12px 0 20px; line-height: 1.6; }
-        .plan-features { list-style: none; margin-bottom: 28px; flex: 1; }
-        .plan-features li {
-            display: flex; align-items: flex-start; gap: 10px;
-            font-size: 13.5px; color: #334155; padding: 6px 0;
-        }
-        .plan-features li::before { content: '✓'; color: #059669; font-weight: 800; flex-shrink: 0; }
-        .plan-btn {
-            width: 100%; padding: 13px; border-radius: 10px;
-            font-size: 14px; font-weight: 700; cursor: pointer;
-            border: none; font-family: inherit; transition: all 0.2s;
-            text-align: center; text-decoration: none; display: block;
-        }
-        .plan-card.selected .plan-btn {
-            background: linear-gradient(135deg, #4f46e5, #6366f1);
-            color: #ffffff; box-shadow: 0 4px 14px rgba(79,70,229,0.3);
-        }
-        .plan-btn-default {
-            background: #f1f5f9; color: #0f172a; border: 1.5px solid #cbd5e1;
-        }
-        .plan-btn-default:hover { background: #e2e8f0; }
-
-        /* ── FAQ Section ── */
-        .faq-list { max-width: 800px; margin: 0 auto; }
-        .faq-item {
-            background: #fff; border: 1.5px solid #e2e8f0; border-radius: 12px;
-            margin-bottom: 12px; overflow: hidden; transition: all 0.2s;
-        }
-        .faq-question {
-            padding: 18px 24px; font-weight: 700; font-size: 15px; color: #0f172a;
-            display: flex; justify-content: space-between; align-items: center; cursor: pointer;
-        }
-        .faq-question:hover { background: #f8fafc; }
-        .faq-answer {
-            padding: 0 24px 18px; font-size: 14px; color: #475569; line-height: 1.7; display: none;
-        }
-        .faq-item.open .faq-answer { display: block; }
-        .faq-item.open .faq-icon { transform: rotate(180deg); }
-        .faq-icon { transition: transform 0.2s; font-size: 12px; color: #94a3b8; }
-
-        /* ── Footer ── */
-        footer {
-            background: #0f172a; color: #94a3b8; padding: 60px 60px 30px;
-            border-top: 1px solid rgba(255,255,255,0.08); font-size: 13px;
-        }
-        .footer-grid {
-            max-width: 1200px; margin: 0 auto; display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px; margin-bottom: 40px;
-        }
-        .footer-col h5 { color: #fff; font-size: 14px; font-weight: 700; margin-bottom: 14px; }
-        .footer-col a { display: block; color: #94a3b8; text-decoration: none; margin-bottom: 8px; transition: color 0.2s; }
-        .footer-col a:hover { color: #fff; }
-        .footer-bottom {
-            max-width: 1200px; margin: 0 auto; padding-top: 24px;
-            border-top: 1px solid rgba(255,255,255,0.08); text-align: center; font-size: 12px;
-        }
-
-        @media (max-width: 900px) {
-            .features-grid, .pricing-grid, .role-hierarchy-grid, .mw-grid { grid-template-columns: 1fr; }
-            .footer-grid { grid-template-columns: 1fr 1fr; }
-            nav { padding: 16px 24px; }
-        }
-    </style>
+    .field-hint { color: var(--text-muted); font-size: 11.5px; margin-top: 4px; }
+</style>
 </head>
-<body>
+<body class="onboard-body">
 
-<!-- Navigation Bar -->
-<nav>
-    <a class="nav-brand" href="onboarding.html">
-        <div class="nav-logo">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+<div class="onboard-shell">
+    <div class="brand-header" style="justify-content:center;">
+        <div class="logo"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg></div>
+        <h1 style="font-size:22px;">BarelyPassing</h1>
+    </div>
+
+    <div class="onboard-steps" id="stepIndicator"></div>
+
+    <div class="onboard-card">
+
+        <!-- ── Step 1: Details ─────────────────────────────────────────── -->
+        <div class="onboard-panel active" id="panel-1">
+            <h2>Your details</h2>
+            <p class="sub">Tell us about you and your institution — nothing is charged yet.</p>
+            <form id="detailsForm" onsubmit="submitDetails(event)">
+                <div class="form-row">
+                    <div class="form-group"><label>First Name</label><input type="text" id="d_first_name"></div>
+                    <div class="form-group"><label>Last Name</label><input type="text" id="d_last_name"></div>
+                </div>
+                <div class="form-group"><label>Work Email</label><input type="email" id="d_email" placeholder="you@college.edu"></div>
+                <div class="form-group"><label>Phone</label><input type="tel" id="d_phone" placeholder="+91 98765 43210"></div>
+                <div class="form-group">
+                    <label>College / Institution Name</label>
+                    <input type="text" id="d_college_name" placeholder="e.g. Apex Institute of Technology">
+                </div>
+                <div class="form-group">
+                    <label>College Code (subdomain / tenant code)</label>
+                    <input type="text" id="d_college_code" placeholder="apex" style="text-transform:uppercase;">
+                    <p class="field-hint">3–10 letters or numbers. Your team will use this to sign in.</p>
+                </div>
+                <div class="form-group">
+                    <label>Password (for your administrator account)</label>
+                    <input type="password" id="d_password" placeholder="At least 8 characters">
+                </div>
+                <button type="submit" class="submit-btn" style="margin-top:12px;">Continue to modules →</button>
+            </form>
         </div>
-        <h1>BarelyPassing</h1>
-    </a>
-    <div class="nav-links">
-        <a href="#features">Platform Features</a>
-        <a href="#roles">Governance Roles</a>
-        <a href="#pricing">Pricing Plans</a>
-        <a href="#faq">FAQ</a>
-        <a href="login.html" style="color:#cbd5e1;">Sign In</a>
-        <a class="nav-cta" href="onboarding-signup.html">Get Started →</a>
-    </div>
-</nav>
 
-<!-- Hero Section -->
-<section class="hero">
-    <div class="hero-tag">🎓 Enterprise Academic Outcome &amp; ERP System</div>
-    <h1 class="hero-title">Transform Institutional Outcomes with <span>Zero Manual Friction</span></h1>
-    <p class="hero-subtitle">Complete dual-tier multi-tenant platform for Directors, HODs, Faculty, Students, and Finance. Built with 5-tier NestJS middleware architecture.</p>
-    <div class="hero-btns">
-        <a class="btn-hero-primary" href="onboarding-signup.html">Get Started for Your Campus →</a>
-        <a class="btn-hero-secondary" href="#pricing">Explore Plans &amp; Pricing</a>
-    </div>
-</section>
+        <!-- ── Step 2: Modules & Scope ─────────────────────────────────── -->
+        <div class="onboard-panel" id="panel-2">
+            <h2>Choose your modules &amp; campus size</h2>
+            <p class="sub">Select the capabilities you need. Core academic management is included.</p>
+            <form id="metricsForm" onsubmit="submitMetrics(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Enrolled Students</label>
+                        <input type="number" id="m_students" min="10" max="50000" value="500" oninput="recalcLivePrice()">
+                    </div>
+                    <div class="form-group">
+                        <label>Faculty &amp; Staff</label>
+                        <input type="number" id="m_faculty" min="1" max="5000" value="50" oninput="recalcLivePrice()">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Contract Term</label>
+                    <select id="m_term" onchange="recalcLivePrice()">
+                        <option value="1">1 year (standard)</option>
+                        <option value="2">2 years (5% discount)</option>
+                        <option value="3" selected>3 years (10% multi-year discount)</option>
+                        <option value="5">5 years (20% long-term discount)</option>
+                    </select>
+                </div>
+                <label style="margin:20px 0 10px;display:block;">Optional Modules</label>
+                <div id="moduleList"></div>
+                <div class="price-live">
+                    <div>
+                        <div class="caption">Estimated Annual Subscription</div>
+                        <div class="amount" id="liveAnnualEstimate">₹0</div>
+                    </div>
+                    <div class="caption" id="liveMonthlyEstimate">≈ ₹0 / month</div>
+                </div>
+                <div style="display:flex;gap:12px;margin-top:20px;">
+                    <button type="button" class="btn-cancel" style="width:35%;" onclick="goToPanel(1)">← Back</button>
+                    <button type="submit" class="submit-btn" style="width:65%;">Generate binding quote →</button>
+                </div>
+            </form>
+        </div>
 
-<!-- Trust Bar -->
-<div class="trust-bar">
-    <p>Engineered for leading academic institutions</p>
-    <div class="trust-logos">
-        <span class="trust-logo">IIIT Sricity</span>
-        <span class="trust-logo">IIT Madras</span>
-        <span class="trust-logo">NIT Warangal</span>
-        <span class="trust-logo">VIT Vellore</span>
-        <span class="trust-logo">BITS Pilani</span>
+        <!-- ── Step 3: Formal Quote ────────────────────────────────────── -->
+        <div class="onboard-panel" id="panel-3">
+            <h2>Your transparent quote</h2>
+            <p class="sub">Every cost explained — no surprise fees later.</p>
+            <div id="quoteBreakdown"></div>
+            <div style="display:flex;gap:12px;margin-top:28px;">
+                <button type="button" class="btn-cancel" style="width:35%;" onclick="goToPanel(2)">← Change scope</button>
+                <button type="button" class="submit-btn" style="width:65%;" onclick="acceptQuote()">Accept &amp; proceed to payment →</button>
+            </div>
+        </div>
+
+        <!-- ── Step 4: Payment & Activation ────────────────────────────── -->
+        <div class="onboard-panel" id="panel-4">
+            <h2>Complete payment to activate</h2>
+            <p class="sub">Your tenant is ready to be provisioned.</p>
+            <div class="mock-checkout">
+                <div class="badge">SANDBOX CHECKOUT</div>
+                <div style="font-size:13px;color:var(--text-muted);">Amount to charge</div>
+                <div class="amount" id="payAmount">₹0</div>
+                <div class="order-id" id="payOrderId">order_...</div>
+                <p style="font-size:12.5px;color:var(--text-muted);margin-bottom:20px;">
+                    This is a prototype sandbox payment gateway. Click below to simulate a successful payment.
+                </p>
+                <button class="submit-btn" onclick="fulfillMockPayment()" style="background:#16a34a;">
+                    ✓ Simulate Successful Payment
+                </button>
+            </div>
+        </div>
+
+        <!-- ── Success Screen ──────────────────────────────────────────── -->
+        <div class="onboard-panel" id="panel-success">
+            <div style="text-align:center;padding:20px 0;">
+                <div style="width:64px;height:64px;border-radius:50%;background:#dcfce7;color:#16a34a;display:inline-flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:16px;">✓</div>
+                <h2>Your campus is live!</h2>
+                <p class="sub" style="margin-bottom:28px;">
+                    We've provisioned your college workspace and set up your SPOC administrator account.
+                </p>
+                <div style="background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:20px;text-align:left;margin-bottom:28px;" id="successDetails"></div>
+                <a href="login.html" class="submit-btn" style="display:inline-block;text-decoration:none;padding:14px 32px;">
+                    Sign in to your new campus dashboard →
+                </a>
+            </div>
+        </div>
+
     </div>
 </div>
 
-<!-- Features Section -->
-<section id="features">
-    <div class="section-label">Comprehensive Academic Suite</div>
-    <h2 class="section-title">Everything Your Institution Demands</h2>
-    <p class="section-sub">From automated clash-free timetable scheduling to real-time student dues and outcome attainment.</p>
-    
-    <div class="features-grid">
-        <div class="feature-card">
-            <div class="feature-icon" style="background:#eef2ff;color:#4f46e5;">📅</div>
-            <h3>Clash-Free Timetable Engine</h3>
-            <p>Automated timetable generation system (Mon–Sat, 08:45 AM – 05:30 PM). Ensures zero room conflicts and faculty double-booking.</p>
-        </div>
-        <div class="feature-card">
-            <div class="feature-icon" style="background:#ecfdf5;color:#059669;">✅</div>
-            <h3>Digital Attendance &amp; Alerts</h3>
-            <p>Live attendance recording, automatic threshold warnings (< 75%), faculty overrides, and institutional shortage analytics.</p>
-        </div>
-        <div class="feature-card">
-            <div class="feature-icon" style="background:#fffbeb;color:#d97706;">💰</div>
-            <h3>Finance &amp; Student Dues Portal</h3>
-            <p>Direct fee structures, receipt generation (RCP-XXXX), collection tracking, and 1-click broadcast reminder notifications to students.</p>
-        </div>
-        <div class="feature-card">
-            <div class="feature-icon" style="background:#fdf4ff;color:#c026d3;">📊</div>
-            <h3>CO/PO Outcome Attainment</h3>
-            <p>Direct mapping of course outcomes to programme outcomes for continuous NBA and NAAC accreditation compliance.</p>
-        </div>
-        <div class="feature-card">
-            <div class="feature-icon" style="background:#f0f9ff;color:#0284c7;">🔬</div>
-            <h3>Research &amp; BTP Milestones</h3>
-            <p>Undergraduate and postgraduate thesis milestone tracking, supervisor approval workflows, and file uploads.</p>
-        </div>
-        <div class="feature-card">
-            <div class="feature-icon" style="background:#fef2f2;color:#dc2626;">💬</div>
-            <h3>Support &amp; Communication</h3>
-            <p>Course discussion boards, direct HOD &amp; Director ticketing to central SaaS Support, and instant cross-stakeholder alerts.</p>
-        </div>
-    </div>
-</section>
-
-<!-- Role Hierarchy -->
-<section id="roles">
-    <div class="section-label">Institutional Governance</div>
-    <h2 class="section-title">The Right Views for Every Stakeholder</h2>
-    <p class="section-sub">Distinct dashboards and privilege boundaries mapped to institutional responsibilities.</p>
-
-    <div class="role-hierarchy-grid">
-        <div class="role-box">
-            <span class="role-badge" style="background:#fee2e2;color:#991b1b;">Level 1</span>
-            <h4>Institute Director</h4>
-            <p>High-level institutional health, cross-department outcome attainment, resource approvals, and SaaS support ticketing.</p>
-        </div>
-        <div class="role-box">
-            <span class="role-badge" style="background:#fef3c7;color:#92400e;">Level 2</span>
-            <h4>Department HOD</h4>
-            <p>Faculty course allocation, department timetable management, leave approvals, and direct SaaS support channel.</p>
-        </div>
-        <div class="role-box">
-            <span class="role-badge" style="background:#e0e7ff;color:#3730a3;">Level 3</span>
-            <h4>Faculty &amp; Mentor</h4>
-            <p>Digital attendance marking, continuous internal assessment grades, BTP project supervision, and course forum replies.</p>
-        </div>
-        <div class="role-box">
-            <span class="role-badge" style="background:#dcfce7;color:#166534;">Level 4</span>
-            <h4>Student</h4>
-            <p>Personal clash-free weekly schedule, attendance stats, grade cards, fee payment receipts, and progress report downloads.</p>
-        </div>
-    </div>
-</section>
-
-<!-- Interactive Pricing Section -->
-<section id="pricing">
-    <div class="section-label">Transparent Plans</div>
-    <h2 class="section-title">Scale Gracefully with Your Campus</h2>
-    <p class="section-sub">Click any plan card below to select your tier. All plans include 24/7 onboarding setup and full middleware security.</p>
-
-    <div class="pricing-toggle">
-        <button class="toggle-btn active" id="btn-annual" onclick="setBilling('annual')">Annual Billing (20% Savings)</button>
-        <button class="toggle-btn" id="btn-monthly" onclick="setBilling('monthly')">Monthly Billing</button>
-    </div>
-
-    <div class="pricing-grid">
-        <!-- Starter Card -->
-        <div class="plan-card" id="card-starter" onclick="selectPricingPlan('Starter')">
-            <div class="plan-name">Starter Plan</div>
-            <div class="plan-price" id="price-starter">₹99,000 <span>/ year</span></div>
-            <div class="plan-desc">Ideal for single departments or colleges initiating digital outcome tracking.</div>
-            <ul class="plan-features">
-                <li>Up to 500 students</li>
-                <li>Student &amp; Faculty dashboards</li>
-                <li>Digital Attendance &amp; Marks</li>
-                <li>Basic Outcome Attainment Reports</li>
-                <li>Standard Email Support</li>
-            </ul>
-            <a href="onboarding-signup.html?plan=Starter" class="plan-btn plan-btn-default" id="btn-starter">Get Started with Starter</a>
-        </div>
-
-        <!-- Professional Card (Default Selected) -->
-        <div class="plan-card selected" id="card-professional" onclick="selectPricingPlan('Professional')">
-            <div class="plan-badge">Most Popular Choice</div>
-            <div class="plan-name">Professional Plan</div>
-            <div class="plan-price" id="price-professional">₹2,40,000 <span>/ year</span></div>
-            <div class="plan-desc">For full-scale colleges and universities managing multiple departments.</div>
-            <ul class="plan-features">
-                <li>Up to 2,000 students</li>
-                <li>Director, HOD, Faculty, Student &amp; Finance portals</li>
-                <li>Automated Clash-Free Timetable Generator</li>
-                <li>Finance Dues &amp; Payment Receipts</li>
-                <li>Research &amp; BTP Milestone Engine</li>
-                <li>Priority 24/7 Technical Support</li>
-            </ul>
-            <a href="onboarding-signup.html?plan=Professional" class="plan-btn" id="btn-professional">Get Started with Professional</a>
-        </div>
-
-        <!-- Enterprise Card -->
-        <div class="plan-card" id="card-enterprise" onclick="selectPricingPlan('Enterprise')">
-            <div class="plan-name">Enterprise Plan</div>
-            <div class="plan-price" id="price-enterprise">Custom <span>Pricing</span></div>
-            <div class="plan-desc">For multi-campus institutions requiring custom ERP bridges and dedicated SLAs.</div>
-            <ul class="plan-features">
-                <li>Unlimited students &amp; faculty</li>
-                <li>Multi-campus tenant partitioning</li>
-                <li>Custom ERP, SAML &amp; SSO integration</li>
-                <li>Dedicated Institutional Account Lead</li>
-                <li>99.9% SLA Guarantee &amp; On-Site Training</li>
-            </ul>
-            <a href="onboarding-signup.html?plan=Enterprise" class="plan-btn plan-btn-default" id="btn-enterprise">Contact Enterprise Sales</a>
-        </div>
-    </div>
-</section>
-
-<!-- FAQ Section -->
-<section id="faq" style="background:#ffffff;border-top:1px solid var(--border);max-width:100%;padding:80px 40px;">
-    <div style="max-width:900px;margin:0 auto;">
-        <div class="section-label">Got Questions?</div>
-        <h2 class="section-title">Frequently Asked Questions</h2>
-        <p class="section-sub">Everything you need to know about our institutional onboarding and platform capabilities.</p>
-
-        <div class="faq-list">
-            <div class="faq-item open">
-                <div class="faq-question" onclick="toggleFaq(this)">
-                    How quickly can our institution go live?
-                    <span class="faq-icon">▼</span>
-                </div>
-                <div class="faq-answer">
-                    Standard provisioning takes under 2 business days. Our automated onboarding engine provisions your dedicated tenant workspace, imports existing faculty/student rosters, and sets up department course mappings instantly.
-                </div>
-            </div>
-
-            <div class="faq-item">
-                <div class="faq-question" onclick="toggleFaq(this)">
-                    How does the Clash-Free Timetable Generator work?
-                    <span class="faq-icon">▼</span>
-                </div>
-                <div class="faq-answer">
-                    Our timetable service runs an automated constraint satisfaction algorithm ensuring that no faculty member or lecture hall is scheduled concurrently across courses, with built-in support for Monday through Saturday schedules and dedicated break intervals.
-                </div>
-            </div>
-
-            <div class="faq-item">
-                <div class="faq-question" onclick="toggleFaq(this)">
-                    Is student and finance data strictly isolated?
-                    <span class="faq-icon">▼</span>
-                </div>
-                <div class="faq-answer">
-                    Yes. All database operations and API requests pass through router-level Tenant Context Middleware with isolated tenant keys and role-based access control, preventing cross-tenant leakage.
-                </div>
-            </div>
-
-            <div class="faq-item">
-                <div class="faq-question" onclick="toggleFaq(this)">
-                    Can HODs and Directors contact SaaS support directly from within the app?
-                    <span class="faq-icon">▼</span>
-                </div>
-                <div class="faq-answer">
-                    Yes. Both the Director and HOD portals feature integrated "Contact SaaS" modals that submit priority support tickets directly to our central SaaS Platform support engineering team.
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Footer -->
-<footer>
-    <div class="footer-grid">
-        <div class="footer-col">
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-                <div class="nav-logo" style="width:30px;height:30px;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
-                </div>
-                <strong style="color:#fff;font-size:16px;">BarelyPassing</strong>
-            </div>
-            <p style="line-height:1.7;max-width:320px;">The next-generation academic outcome and institutional ERP platform for higher education.</p>
-        </div>
-        <div class="footer-col">
-            <h5>Product</h5>
-            <a href="#features">Features</a>
-            <a href="#architecture">Architecture</a>
-            <a href="#pricing">Pricing Plans</a>
-            <a href="onboarding-signup.html">Institutional Signup</a>
-        </div>
-        <div class="footer-col">
-            <h5>Portals</h5>
-            <a href="login.html">Campus Login</a>
-            <a href="saas-login.html">SaaS Platform Login</a>
-            <a href="finance.html">Finance Portal</a>
-            <a href="student.html">Student Portal</a>
-        </div>
-        <div class="footer-col">
-            <h5>Support &amp; API</h5>
-            <a href="/api/docs" target="_blank">Swagger API Docs</a>
-            <a href="mailto:support@platform.com">support@platform.com</a>
-            <a href="mailto:sales@platform.com">sales@platform.com</a>
-        </div>
-    </div>
-    <div class="footer-bottom">
-        &copy; 2026 BarelyPassing Platform Inc. All rights reserved. Evaluation release.
-    </div>
-</footer>
-
+<script src="state.js"></script>
 <script>
-let currentBilling = 'annual';
+const MODULES = [
+    { key: 'attendance_biometric', name: 'Digital & Excused Attendance Engine', desc: 'Medical excuse workflow and automated low-attendance warnings', weight: '₹30 / student / yr' },
+    { key: 'accreditation_nba',    name: 'NBA/NAAC Accreditation Suite',       desc: 'CO-PO mapping, OBE outcome exports, compliance dashboards',  weight: '₹45 / student / yr' },
+    { key: 'fees_online',          name: 'Online Fee Collection & Invoicing',  desc: 'Payment gateway integration and real-time dues tracking',     weight: '₹20 / student / yr' },
+    { key: 'placements',           name: 'Placement & Career Portal',          desc: 'Drive scheduling, resume builder and company coordination',    weight: '₹25 / student / yr' },
+    { key: 'hostel',               name: 'Hostel & Resource Allocation',       desc: 'Room allocation and conflict-free campus facility booking',   weight: '₹15 / student / yr' },
+];
 
-function setBilling(mode) {
-    currentBilling = mode;
-    document.getElementById('btn-annual').classList.toggle('active', mode === 'annual');
-    document.getElementById('btn-monthly').classList.toggle('active', mode === 'monthly');
+let currentStep = 1;
+let lastQuote = null;
+let currentOrder = null;
 
-    if (mode === 'monthly') {
-        document.getElementById('price-starter').innerHTML = '₹9,900 <span>/ month</span>';
-        document.getElementById('price-professional').innerHTML = '₹24,000 <span>/ month</span>';
-        document.getElementById('price-enterprise').innerHTML = 'Custom <span>Pricing</span>';
-    } else {
-        document.getElementById('price-starter').innerHTML = '₹99,000 <span>/ year</span>';
-        document.getElementById('price-professional').innerHTML = '₹2,40,000 <span>/ year</span>';
-        document.getElementById('price-enterprise').innerHTML = 'Custom <span>Pricing</span>';
+function renderStepIndicator() {
+    const steps = [
+        { num: 1, label: 'Details' },
+        { num: 2, label: 'Scope' },
+        { num: 3, label: 'Quote' },
+        { num: 4, label: 'Payment' }
+    ];
+    document.getElementById('stepIndicator').innerHTML = steps.map(s => {
+        const cls = s.num < currentStep ? 'done' : (s.num === currentStep ? 'active' : '');
+        return `<div class="onboard-step-dot ${cls}"><div class="circle">${s.num < currentStep ? '✓' : s.num}</div><div class="label">${s.label}</div></div>`;
+    }).join('');
+}
+
+function goToPanel(num) {
+    currentStep = num;
+    document.querySelectorAll('.onboard-panel').forEach(p => p.classList.remove('active'));
+    const target = document.getElementById(`panel-${num}`);
+    if (target) target.classList.add('active');
+    renderStepIndicator();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderModuleList() {
+    document.getElementById('moduleList').innerHTML = MODULES.map(m => `
+        <label class="module-row">
+            <div>
+                <div class="name">${m.name}</div>
+                <div class="desc">${m.desc}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;">
+                <span class="weight">${m.weight}</span>
+                <input type="checkbox" class="m_module" value="${m.key}" checked onchange="recalcLivePrice()">
+            </div>
+        </label>
+    `).join('');
+}
+
+function getSelectedModules() {
+    return Array.from(document.querySelectorAll('.m_module:checked')).map(el => el.value);
+}
+
+function recalcLivePrice() {
+    const students = Number(document.getElementById('m_students').value) || 0;
+    const term = Number(document.getElementById('m_term').value) || 1;
+    const modules = getSelectedModules();
+
+    const basePerStudent = 150;
+    const moduleRates = { attendance_biometric: 30, accreditation_nba: 45, fees_online: 20, placements: 25, hostel: 15 };
+    const perStudentTotal = basePerStudent + modules.reduce((sum, k) => sum + (moduleRates[k] || 0), 0);
+    const rawAnnual = students * perStudentTotal;
+
+    const discountRates = { 1: 0, 2: 0.05, 3: 0.10, 5: 0.20 };
+    const discount = rawAnnual * (discountRates[term] || 0);
+    const netAnnual = Math.round(rawAnnual - discount);
+
+    document.getElementById('liveAnnualEstimate').textContent = `₹${netAnnual.toLocaleString('en-IN')}`;
+    document.getElementById('liveMonthlyEstimate').textContent = `≈ ₹${Math.round(netAnnual / 12).toLocaleString('en-IN')} / mo (billed annually)`;
+}
+
+async function apiCall(endpoint, opts = {}) {
+    const token = localStorage.getItem('bp_token') || localStorage.getItem('accessToken');
+    const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch(endpoint, { ...opts, headers, credentials: 'include' });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(json.message || json.error || `Request failed (${res.status})`);
+    return json;
+}
+
+async function submitDetails(e) {
+    e.preventDefault();
+    const payload = {
+        first_name:   document.getElementById('d_first_name').value.trim(),
+        last_name:    document.getElementById('d_last_name').value.trim(),
+        email:        document.getElementById('d_email').value.trim(),
+        phone:        document.getElementById('d_phone').value.trim(),
+        college_name: document.getElementById('d_college_name').value.trim(),
+        college_code: document.getElementById('d_college_code').value.trim().toUpperCase(),
+        password:     document.getElementById('d_password').value,
+    };
+    try {
+        await apiCall('/billing/onboarding/draft', { method: 'POST', body: JSON.stringify(payload) });
+        goToPanel(2);
+    } catch (err) {
+        alert(err.message);
     }
 }
 
-function selectPricingPlan(planName) {
-    document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
-    
-    const cardId = 'card-' + planName.toLowerCase();
-    const targetCard = document.getElementById(cardId);
-    if (targetCard) targetCard.classList.add('selected');
-
-    // Update buttons
-    ['starter', 'professional', 'enterprise'].forEach(p => {
-        const btn = document.getElementById('btn-' + p);
-        if (p === planName.toLowerCase()) {
-            btn.className = 'plan-btn';
-        } else {
-            btn.className = 'plan-btn plan-btn-default';
-        }
-    });
+async function submitMetrics(e) {
+    e.preventDefault();
+    const payload = {
+        student_count: Number(document.getElementById('m_students').value),
+        faculty_count: Number(document.getElementById('m_faculty').value),
+        term_years:    Number(document.getElementById('m_term').value),
+        modules:       getSelectedModules(),
+    };
+    try {
+        const res = await apiCall('/billing/onboarding/quote', { method: 'POST', body: JSON.stringify(payload) });
+        lastQuote = res.data;
+        renderBreakdown(lastQuote);
+        goToPanel(3);
+    } catch (err) {
+        alert(err.message);
+    }
 }
 
-function toggleFaq(el) {
-    const parent = el.parentElement;
-    parent.classList.toggle('open');
+function renderBreakdown(quote) {
+    const b = quote.breakdown;
+    document.getElementById('quoteBreakdown').innerHTML = `
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;">
+            <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:12px;">Quote #${quote.quote_id} · Valid for 30 days</div>
+            <div class="breakdown-line"><span>Base academic tier (${quote.metrics.student_count} students @ ₹${b.per_student_annual}/yr)</span><span class="amt">₹${b.base_annual.toLocaleString('en-IN')}</span></div>
+            ${b.modules.map(m => `<div class="breakdown-line"><span>${m.name}</span><span class="amt">₹${m.annual_cost.toLocaleString('en-IN')}</span></div>`).join('')}
+            ${b.discount_amount > 0 ? `<div class="breakdown-line negative"><span>${b.discount_reason}</span><span class="amt">-₹${b.discount_amount.toLocaleString('en-IN')}</span></div>` : ''}
+            <div class="breakdown-line total"><span>Annual Total (${quote.metrics.term_years}-year term)</span><span class="amt">₹${b.final_annual.toLocaleString('en-IN')} / yr</span></div>
+        </div>
+    `;
 }
+
+async function acceptQuote() {
+    try {
+        await apiCall('/billing/onboarding/quote/accept', { method: 'POST' });
+        await openMockCheckout();
+        goToPanel(4);
+    } catch (err) {
+        alert(err.message);
+    }
+}
+
+async function openMockCheckout() {
+    const res = await apiCall('/billing/onboarding/checkout', { method: 'POST' });
+    currentOrder = res.data;
+    document.getElementById('payAmount').textContent = `₹${currentOrder.amount.toLocaleString('en-IN')}`;
+    document.getElementById('payOrderId').textContent = currentOrder.order_id;
+}
+
+async function fulfillMockPayment() {
+    try {
+        const res = await apiCall('/billing/onboarding/fulfill', {
+            method: 'POST',
+            body: JSON.stringify({
+                order_id: currentOrder.order_id,
+                payment_id: `pay_mock_${Date.now()}`,
+                gateway: 'mock',
+            }),
+        });
+        document.querySelectorAll('.onboard-panel').forEach(p => p.classList.remove('active'));
+        document.getElementById('panel-success').classList.add('active');
+        document.getElementById('successDetails').innerHTML = `
+            <div><strong>Institution:</strong> ${res.data.college.name} (${res.data.college.code})</div>
+            <div style="margin-top:6px;"><strong>Administrator Account:</strong> ${res.data.user.email}</div>
+            <div style="margin-top:6px;"><strong>Subscription Plan:</strong> Active (${res.data.subscription.term_years} years)</div>
+        `;
+    } catch (err) {
+        alert(err.message);
+    }
+}
+
+renderModuleList();
+renderStepIndicator();
+recalcLivePrice();
 </script>
-
 </body>
 </html>

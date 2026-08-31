@@ -31,6 +31,9 @@ export enum ErrorCode {
   NOT_RESOURCE_OWNER = 'NOT_RESOURCE_OWNER',
   PRIVILEGE_CEILING = 'PRIVILEGE_CEILING',
   ENVIRONMENT_RESTRICTED = 'ENVIRONMENT_RESTRICTED',
+  SEAT_LIMIT_EXCEEDED = 'SEAT_LIMIT_EXCEEDED',
+  MODULE_NOT_LICENSED = 'MODULE_NOT_LICENSED',
+  SUBSCRIPTION_EXPIRED = 'SUBSCRIPTION_EXPIRED',
 
   // ── 404 Not Found ──────────────────────────────────────────────────────────
   RESOURCE_NOT_FOUND = 'RESOURCE_NOT_FOUND',
@@ -73,15 +76,27 @@ export function errorBody(
 /** Fallback code for an exception thrown without one, keyed by HTTP status. */
 export function defaultCodeForStatus(status: number): ErrorCode {
   switch (status) {
-    case 400: return ErrorCode.MALFORMED_REQUEST;
-    case 401: return ErrorCode.AUTHENTICATION_REQUIRED;
-    case 403: return ErrorCode.INSUFFICIENT_ROLE;
-    case 404: return ErrorCode.RESOURCE_NOT_FOUND;
-    case 409: return ErrorCode.DUPLICATE_RESOURCE;
-    case 413: return ErrorCode.PAYLOAD_TOO_LARGE;
-    case 415: return ErrorCode.UNSUPPORTED_MEDIA_TYPE;
-    case 429: return ErrorCode.RATE_LIMITED;
-    case 503: return ErrorCode.DATABASE_UNAVAILABLE;
-    default:  return status >= 500 ? ErrorCode.INTERNAL_ERROR : ErrorCode.MALFORMED_REQUEST;
+    case 400:
+      return ErrorCode.MALFORMED_REQUEST;
+    case 401:
+      return ErrorCode.AUTHENTICATION_REQUIRED;
+    case 403:
+      return ErrorCode.INSUFFICIENT_ROLE;
+    case 404:
+      return ErrorCode.RESOURCE_NOT_FOUND;
+    case 409:
+      return ErrorCode.DUPLICATE_RESOURCE;
+    case 413:
+      return ErrorCode.PAYLOAD_TOO_LARGE;
+    case 415:
+      return ErrorCode.UNSUPPORTED_MEDIA_TYPE;
+    case 429:
+      return ErrorCode.RATE_LIMITED;
+    case 503:
+      return ErrorCode.DATABASE_UNAVAILABLE;
+    default:
+      return status >= 500
+        ? ErrorCode.INTERNAL_ERROR
+        : ErrorCode.MALFORMED_REQUEST;
   }
 }

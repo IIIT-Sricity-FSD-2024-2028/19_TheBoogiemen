@@ -21,6 +21,7 @@ import helmet from 'helmet';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { VALIDATION_PIPE_OPTIONS } from './common/errors/validation.factory';
 import { registerProcessHandlers } from './common/errors/process-handlers';
+import { LOG_DIR } from './config/logger.config';
 
 async function bootstrap() {
   // bufferLogs holds Nest's own startup output until the Pino logger is
@@ -146,8 +147,8 @@ async function bootstrap() {
     .setTitle('BarelyPassing API')
     .setDescription(
       'Academic Progress & Outcome Tracking API.\n\n' +
-      'Authenticate with POST /api/auth/login, then click **Authorize** and paste the returned token. ' +
-      'All endpoints require a valid bearer token except login and signup.'
+        'Authenticate with POST /api/auth/login, then click **Authorize** and paste the returned token. ' +
+        'All endpoints require a valid bearer token except login and signup.',
     )
     .setVersion('2.0')
     .addBearerAuth(
@@ -156,7 +157,7 @@ async function bootstrap() {
     )
     .addSecurityRequirements('bearer')
     .build();
-    
+
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
@@ -174,6 +175,11 @@ async function bootstrap() {
     docs: `http://localhost:${PORT}/api/docs`,
     env: process.env.NODE_ENV ?? 'development',
     logLevel: process.env.LOG_LEVEL ?? 'debug',
+    // Printed so nobody has to go looking for where the logs ended up.
+    logDir:
+      (process.env.LOG_TO_FILE ?? 'true').toLowerCase() === 'false'
+        ? 'disabled'
+        : LOG_DIR,
     msg: 'Application started',
   });
 }
