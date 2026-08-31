@@ -136,18 +136,6 @@ Key Endpoint Groups:
 
 ---
 
-## ⚛️ Lab 2: React Frontend Conversion
-
-The repository includes a modern React 18 + Vite conversion of the Student Portal located in `/lab2/`.
-
-- **Component Hierarchy**: `App` → `Sidebar`, `Header`, `DashboardView`, `ProfileView`, `TimetableView`, `CoursesView`, `AttendanceView`, `LeaveManagementView`, `DiscussionForumView`, `ResearchProjectsView`, `ProgressReportsView`, `LeaveModal`.
-- **Core Concepts Demonstrated**:
-  - **Props**: Data flow down to presentational components (`Sidebar`, `Header`, metric cards).
-  - **Callbacks (Child-to-Parent)**: Triggering actions such as view switching (`onViewChange`) and form submissions (`onSubmit`).
-  - **Lifted State**: Shared state (`activeView`, `leaveApplications`, `discussions`, `attendanceRecords`) centralized in parent `App.jsx`.
-- **Documentation**: Available in [`lab2/Lab2_React_Documentation.md`](file:///Users/gayathridevi/Documents/FFSD/lab2/Lab2_React_Documentation.md) and [`lab2/Lab2_React_Documentation.pdf`](file:///Users/gayathridevi/Documents/FFSD/lab2/Lab2_React_Documentation.pdf).
-
----
 
 ## 🧪 Automated Testing & Quality Assurance
 
