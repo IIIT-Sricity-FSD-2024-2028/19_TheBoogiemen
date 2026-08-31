@@ -1832,6 +1832,23 @@ export class CommonController {
     const booking = this.db.resource_bookings.find((b) => b.booking_id === id);
     if (!isSameCollege(booking, collegeId)) notFoundInMyCollege('Booking');
     booking.status = body.status || 'approved';
+
+    // Approving a booking previously left the resource itself marked
+    // 'available', so the same slot could be booked again — the resource
+    // record and the booking record were never actually connected. Mirrors
+    // the same status toggleResource() already writes (fixes.js), not the
+    // 'booked' string sitting in seed data, which no code path produces.
+    if (booking.status === 'approved') {
+      const resource = this.db.resources.find(
+        (r) => r.resource_id === booking.resource_id,
+      );
+      if (resource) resource.status = 'in_use';
+    }
+
+    // Mutating an existing element doesn't trip the store's array proxy —
+    // without this the status change lives only in memory until some other,
+    // unrelated write happens to persist it.
+    this.db.persist();
     return { success: true, data: booking };
   }
 

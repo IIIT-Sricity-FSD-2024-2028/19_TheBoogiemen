@@ -2779,6 +2779,9 @@ window.approveBooking = async function(id, userId, status, name) {
         }
         showToast(`Booking ${status}! Faculty notified.`, 'success');
         renderAdminResourceBookings();
+        // Approval flips the resource itself to in_use server-side — refresh
+        // the resources list too, or it sits stale right above this panel.
+        renderResourceManagement();
     } catch(e) { showToast('Failed: ' + e.message, 'error'); }
 };
 
