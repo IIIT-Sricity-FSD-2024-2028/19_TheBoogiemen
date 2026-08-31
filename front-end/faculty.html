@@ -446,11 +446,19 @@
                         </select>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>Course</label>
-                    <select id="assessCourse">
-                        <option value="">Loading courses…</option>
-                    </select>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Course</label>
+                        <select id="assessCourse" onchange="populateAssessSectionOptions()">
+                            <option value="">Loading courses…</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Section</label>
+                        <select id="assessSection">
+                            <option value="">— Select a course first —</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">

@@ -865,6 +865,28 @@ window.submitAttendance = async function() {
 };
 
 // ── Faculty: Assessments ─────────────────────────────────────────────────────
+let _assessCoursesCache = [];
+
+// A course can have several sections, each with a different faculty
+// (COURSE_OWNERSHIP_MIGRATION_PLAN.md) — re-derives which section(s) of the
+// selected course belong to the logged-in faculty every time the course
+// dropdown changes, so the assessment is attributed to the right one rather
+// than the server guessing (and refusing when there's more than one to guess).
+window.populateAssessSectionOptions = function() {
+    const courseId = document.getElementById('assessCourse')?.value;
+    const sectionSel = document.getElementById('assessSection');
+    if (!sectionSel) return;
+    const myUserId = window.Auth?.getUser?.()?.user_id;
+    const course = _assessCoursesCache.find(c => c.course_id === courseId);
+    const mySections = (course?.sections || []).filter(s => s.faculty_id === myUserId);
+    if (!mySections.length) {
+        sectionSel.innerHTML = '<option value="">— Select a course first —</option>';
+        return;
+    }
+    sectionSel.innerHTML = (mySections.length > 1 ? '<option value="">— Select Section —</option>' : '')
+        + mySections.map(s => `<option value="${escapeHtmlSafe(s.section)}">Section ${escapeHtmlSafe(s.section)}</option>`).join('');
+};
+
 window.renderAssessmentList = async function(userId) {
     const el = document.getElementById('assessmentListContainer');
     if (!el) return;
@@ -877,6 +899,13 @@ window.renderAssessmentList = async function(userId) {
             assSel.innerHTML = '<option value="">Select course</option>' +
                 courses.map(c => `<option value="${c.course_id}">${c.course_code} – ${c.course_name}</option>`).join('');
         } catch(e) { assSel.innerHTML = '<option value="">Error loading courses</option>'; }
+        // Full per-course section lists (getMyCourses() only ever carries one
+        // section per course_id, which breaks if this faculty teaches more
+        // than one section of the same course) — cached here for
+        // populateAssessSectionOptions() to filter down to just this
+        // faculty's own sections.
+        try { _assessCoursesCache = await api('/courses'); } catch(e) { _assessCoursesCache = []; }
+        document.getElementById('assessSection').innerHTML = '<option value="">— Select a course first —</option>';
     }
     try {
         const assessments = await api(`/assessments?faculty_id=${userId}`);
@@ -897,7 +926,7 @@ window.renderAssessmentList = async function(userId) {
                     </div>
                     <div style="display:flex;gap:6px;align-items:center;">
                         <span style="font-size:10px;font-weight:700;padding:3px 8px;background:${(a.exam_mode==='online')?'#eff6ff':'#f1f5f9'};color:${(a.exam_mode==='online')?'#2563eb':'#64748b'};border-radius:4px;">${(a.exam_mode||'offline').toUpperCase()}</span>
-                        <span style="font-size:11px;font-weight:700;padding:4px 10px;background:#e0e7ff;color:#4338ca;border-radius:6px;">${a.course_code||a.course_id||''}</span>
+                        <span style="font-size:11px;font-weight:700;padding:4px 10px;background:#e0e7ff;color:#4338ca;border-radius:6px;">${a.course_code||a.course_id||''}${a.section ? ' · Sec ' + escapeHtmlSafe(a.section) : ''}</span>
                     </div>
                 </div>
                 <div style="display:flex;align-items:center;justify-content:space-between;">
@@ -923,15 +952,17 @@ window.submitCreateAssessment = async function() {
     const date      = document.getElementById('assessDate')?.value;
     const max_marks = document.getElementById('assessMarks')?.value;
     const course_id = document.getElementById('assessCourse')?.value;
+    const section   = document.getElementById('assessSection')?.value;
     const exam_mode = document.getElementById('assessMode')?.value || 'offline';
     if (!name || name.length < 3)  { showToast('Assessment name must be at least 3 characters', 'warning'); return; }
     if (!type)                      { showToast('Please select assessment type', 'warning'); return; }
     if (!date)                      { showToast('Date is required', 'warning'); return; }
     if (!course_id)                 { showToast('Please select a course', 'warning'); return; }
+    if (!section)                   { showToast('Please select a section', 'warning'); return; }
     if (!max_marks || Number(max_marks) < 1)   { showToast('Enter valid max marks (min 1)', 'warning'); return; }
     if (Number(max_marks) > 1000)              { showToast('Max marks cannot exceed 1000', 'warning'); return; }
     try {
-        await api('/assessments', { method:'POST', body: JSON.stringify({ name, type, date, max_marks: Number(max_marks), course_id, exam_mode }) });
+        await api('/assessments', { method:'POST', body: JSON.stringify({ name, type, date, max_marks: Number(max_marks), course_id, section, exam_mode }) });
         showToast('Assessment created!', 'success');
         closeModal('assessmentModal');
         document.getElementById('createAssessForm')?.reset();
