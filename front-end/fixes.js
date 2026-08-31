@@ -2729,7 +2729,10 @@ window.grantAttReq = async function(id, studentId) {
 // ── Resource Booking Workflow ────────────────────────────────────────────────
 window.openResourceBookingModal = async function() {
     const sel = document.getElementById('bookResourceSel');
-    if (sel) { try { const res = await api('/resources'); sel.innerHTML = '<option value="">Select resource</option>' + res.map(r => `<option value="${r.resource_id}">${r.name} (${r.type})</option>`).join(''); } catch { sel.innerHTML = '<option>Error</option>'; } }
+    // Only resources actually available today — one currently in use or
+    // under maintenance would be rejected on submit anyway (createResourceBooking
+    // enforces this server-side); no point offering a choice guaranteed to fail.
+    if (sel) { try { const res = await api('/resources'); const free = res.filter(r => r.status === 'available'); sel.innerHTML = (free.length ? '<option value="">Select resource</option>' : '<option value="">No resources available right now</option>') + free.map(r => `<option value="${r.resource_id}">${r.name} (${r.type})</option>`).join(''); } catch { sel.innerHTML = '<option>Error</option>'; } }
     const dateEl = document.getElementById('bookResourceDate');
     if (dateEl) dateEl.min = new Date().toISOString().split('T')[0];
     openModal('resourceBookingModal');

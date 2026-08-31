@@ -1786,6 +1786,13 @@ export class CommonController {
     );
     if (!isSameCollege(resource, actorCollegeId))
       notFoundInMyCollege('Resource');
+    if (resource.status !== 'available')
+      throw new BadRequestException(
+        errorBody(
+          ErrorCode.BUSINESS_RULE_VIOLATION,
+          `${resource.name} is currently ${resource.status === 'in_use' ? 'in use' : resource.status} and cannot be requested right now.`,
+        ),
+      );
     const faculty = this.db.faculty.find((f) => f.user_id === userId);
     const id = `rb${Date.now()}`;
     const booking = {
@@ -1831,19 +1838,33 @@ export class CommonController {
   ) {
     const booking = this.db.resource_bookings.find((b) => b.booking_id === id);
     if (!isSameCollege(booking, collegeId)) notFoundInMyCollege('Booking');
-    booking.status = body.status || 'approved';
+    const status = body.status || 'approved';
 
     // Approving a booking previously left the resource itself marked
     // 'available', so the same slot could be booked again — the resource
     // record and the booking record were never actually connected. Mirrors
     // the same status toggleResource() already writes (fixes.js), not the
     // 'booked' string sitting in seed data, which no code path produces.
-    if (booking.status === 'approved') {
+    if (status === 'approved') {
       const resource = this.db.resources.find(
         (r) => r.resource_id === booking.resource_id,
       );
+      // Re-checked here, not just at request time (createResourceBooking):
+      // another booking for the same resource may have been approved, or it
+      // may have gone into maintenance, in the time since this one was
+      // submitted. Approving must refuse a resource that isn't available
+      // right now, whatever it looked like when the request was made.
+      if (resource && resource.status !== 'available')
+        throw new BadRequestException(
+          errorBody(
+            ErrorCode.BUSINESS_RULE_VIOLATION,
+            `${resource.name} is currently ${resource.status === 'in_use' ? 'in use' : resource.status} and cannot be approved right now.`,
+          ),
+        );
       if (resource) resource.status = 'in_use';
     }
+
+    booking.status = status;
 
     // Mutating an existing element doesn't trip the store's array proxy —
     // without this the status change lives only in memory until some other,
