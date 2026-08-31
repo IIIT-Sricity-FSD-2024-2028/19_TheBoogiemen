@@ -11,6 +11,7 @@ import { Roles } from '../auth/roles.guard';
 import {
   CurrentUserCollegeId,
   CurrentUserId,
+  CurrentUserRole,
 } from '../common/decorators/current-user.decorator';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { ErrorCode, errorBody } from '../common/errors/error-codes';
@@ -74,8 +75,12 @@ export class FacultyController {
     status: 200,
     description: 'List of at-risk students with attendance data',
   })
-  async getAtRisk(@CurrentUserCollegeId() collegeId: string | null) {
-    return this.facultyService.getAtRiskStudents(collegeId);
+  async getAtRisk(
+    @CurrentUserId() userId: string,
+    @CurrentUserRole() role: string,
+    @CurrentUserCollegeId() collegeId: string | null,
+  ) {
+    return this.facultyService.getAtRiskStudents(collegeId, userId, role);
   }
 
   @Get('me/assessments')

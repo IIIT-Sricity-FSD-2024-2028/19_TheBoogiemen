@@ -273,10 +273,35 @@ export class FacultyService {
     return this.db.assessments.filter((a) => a.faculty_id === facultyId);
   }
 
-  async getAtRiskStudents(collegeId: string | null) {
+  async getAtRiskStudents(
+    collegeId: string | null,
+    userId?: string,
+    role?: string,
+  ) {
     // M-04: one predicate for every at-risk surface. This previously filtered on
     // `cgpa < 6` alone, so a student failing only on attendance never appeared.
-    return scopeToCollege(this.db.students, collegeId)
+    let pool = scopeToCollege(this.db.students, collegeId);
+
+    // A faculty member's "at-risk" list previously meant every at-risk
+    // student in the whole college — every other section, every other
+    // faculty's roster included — because this was never updated when
+    // sections became real. admin/head/superadmin keep the full college
+    // view, which is correct for them.
+    if (role === 'faculty' && userId) {
+      const mySections = sectionsTaughtBy(this.db, userId);
+      const myStudentIds = new Set(
+        this.db.enrollment
+          .filter((e) =>
+            mySections.some(
+              (cs) => cs.course_id === e.course_id && cs.section === e.section,
+            ),
+          )
+          .map((e) => e.student_id),
+      );
+      pool = pool.filter((s) => myStudentIds.has(s.user_id));
+    }
+
+    return pool
       .map((s) => {
         const records = this.db.attendance_log.filter(
           (a) => a.student_id === s.user_id,

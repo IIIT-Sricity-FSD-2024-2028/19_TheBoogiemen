@@ -37,6 +37,7 @@ import {
   courseIdsTaughtBy,
   sectionsOfCourse,
   sectionsTaughtBy,
+  sectionTaughtIn,
 } from '../common/course-sections';
 import { RequiresModule } from '../common/guards/requires-module.guard';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
@@ -332,12 +333,34 @@ export class CommonController {
   })
   async getAssessments(
     @Query('faculty_id') facultyId: string | undefined,
+    @CurrentUserId() userId: string,
+    @CurrentUserRole() role: string,
     @CurrentUserCollegeId() collegeId: string | null,
   ) {
     const scoped = scopeToCollege(this.db.assessments, collegeId);
-    const list = facultyId
+    let list = facultyId
       ? scoped.filter((a) => a.faculty_id === facultyId)
       : scoped;
+
+    // A course can now have several sections, each with a different
+    // faculty. Without this, a student saw every assessment in the whole
+    // college — including other sections of a course they're in, and
+    // courses they were never enrolled in at all — because nothing here
+    // checked their own enrollment. An assessment with no `section` stamped
+    // (legacy rows from before sections existed, or one an admin created
+    // without picking one) still applies to every enrolled student of the
+    // course, same as it always did.
+    if (role === 'student') {
+      const myEnrollment = this.db.enrollment.filter(
+        (e) => e.student_id === userId,
+      );
+      list = list.filter((a) =>
+        myEnrollment.some(
+          (e) => e.course_id === a.course_id && (!a.section || e.section === a.section),
+        ),
+      );
+    }
+
     return list.map((a) => {
       const course = this.db.courses.find((c) => c.course_id === a.course_id);
       return {
@@ -355,14 +378,38 @@ export class CommonController {
   async createAssessment(
     @Body() body: any,
     @CurrentUserId() userId: string,
+    @CurrentUserRole() actorRole: string,
     @CurrentUserCollegeId() actorCollegeId: string | null,
   ) {
+    if (!body.course_id)
+      throw new BadRequestException(
+        errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'course_id is required'),
+      );
+    // A course can now have several sections, each with a different faculty
+    // (COURSE_OWNERSHIP_MIGRATION_PLAN.md). Without this, any faculty could
+    // create an assessment for a course they don't teach any section of —
+    // and it would then apply to every section's students, not just theirs.
+    // Admin/head/superadmin aren't teaching a section, so they aren't held
+    // to this — they may set up an assessment on a faculty member's behalf.
+    let section: string | undefined = body.section;
+    if (actorRole === 'faculty') {
+      const mySection = sectionTaughtIn(this.db, userId, body.course_id);
+      if (!mySection)
+        throw new ForbiddenException(
+          errorBody(
+            ErrorCode.PRIVILEGE_CEILING,
+            'You are not assigned to any section of this course.',
+          ),
+        );
+      section = mySection;
+    }
     const id = `a${Date.now()}`;
     const newAssessment = {
       assessment_id: id,
       faculty_id: userId,
       weightage: body.weightage || 10,
       ...body,
+      section,
       college_id: writeCollegeId(actorCollegeId),
     };
     this.db.assessments.push(newAssessment);
@@ -401,6 +448,8 @@ export class CommonController {
   @ApiBody({ schema: { type: 'object', additionalProperties: true } })
   async recordMarks(
     @Body() body: any,
+    @CurrentUserId() userId: string,
+    @CurrentUserRole() actorRole: string,
     @CurrentUserCollegeId() actorCollegeId: string | null,
   ) {
     if (!body.student_id || !body.assessment_id)
@@ -411,6 +460,30 @@ export class CommonController {
         ),
       );
     const collegeId = writeCollegeId(actorCollegeId);
+
+    // The assessment is client-supplied — without this a faculty member
+    // could post marks against an assessment they didn't create (mixing
+    // into another section's, or another faculty's, gradebook), and for a
+    // student who was never enrolled in it at all.
+    const assessment = this.db.assessments.find(
+      (a) => a.assessment_id === body.assessment_id,
+    );
+    if (!isSameCollege(assessment, collegeId)) notFoundInMyCollege('Assessment');
+    if (actorRole === 'faculty' && assessment.faculty_id !== userId)
+      notFoundInMyCollege('Assessment');
+    const enrolled = this.db.enrollment.find(
+      (e) =>
+        e.student_id === body.student_id &&
+        e.course_id === assessment.course_id &&
+        (!assessment.section || e.section === assessment.section),
+    );
+    if (!enrolled)
+      throw new BadRequestException(
+        errorBody(
+          ErrorCode.BUSINESS_RULE_VIOLATION,
+          'That student is not enrolled in this assessment\'s course/section.',
+        ),
+      );
     // Marks lock: reject if already entered. Scoped so the lock is per
     // college — the assessment_id namespace is already college-specific by
     // construction (created scoped, above), but the lock check stays
@@ -463,6 +536,25 @@ export class CommonController {
       throw new BadRequestException(
         errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'assessment_id required'),
       );
+
+    // assessment_id is client-supplied — previously accepted with no check
+    // at all, so a student could submit against any assessment_id, in any
+    // college, for a course they were never enrolled in. Same not-found
+    // treatment as every other cross-tenant lookup miss in this file: "no
+    // such assessment" and "not one you're enrolled in" must look identical.
+    const assessment = this.db.assessments.find(
+      (a) => a.assessment_id === body.assessment_id,
+    );
+    if (!isSameCollege(assessment, actorCollegeId))
+      notFoundInMyCollege('Assessment');
+    const enrolled = this.db.enrollment.find(
+      (e) =>
+        e.student_id === userId &&
+        e.course_id === assessment.course_id &&
+        (!assessment.section || e.section === assessment.section),
+    );
+    if (!enrolled) notFoundInMyCollege('Assessment');
+
     // Upsert — allow re-submission
     const existing = this.db.submissions.find(
       (s) => s.student_id === userId && s.assessment_id === body.assessment_id,
@@ -1315,12 +1407,36 @@ export class CommonController {
   @Get('reports/at-risk')
   @Roles('admin', 'head', 'superadmin', 'faculty')
   @ApiOperation({ summary: 'Get at-risk students list' })
-  async getAtRisk(@CurrentUserCollegeId() collegeId: string | null) {
+  async getAtRisk(
+    @CurrentUserId() userId: string,
+    @CurrentUserRole() role: string,
+    @CurrentUserCollegeId() collegeId: string | null,
+  ) {
     // M-04: uses the shared isAtRisk() predicate. This endpoint previously used
     // `cgpa < 6.5` while the faculty dashboard used `cgpa < 6`, so the same
     // student appeared at-risk on one screen and healthy on the other.
     // M-02: EXCUSED sessions count as attended via summariseAttendance().
-    return scopeToCollege(this.db.students, collegeId)
+    let pool = scopeToCollege(this.db.students, collegeId);
+
+    // Same gap as faculty.service.ts's getAtRiskStudents, fixed the same
+    // way: a faculty caller previously got the whole college's at-risk
+    // list, other sections included, because this route is never updated
+    // when sections were introduced. admin/head/superadmin keep the full view.
+    if (role === 'faculty') {
+      const mySections = sectionsTaughtBy(this.db, userId);
+      const myStudentIds = new Set(
+        this.db.enrollment
+          .filter((e) =>
+            mySections.some(
+              (cs) => cs.course_id === e.course_id && cs.section === e.section,
+            ),
+          )
+          .map((e) => e.student_id),
+      );
+      pool = pool.filter((s) => myStudentIds.has(s.user_id));
+    }
+
+    return pool
       .map((s) => {
         const records = this.db.attendance_log.filter(
           (a) => a.student_id === s.user_id,
