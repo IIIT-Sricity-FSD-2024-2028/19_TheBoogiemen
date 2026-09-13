@@ -25,7 +25,7 @@ export default function StudentPortal() {
       <div className="bg-gradient-to-r from-indigo-950/60 to-slate-900 p-6 rounded-3xl border border-indigo-800/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-bold mb-2">
-            <span>👨‍🎓 Level 4: Student Hub</span>
+            <span>Level 4: Student Hub</span>
           </div>
           <h1 className="text-2xl font-black text-white">Welcome, {profileData?.profile?.first_name || 'John'} {profileData?.profile?.last_name || 'Doe'}</h1>
           <p className="text-xs text-indigo-200/70 mt-1">
@@ -44,7 +44,7 @@ export default function StudentPortal() {
         <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800">
           <div className="text-xs text-slate-400 font-semibold">Overall Attendance</div>
           <div className="text-3xl font-black text-emerald-400 mt-2">85%</div>
-          <div className="text-[10px] text-emerald-500 mt-1">✓ Safe threshold (Above 75%)</div>
+          <div className="text-[10px] text-emerald-500 mt-1">Safe threshold (Above 75%)</div>
         </div>
 
         <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800">

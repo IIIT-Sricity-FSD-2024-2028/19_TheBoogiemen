@@ -130,19 +130,19 @@
         <p>Join students and faculty on a platform built for outcome-driven academic excellence.</p>
         <div class="feature-list">
             <div class="feature-item">
-                <div class="feature-icon">📊</div>
+                <div class="feature-icon"></div>
                 <div><h4>Real-time Progress</h4><p>Track attendance, marks &amp; CGPA instantly.</p></div>
             </div>
             <div class="feature-item">
-                <div class="feature-icon">🔔</div>
+                <div class="feature-icon"></div>
                 <div><h4>Smart Notifications</h4><p>Get alerts before it's too late.</p></div>
             </div>
             <div class="feature-item">
-                <div class="feature-icon">🎯</div>
+                <div class="feature-icon"></div>
                 <div><h4>Early Intervention</h4><p>Faculty reaches out when you need help most.</p></div>
             </div>
             <div class="feature-item">
-                <div class="feature-icon">📚</div>
+                <div class="feature-icon"></div>
                 <div><h4>Course Management</h4><p>Enroll, track syllabus &amp; manage leave.</p></div>
             </div>
         </div>
@@ -155,8 +155,8 @@
 
         <!-- Role tabs -->
         <div class="role-tabs" role="tablist">
-            <button class="role-tab active" onclick="setRole('student',this)" id="tab-student">🎓 Student</button>
-            <button class="role-tab" onclick="setRole('faculty',this)" id="tab-faculty">👨‍🏫 Faculty</button>
+            <button class="role-tab active" onclick="setRole('student',this)" id="tab-student"> Student</button>
+            <button class="role-tab" onclick="setRole('faculty',this)" id="tab-faculty">‍ Faculty</button>
         </div>
 
         <form id="signupForm" novalidate onsubmit="handleFormSubmit(event)">
@@ -258,7 +258,7 @@
                 <label for="password">Password *</label>
                 <div class="pw-wrap">
                     <input type="password" id="password" placeholder="At least 6 characters" autocomplete="new-password">
-                    <button type="button" class="pw-eye" onclick="togglePw('password',this)" tabindex="-1">👁</button>
+                    <button type="button" class="pw-eye" onclick="togglePw('password',this)" tabindex="-1"></button>
                 </div>
                 <div class="pw-strength"><div class="pw-strength-fill" id="pw-fill"></div></div>
                 <span class="err-msg" id="err-password">Password must be at least 6 characters.</span>
@@ -269,7 +269,7 @@
                 <label for="confirmPassword">Confirm Password *</label>
                 <div class="pw-wrap">
                     <input type="password" id="confirmPassword" placeholder="Re-enter your password" autocomplete="new-password">
-                    <button type="button" class="pw-eye" onclick="togglePw('confirmPassword',this)" tabindex="-1">👁</button>
+                    <button type="button" class="pw-eye" onclick="togglePw('confirmPassword',this)" tabindex="-1"></button>
                 </div>
                 <span class="err-msg" id="err-confirmPassword">Passwords do not match.</span>
             </div>
@@ -313,7 +313,7 @@
     function togglePw(id, btn) {
         const inp = document.getElementById(id);
         inp.type = inp.type === 'password' ? 'text' : 'password';
-        btn.textContent = inp.type === 'password' ? '👁' : '🙈';
+        btn.textContent = inp.type === 'password' ? '' : '';
     }
 
     // Password strength meter
@@ -388,8 +388,8 @@
             designation: document.getElementById('designation')?.value || 'Assistant Professor'
         } : {};
         try {
-            // Use absolute URL — static server (3000) ≠ API server (5001)
-            const res = await fetch('http://localhost:5001/api/auth/signup', {
+            const apiBase = (window.Auth && window.Auth.API_BASE) || (window.location.port ? `${window.location.origin}/api` : 'http://localhost:5002/api');
+            const res = await fetch(`${apiBase}/auth/signup`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, first_name, last_name, email, password, role, ...extra })
@@ -397,7 +397,7 @@
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || 'Registration failed');
             // Success — show confirmation and redirect
-            btn.textContent = '✓ Account Created!';
+            btn.textContent = ' Account Created!';
             btn.style.background = 'linear-gradient(135deg,#16a34a,#15803d)';
             setTimeout(() => { window.location.href = 'login.html'; }, 1200);
         } catch (err) {

@@ -4,9 +4,73 @@
  * with new semester B2B architecture (multi-tenant, subscription tiers, Redux frontend).
  */
 
-const API_BASE = (typeof window !== 'undefined' && window.location && (window.location.port === '5001' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))
-    ? `${window.location.protocol}//${window.location.hostname}:5001/api`
-    : 'http://localhost:5001/api';
+const API_BASE = (function() {
+    if (typeof window === 'undefined' || !window.location) return 'http://localhost:5001/api';
+    if (window.API_BASE) return window.API_BASE;
+    const stored = localStorage.getItem('API_BASE');
+    if (stored) return stored;
+
+    const loc = window.location;
+    // If accessed over http(s)
+    if (loc.protocol && loc.protocol.startsWith('http')) {
+        // If served directly from backend (e.g. port 5001, 5002, 5000, 8080)
+        if (loc.port && loc.port !== '3000' && loc.port !== '5173' && loc.port !== '5500') {
+            return `${loc.origin}/api`;
+        }
+        // If served from dev static server (e.g. Vite on 3000, live-server on 5500)
+        const backendPort = localStorage.getItem('backend_port') || (loc.port === '5002' ? '5002' : '5001');
+        return `${loc.protocol}//${loc.hostname}:${backendPort}/api`;
+    }
+    return 'http://localhost:5001/api';
+})();
+
+window.formatDisplayId = function(id, type = 'general') {
+    if (!id || id === 'undefined' || id === 'null' || id === '[object Object]') return 'Not available';
+    const str = String(id).trim();
+    if (/^[A-Z]{2,4}-[0-9]{4,}/.test(str)) return str;
+
+    const numMatch = str.match(/\d+/);
+    const numPart = numMatch ? numMatch[0] : '1';
+    const padded = numPart.padStart(4, '0');
+    const t = (type || '').toLowerCase();
+
+    if (t === 'student' || t === 'stu') return 'STU-2026' + padded;
+    if (t === 'faculty' || t === 'fac') return 'FAC-2026' + padded;
+    if (t === 'hod' || t === 'head') return 'HOD-2026' + padded;
+    if (t === 'director' || t === 'dir' || t === 'superadmin') return 'DIR-2026' + padded;
+    if (t === 'finance' || t === 'fin') return 'FIN-2026' + padded;
+    if (t === 'support' || t === 'sup' || t === 'platform') return 'SUP-2026' + padded;
+    if (t === 'admin' || t === 'adm') return 'ADM-2026' + padded;
+    if (t === 'course' || t === 'crs') return 'CRS-1' + padded;
+    if (t === 'section' || t === 'sec') return 'SEC-2026' + padded;
+    if (t === 'enrollment' || t === 'enr') return 'ENR-2026' + padded;
+    if (t === 'request' || t === 'req' || t === 'ticket') return 'REQ-2026' + padded;
+    if (t === 'leave' || t === 'lv') return 'LV-2026' + padded;
+    if (t === 'fee') return 'FEE-2026' + padded;
+
+    if (str === 'u1' || str.startsWith('u1_') || str === 'student') return 'STU-20260001';
+    if (str === 'u6' || str.startsWith('u6_') || str === 'student2') return 'STU-20260002';
+    if (str === 'u2' || str.startsWith('u2_') || str === 'faculty') return 'FAC-20260001';
+    if (str === 'u7' || str.startsWith('u7_') || str === 'faculty2') return 'FAC-20260002';
+    if (str === 'u3' || str === 'admin') return 'ADM-20260001';
+    if (str === 'u4' || str === 'head') return 'HOD-20260001';
+    if (str === 'u5' || str === 'director') return 'DIR-20260001';
+    if (str === 'u_fin' || str.startsWith('u_fin') || str === 'finance') return 'FIN-20260001';
+    if (str === 'saas_admin' || str.startsWith('u_support_') || str.startsWith('saas_')) return 'SUP-2026' + padded;
+    if (str === 'c1' || str === 'c2' || str === 'c3' || str === 'c4' || str === 'c5' || str === 'c6' || str === 'c7' || str === 'c8') return 'CRS-2026' + padded;
+    if (str === 'e1' || str === 'e2' || str === 'e3' || str === 'e4' || str === 'e5' || str === 'e6') return 'ENR-2026' + padded;
+    if (str.startsWith('sec_')) return 'SEC-2026' + padded;
+
+    if (/^u\d+/.test(str)) return 'USR-2026' + padded;
+    return str;
+};
+
+window.formatSafeValue = function(val, fallback = 'Not available') {
+    if (val === null || val === undefined || val === '' || Number.isNaN(val) || val === 'undefined' || val === 'null' || val === 'NaN' || val === '[object Object]') {
+        return fallback;
+    }
+    return val;
+};
 
 // ── Interlinked SaaS Support, Onboarding & Activity Sync Store ─────────────
 window.SaaSStore = {
@@ -19,7 +83,7 @@ window.SaaSStore = {
         return [
             { id: '#1042', institution: 'IIIT Sricity', tenantId: 't1', contactEmail: 'director@iiits.in', subject: 'Grade import system inquiry', priority: 'High', status: 'In Progress', raisedAt: '2 hours ago', message: 'We need assistance configuring automated end-of-semester grade imports for EE department.', replies: [] },
             { id: '#1041', institution: 'VIT Vellore', tenantId: 't2', contactEmail: 'admin@vit.ac.in', subject: 'Cannot access fee compliance portal', priority: 'Medium', status: 'Open', raisedAt: '5 hours ago', message: 'Faculty users report a 403 error when updating hostel fee compliance.', replies: [] },
-            { id: '#1040', institution: 'IIT Madras', tenantId: 't3', contactEmail: 'director@iitm.ac.in', subject: 'Attendance sync delay', priority: 'Medium', status: 'Resolved', raisedAt: 'Yesterday', message: 'Attendance sync is taking longer than expected.', replies: [{ from: 'SaaS Support', text: 'Optimized index query on backend. Resolved.', at: 'Yesterday' }] }
+            { id: '#1040', institution: 'IIT Madras', tenantId: 't3', contactEmail: 'director@iitm.ac.in', subject: 'Attendance sync delay', priority: 'Medium', status: 'Resolved', raisedAt: 'Yesterday', message: 'Attendance sync is taking longer than expected.', replies: [{ from: 'Support Portal', text: 'Optimized index query on backend. Resolved.', at: 'Yesterday' }] }
         ];
     },
     saveTickets: (tickets) => {
@@ -44,7 +108,7 @@ window.SaaSStore = {
         window.SaaSStore.logActivity(`New Support Ticket ${newTicket.id} created by ${newTicket.contactEmail} (${newTicket.institution})`);
         return newTicket;
     },
-    replyTicket: (ticketId, replyText, fromName = 'SaaS Support') => {
+    replyTicket: (ticketId, replyText, fromName = 'Support Portal') => {
         const list = window.SaaSStore.getTickets();
         const t = list.find(x => x.id === ticketId);
         if (t) {
@@ -57,14 +121,14 @@ window.SaaSStore = {
                 window.Notifications.broadcast(
                     'all',
                     fromName,
-                    `💬 Reply to Ticket ${ticketId}: ${replyText}`,
+                    `Reply to Ticket ${ticketId}: ${replyText}`,
                     'ticket_reply'
                 );
             }
             window.SaaSStore.logActivity(`Ticket ${ticketId} replied by ${fromName}`);
         }
     },
-    resolveTicket: (ticketId, fromName = 'SaaS Support') => {
+    resolveTicket: (ticketId, fromName = 'Support Portal') => {
         const list = window.SaaSStore.getTickets();
         const t = list.find(x => x.id === ticketId);
         if (t) {
@@ -154,33 +218,42 @@ window.Auth = {
         if (user?.user_id)  headers['user-id']       = user.user_id;
         if (tenant?.tenant_id) headers['x-tenant-id'] = tenant.tenant_id;
 
-        const res = await fetch(`${API_BASE}${endpoint}`, {
-            ...options,
-            credentials: 'include',
-            headers
-        }).catch(() => null);
-
-        const isListEndpoint = ['/admin/users', '/users', '/leave', '/events', '/fees', '/resources', '/assessments', '/discussions', '/research', '/courses', '/students/me/courses', '/attendance-requests', '/syllabus-progress', '/submissions'].some(p => endpoint.includes(p));
-
-        if (!res) {
-            return isListEndpoint ? [] : {};
+        let res;
+        try {
+            res = await fetch(`${API_BASE}${endpoint}`, {
+                ...options,
+                credentials: 'include',
+                headers
+            });
+        } catch (netErr) {
+            console.error(`[Auth API] Network failure for ${endpoint}:`, netErr);
+            throw new Error(`Cannot connect to backend server at ${API_BASE}. Please verify server is running.`);
         }
 
         if (res.status === 401) {
-            console.warn(`[Auth API] 401 for ${endpoint} - continuing session with fallback data`);
-            return isListEndpoint ? [] : {};
-        }
-        if (res.status === 403) {
-            console.warn(`[Auth API] 403 for ${endpoint} - permission denied`);
-            return isListEndpoint ? [] : {};
+            console.error(`[Auth API] 401 Unauthorized for ${endpoint}`);
+            throw new Error('Authentication required (HTTP 401). Please log in again.');
         }
 
-        const data = await res.json().catch(() => null);
-        if (!res.ok || data === null) {
-            const errMsg = data ? ((Array.isArray(data.message) ? data.message.join(', ') : data.message) || data.error || `HTTP ${res.status}`) : `HTTP ${res.status}`;
-            console.warn(`[Auth API] Error ${res.status} for ${endpoint}:`, errMsg);
-            return isListEndpoint ? [] : (data || {});
+        if (res.status === 403) {
+            console.error(`[Auth API] 403 Forbidden for ${endpoint} (role: ${user?.role || 'unknown'})`);
+            throw new Error(`Permission denied (HTTP 403). Your account role cannot access ${endpoint}.`);
         }
+
+        let data;
+        try {
+            data = await res.json();
+        } catch (_) {
+            if (!res.ok) throw new Error(`HTTP ${res.status}: Server returned an unparseable response.`);
+            return {};
+        }
+
+        if (!res.ok) {
+            const errMsg = data ? ((Array.isArray(data.message) ? data.message.join(', ') : data.message) || data.error || `HTTP ${res.status}`) : `HTTP ${res.status}`;
+            console.error(`[Auth API] Error ${res.status} for ${endpoint}:`, errMsg);
+            throw new Error(`HTTP ${res.status}: ${errMsg}`);
+        }
+
         return data;
     },
 
@@ -194,11 +267,11 @@ window.Auth = {
         if (!cleanPass)  throw new Error('Please enter your password.');
         if (!cleanTenant) throw new Error('Please enter your institute code.');
 
-        // 1. SaaS Central Platform Credentials
-        if (cleanEmail === 'saasadmin@platform.com' || cleanEmail === 'saasadmin' || cleanEmail === 'admin@platform.com') {
-            const user = { user_id: 'saas_admin_1', name: 'SaaS Platform Admin', email: 'saasadmin@platform.com', role: 'PLATFORM_SUPER_ADMIN' };
-            const tenant = { tenant_id: 'global', name: 'BarelyPassing SaaS Global', code: 'PLATFORM' };
-            localStorage.setItem('bp_token', 'jwt_saas_super_' + Date.now());
+        // 1. Support Platform 4-Tier Hierarchy Credentials
+        if (cleanEmail === 'agent@platform.com') {
+            const user = { user_id: 'saas_agent_1', name: 'Support Agent', email: 'agent@platform.com', role: 'PLATFORM_SUPPORT_AGENT', level: 'Level 1: Support Agent' };
+            const tenant = { tenant_id: 'global', name: 'BarelyPassing Support Global', code: 'PLATFORM' };
+            localStorage.setItem('bp_token', 'jwt_saas_agent_' + Date.now());
             localStorage.setItem('bp_user', JSON.stringify(user));
             localStorage.setItem('bp_tenant', JSON.stringify(tenant));
             localStorage.setItem('user', JSON.stringify(user));
@@ -207,22 +280,34 @@ window.Auth = {
             return true;
         }
 
-        if (cleanEmail === 'sales@platform.com') {
-            const user = { user_id: 'saas_sales_1', name: 'SaaS Sales Lead', email: 'sales@platform.com', role: 'PLATFORM_SALES_SUPPORT' };
-            const tenant = { tenant_id: 'global', name: 'BarelyPassing SaaS Global', code: 'PLATFORM' };
-            localStorage.setItem('bp_token', 'jwt_saas_sales_' + Date.now());
-            localStorage.setItem('bp_user', JSON.stringify(user));
-            localStorage.setItem('bp_tenant', JSON.stringify(tenant));
-            localStorage.setItem('user', JSON.stringify(user));
-            localStorage.setItem('tenant', JSON.stringify(tenant));
-            window.location.href = 'saas.html';
-            return true;
-        }
-
-        if (cleanEmail === 'support@platform.com') {
-            const user = { user_id: 'saas_tech_1', name: 'Technical Support', email: 'support@platform.com', role: 'PLATFORM_TECH_SUPPORT' };
-            const tenant = { tenant_id: 'global', name: 'BarelyPassing SaaS Global', code: 'PLATFORM' };
+        if (cleanEmail === 'techsupport@platform.com' || cleanEmail === 'support@platform.com') {
+            const user = { user_id: 'saas_tech_1', name: 'Technical Support', email: 'techsupport@platform.com', role: 'PLATFORM_TECH_SUPPORT', level: 'Level 2: Senior / Technical Support' };
+            const tenant = { tenant_id: 'global', name: 'BarelyPassing Support Global', code: 'PLATFORM' };
             localStorage.setItem('bp_token', 'jwt_saas_tech_' + Date.now());
+            localStorage.setItem('bp_user', JSON.stringify(user));
+            localStorage.setItem('bp_tenant', JSON.stringify(tenant));
+            localStorage.setItem('user', JSON.stringify(user));
+            localStorage.setItem('tenant', JSON.stringify(tenant));
+            window.location.href = 'saas.html';
+            return true;
+        }
+
+        if (cleanEmail === 'manager@platform.com' || cleanEmail === 'sales@platform.com') {
+            const user = { user_id: 'saas_mgr_1', name: 'Support Manager', email: 'manager@platform.com', role: 'PLATFORM_SUPPORT_MANAGER', level: 'Level 3: Support Manager' };
+            const tenant = { tenant_id: 'global', name: 'BarelyPassing Support Global', code: 'PLATFORM' };
+            localStorage.setItem('bp_token', 'jwt_saas_mgr_' + Date.now());
+            localStorage.setItem('bp_user', JSON.stringify(user));
+            localStorage.setItem('bp_tenant', JSON.stringify(tenant));
+            localStorage.setItem('user', JSON.stringify(user));
+            localStorage.setItem('tenant', JSON.stringify(tenant));
+            window.location.href = 'saas.html';
+            return true;
+        }
+
+        if (cleanEmail === 'saasadmin@platform.com' || cleanEmail === 'saasadmin' || cleanEmail === 'admin@platform.com') {
+            const user = { user_id: 'saas_admin_1', name: 'Platform Administrator', email: 'saasadmin@platform.com', role: 'PLATFORM_SUPER_ADMIN', level: 'Level 4: Platform Administrator' };
+            const tenant = { tenant_id: 'global', name: 'BarelyPassing Support Global', code: 'PLATFORM' };
+            localStorage.setItem('bp_token', 'jwt_saas_super_' + Date.now());
             localStorage.setItem('bp_user', JSON.stringify(user));
             localStorage.setItem('bp_tenant', JSON.stringify(tenant));
             localStorage.setItem('user', JSON.stringify(user));
@@ -253,6 +338,7 @@ window.Auth = {
 
                 localStorage.setItem('bp_token',  activeToken);
                 localStorage.setItem('bp_user',   JSON.stringify(activeUser));
+                localStorage.setItem('bp_role',   activeUser.role);
                 localStorage.setItem('bp_tenant', JSON.stringify(activeTenant));
                 localStorage.setItem('accessToken', activeToken);
                 localStorage.setItem('user', JSON.stringify(activeUser));
@@ -304,6 +390,7 @@ window.Auth = {
             const tenant = { tenant_id: 't1', name: cleanTenant === 'NITW' ? 'NIT Warangal' : 'IIIT Sri City', code: cleanTenant };
             localStorage.setItem('bp_token',  'jwt_demo_' + Date.now());
             localStorage.setItem('bp_user',   JSON.stringify(user));
+            localStorage.setItem('bp_role',   acct.role);
             localStorage.setItem('bp_tenant', JSON.stringify(tenant));
             localStorage.setItem('user',      JSON.stringify(user));
             localStorage.setItem('tenant',    JSON.stringify(tenant));
@@ -317,9 +404,11 @@ window.Auth = {
     // ── Logout (clears all B2B + old keys, context-aware redirect) ────────
     logout: () => {
         const user = window.Auth.getUser();
-        const isSaaS = user && (user.role === 'PLATFORM_SUPER_ADMIN' || user.role === 'PLATFORM_SALES_SUPPORT' || user.role === 'PLATFORM_TECH_SUPPORT');
+        const pathname = (window.location.pathname || '').toLowerCase();
+        const role = (user && user.role) ? user.role : (localStorage.getItem('bp_role') || '');
+        const isSaaS = pathname.includes('saas') || role.startsWith('PLATFORM_');
         [
-            'bp_token', 'bp_user', 'bp_tenant',
+            'bp_token', 'bp_user', 'bp_role', 'bp_tenant',
             'currentUser', 'ffsd_db',
             'accessToken', 'refreshToken', 'user', 'tenant'
         ].forEach(k => localStorage.removeItem(k));
@@ -329,7 +418,7 @@ window.Auth = {
     // ── Route guard (works for all pages) ──────────────────────────────────
     _roleToPage: (role) => {
         if (!role) return 'login.html';
-        if (role === 'PLATFORM_SUPER_ADMIN' || role === 'PLATFORM_SALES_SUPPORT' || role === 'PLATFORM_TECH_SUPPORT') return 'saas.html';
+        if (role.startsWith('PLATFORM_')) return 'saas.html';
         if (role === 'INSTITUTE_SUPER_ADMIN' || role === 'superadmin' || role === 'admin') return 'director.html';
         if (role === 'FINANCE_ADMIN') return 'finance.html';
         if (role === 'DEPARTMENT_ADMIN_HOD' || role === 'head') return 'hod.html';
@@ -342,8 +431,9 @@ window.Auth = {
         const token = window.Auth.getToken();
 
         if (!user) {
-            console.warn('⛔ Unauthenticated user in requireAuth');
-            window.location.href = 'login.html';
+            console.warn('[Auth] Unauthenticated user in requireAuth');
+            const pathname = (window.location.pathname || '').toLowerCase();
+            window.location.href = pathname.includes('saas') ? 'saas-login.html' : 'login.html';
             return null;
         }
 
@@ -358,8 +448,9 @@ window.Auth = {
         if (allowedRoles.length > 0) {
             const hasAccess = allowedRoles.some(r => normalizedUserRoles.includes(r));
             if (!hasAccess) {
-                console.warn(`⛔ Role "${userRole}" cannot access this page`);
-                window.location.href = 'login.html';
+                console.warn(`[Auth] Role "${userRole}" cannot access this page`);
+                const pathname = (window.location.pathname || '').toLowerCase();
+                window.location.href = (pathname.includes('saas') || (userRole && userRole.startsWith('PLATFORM_'))) ? 'saas-login.html' : 'login.html';
                 return null;
             }
         }

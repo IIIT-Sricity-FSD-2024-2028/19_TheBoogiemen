@@ -1,4 +1,9 @@
-import { Module } from '@nestjs/common';
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { LoggerModule } from 'nestjs-pino';
@@ -8,13 +13,15 @@ import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
 import { RolesGuard } from './auth/roles.guard';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
+import { RequiresModuleGuard } from './common/guards/requires-module.guard';
 import { AuthModule } from './auth/auth.module';
 import { StudentsModule } from './students/students.module';
 import { FacultyModule } from './faculty/faculty.module';
 import { AdminModule } from './admin/admin.module';
 import { UploadsModule } from './uploads/uploads.module';
+import { BillingModule } from './billing/billing.module';
 
-// Pranjal's modular backend (Workflow-based)
+// Academic workflow modules from FFSD 2
 import { FeeModule } from './modules/fee/fee.fee.module';
 import { ReportModule } from './modules/report/report.report.module';
 import { UserModule } from './modules/user/user.user.module';
@@ -26,12 +33,17 @@ import { LeaveModule } from './modules/leave/leave.leave.module';
 import { AssessmentModule } from './modules/assessment/assessment.assessment.module';
 import { OutcomeModule } from './modules/outcome/outcome.outcome.module';
 
+// Mandatory FDFED Middleware Suite
+import { FileLoggerService } from './common/services/file-logger.service';
+import { LoggingMiddleware } from './common/middleware/logging.middleware';
+import { SecurityMiddleware } from './common/middleware/security.middleware';
+import { RateLimiterMiddleware } from './common/middleware/rate-limiter.middleware';
+import { TenantContextMiddleware } from './common/middleware/tenant-context.middleware';
+import { AuditLoggerMiddleware } from './common/middleware/audit-logger.middleware';
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    // Registered after ConfigModule so LOG_LEVEL from .env is already in
-    // process.env when the logger is built. buildLoggerConfig() is a function,
-    // not a constant, for exactly this reason — it reads env at call time.
     LoggerModule.forRoot(buildLoggerConfig()),
     DatabaseModule,
     AuthModule,
@@ -39,7 +51,8 @@ import { OutcomeModule } from './modules/outcome/outcome.outcome.module';
     FacultyModule,
     AdminModule,
     UploadsModule,
-    // Pranjal's workflow modules
+    BillingModule,
+    // Academic workflow modules
     FeeModule,
     ReportModule,
     UserModule,
@@ -54,9 +67,13 @@ import { OutcomeModule } from './modules/outcome/outcome.outcome.module';
   controllers: [AppController],
   providers: [
     AppService,
-    // Order matters. JwtAuthGuard must run first: it verifies the token and
-    // populates request.user, which RolesGuard then reads. Nest applies
-    // APP_GUARD providers in registration order.
+    FileLoggerService,
+    LoggingMiddleware,
+    SecurityMiddleware,
+    RateLimiterMiddleware,
+    TenantContextMiddleware,
+    AuditLoggerMiddleware,
+    // Global Authentication & Authorization Guards
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
@@ -65,6 +82,45 @@ import { OutcomeModule } from './modules/outcome/outcome.outcome.module';
       provide: APP_GUARD,
       useClass: RolesGuard,
     },
+    {
+      provide: APP_GUARD,
+      useClass: RequiresModuleGuard,
+    },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  /**
+   * Router-level middleware registration for the 5 mandatory FDFED middleware types:
+   * 1. Global Security Middleware (OWASP headers, stripped X-Powered-By)
+   * 2. Global Logging Middleware (disk logging to logs/access.log & app.log)
+   * 3. Global Rate Limiter & Token Quota Middleware (X-RateLimit-* headers, 429 status)
+   * 4. Router-Level Tenant Context Middleware (Multi-Tenant Isolation, x-tenant-id injection)
+   * 5. Router-Level Audit Logger Middleware (Mutation Auditing to logs/audit.log)
+   */
+  configure(consumer: MiddlewareConsumer): void {
+    // 1. Security headers & CORS hygiene
+    consumer
+      .apply(SecurityMiddleware)
+      .forRoutes({ path: '*path', method: RequestMethod.ALL });
+
+    // 2. Access logging to disk & console
+    consumer
+      .apply(LoggingMiddleware)
+      .forRoutes({ path: '*path', method: RequestMethod.ALL });
+
+    // 3. IP token-bucket rate limiting
+    consumer
+      .apply(RateLimiterMiddleware)
+      .forRoutes({ path: '*path', method: RequestMethod.ALL });
+
+    // 4. Multi-Tenant Context injection
+    consumer
+      .apply(TenantContextMiddleware)
+      .forRoutes({ path: '*path', method: RequestMethod.ALL });
+
+    // 5. Data Mutation Audit Logging (POST, PUT, PATCH, DELETE)
+    consumer
+      .apply(AuditLoggerMiddleware)
+      .forRoutes({ path: '*path', method: RequestMethod.ALL });
+  }
+}

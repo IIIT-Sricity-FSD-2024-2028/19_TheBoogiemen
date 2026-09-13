@@ -50,9 +50,9 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
             <span>Leave Requests</span>
         </a>
-        <a href="#" class="nav-item" style="color:#6366f1;" onclick="openHodSupportModal()">
+        <a href="#" class="nav-item" onclick="switchView('contact-support-view', this)">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            <span>Contact SaaS</span>
+            <span>Contact Support</span>
         </a>
     </nav>
     <div class="sidebar-footer">
@@ -75,16 +75,16 @@
         <div id="dashboard-view" class="view-section active">
             <div class="metrics-grid">
                 <div class="metric-card" onclick="switchView('user-management-view',document.querySelector('.nav-item[onclick*=user-management-view]'))" style="cursor:pointer;" title="View all users">
-                    <div class="label">STUDENTS</div><div class="value" id="total-students">0</div><div class="sub">click to manage ↗</div>
+                    <div class="label">STUDENTS</div><div class="value" id="total-students">0</div><div class="sub">click to manage</div>
                 </div>
                 <div class="metric-card" onclick="switchView('user-management-view',document.querySelector('.nav-item[onclick*=user-management-view]'))" style="cursor:pointer;" title="View all faculty">
-                    <div class="label">FACULTY</div><div class="value" id="total-faculty">0</div><div class="sub">click to manage ↗</div>
+                    <div class="label">FACULTY</div><div class="value" id="total-faculty">0</div><div class="sub">click to manage</div>
                 </div>
                 <div class="metric-card" onclick="switchView('institutional-reports-view',document.querySelector('.nav-item[onclick*=institutional-reports-view]'))" style="cursor:pointer;" title="View reports">
-                    <div class="label">ACTIVE COURSES</div><div class="value" id="total-courses">0</div><div class="sub">click to view report ↗</div>
+                    <div class="label">ACTIVE COURSES</div><div class="value" id="total-courses">0</div><div class="sub">click to view report</div>
                 </div>
                 <div class="metric-card" onclick="switchView('institutional-reports-view',document.querySelector('.nav-item[onclick*=institutional-reports-view]'))" style="cursor:pointer;" title="View attainment">
-                    <div class="label">AVG ATTAINMENT</div><div class="value">81%</div><div class="sub">click to view report ↗</div>
+                    <div class="label">AVG ATTAINMENT</div><div class="value" id="avg-attainment">--</div><div class="sub">click to view report</div>
                 </div>
             </div>
             <div class="stats-card" style="margin-top:20px;">
@@ -99,15 +99,15 @@
                 <div class="stats-card-header"><h3>Institutional Performance</h3></div>
                 <div class="stats-card-body" style="padding:24px;">
                     <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
-                        <button class="submit-btn" id="nba-export-btn" onclick="renderInstitutionalReports()" style="display:flex;align-items:center;gap:8px;">
-                            ⬇ Export NBA/NAAC Report (CSV)
+                        <button class="submit-btn" id="nba-export-btn" onclick="exportNbaReportPdf()" style="display:flex;align-items:center;gap:8px;">
+                            Export NBA/NAAC Report (PDF)
                         </button>
-                        <button class="btn-cancel" id="cohort-export-btn" onclick="renderInstitutionalReports()" style="display:flex;align-items:center;gap:8px;">
-                            ⬇ Export Cohort Analysis (CSV)
+                        <button class="btn-cancel" id="cohort-export-btn" onclick="exportCohortReportPdf()" style="display:flex;align-items:center;gap:8px;">
+                            Export Cohort Analysis (PDF)
                         </button>
                     </div>
                     <div style="padding:12px;background:#f8fafc;border-radius:8px;font-size:13px;color:#64748b;border:1px solid #e2e8f0;">
-                        📊 Click either button to load and export data. Includes at-risk students, attainment metrics, and cohort analytics.
+                        Click either button to download comprehensive PDF reports including at-risk students, attainment metrics, and cohort analytics.
                     </div>
                 </div>
             </div>
@@ -181,6 +181,84 @@
 
         <!-- Settings -->
         <div id="settings-view" class="view-section" style="display:none;"></div>
+
+        <!-- Contact Support View -->
+        <div id="contact-support-view" class="view-section" style="display:none;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                <div>
+                    <h2 style="font-size:20px;font-weight:700;color:#0f172a;margin:0;">Contact Central Support</h2>
+                    <p style="color:#64748b;font-size:14px;margin-top:4px;">Submit support requests, report technical issues, or request configuration changes.</p>
+                </div>
+                <button class="btn-cancel" onclick="switchView('dashboard-view', document.querySelector('.nav-item[onclick*=\'dashboard-view\']'))" style="display:flex;align-items:center;gap:6px;padding:8px 16px;cursor:pointer;">
+                    Back to Dashboard
+                </button>
+            </div>
+
+            <div class="stats-card" style="margin-bottom:24px;">
+                <div class="stats-card-header">
+                    <h3>Submit New Support Request</h3>
+                </div>
+                <div class="stats-card-body" style="padding:24px;">
+                    <form id="hodSupportForm" onsubmit="event.preventDefault(); submitHodSupportRequest();">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                            <div class="form-group">
+                                <label style="display:block;font-size:13px;font-weight:600;color:#334155;margin-bottom:6px;">Subject</label>
+                                <input type="text" id="hodSupportSubject" placeholder="e.g., Course slot allocation adjustment" required style="width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:14px;">
+                            </div>
+                            <div class="form-group">
+                                <label style="display:block;font-size:13px;font-weight:600;color:#334155;margin-bottom:6px;">Category</label>
+                                <select id="hodSupportCategory" required style="width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:14px;background:#fff;">
+                                    <option value="Academic Curriculum">Academic Curriculum &amp; Courses</option>
+                                    <option value="Attendance / Grading">Attendance / Grading System</option>
+                                    <option value="Technical Bug">Technical Platform Issue</option>
+                                    <option value="Account &amp; Access">Account &amp; Access Permissions</option>
+                                    <option value="General Inquiry">General Operational Inquiry</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-top:16px;">
+                            <label style="display:block;font-size:13px;font-weight:600;color:#334155;margin-bottom:6px;">Description</label>
+                            <textarea id="hodSupportDescription" rows="4" placeholder="Provide complete details of your request or issue..." required style="width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:14px;resize:vertical;"></textarea>
+                        </div>
+                        <div class="form-group" style="margin-top:16px;">
+                            <label style="display:block;font-size:13px;font-weight:600;color:#334155;margin-bottom:6px;">Attachment (Optional)</label>
+                            <input type="file" id="hodSupportAttachment" style="width:100%;padding:8px;border:1px dashed #cbd5e1;border-radius:6px;font-size:13px;background:#f8fafc;">
+                            <span style="font-size:12px;color:#94a3b8;margin-top:4px;display:block;">Supported formats: PDF, PNG, JPG, CSV (Max 5MB)</span>
+                        </div>
+                        <div style="margin-top:20px;display:flex;justify-content:flex-end;gap:12px;">
+                            <button type="submit" class="submit-btn" style="background:#0f172a;color:#fff;padding:10px 24px;border-radius:6px;font-weight:600;cursor:pointer;border:none;">
+                                Submit Request
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Existing Requests History -->
+            <div class="stats-card">
+                <div class="stats-card-header" style="display:flex;justify-content:space-between;align-items:center;">
+                    <h3>Support Request History</h3>
+                    <button type="button" onclick="renderHodSupportHistory()" style="background:transparent;border:1px solid #cbd5e1;border-radius:4px;padding:4px 12px;font-size:12px;cursor:pointer;color:#475569;">Refresh</button>
+                </div>
+                <div class="stats-card-body" style="padding:0;overflow-x:auto;">
+                    <table class="data-table" style="width:100%;border-collapse:collapse;">
+                        <thead>
+                            <tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0;text-align:left;">
+                                <th style="padding:12px 16px;font-size:12px;font-weight:600;color:#475569;">Request ID</th>
+                                <th style="padding:12px 16px;font-size:12px;font-weight:600;color:#475569;">Subject</th>
+                                <th style="padding:12px 16px;font-size:12px;font-weight:600;color:#475569;">Category</th>
+                                <th style="padding:12px 16px;font-size:12px;font-weight:600;color:#475569;">Submitted</th>
+                                <th style="padding:12px 16px;font-size:12px;font-weight:600;color:#475569;">Status</th>
+                                <th style="padding:12px 16px;font-size:12px;font-weight:600;color:#475569;">Latest Response</th>
+                            </tr>
+                        </thead>
+                        <tbody id="hodSupportHistoryTbody">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
     </div>
 </div>
@@ -441,36 +519,6 @@
     </div>
 </div>
 
-<!-- HOD SaaS Support Ticket Modal -->
-<div id="hodSupportModal" class="modal-backdrop">
-    <div class="modal">
-        <div class="modal-header"><h2>💬 Contact SaaS Support Platform</h2><button class="close-modal" onclick="closeModal('hodSupportModal')">&times;</button></div>
-        <div class="modal-body">
-            <p style="font-size:13px;color:#64748b;margin-bottom:16px;">Have a department technical issue or need system customizations? Submit a direct ticket to our central SaaS Platform support team.</p>
-            <div class="form-group">
-                <label>Issue Subject</label>
-                <input type="text" id="hodSupportSubject" placeholder="e.g., Request for Department Course Slot Configuration">
-            </div>
-            <div class="form-group">
-                <label>Priority Level</label>
-                <select id="hodSupportPriority">
-                    <option value="Low">🟢 Low — General Inquiry</option>
-                    <option value="Medium" selected>🟡 Medium — Operational Support</option>
-                    <option value="High">🔴 High — Urgent Issue</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Detailed Message</label>
-                <textarea id="hodSupportMsg" rows="4" placeholder="Describe your department inquiry or request in detail..."></textarea>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn-cancel" onclick="closeModal('hodSupportModal')">Cancel</button>
-            <button class="btn-submit" onclick="submitHodSupportTicket()" style="background:#6366f1;color:#fff;">Submit Ticket to SaaS</button>
-        </div>
-    </div>
-</div>
-
 <script src="state.js"></script>
 <script src="script.js"></script>
 <script src="fixes.js"></script>
@@ -492,42 +540,13 @@ document.addEventListener('DOMContentLoaded', () => {
         window.renderUsersTable && window.renderUsersTable(),
         window.renderLeaveManagement && window.renderLeaveManagement(),
         window.renderAttendanceOverride && window.renderAttendanceOverride(),
+        window.renderHodSupportHistory && window.renderHodSupportHistory(),
     ]);
 });
 
 window.openHodSupportModal = function() {
-    openModal('hodSupportModal');
+    switchView('contact-support-view', document.querySelector('.nav-item[onclick*="contact-support-view"]'));
 };
-
-window.submitHodSupportTicket = function() {
-    const subject = document.getElementById('hodSupportSubject')?.value.trim();
-    const msg = document.getElementById('hodSupportMsg')?.value.trim();
-    const priority = document.getElementById('hodSupportPriority')?.value || 'Medium';
-
-    if (!subject || !msg) {
-        showToast('Please fill in both subject and message', 'warning');
-        return;
-    }
-
-    const user = window.Auth?.getUser?.();
-    if (window.SaaSStore && window.SaaSStore.addTicket) {
-        const ticket = window.SaaSStore.addTicket({
-            institution: 'IIIT Sricity',
-            tenantId: user?.tenant_id || 't1',
-            contactEmail: user?.email || 'head@iiits.in',
-            subject: subject,
-            priority: priority,
-            message: msg
-        });
-        showToast(`✅ Ticket ${ticket.id} submitted directly to SaaS Support!`, 'success');
-        closeModal('hodSupportModal');
-        document.getElementById('hodSupportSubject').value = '';
-        document.getElementById('hodSupportMsg').value = '';
-    } else {
-        showToast('Support store not available', 'error');
-    }
-};
-
 </script>
 </body>
 </html>

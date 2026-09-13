@@ -47,7 +47,6 @@ export default function Navbar() {
           </div>
           {tenant && (
             <div className="text-xs text-slate-400 flex items-center space-x-1.5 font-medium">
-              <span>{tenant.logo || '🏫'}</span>
               <span className="text-indigo-300 font-semibold">{tenant.name}</span>
               <span>•</span>
               <span className="text-slate-400">{tenant.subscription_tier}</span>
@@ -66,7 +65,7 @@ export default function Navbar() {
                 activeView === 'saas-admin' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              🌐 SaaS Platform Admin
+              Support Portal Admin
             </button>
           )}
 
@@ -77,7 +76,7 @@ export default function Navbar() {
                 activeView === 'institute-admin' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              🏛️ Campus Director
+              Campus Director
             </button>
           )}
 
@@ -88,7 +87,7 @@ export default function Navbar() {
                 activeView === 'hod' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              🎓 HOD Control
+              HOD Control
             </button>
           )}
 
@@ -99,7 +98,7 @@ export default function Navbar() {
                 activeView === 'faculty' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              👨‍🏫 Faculty Portal
+              Faculty Portal
             </button>
           )}
 
@@ -110,7 +109,7 @@ export default function Navbar() {
                 activeView === 'student' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              👨‍🎓 Student Hub
+              Student Hub
             </button>
           )}
 
@@ -121,7 +120,7 @@ export default function Navbar() {
                 activeView === 'parent' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              👪 Parent View
+              Parent View
             </button>
           )}
         </div>
@@ -132,7 +131,7 @@ export default function Navbar() {
         {/* Token Meter Status Badge */}
         {tenant && tokenMeter && (
           <div className="hidden lg:flex items-center space-x-2 bg-slate-950/80 px-3 py-1.5 rounded-xl border border-slate-800 text-xs">
-            <span className="text-amber-400 font-bold">⚡ Token Meter:</span>
+            <span className="text-amber-400 font-bold">Token Meter:</span>
             <span className="text-slate-200 font-mono">
               {tokenMeter.used_tokens?.toLocaleString()} / {tokenMeter.monthly_quota?.toLocaleString()}
             </span>

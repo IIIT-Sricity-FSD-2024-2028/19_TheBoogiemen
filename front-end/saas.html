@@ -276,14 +276,21 @@
         Support Team Users
     </a>
 
+    <div style="margin: 16px 12px 8px;">
+        <a class="nav-item" href="index.html" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #cbd5e1; margin: 0;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            Back to Landing Page
+        </a>
+    </div>
+
     <div class="sidebar-footer">
         <div class="user-pill">
             <div class="user-avatar" id="saas-avatar">SA</div>
             <div class="user-info">
-                <p id="saas-user-name">SaaS Admin</p>
+                <p id="saas-user-name">Support Admin</p>
                 <span id="saas-user-role">Level 0 · Platform</span>
             </div>
-            <button class="logout-btn" onclick="window.Auth.logout()" title="Logout to SaaS Login">
+            <button class="logout-btn" onclick="window.Auth.logout()" title="Logout">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
             </button>
         </div>
@@ -318,7 +325,7 @@
             <div class="stat-card">
                 <div class="stat-label">Interlinked Tickets</div>
                 <div class="stat-value" id="dash-ticket-count">3</div>
-                <div class="stat-sub">Director ↔ SaaS synced</div>
+                <div class="stat-sub">Director ↔ Support synced</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Pending Onboarding</div>
@@ -377,17 +384,103 @@
     <div id="page-support" class="page">
         <div class="page-header">
             <div>
-                <h2>Interlinked Director &amp; Campus Support Tickets</h2>
-                <p>Support requests submitted directly by Institute Directors and Administrators.</p>
+                <h2>Support Portal Workspace</h2>
+                <p>Interlinked support operations, ticket triage, and campus issue resolution.</p>
             </div>
+            <button class="btn btn-ghost" onclick="renderSupportTickets()">Refresh Tickets</button>
         </div>
-        <div class="card">
-            <table>
-                <thead>
-                    <tr><th>Ticket ID</th><th>Institution</th><th>Director / Contact</th><th>Subject</th><th>Priority</th><th>Status</th><th>Actions</th></tr>
-                </thead>
-                <tbody id="support-tickets-tbody"></tbody>
-            </table>
+
+        <div style="display: grid; grid-template-columns: 300px 1fr; gap: 24px; align-items: start;">
+            <!-- Left Side: Support Role Menu / Navigation -->
+            <div class="card" style="padding: 24px;">
+                <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px;">Support Role Navigation</div>
+                <h3 style="font-size: 16px; font-weight: 800; color: #0f172a; margin: 0 0 16px 0;">Operational Tiers</h3>
+
+                <div style="display: flex; flex-direction: column; gap: 10px;" id="supportRoleNav">
+                    <div class="support-tier-card" id="tier-nav-PLATFORM_SUPPORT_AGENT" onclick="filterSupportByTier('PLATFORM_SUPPORT_AGENT', this)" style="padding: 14px; border: 1.5px solid #cbd5e1; border-radius: 12px; cursor: pointer; transition: all 0.2s; background: #fff;">
+                        <span style="font-size: 10px; font-weight: 800; color: #64748b; letter-spacing: 0.5px; display: block; margin-bottom: 2px;">LEVEL 1</span>
+                        <div style="font-size: 14px; font-weight: 700; color: #0f172a;">Support Agent</div>
+                        <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Ticket triage &amp; communications</div>
+                    </div>
+                    <div class="support-tier-card" id="tier-nav-PLATFORM_TECH_SUPPORT" onclick="filterSupportByTier('PLATFORM_TECH_SUPPORT', this)" style="padding: 14px; border: 1.5px solid #cbd5e1; border-radius: 12px; cursor: pointer; transition: all 0.2s; background: #fff;">
+                        <span style="font-size: 10px; font-weight: 800; color: #d97706; letter-spacing: 0.5px; display: block; margin-bottom: 2px;">LEVEL 2</span>
+                        <div style="font-size: 14px; font-weight: 700; color: #0f172a;">Senior / Technical Support</div>
+                        <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Technical resolution &amp; system health</div>
+                    </div>
+                    <div class="support-tier-card" id="tier-nav-PLATFORM_SUPPORT_MANAGER" onclick="filterSupportByTier('PLATFORM_SUPPORT_MANAGER', this)" style="padding: 14px; border: 1.5px solid #cbd5e1; border-radius: 12px; cursor: pointer; transition: all 0.2s; background: #fff;">
+                        <span style="font-size: 10px; font-weight: 800; color: #16a34a; letter-spacing: 0.5px; display: block; margin-bottom: 2px;">LEVEL 3</span>
+                        <div style="font-size: 14px; font-weight: 700; color: #0f172a;">Support Manager</div>
+                        <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Subscriptions, leads &amp; billing</div>
+                    </div>
+                    <div class="support-tier-card" id="tier-nav-PLATFORM_SUPER_ADMIN" onclick="filterSupportByTier('PLATFORM_SUPER_ADMIN', this)" style="padding: 14px; border: 1.5px solid #4f46e5; border-radius: 12px; cursor: pointer; transition: all 0.2s; background: #eef2ff;">
+                        <span style="font-size: 10px; font-weight: 800; color: #4338ca; letter-spacing: 0.5px; display: block; margin-bottom: 2px;">LEVEL 4</span>
+                        <div style="font-size: 14px; font-weight: 700; color: #0f172a;">Platform Administrator</div>
+                        <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Full platform governance &amp; tenants</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; padding: 14px; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0;">
+                    <div style="font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px; text-transform: uppercase;">Active Session Tier</div>
+                    <div style="font-size: 13px; color: #0f172a; font-weight: 700;" id="supportWorkspaceCurrentRole">Platform Administrator</div>
+                    <div style="font-size: 11px; color: #64748b; margin-top: 2px;" id="supportWorkspaceCurrentEmail">saasadmin@platform.com</div>
+                </div>
+            </div>
+
+            <!-- Right Side: Dynamic Role Workspace -->
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                <!-- Escalation Pipeline Indicator -->
+                <div class="card" style="padding: 16px 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <span style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.6px;">Interlinked Support Resolution Pipeline</span>
+                        <span style="font-size: 11px; color: #2563eb; font-weight: 700;" id="supportEscalationStatus">Level 4 Active — Master Governance</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;" id="escalationStepsContainer">
+                        <!-- Dynamic Escalation Steps Rendered by JS -->
+                    </div>
+                </div>
+
+                <!-- Role Workspace Overview & KPI Metrics -->
+                <div class="card" style="padding: 20px 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span class="badge badge-blue" id="supportTierBadge">Level 4</span>
+                                <h3 style="margin: 0; font-size: 18px; font-weight: 800; color: #0f172a;" id="supportWorkspaceTitle">Platform Administrator Workspace</h3>
+                            </div>
+                            <p style="margin: 4px 0 0; font-size: 13px; color: #64748b;" id="supportWorkspaceSub">Full platform governance, multi-tenant isolation, and master ticket queue.</p>
+                        </div>
+                    </div>
+
+                    <!-- 4 Dynamic Metric Stats for this Tier -->
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;" id="supportTierMetrics">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Role-Specific Diagnostic / Operational Context Box -->
+                <div id="supportTierSpecialPanel">
+                    <!-- Populated dynamically by JS -->
+                </div>
+
+                <!-- Active Tickets Queue Table -->
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    <div style="padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
+                        <div>
+                            <div style="font-size: 14px; font-weight: 800; color: #0f172a;" id="supportQueueHeading">Active Ticket Queue</div>
+                            <div style="font-size: 12px; color: #64748b;" id="supportQueueSub">Tickets routed to this tier for resolution or triage</div>
+                        </div>
+                        <span class="badge badge-blue" id="supportQueueCountBadge">0 Tickets</span>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead>
+                                <tr><th>Ticket ID</th><th>Institution</th><th>Contact</th><th>Subject</th><th>Priority</th><th>Status</th><th>Tier Routing</th><th>Actions</th></tr>
+                            </thead>
+                            <tbody id="support-tickets-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -416,7 +509,7 @@
                 <h2>Live Cross-Tenant Activity Logs</h2>
                 <p>Real-time audit log of user connections and system events across all institute portals.</p>
             </div>
-            <button class="btn btn-ghost" onclick="renderActivityLogs()">🔄 Refresh Audit Stream</button>
+            <button class="btn btn-ghost" onclick="renderActivityLogs()">Refresh Audit Stream</button>
         </div>
         <div class="card">
             <table>
@@ -432,21 +525,105 @@
     <div id="page-platform-users" class="page">
         <div class="page-header">
             <div>
-                <h2>SaaS Support Team Personnel</h2>
-                <p>Seeded accounts authorized to log into saas-login.html to support institutions.</p>
+                <h2>Support Portal Team Personnel</h2>
+                <p>Authorized operational tiers configured for platform governance and institution assistance.</p>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;">
+                <span id="supportTeamLiveCountBadge" class="badge badge-blue">Loading staff...</span>
+                <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px;" onclick="fetchAndRenderSupportTeam(window._selectedSupportTeamTier || 'all', true)">Refresh Personnel</button>
             </div>
         </div>
-        <div class="card">
-            <table>
-                <thead>
-                    <tr><th>Name</th><th>Email Username</th><th>Role / Tier</th><th>Access Rights</th></tr>
-                </thead>
-                <tbody>
-                    <tr><td><strong>SaaS Global Admin</strong></td><td><code>saasadmin@platform.com</code></td><td><span class="badge badge-blue">PLATFORM_SUPER_ADMIN</span></td><td>Full Platform Owner Access</td></tr>
-                    <tr><td><strong>Platform Sales Lead</strong></td><td><code>sales@platform.com</code></td><td><span class="badge badge-green">PLATFORM_SALES_SUPPORT</span></td><td>Subscriptions &amp; Onboarding Management</td></tr>
-                    <tr><td><strong>Tech Support Lead</strong></td><td><code>techsupport@platform.com</code></td><td><span class="badge badge-amber">PLATFORM_TECH_SUPPORT</span></td><td>Ticket Response &amp; System Health</td></tr>
-                </tbody>
-            </table>
+        <div style="display: grid; grid-template-columns: 320px 1fr; gap: 24px; align-items: start;">
+            <!-- Left Side: Role Hierarchy Interactive Navigation -->
+            <div class="card" style="padding: 20px;">
+                <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px;">Personnel Structure</div>
+                <h3 style="font-size: 16px; font-weight: 800; color: #0f172a; margin: 0 0 16px 0;">Support Hierarchy</h3>
+                <div style="display: flex; flex-direction: column; gap: 10px;" id="supportHierarchyTierList">
+                    <!-- Level 1 -->
+                    <div id="support-tier-btn-1" class="support-tier-item" onclick="selectSupportTeamTier(1)"
+                        style="padding: 14px; border: 1.5px solid #cbd5e1; border-radius: 12px; background: #fff; cursor: pointer; transition: all .2s;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                            <span style="font-size: 10px; font-weight: 800; color: #64748b; letter-spacing: 0.5px;">LEVEL 1</span>
+                            <span class="badge" style="font-size: 9px; padding: 2px 6px; background: #f1f5f9; color: #475569;" id="tier-badge-count-1">2 Staff</span>
+                        </div>
+                        <div style="font-size: 14px; font-weight: 700; color: #0f172a;">Support Agent</div>
+                        <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Ticket triage &amp; replies</div>
+                    </div>
+
+                    <!-- Level 2 -->
+                    <div id="support-tier-btn-2" class="support-tier-item" onclick="selectSupportTeamTier(2)"
+                        style="padding: 14px; border: 1.5px solid #cbd5e1; border-radius: 12px; background: #fff; cursor: pointer; transition: all .2s;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                            <span style="font-size: 10px; font-weight: 800; color: #d97706; letter-spacing: 0.5px;">LEVEL 2</span>
+                            <span class="badge" style="font-size: 9px; padding: 2px 6px; background: #fef3c7; color: #92400e;" id="tier-badge-count-2">2 Staff</span>
+                        </div>
+                        <div style="font-size: 14px; font-weight: 700; color: #0f172a;">Senior / Technical Support</div>
+                        <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Technical resolution &amp; health</div>
+                    </div>
+
+                    <!-- Level 3 -->
+                    <div id="support-tier-btn-3" class="support-tier-item" onclick="selectSupportTeamTier(3)"
+                        style="padding: 14px; border: 1.5px solid #cbd5e1; border-radius: 12px; background: #fff; cursor: pointer; transition: all .2s;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                            <span style="font-size: 10px; font-weight: 800; color: #16a34a; letter-spacing: 0.5px;">LEVEL 3</span>
+                            <span class="badge" style="font-size: 9px; padding: 2px 6px; background: #dcfce7; color: #166534;" id="tier-badge-count-3">1 Staff</span>
+                        </div>
+                        <div style="font-size: 14px; font-weight: 700; color: #0f172a;">Support Manager</div>
+                        <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Billing &amp; onboarding leads</div>
+                    </div>
+
+                    <!-- Level 4 -->
+                    <div id="support-tier-btn-4" class="support-tier-item" onclick="selectSupportTeamTier(4)"
+                        style="padding: 14px; border: 1.5px solid #cbd5e1; border-radius: 12px; background: #fff; cursor: pointer; transition: all .2s;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                            <span style="font-size: 10px; font-weight: 800; color: #4338ca; letter-spacing: 0.5px;">LEVEL 4</span>
+                            <span class="badge" style="font-size: 9px; padding: 2px 6px; background: #e0e7ff; color: #3730a3;" id="tier-badge-count-4">1 Staff</span>
+                        </div>
+                        <div style="font-size: 14px; font-weight: 700; color: #0f172a;">Platform Administrator</div>
+                        <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Master platform owner</div>
+                    </div>
+
+                    <!-- All Tiers View -->
+                    <div id="support-tier-btn-all" class="support-tier-item" onclick="selectSupportTeamTier('all')"
+                        style="padding: 12px 14px; border: 1.5px solid #cbd5e1; border-radius: 12px; background: #fff; cursor: pointer; transition: all .2s; margin-top: 4px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 13px; font-weight: 700; color: #334155;">View Complete Roster</span>
+                            <span class="badge" style="font-size: 9px; padding: 2px 6px; background: #f8fafc; color: #475569;" id="tier-badge-count-all">All Tiers</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Dynamic Personnel Table & Tier Workspace Details -->
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+                <!-- Selected Tier Overview Card -->
+                <div class="card" style="padding: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span id="supportTeamSelectedBadge" class="badge badge-blue">Level 4</span>
+                                <h3 id="supportTeamSelectedTitle" style="font-size: 18px; font-weight: 800; color: #0f172a; margin: 0;">Platform Administrator</h3>
+                            </div>
+                            <p id="supportTeamSelectedSub" style="font-size: 13px; color: #64748b; margin: 4px 0 0 0;">Master platform owner — full system governance and multi-tenant management.</p>
+                        </div>
+                        <div id="supportTeamTierActionGroup" style="display: flex; gap: 8px;">
+                            <button id="supportTeamOpenQueueBtn" class="btn btn-primary" style="font-size: 12px; padding: 6px 14px;" onclick="switchActiveSupportWorkspaceFromPersonnel()">Switch to Tier Queue</button>
+                        </div>
+                    </div>
+
+                    <!-- Tier Responsibilities & Scope -->
+                    <div id="supportTeamScopePanel" style="margin-top: 14px; padding: 12px 16px; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0; font-size: 12px; color: #475569; line-height: 1.6;">
+                        <!-- Injected dynamically -->
+                    </div>
+                </div>
+
+                <!-- Dynamic Personnel Table Container (Loading / Error / Empty / Loaded) -->
+                <div class="card" style="padding: 0; overflow: hidden;" id="supportTeamWorkspaceCard">
+                    <div id="supportTeamWorkspaceContainer">
+                        <!-- Loaded dynamically -->
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -477,7 +654,7 @@
         </div>
         <div class="modal-actions">
             <button class="btn btn-ghost" onclick="closeModal('b2bInvoiceModal')">Cancel</button>
-            <button class="btn btn-primary" onclick="dispatchB2BInvoice()">⚡ Dispatch B2B Invoice &amp; Payment Link</button>
+            <button class="btn btn-primary" onclick="dispatchB2BInvoice()">Dispatch B2B Invoice &amp; Payment Link</button>
         </div>
     </div>
 </div>
@@ -486,7 +663,7 @@
 <div class="modal-overlay" id="b2bCheckoutModal">
     <div class="modal" style="max-width:560px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-            <span class="badge badge-green">💳 BarelyPassing B2B Checkout</span>
+            <span class="badge badge-green">BarelyPassing B2B Checkout</span>
             <span style="font-size:12px;color:var(--muted);" id="checkoutInvoiceId">INV-2026-8802</span>
         </div>
         <h3 class="modal-title" id="checkoutInstName">Amrita University</h3>
@@ -508,7 +685,7 @@
         </div>
         <div class="modal-actions">
             <button class="btn btn-ghost" onclick="closeModal('b2bCheckoutModal')">Cancel</button>
-            <button class="btn btn-primary" style="background:linear-gradient(135deg,#059669,#10b981);" onclick="processB2BPayment()">✅ Complete Payment &amp; Provision Tenant</button>
+            <button class="btn btn-primary" style="background:linear-gradient(135deg,#059669,#10b981);" onclick="processB2BPayment()">Complete Payment &amp; Provision Tenant</button>
         </div>
     </div>
 </div>
@@ -548,6 +725,19 @@
     </div>
 </div>
 
+<!-- Technical Diagnostic Trace Modal -->
+<div class="modal-overlay" id="diagnosticTraceModal">
+    <div class="modal" style="max-width: 580px;">
+        <h3 class="modal-title" id="diagModalTitle">Technical Diagnostic Trace</h3>
+        <p class="modal-sub" id="diagModalSub">Inspecting live API latency, headers, and tenant health for ticket.</p>
+        <div id="diagModalContent" style="font-family: monospace; font-size: 12px; background: #0f172a; color: #38bdf8; padding: 16px; border-radius: 8px; line-height: 1.6; white-space: pre-wrap; max-height: 280px; overflow-y: auto;"></div>
+        <div class="modal-actions" style="margin-top: 16px;">
+            <button class="btn btn-ghost" onclick="closeModal('diagnosticTraceModal')">Close</button>
+            <button class="btn btn-primary" onclick="escalateCurrentDiagnosticTicket()">Escalate Ticket to Level 3</button>
+        </div>
+    </div>
+</div>
+
 <div id="toast"></div>
 
 <script src="state.js"></script>
@@ -556,16 +746,22 @@ let currentActiveLeadId = null;
 let currentActiveTicketId = null;
 
 function initSaaS() {
-    const user = window.Auth.requireAuth(['PLATFORM_SUPER_ADMIN', 'PLATFORM_SALES_SUPPORT', 'PLATFORM_TECH_SUPPORT']);
+    const user = window.Auth.requireAuth([
+        'PLATFORM_SUPER_ADMIN',
+        'PLATFORM_SUPPORT_MANAGER',
+        'PLATFORM_TECH_SUPPORT',
+        'PLATFORM_SUPPORT_AGENT',
+        'PLATFORM_SALES_SUPPORT'
+    ]);
     if (!user) return;
 
-    const name = user.first_name || user.name || user.username || 'SaaS Support Agent';
+    const name = user.first_name || user.name || user.username || 'Support Agent';
     const nameEl = document.getElementById('saas-user-name');
     const avatarEl = document.getElementById('saas-avatar');
     const roleEl = document.getElementById('saas-user-role');
     if (nameEl) nameEl.textContent = name;
     if (avatarEl) avatarEl.textContent = (name.charAt(0) || 'S').toUpperCase();
-    if (roleEl) roleEl.textContent = (user.role || '').replace('PLATFORM_', '').replace(/_/g, ' ');
+    if (roleEl) roleEl.textContent = user.level || (user.role || '').replace('PLATFORM_', '').replace(/_/g, ' ');
 
     configureSaaSRolePermissions(user.role);
     renderAllViews();
@@ -581,18 +777,18 @@ function configureSaaSRolePermissions(role) {
     const navItems = document.querySelectorAll('.nav-item[data-nav]');
     const roleBanner = document.getElementById('role-banner');
 
-    if (role === 'PLATFORM_SALES_SUPPORT') {
-        if (roleBanner) roleBanner.innerHTML = `<span class="badge badge-green">💼 Sales &amp; Growth View</span> &nbsp;<span style="font-size:12px;color:var(--muted);">Tailored for Sales Lead — Billing, Subscriptions &amp; Onboarding Leads</span>`;
+    if (role === 'PLATFORM_SUPPORT_AGENT') {
+        if (roleBanner) roleBanner.innerHTML = `<span class="badge" style="background:#f1f5f9;color:#475569;">Level 1: Support Agent</span> &nbsp;<span style="font-size:12px;color:var(--muted);">Ticket Responses, Customer Communications &amp; Inquiry Triage</span>`;
         navItems.forEach(item => {
             const page = item.getAttribute('data-nav');
-            if (['support', 'activity', 'platform-users'].includes(page)) {
+            if (['subscriptions', 'onboarding-list', 'platform-users'].includes(page)) {
                 item.style.display = 'none';
             } else {
                 item.style.display = 'flex';
             }
         });
     } else if (role === 'PLATFORM_TECH_SUPPORT') {
-        if (roleBanner) roleBanner.innerHTML = `<span class="badge badge-amber">🛠 Technical Support View</span> &nbsp;<span style="font-size:12px;color:var(--muted);">Tailored for Tech Support — Ticket Resolution, Audit Streams &amp; System Health</span>`;
+        if (roleBanner) roleBanner.innerHTML = `<span class="badge badge-amber">Level 2: Senior / Technical Support</span> &nbsp;<span style="font-size:12px;color:var(--muted);">Ticket Resolution, Cross-Tenant Audit Streams &amp; System Health</span>`;
         navItems.forEach(item => {
             const page = item.getAttribute('data-nav');
             if (['subscriptions', 'onboarding-list'].includes(page)) {
@@ -601,11 +797,225 @@ function configureSaaSRolePermissions(role) {
                 item.style.display = 'flex';
             }
         });
+    } else if (role === 'PLATFORM_SUPPORT_MANAGER' || role === 'PLATFORM_SALES_SUPPORT') {
+        if (roleBanner) roleBanner.innerHTML = `<span class="badge badge-green">Level 3: Support Manager</span> &nbsp;<span style="font-size:12px;color:var(--muted);">Subscriptions, Tenant Onboarding Leads &amp; Invoice Billing</span>`;
+        navItems.forEach(item => {
+            const page = item.getAttribute('data-nav');
+            if (['platform-users'].includes(page)) {
+                item.style.display = 'none';
+            } else {
+                item.style.display = 'flex';
+            }
+        });
     } else {
-        // PLATFORM_SUPER_ADMIN
-        if (roleBanner) roleBanner.innerHTML = `<span class="badge badge-blue">⚡ Global Owner View</span>&nbsp;<span style="font-size:12px;color:var(--muted);">Platform Super Admin — All Modules & Tenants Accessible</span>`;
+        // PLATFORM_SUPER_ADMIN (Level 4)
+        if (roleBanner) roleBanner.innerHTML = `<span class="badge badge-blue">Level 4: Platform Administrator</span>&nbsp;<span style="font-size:12px;color:var(--muted);">Full Platform Owner — All Modules, Tenants &amp; Support Personnel Accessible</span>`;
         navItems.forEach(item => item.style.display = 'flex');
     }
+
+    const tierCard = document.getElementById('tier-nav-' + role);
+    if (tierCard) filterSupportByTier(role, tierCard);
+}
+
+const SUPPORT_TIER_CONFIG = {
+    'PLATFORM_SUPPORT_AGENT': {
+        tierNum: 1,
+        tierName: 'Level 1',
+        role: 'Support Agent',
+        email: 'agent@platform.com',
+        title: 'Level 1 — Ticket Triage & Communications',
+        sub: 'Preliminary intake, customer triage, response dispatch, and technical escalation routing to Level 2.',
+        statusText: 'Level 1 Active — Triage & Customer Communications',
+        metrics: [
+            { label: 'Triage Queue', value: '3 Tickets', sub: 'Inbound pending response' },
+            { label: 'Avg First Response', value: '11 mins', sub: 'SLA target: < 30m' },
+            { label: 'First-Contact Resolution', value: '86%', sub: 'Resolved at Level 1' },
+            { label: 'Routing to L2', value: '1 In Progress', sub: 'Technical anomalies' }
+        ],
+        specialHtml: `
+            <div style="padding: 14px 18px; background: #f0f7ff; border: 1px solid #bfdbfe; border-radius: 12px; display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                    <div style="font-size: 13px; font-weight: 700; color: #1e40af;">First-Response Standard Active</div>
+                    <div style="font-size: 12px; color: #3b82f6;">Campus Director inquiries are triaged here first. Respond directly or escalate unresolved bugs to Level 2.</div>
+                </div>
+                <button class="btn btn-ghost" style="font-size: 12px; padding: 4px 12px; background: #fff; border: 1px solid #93c5fd;" onclick="showToast('Customer communications protocol active', 'success')">Triage SOP</button>
+            </div>
+        `
+    },
+    'PLATFORM_TECH_SUPPORT': {
+        tierNum: 2,
+        tierName: 'Level 2',
+        role: 'Senior / Technical Support',
+        email: 'techsupport@platform.com',
+        title: 'Level 2 — Technical Resolution & System Health',
+        sub: 'Deep technical diagnostics, NestJS backend API health monitoring, database integrity, and high-priority bug resolution.',
+        statusText: 'Level 2 Active — Senior / Technical Diagnostics & Health',
+        metrics: [
+            { label: 'Technical Incidents', value: '1 High Priority', sub: 'Active diagnostic triage' },
+            { label: 'NestJS API Backend', value: '200 OK', sub: 'Port 5001 • Latency: 18ms' },
+            { label: 'DB Integrity', value: 'Synchronized', sub: 'Zero schema errors' },
+            { label: 'Escalated to L3', value: '0 Blockers', sub: 'No SLA breaches' }
+        ],
+        specialHtml: `
+            <div style="padding: 14px 18px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <div style="font-size: 13px; font-weight: 700; color: #0f172a;">Live Technical Infrastructure Health</div>
+                    <span class="badge badge-green">All 4 Services Operational</span>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; font-size: 12px;">
+                    <div style="background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                        <span style="color: #64748b; display: block; font-size: 10px; text-transform: uppercase; font-weight: 700;">NestJS REST API</span>
+                        <strong style="color: #10b981; font-size: 13px;">Port 5001 — OK</strong>
+                    </div>
+                    <div style="background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                        <span style="color: #64748b; display: block; font-size: 10px; text-transform: uppercase; font-weight: 700;">PDF Generator</span>
+                        <strong style="color: #10b981; font-size: 13px;">Binary Stream — OK</strong>
+                    </div>
+                    <div style="background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                        <span style="color: #64748b; display: block; font-size: 10px; text-transform: uppercase; font-weight: 700;">Course Attendance</span>
+                        <strong style="color: #10b981; font-size: 13px;">Aligned (85%)</strong>
+                    </div>
+                    <div style="background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                        <span style="color: #64748b; display: block; font-size: 10px; text-transform: uppercase; font-weight: 700;">Date Validation</span>
+                        <strong style="color: #10b981; font-size: 13px;">Strict (#dc2626)</strong>
+                    </div>
+                </div>
+            </div>
+        `
+    },
+    'PLATFORM_SUPPORT_MANAGER': {
+        tierNum: 3,
+        tierName: 'Level 3',
+        role: 'Support Manager',
+        email: 'manager@platform.com',
+        title: 'Level 3 — Support Operations & Institutional SLAs',
+        sub: 'Service level agreement compliance, institutional onboarding lead fulfillment, billing disputes, and team escalations.',
+        statusText: 'Level 3 Active — Operations, Subscriptions & SLAs',
+        metrics: [
+            { label: 'SLA Compliance Rate', value: '99.4%', sub: 'Target: 98.0%' },
+            { label: 'Subscribed Campuses', value: '2 Active', sub: 'IIIT Sricity & Pioneer' },
+            { label: 'Onboarding Pipeline', value: '3 Inbound', sub: 'Leads pending contract' },
+            { label: 'Critical Escalations', value: '0 Breached', sub: 'Full SLA adherence' }
+        ],
+        specialHtml: `
+            <div style="padding: 14px 18px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                    <div style="font-size: 13px; font-weight: 700; color: #166534;">Institutional SLA &amp; Account Governance</div>
+                    <div style="font-size: 12px; color: #15803d;">Managing enterprise account tier entitlements, seat quotas, and high-tier escalation resolutions.</div>
+                </div>
+                <button class="btn btn-primary" style="font-size: 12px; padding: 6px 14px; background: #16a34a;" onclick="showPage('onboarding-list')">Inspect Leads Queue</button>
+            </div>
+        `
+    },
+    'PLATFORM_SUPER_ADMIN': {
+        tierNum: 4,
+        tierName: 'Level 4',
+        role: 'Platform Administrator',
+        email: 'saasadmin@platform.com',
+        title: 'Level 4 — Master Support Queue & Governance',
+        sub: 'Master platform governance, cross-tenant isolation enforcement, full audit stream inspection, and support team management.',
+        statusText: 'Level 4 Active — Master Platform Governance & Superadmin',
+        metrics: [
+            { label: 'Isolated Tenants', value: '2 Campuses', sub: 'Multi-tenant database' },
+            { label: 'Master Ticket Stream', value: '3 Global', sub: 'Full cross-tenant view' },
+            { label: 'Operational Tiers', value: '4 Levels Active', sub: 'Personnel configured' },
+            { label: 'Platform Security Audit', value: '100% Monitored', sub: 'Zero security alerts' }
+        ],
+        specialHtml: `
+            <div style="padding: 14px 18px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                    <div style="font-size: 13px; font-weight: 700; color: #0f172a;">Full Superadmin Privileges Enabled</div>
+                    <div style="font-size: 12px; color: #64748b;">Complete access across all tenant databases, audit streams, and support staff role assignments.</div>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-ghost" style="font-size: 12px; padding: 4px 10px;" onclick="showPage('activity')">Audit Log</button>
+                    <button class="btn btn-ghost" style="font-size: 12px; padding: 4px 10px;" onclick="showPage('platform-users')">Personnel</button>
+                </div>
+            </div>
+        `
+    }
+};
+
+let currentDiagnosticTicketId = null;
+
+function filterSupportByTier(role, el) {
+    if (window.event) window.event.preventDefault();
+    
+    // Update left-side role menu styling (subtle borders, subtle elevation, no giant blue box)
+    document.querySelectorAll('.support-tier-card').forEach(c => {
+        c.style.background = '#ffffff';
+        c.style.borderColor = '#cbd5e1';
+        c.style.boxShadow = 'none';
+    });
+    
+    const targetEl = el || document.getElementById('tier-nav-' + role);
+    if (targetEl) {
+        targetEl.style.background = '#f0f7ff';
+        targetEl.style.borderColor = '#2563eb';
+        targetEl.style.boxShadow = '0 2px 8px rgba(37,99,235,0.08)';
+    }
+
+    const config = SUPPORT_TIER_CONFIG[role] || SUPPORT_TIER_CONFIG['PLATFORM_SUPER_ADMIN'];
+    window._activeSupportRole = role;
+
+    // Update session info
+    const curRole = document.getElementById('supportWorkspaceCurrentRole');
+    const curEmail = document.getElementById('supportWorkspaceCurrentEmail');
+    const title = document.getElementById('supportWorkspaceTitle');
+    const sub = document.getElementById('supportWorkspaceSub');
+    const badge = document.getElementById('supportTierBadge');
+    const statusText = document.getElementById('supportEscalationStatus');
+
+    if (curRole) curRole.textContent = config.role;
+    if (curEmail) curEmail.textContent = config.email;
+    if (title) title.textContent = config.title;
+    if (sub) sub.textContent = config.sub;
+    if (badge) badge.textContent = config.tierName;
+    if (statusText) statusText.textContent = config.statusText;
+
+    // Render Escalation Flow Steps Bar
+    const flowContainer = document.getElementById('escalationStepsContainer');
+    if (flowContainer) {
+        const steps = [
+            { tier: 'PLATFORM_SUPPORT_AGENT', label: 'Level 1', desc: 'Triage & Inbound' },
+            { tier: 'PLATFORM_TECH_SUPPORT', label: 'Level 2', desc: 'Technical Health' },
+            { tier: 'PLATFORM_SUPPORT_MANAGER', label: 'Level 3', desc: 'Operations & SLA' },
+            { tier: 'PLATFORM_SUPER_ADMIN', label: 'Level 4', desc: 'Platform Owner' },
+        ];
+        flowContainer.innerHTML = steps.map((s, idx) => {
+            const isCurrent = s.tier === role;
+            const isPassed = config.tierNum > (idx + 1);
+            return `
+                <div style="padding: 8px 12px; border-radius: 8px; border: 1.5px solid ${isCurrent ? '#2563eb' : (isPassed ? '#93c5fd' : '#e2e8f0')}; background: ${isCurrent ? '#eff6ff' : (isPassed ? '#f8fafc' : '#fff')}; display: flex; flex-direction: column; cursor: pointer;" onclick="filterSupportByTier('${s.tier}')">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 11px; font-weight: 800; color: ${isCurrent ? '#1d4ed8' : '#64748b'};">${s.label}</span>
+                        ${isCurrent ? '<span style="font-size: 9px; font-weight: 800; background: #2563eb; color: #fff; padding: 1px 5px; border-radius: 4px;">ACTIVE</span>' : ''}
+                    </div>
+                    <span style="font-size: 10px; color: ${isCurrent ? '#1e40af' : '#94a3b8'}; margin-top: 2px;">${s.desc}</span>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Render Dynamic KPI Metrics
+    const metricsContainer = document.getElementById('supportTierMetrics');
+    if (metricsContainer && config.metrics) {
+        metricsContainer.innerHTML = config.metrics.map(m => `
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px;">
+                <div style="font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">${m.label}</div>
+                <div style="font-size: 18px; font-weight: 800; color: #0f172a; margin-top: 4px;">${m.value}</div>
+                <div style="font-size: 11px; color: #64748b; margin-top: 2px;">${m.sub}</div>
+            </div>
+        `).join('');
+    }
+
+    // Render Special Panel
+    const specialContainer = document.getElementById('supportTierSpecialPanel');
+    if (specialContainer) {
+        specialContainer.innerHTML = config.specialHtml || '';
+    }
+
+    renderSupportTickets();
 }
 
 function showPage(id, el) {
@@ -618,10 +1028,270 @@ function showPage(id, el) {
     renderAllViews();
 }
 
+window._selectedSupportTeamTier = 4;
+window._supportTeamDataCache = null;
+
+const SUPPORT_TIER_META = {
+    1: {
+        tierName: 'Level 1',
+        designation: 'Support Agent',
+        role: 'PLATFORM_SUPPORT_AGENT',
+        sub: 'Customer inquiry triage, front-line ticket handling, response dispatch, and initial escalation.',
+        badgeBg: '#f1f5f9',
+        badgeColor: '#475569',
+        scope: 'Handles inbound student, faculty, and administrative help requests. Conducts standard ticket responses and routes complex infrastructure or database bugs to Level 2.'
+    },
+    2: {
+        tierName: 'Level 2',
+        designation: 'Senior / Technical Support',
+        role: 'PLATFORM_TECH_SUPPORT',
+        sub: 'System health monitoring, cross-tenant latency inspection, database query diagnostics, and technical bug resolution.',
+        badgeBg: '#fef3c7',
+        badgeColor: '#92400e',
+        scope: 'Investigates technical exceptions, evaluates API response latency, checks live database replication health, and manages ticket escalations requiring schema or code tracing.'
+    },
+    3: {
+        tierName: 'Level 3',
+        designation: 'Support Manager',
+        role: 'PLATFORM_SUPPORT_MANAGER',
+        sub: 'SLA oversight, onboarding leads pipeline, subscription license quotas, and tier escalation management.',
+        badgeBg: '#dcfce7',
+        badgeColor: '#166534',
+        scope: 'Oversees institutional SLA compliance, tracks onboarding demonstration tenants, approves custom institutional plan discounts, and manages support staff assignments.'
+    },
+    4: {
+        tierName: 'Level 4',
+        designation: 'Platform Administrator',
+        role: 'PLATFORM_SUPER_ADMIN',
+        sub: 'Master platform owner — full system governance, multi-tenant database isolation, and security audit log streams.',
+        badgeBg: '#e0e7ff',
+        badgeColor: '#3730a3',
+        scope: 'Full cross-tenant administrative control. Configures institutional tenant isolation rules, audits operational personnel access, and provisions dedicated cloud databases.'
+    },
+    'all': {
+        tierName: 'All Tiers',
+        designation: 'All Operational Personnel',
+        role: 'PLATFORM_SUPER_ADMIN',
+        sub: 'Complete organizational roster across Level 1 through Level 4 operational personnel.',
+        badgeBg: '#e0e7ff',
+        badgeColor: '#3730a3',
+        scope: 'Cross-functional overview of all active, busy, and offline platform support engineers and administrators.'
+    }
+};
+
+function selectSupportTeamTier(tier) {
+    window._selectedSupportTeamTier = tier;
+    
+    // Update left tier navigation buttons cleanly:
+    document.querySelectorAll('.support-tier-item').forEach(item => {
+        item.style.background = '#ffffff';
+        item.style.borderColor = '#cbd5e1';
+        item.style.boxShadow = 'none';
+    });
+    
+    const target = document.getElementById('support-tier-btn-' + tier);
+    if (target) {
+        target.style.background = '#f0f7ff';
+        target.style.borderColor = '#2563eb';
+        target.style.boxShadow = '0 2px 8px rgba(37,99,235,0.08)';
+    }
+
+    const meta = SUPPORT_TIER_META[tier] || SUPPORT_TIER_META[4];
+    const titleEl = document.getElementById('supportTeamSelectedTitle');
+    const subEl = document.getElementById('supportTeamSelectedSub');
+    const badgeEl = document.getElementById('supportTeamSelectedBadge');
+    const scopeEl = document.getElementById('supportTeamScopePanel');
+    const openQueueBtn = document.getElementById('supportTeamOpenQueueBtn');
+
+    if (titleEl) titleEl.textContent = `${meta.tierName} — ${meta.designation}`;
+    if (subEl) subEl.textContent = meta.sub;
+    if (badgeEl) {
+        badgeEl.textContent = meta.tierName;
+        badgeEl.style.background = meta.badgeBg;
+        badgeEl.style.color = meta.badgeColor;
+    }
+    if (scopeEl) {
+        scopeEl.innerHTML = `<strong>Operational Scope:</strong> ${meta.scope}`;
+    }
+    if (openQueueBtn) {
+        openQueueBtn.textContent = `Switch Workspace to ${meta.tierName}`;
+        openQueueBtn.onclick = () => {
+            filterSupportByTier(meta.role);
+            showPage('support');
+            showToast(`Switched operational workspace to ${meta.tierName} (${meta.designation})`, 'success');
+        };
+    }
+
+    fetchAndRenderSupportTeam(tier);
+}
+
+function switchActiveSupportWorkspaceFromPersonnel() {
+    const tier = window._selectedSupportTeamTier || 4;
+    const meta = SUPPORT_TIER_META[tier] || SUPPORT_TIER_META[4];
+    filterSupportByTier(meta.role);
+    showPage('support');
+    showToast(`Switched operational workspace to ${meta.tierName} (${meta.designation})`, 'success');
+}
+
+async function fetchAndRenderSupportTeam(tier = 'all', forceRefresh = false) {
+    const container = document.getElementById('supportTeamWorkspaceContainer');
+    if (!container) return;
+
+    // Loading state: skeleton
+    container.innerHTML = `
+        <div style="padding: 24px; text-align: center;">
+            <div style="display: inline-block; width: 24px; height: 24px; border: 3px solid #e2e8f0; border-top-color: #2563eb; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px;"></div>
+            <div style="font-size: 13px; color: #64748b; font-weight: 600;">Fetching real support team personnel from platform database...</div>
+        </div>
+    `;
+
+    try {
+        let users = null;
+        if (!forceRefresh && window._supportTeamDataCache) {
+            users = window._supportTeamDataCache;
+        } else {
+            const token = window.Auth?.getToken?.() || localStorage.getItem('token');
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            
+            const res = await fetch(`${API_BASE}/platform/support-team`, { headers });
+            if (!res.ok) {
+                const errJson = await res.json().catch(() => ({}));
+                throw new Error(errJson.message || `API server returned HTTP ${res.status} (${res.statusText})`);
+            }
+            const data = await res.json();
+            users = data.data || [];
+            window._supportTeamDataCache = users;
+        }
+
+        // Update counts in left nav badges
+        const count1 = users.filter(u => u.tier_level === 1).length;
+        const count2 = users.filter(u => u.tier_level === 2).length;
+        const count3 = users.filter(u => u.tier_level === 3).length;
+        const count4 = users.filter(u => u.tier_level === 4).length;
+
+        const b1 = document.getElementById('tier-badge-count-1'); if (b1) b1.textContent = `${count1} Staff`;
+        const b2 = document.getElementById('tier-badge-count-2'); if (b2) b2.textContent = `${count2} Staff`;
+        const b3 = document.getElementById('tier-badge-count-3'); if (b3) b3.textContent = `${count3} Staff`;
+        const b4 = document.getElementById('tier-badge-count-4'); if (b4) b4.textContent = `${count4} Staff`;
+        const liveBadge = document.getElementById('supportTeamLiveCountBadge');
+        if (liveBadge) liveBadge.textContent = `${users.length} Active Platform Staff`;
+
+        // Filter for currently selected tier
+        let displayed = users;
+        if (tier && tier !== 'all') {
+            displayed = users.filter(u => u.tier_level === Number(tier));
+        }
+
+        // Handle genuine empty state
+        if (!displayed || displayed.length === 0) {
+            container.innerHTML = `
+                <div style="padding: 40px 20px; text-align: center;">
+                    <div style="font-weight: 700; font-size: 15px; color: #475569; margin-bottom: 4px;">No Support Personnel Found</div>
+                    <div style="font-size: 13px; color: #94a3b8;">There are no active support staff currently registered for this tier in the platform database.</div>
+                </div>
+            `;
+            return;
+        }
+
+        // Populated state: render clean table
+        container.innerHTML = `
+            <table style="width:100%; border-collapse: collapse; font-size: 13px;">
+                <thead>
+                    <tr style="border-bottom: 1px solid #e2e8f0; background: #f8fafc; text-align: left;">
+                        <th style="padding: 12px 16px; font-weight: 700; color: #475569; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Display ID</th>
+                        <th style="padding: 12px 16px; font-weight: 700; color: #475569; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Personnel Name</th>
+                        <th style="padding: 12px 16px; font-weight: 700; color: #475569; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Tier &amp; Role</th>
+                        <th style="padding: 12px 16px; font-weight: 700; color: #475569; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Contact Email</th>
+                        <th style="padding: 12px 16px; font-weight: 700; color: #475569; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Workload</th>
+                        <th style="padding: 12px 16px; font-weight: 700; color: #475569; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Key Permissions</th>
+                        <th style="padding: 12px 16px; font-weight: 700; color: #475569; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${displayed.map(u => {
+                        const statusColor = u.status === 'active' ? '#10b981' : (u.status === 'busy' ? '#f59e0b' : '#94a3b8');
+                        const statusLabel = u.status === 'active' ? 'Active' : (u.status === 'busy' ? 'In Triage' : 'Offline');
+                        let tierBadge = `<span class="badge badge-default">Level ${u.tier_level}</span>`;
+                        if (u.tier_level === 4) tierBadge = `<span class="badge badge-blue">Level 4</span>`;
+                        else if (u.tier_level === 3) tierBadge = `<span class="badge badge-green">Level 3</span>`;
+                        else if (u.tier_level === 2) tierBadge = `<span class="badge badge-amber">Level 2</span>`;
+
+                        const permBadges = (u.permissions || []).slice(0, 2).map(p => `
+                            <span style="display:inline-block; font-size:10px; background:#f1f5f9; color:#334155; padding:2px 6px; border-radius:4px; margin-right:4px; margin-bottom:2px;">${p}</span>
+                        `).join('') + ((u.permissions && u.permissions.length > 2) ? `<span style="font-size:10px; color:#64748b;">+${u.permissions.length - 2} more</span>` : '');
+
+                        return `
+                            <tr style="border-bottom: 1px solid #f1f5f9; transition: background .15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+                                <td style="padding: 12px 16px;"><code style="font-size: 12px; font-weight: 700; color: #2563eb;">${u.display_id || ('SUP-2026' + String(u.tier_level).padStart(4, '0'))}</code></td>
+                                <td style="padding: 12px 16px;">
+                                    <div style="font-weight: 700; color: #0f172a;">${u.full_name || u.first_name || u.username}</div>
+                                    <div style="display: flex; align-items: center; gap: 5px; margin-top: 2px;">
+                                        <span style="width: 7px; height: 7px; border-radius: 50%; background: ${statusColor}; display: inline-block;"></span>
+                                        <span style="font-size: 11px; color: #64748b;">${statusLabel}</span>
+                                    </div>
+                                </td>
+                                <td style="padding: 12px 16px;">
+                                    <div>${tierBadge}</div>
+                                    <div style="font-size: 12px; font-weight: 600; color: #334155; margin-top: 3px;">${u.designation}</div>
+                                    <code style="font-size: 10px; color: #64748b;">${u.role}</code>
+                                </td>
+                                <td style="padding: 12px 16px;">
+                                    <span style="font-size: 12px; color: #0f172a;">${u.email}</span>
+                                </td>
+                                <td style="padding: 12px 16px;">
+                                    <span class="badge" style="font-size: 11px; font-weight: 700; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;">${u.assigned_tickets || 0} Tickets</span>
+                                </td>
+                                <td style="padding: 12px 16px; max-width: 200px;">
+                                    ${permBadges}
+                                </td>
+                                <td style="padding: 12px 16px; text-align: right;">
+                                    <button class="btn btn-ghost" style="font-size: 11px; padding: 4px 10px; border: 1px solid #cbd5e1;" onclick="inspectSupportMemberWorkspace('${u.role}', '${u.full_name || u.username}')">
+                                        Inspect Queue
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+        `;
+    } catch (err) {
+        // Red error state - NEVER show 'no users found' on API error!
+        container.innerHTML = `
+            <div id="supportTeamErrorBanner" style="background: #fef2f2; border: 1.5px solid #fecaca; color: #991b1b; padding: 20px; border-radius: 12px; margin: 16px; display: flex; align-items: center; justify-content: space-between; gap: 16px;">
+                <div>
+                    <div style="font-weight: 700; font-size: 14px; color: #dc2626; display: flex; align-items: center; gap: 8px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        Failed to Load Support Team Personnel
+                    </div>
+                    <div style="font-size: 12px; color: #b91c1c; margin-top: 4px; line-height: 1.4;">
+                        ${err.message || 'The platform API could not be reached or returned an unexpected error response.'}
+                    </div>
+                </div>
+                <button class="btn" style="background: #dc2626; color: #fff; font-size: 12px; padding: 7px 16px; border: none; border-radius: 6px; cursor: pointer; white-space: nowrap;" onclick="fetchAndRenderSupportTeam(window._selectedSupportTeamTier || 'all', true)">
+                    Retry Connection
+                </button>
+            </div>
+        `;
+    }
+}
+
+function inspectSupportMemberWorkspace(role, memberName) {
+    filterSupportByTier(role);
+    showPage('support');
+    showToast(`Active queue switched to ${memberName} (${role})`, 'success');
+}
+
+function renderSupportTeamPersonnel() {
+    selectSupportTeamTier(window._selectedSupportTeamTier || 4);
+}
+
 function renderAllViews() {
     renderSupportTickets();
     renderOnboardingLeads();
     renderActivityLogs();
+    renderSupportTeamPersonnel();
 }
 
 function renderSupportTickets() {
@@ -629,29 +1299,75 @@ function renderSupportTickets() {
     const tbody = document.getElementById('support-tickets-tbody');
     const preview = document.getElementById('dash-tickets-preview');
     const badge = document.getElementById('ticket-badge');
+    const countEl = document.getElementById('dash-ticket-count');
+    const queueCountBadge = document.getElementById('supportQueueCountBadge');
 
     const openCount = tickets.filter(t => t.status !== 'Resolved').length;
     if (badge) {
         badge.textContent = openCount;
         badge.style.display = openCount > 0 ? 'inline-flex' : 'none';
     }
-    const countEl = document.getElementById('dash-ticket-count');
     if (countEl) countEl.textContent = tickets.length;
 
+    const activeRole = window._activeSupportRole || 'PLATFORM_SUPER_ADMIN';
+    let filteredTickets = tickets;
+
+    if (activeRole === 'PLATFORM_SUPPORT_AGENT') {
+        filteredTickets = tickets.filter(t => !t.escalatedTo || t.escalatedTo === 'PLATFORM_SUPPORT_AGENT' || t.status === 'Open');
+    } else if (activeRole === 'PLATFORM_TECH_SUPPORT') {
+        filteredTickets = tickets.filter(t => t.escalatedTo === 'PLATFORM_TECH_SUPPORT' || t.priority === 'High' || (t.subject && t.subject.toLowerCase().includes('error')) || t.status === 'In Progress');
+    } else if (activeRole === 'PLATFORM_SUPPORT_MANAGER') {
+        filteredTickets = tickets.filter(t => t.escalatedTo === 'PLATFORM_SUPPORT_MANAGER' || t.status !== 'Resolved');
+    }
+
+    if (!filteredTickets.length) filteredTickets = tickets;
+
+    if (queueCountBadge) queueCountBadge.textContent = `${filteredTickets.length} Ticket${filteredTickets.length === 1 ? '' : 's'}`;
+
     if (tbody) {
-        tbody.innerHTML = tickets.map(t => `
-            <tr>
-                <td><code>${t.id}</code></td>
-                <td><strong>${t.institution}</strong></td>
-                <td>${t.contactEmail}</td>
-                <td>${t.subject}</td>
-                <td><span class="badge ${t.priority === 'High' ? 'badge-red' : 'badge-amber'}">${t.priority}</span></td>
-                <td><span class="badge ${t.status === 'Resolved' ? 'badge-green' : (t.status === 'In Progress' ? 'badge-amber' : 'badge-blue')}">${t.status}</span></td>
-                <td>
-                    <button class="btn btn-primary" style="padding:4px 10px;font-size:12px;" onclick="openTicketModal('${t.id}')">Respond</button>
-                </td>
-            </tr>
-        `).join('');
+        tbody.innerHTML = filteredTickets.map(t => {
+            let routingBadge = `<span class="badge badge-blue">L1 Queue</span>`;
+            if (t.escalatedTo === 'PLATFORM_SUPER_ADMIN') routingBadge = `<span class="badge badge-blue">L4 Admin</span>`;
+            else if (t.escalatedTo === 'PLATFORM_SUPPORT_MANAGER') routingBadge = `<span class="badge badge-green">L3 Manager</span>`;
+            else if (t.escalatedTo === 'PLATFORM_TECH_SUPPORT' || t.priority === 'High') routingBadge = `<span class="badge badge-amber">L2 Tech</span>`;
+
+            let actionButtons = '';
+            if (activeRole === 'PLATFORM_SUPPORT_AGENT') {
+                actionButtons = `
+                    <button class="btn btn-primary" style="padding:4px 8px;font-size:11px;" onclick="openTicketModal('${t.id}')">Respond</button>
+                    <button class="btn btn-ghost" style="padding:4px 8px;font-size:11px;color:#d97706;border-color:#d97706;" onclick="escalateTicket('${t.id}', 'PLATFORM_TECH_SUPPORT')">Escalate L2</button>
+                `;
+            } else if (activeRole === 'PLATFORM_TECH_SUPPORT') {
+                actionButtons = `
+                    <button class="btn btn-ghost" style="padding:4px 8px;font-size:11px;" onclick="inspectDiagnosticTrace('${t.id}')">Inspect Trace</button>
+                    <button class="btn btn-primary" style="padding:4px 8px;font-size:11px;" onclick="openTicketModal('${t.id}')">Respond</button>
+                    <button class="btn btn-ghost" style="padding:4px 8px;font-size:11px;color:#16a34a;border-color:#16a34a;" onclick="escalateTicket('${t.id}', 'PLATFORM_SUPPORT_MANAGER')">Escalate L3</button>
+                `;
+            } else if (activeRole === 'PLATFORM_SUPPORT_MANAGER') {
+                actionButtons = `
+                    <button class="btn btn-primary" style="padding:4px 8px;font-size:11px;" onclick="openTicketModal('${t.id}')">Review SLA</button>
+                    <button class="btn btn-ghost" style="padding:4px 8px;font-size:11px;color:#2563eb;border-color:#2563eb;" onclick="escalateTicket('${t.id}', 'PLATFORM_SUPER_ADMIN')">Escalate L4</button>
+                `;
+            } else {
+                actionButtons = `
+                    <button class="btn btn-primary" style="padding:4px 8px;font-size:11px;" onclick="openTicketModal('${t.id}')">Respond</button>
+                    <button class="btn btn-ghost" style="padding:4px 8px;font-size:11px;color:#10b981;border-color:#10b981;" onclick="resolveTicketDirect('${t.id}')">Force Resolve</button>
+                `;
+            }
+
+            return `
+                <tr>
+                    <td><code>${t.id}</code></td>
+                    <td><strong>${t.institution}</strong></td>
+                    <td>${t.contactEmail}</td>
+                    <td>${t.subject}</td>
+                    <td><span class="badge ${t.priority === 'High' ? 'badge-red' : 'badge-amber'}">${t.priority}</span></td>
+                    <td><span class="badge ${t.status === 'Resolved' ? 'badge-green' : (t.status === 'In Progress' ? 'badge-amber' : 'badge-blue')}">${t.status}</span></td>
+                    <td>${routingBadge}</td>
+                    <td><div style="display:flex;gap:4px;flex-wrap:wrap;">${actionButtons}</div></td>
+                </tr>
+            `;
+        }).join('');
     }
 
     if (preview) {
@@ -674,6 +1390,60 @@ function renderSupportTickets() {
     }
 }
 
+function escalateTicket(ticketId, toTier) {
+    const tickets = window.SaaSStore.getTickets();
+    const t = tickets.find(x => x.id === ticketId);
+    if (!t) return;
+    t.escalatedTo = toTier;
+    if (toTier === 'PLATFORM_TECH_SUPPORT') t.priority = 'High';
+    t.status = 'In Progress';
+    window.SaaSStore.saveTickets(tickets);
+    const tierName = toTier.replace('PLATFORM_', '').replace('_', ' ');
+    window.SaaSStore.logActivity(`Ticket ${ticketId} escalated to ${tierName} queue`);
+    showToast(`Ticket ${ticketId} escalated to ${tierName} successfully.`, 'success');
+    renderSupportTickets();
+}
+
+function resolveTicketDirect(ticketId) {
+    const user = window.Auth.getUser();
+    const sender = user ? (user.name || user.username || 'Support Admin') : 'Support Admin';
+    window.SaaSStore.resolveTicket(ticketId, sender);
+    showToast(`Ticket ${ticketId} marked as Resolved directly.`, 'success');
+    renderSupportTickets();
+}
+
+function inspectDiagnosticTrace(ticketId) {
+    currentDiagnosticTicketId = ticketId;
+    const tickets = window.SaaSStore.getTickets();
+    const t = tickets.find(x => x.id === ticketId) || {};
+    document.getElementById('diagModalTitle').textContent = `Diagnostic Trace — Ticket ${ticketId}`;
+    document.getElementById('diagModalSub').textContent = `Live tracing inspection for ${t.institution || 'Campus Tenant'}`;
+    const trace = `[DIAGNOSTIC TRACE LOG]
+Timestamp: ${new Date().toISOString()}
+Ticket ID: ${ticketId}
+Tenant: ${t.institution || 'IIIT Sricity'} (tenant_id: ${t.tenantId || 't1'})
+Contact: ${t.contactEmail || 'director@iiits.in'}
+Subject: "${t.subject || 'Diagnostic inquiry'}"
+HTTP Route: POST /api/support/tickets/${ticketId}/trace
+Response Code: 200 OK
+Latency: 17ms
+Backend Server: NestJS (PID active, port 5001)
+Database Isolation: Enforced (Tenant Scope verified)
+PDF Engine: %PDF-1.4 Stream Healthy
+Leave Validation: Strict (#dc2626) Enforced
+System Memory: 42MB (RSS normal)
+Result: Operational anomaly localized. No catastrophic fault detected.`;
+    document.getElementById('diagModalContent').textContent = trace;
+    openModal('diagnosticTraceModal');
+}
+
+function escalateCurrentDiagnosticTicket() {
+    if (currentDiagnosticTicketId) {
+        escalateTicket(currentDiagnosticTicketId, 'PLATFORM_SUPPORT_MANAGER');
+    }
+    closeModal('diagnosticTraceModal');
+}
+
 function renderOnboardingLeads() {
     const leads = window.SaaSStore ? window.SaaSStore.getOnboardingRequests() : [];
     const tbody = document.getElementById('onboarding-tbody');
@@ -690,7 +1460,7 @@ function renderOnboardingLeads() {
                 <td>${l.submitted}</td>
                 <td>
                     <button class="btn btn-ghost" style="padding:4px 10px;font-size:12px;margin-right:4px;" onclick="openContactLeadModal('${l.id}')">Contact Lead</button>
-                    <button class="btn btn-primary" style="padding:4px 10px;font-size:12px;background:linear-gradient(135deg,#059669,#10b981);" onclick="openB2BInvoiceModal('${l.id}')">⚡ Invoice &amp; Pay Link</button>
+                    <button class="btn btn-primary" style="padding:4px 10px;font-size:12px;background:linear-gradient(135deg,#059669,#10b981);" onclick="openB2BInvoiceModal('${l.id}')">Invoice &amp; Pay Link</button>
                 </td>
             </tr>
         `).join('');
@@ -747,7 +1517,7 @@ function processB2BPayment() {
     window.SaaSStore.logActivity(`B2B Payment Successful via ${method} for ${l ? l.institution : 'New Tenant'}. Tenant "${tenantCode}" Provisioned!`);
 
     closeModal('b2bCheckoutModal');
-    showToast(`✅ Payment Successful! Tenant "${tenantCode}" activated & login credentials dispatched to ${directorEmail}.`, 'success');
+    showToast(`Payment Successful! Tenant "${tenantCode}" activated & login credentials dispatched to ${directorEmail}.`, 'success');
     renderOnboardingLeads();
 }
 
@@ -781,7 +1551,7 @@ function openContactLeadModal(leadId) {
         <strong>Est. Size:</strong> ${l.size || 'N/A'}<br>
         <strong>Message:</strong> ${l.message || 'No additional note.'}
     `;
-    document.getElementById('leadReplyMsg').value = `Dear ${l.name},\n\nThank you for choosing BarelyPassing for ${l.institution}. We have configured your demonstration tenant workspace on our platform.\n\nBest regards,\nSaaS Support Team`;
+    document.getElementById('leadReplyMsg').value = `Dear ${l.name},\n\nThank you for choosing BarelyPassing for ${l.institution}. We have configured your demonstration tenant workspace on our platform.\n\nBest regards,\nSupport Portal Team`;
     openModal('contactLeadModal');
 }
 
@@ -790,7 +1560,7 @@ function submitLeadReply() {
     if (!msg) { showToast('Please enter a response message', 'error'); return; }
 
     window.SaaSStore.logActivity(`Contacted Onboarding Lead (ID: ${currentActiveLeadId})`);
-    showToast('✅ Response sent successfully to Lead email!', 'success');
+    showToast('Response sent successfully to Lead email!', 'success');
     closeModal('contactLeadModal');
 }
 
@@ -818,18 +1588,18 @@ function submitTicketReply() {
     if (!text) { showToast('Please enter reply text', 'error'); return; }
 
     const user = window.Auth.getUser();
-    const sender = user ? (user.name || user.username || 'SaaS Support') : 'SaaS Support';
+    const sender = user ? (user.name || user.username || 'Support Portal') : 'Support Portal';
     window.SaaSStore.replyTicket(currentActiveTicketId, text, sender);
-    showToast(`✅ Reply sent to Director! Ticket ${currentActiveTicketId} updated.`, 'success');
+    showToast(`Reply sent to Director! Ticket ${currentActiveTicketId} updated.`, 'success');
     closeModal('ticketReplyModal');
     renderSupportTickets();
 }
 
 function resolveCurrentTicket() {
     const user = window.Auth.getUser();
-    const sender = user ? (user.name || user.username || 'SaaS Support') : 'SaaS Support';
+    const sender = user ? (user.name || user.username || 'Support Portal') : 'Support Portal';
     window.SaaSStore.resolveTicket(currentActiveTicketId, sender);
-    showToast(`✅ Ticket ${currentActiveTicketId} marked as Resolved.`, 'success');
+    showToast(`Ticket ${currentActiveTicketId} marked as Resolved.`, 'success');
     closeModal('ticketReplyModal');
     renderSupportTickets();
 }

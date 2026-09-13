@@ -95,7 +95,7 @@
 
 <aside class="sidebar">
     <div class="sidebar-brand">
-        <h2>💰 Finance Portal</h2>
+        <h2>Finance Portal</h2>
         <p>BarelyPassing · IIITS</p>
     </div>
     <div class="sidebar-user">
@@ -146,7 +146,7 @@
     <header class="top-header">
         <h1 id="finPageTitle">Fee Dashboard</h1>
         <div class="header-right">
-            <span class="badge-role">💰 Finance Officer</span>
+            <span class="badge-role">Finance Officer</span>
             <span style="font-size:12px;color:#64748b;" id="finDateBadge"></span>
         </div>
     </header>
@@ -163,7 +163,7 @@
             </div>
             <div class="section-card">
                 <div class="section-header">
-                    <span class="section-title">📊 Fee Compliance Rate</span>
+                    <span class="section-title">Fee Compliance Rate</span>
                     <span id="kpiComplianceText" style="font-size:20px;font-weight:800;color:#0f172a;">—</span>
                 </div>
                 <div class="section-body">
@@ -173,7 +173,7 @@
             </div>
             <div class="section-card">
                 <div class="section-header">
-                    <span class="section-title">⚠️ Recent Overdue Fees</span>
+                    <span class="section-title">Recent Overdue Fees</span>
                     <button class="btn btn-ghost btn-sm" onclick="switchFinView('dues-view',document.querySelector('[onclick*=dues-view]'))">View All Dues →</button>
                 </div>
                 <div class="section-body" id="dashOverdueList"><p style="color:#94a3b8;font-size:13px;">Loading...</p></div>
@@ -184,7 +184,7 @@
         <div id="fee-records-view" class="view-section">
             <div class="section-card">
                 <div class="section-header">
-                    <span class="section-title">📄 All Fee Records</span>
+                    <span class="section-title">All Fee Records</span>
                     <div class="filter-bar">
                         <input type="text" class="search-input" id="feeSearchInput" placeholder="Search student / fee type..." oninput="filterFeeTable()">
                         <select class="filter-select" id="feeStatusFilter" onchange="filterFeeTable()">
@@ -210,8 +210,8 @@
             <div class="section-card">
                 <div class="section-header">
                     <div style="display:flex;align-items:center;gap:10px;">
-                        <span class="section-title">🔴 Student Dues (Pending &amp; Overdue)</span>
-                        <button class="btn btn-primary btn-sm" onclick="broadcastDueReminders()" style="background:#4338ca;color:#fff;">📢 Broadcast Reminders to All</button>
+                        <span class="section-title">Student Dues (Pending &amp; Overdue)</span>
+                        <button class="btn btn-primary btn-sm" onclick="broadcastDueReminders()" style="background:#4338ca;color:#fff;">Broadcast Reminders to All</button>
                     </div>
                     <input type="text" class="search-input" id="duesSearch" placeholder="Search student..." oninput="filterDues()">
                 </div>
@@ -228,8 +228,8 @@
         <div id="receipts-view" class="view-section">
             <div class="section-card">
                 <div class="section-header">
-                    <span class="section-title">🧾 Payment Receipts</span>
-                    <button class="btn btn-ghost btn-sm" onclick="exportReceipts()">⬇ Export CSV</button>
+                    <span class="section-title">Payment Receipts</span>
+                    <button class="btn btn-ghost btn-sm" onclick="exportReceipts()">Export CSV</button>
                 </div>
                 <div style="overflow-x:auto;">
                     <table class="data-table">
@@ -244,7 +244,7 @@
         <div id="fee-structure-view" class="view-section">
             <div class="section-card">
                 <div class="section-header">
-                    <span class="section-title">🏛 Fee Structures</span>
+                    <span class="section-title">Fee Structures</span>
                     <button class="btn btn-primary btn-sm" onclick="openFinModal('addStructureModal')">+ Add Structure</button>
                 </div>
                 <div class="section-body" id="feeStructureList">Loading...</div>
@@ -260,7 +260,7 @@
                 <div class="kpi-card red"><div class="kpi-label">Overdue Amount</div><div class="kpi-value" id="compOverdueAmt">—</div><div class="kpi-sub">Rupees</div></div>
             </div>
             <div class="section-card">
-                <div class="section-header"><span class="section-title">📈 Fee Type Breakdown</span></div>
+                <div class="section-header"><span class="section-title">Fee Type Breakdown</span></div>
                 <div class="section-body" id="compBreakdown"><p style="color:#94a3b8;">Loading...</p></div>
             </div>
         </div>
@@ -271,7 +271,7 @@
 <!-- Add Fee Modal -->
 <div class="modal-backdrop" id="addFeeModal">
     <div class="modal-window">
-        <div class="modal-header"><h3>➕ Add Fee Record</h3><button class="modal-close" onclick="closeFinModal('addFeeModal')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+        <div class="modal-header"><h3>Add Fee Record</h3><button class="modal-close" onclick="closeFinModal('addFeeModal')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
         <div class="modal-body">
             <div class="form-group"><label>Student ID</label><input type="text" id="newFeeStudentId" placeholder="e.g. u1"></div>
             <div class="form-row">
@@ -290,16 +290,16 @@
 <!-- Receipt Modal -->
 <div class="modal-backdrop" id="receiptModal">
     <div class="modal-window">
-        <div class="modal-header"><h3>🧾 Payment Receipt</h3><button class="modal-close" onclick="closeFinModal('receiptModal')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+        <div class="modal-header"><h3>Payment Receipt</h3><button class="modal-close" onclick="closeFinModal('receiptModal')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
         <div class="modal-body" id="receiptModalBody"></div>
-        <div class="modal-footer"><button class="btn btn-ghost" onclick="closeFinModal('receiptModal')">Close</button><button class="btn btn-success" onclick="window.print()">🖨 Print</button></div>
+        <div class="modal-footer"><button class="btn btn-ghost" onclick="closeFinModal('receiptModal')">Close</button><button class="btn btn-success" onclick="window.print()">Print</button></div>
     </div>
 </div>
 
 <!-- Add Structure Modal -->
 <div class="modal-backdrop" id="addStructureModal">
     <div class="modal-window">
-        <div class="modal-header"><h3>🏛 Add Fee Structure</h3><button class="modal-close" onclick="closeFinModal('addStructureModal')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+        <div class="modal-header"><h3>Add Fee Structure</h3><button class="modal-close" onclick="closeFinModal('addStructureModal')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
         <div class="modal-body">
             <div class="form-row">
                 <div class="form-group"><label>Programme</label><select id="structProg"><option>B.Tech</option><option>M.Tech</option><option>Ph.D</option></select></div>
@@ -404,7 +404,7 @@ async function loadDashboard() {
     document.getElementById('kpiComplianceBar').style.width = rate;
     const overdue = _fees.filter(f=>f.status==='overdue').slice(0,5);
     const listEl = document.getElementById('dashOverdueList');
-    if (!overdue.length) { listEl.innerHTML='<p style="color:#16a34a;font-size:13px;font-weight:600;">✅ No overdue fees — great compliance!</p>'; return; }
+    if (!overdue.length) { listEl.innerHTML='<p style="color:#16a34a;font-size:13px;font-weight:600;">No overdue fees — great compliance!</p>'; return; }
     listEl.innerHTML='<table class="data-table"><thead><tr><th>Student ID</th><th>Fee Type</th><th>Amount</th><th>Due Date</th><th>Action</th></tr></thead><tbody>'+
         overdue.map(f=>`<tr><td><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:12px;">${f.student_id}</code></td><td>${f.fee_type||'—'}</td><td style="font-weight:700;color:#ef4444;">₹${Number(f.amount||0).toLocaleString('en-IN')}</td><td>${f.due_date||'—'}</td><td><button class="btn btn-success btn-sm" onclick="markPaid('${f.fee_id}')">Mark Paid</button></td></tr>`).join('')+
         '</tbody></table>';
@@ -418,7 +418,7 @@ function renderFeeTable(fees) {
         <td>${f.student_id||'—'}</td><td>${f.fee_type||'—'}</td>
         <td style="font-weight:700;">₹${Number(f.amount||0).toLocaleString('en-IN')}</td>
         <td>${f.due_date||'—'}</td><td>${statusBadge(f.status)}</td>
-        <td style="display:flex;gap:6px;">${f.status!=='paid'?`<button class="btn btn-success btn-sm" onclick="markPaid('${f.fee_id}')">Mark Paid</button>`:''}<button class="btn btn-ghost btn-sm" onclick="showReceipt('${f.fee_id}')">🧾</button></td>
+        <td style="display:flex;gap:6px;">${f.status!=='paid'?`<button class="btn btn-success btn-sm" onclick="markPaid('${f.fee_id}')">Mark Paid</button>`:''}<button class="btn btn-ghost btn-sm" onclick="showReceipt('${f.fee_id}')">View</button></td>
     </tr>`).join('');
 }
 
@@ -439,10 +439,10 @@ function filterFeeTable() {
 async function markPaid(feeId) {
     try {
         await finApi('/fees/'+feeId+'/pay',{method:'PATCH'});
-        finToast('✅ Fee marked as paid!','success');
+        finToast('Fee marked as paid!','success');
         const f = _fees.find(x => x.fee_id === feeId);
         if (f && f.student_id && window.Notifications?.send) {
-            window.Notifications.send(f.student_id, 'Finance Department', `💳 Payment Confirmed: Your fee payment of ₹${Number(f.amount||0).toLocaleString('en-IN')} for "${f.fee_type||'Fee'}" has been marked as PAID. Receipt is now available.`, 'info');
+            window.Notifications.send(f.student_id, 'Finance Department', `Payment Confirmed: Your fee payment of ₹${Number(f.amount||0).toLocaleString('en-IN')} for "${f.fee_type||'Fee'}" has been marked as PAID. Receipt is now available.`, 'info');
         }
         await loadFees(); renderFeeTable(_fees); filterDues(); loadDashboard();
     } catch(e) { finToast('Error: '+e.message,'error'); }
@@ -458,10 +458,10 @@ function notifyStudentDue(studentId, feeType, amount, dueDate) {
         window.Notifications.send(
             studentId,
             'Finance Department',
-            `⚠️ FEE DUE REMINDER: ₹${Number(amount).toLocaleString('en-IN')} for "${feeType}" is due by ${dueDate}. Please clear dues to prevent examination and registration holds.`,
+            `FEE DUE REMINDER: ₹${Number(amount).toLocaleString('en-IN')} for "${feeType}" is due by ${dueDate}. Please clear dues to prevent examination and registration holds.`,
             'alert'
         );
-        finToast(`🔔 Due reminder sent to student ${studentId}!`, 'success');
+        finToast(`Due reminder sent to student ${studentId}!`, 'success');
     } else {
         finToast(`Notification sent to ${studentId}`, 'success');
     }
@@ -482,7 +482,7 @@ function broadcastDueReminders() {
                 window.Notifications.send(
                     f.student_id,
                     'Finance Department',
-                    `⚠️ OFFICIAL FEE NOTICE: You have pending institutional fee dues of ₹${Number(f.amount||0).toLocaleString('en-IN')} for ${f.fee_type||'Tuition/Hostel'}. Due date: ${f.due_date||'Immediate'}. Please clear at the finance portal.`,
+                    `OFFICIAL FEE NOTICE: You have pending institutional fee dues of ₹${Number(f.amount||0).toLocaleString('en-IN')} for ${f.fee_type||'Tuition/Hostel'}. Due date: ${f.due_date||'Immediate'}. Please clear at the finance portal.`,
                     'alert'
                 );
             }
@@ -491,9 +491,9 @@ function broadcastDueReminders() {
     });
     // Also notify Director
     if (window.Notifications?.broadcast) {
-        window.Notifications.broadcast('superadmin', 'Finance Department', `📊 Finance Report: Sent fee due reminder notices to ${count} students with outstanding balances.`, 'info');
+        window.Notifications.broadcast('superadmin', 'Finance Department', `Finance Report: Sent fee due reminder notices to ${count} students with outstanding balances.`, 'info');
     }
-    finToast(`📢 Broadcast sent! Notified ${count} students with outstanding dues.`, 'success');
+    finToast(`Broadcast sent! Notified ${count} students with outstanding dues.`, 'success');
 }
 
 function filterDues() {
@@ -501,7 +501,7 @@ function filterDues() {
     const dues=_fees.filter(f=>f.status==='pending'||f.status==='overdue');
     const filtered=q?dues.filter(f=>(f.student_id||'').toLowerCase().includes(q)||(f.fee_type||'').toLowerCase().includes(q)):dues;
     const tbody=document.getElementById('duesTableBody');
-    if(!filtered.length) { tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:#16a34a;font-weight:600;padding:30px;">✅ No outstanding dues!</td></tr>'; return; }
+    if(!filtered.length) { tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:#16a34a;font-weight:600;padding:30px;">No outstanding dues!</td></tr>'; return; }
     const today=new Date();
     tbody.innerHTML=filtered.map(f=>{
         const due=f.due_date?new Date(f.due_date):null;
@@ -514,7 +514,7 @@ function filterDues() {
             <td style="font-weight:700;color:${days>0?'#ef4444':'#94a3b8'};">${days>0?days+' days':'—'}</td>
             <td style="display:flex;gap:6px;">
                 <button class="btn btn-success btn-sm" onclick="markPaid('${f.fee_id}')">Collect</button>
-                <button class="btn btn-ghost btn-sm" style="color:#d97706;border:1px solid #fde68a;" onclick="notifyStudentDue('${f.student_id}','${f.fee_type||'Fee'}','${f.amount||0}','${f.due_date||''}')" title="Send due reminder notification to student">🔔 Remind</button>
+                <button class="btn btn-ghost btn-sm" style="color:#d97706;border:1px solid #fde68a;" onclick="notifyStudentDue('${f.student_id}','${f.fee_type||'Fee'}','${f.amount||0}','${f.due_date||''}')" title="Send due reminder notification to student">Remind</button>
             </td>
         </tr>`;
     }).join('');
@@ -531,7 +531,7 @@ async function loadReceipts() {
         <td>${f.student_id||'—'}</td><td>${f.fee_type||'—'}</td>
         <td style="font-weight:700;color:#16a34a;">₹${Number(f.amount||0).toLocaleString('en-IN')}</td>
         <td>${f.paid_date||f.due_date||'—'}</td><td><span class="badge badge-paid">Paid</span></td>
-        <td><button class="btn btn-ghost btn-sm" onclick="showReceipt('${f.fee_id}')">🧾 View</button></td>
+        <td><button class="btn btn-ghost btn-sm" onclick="showReceipt('${f.fee_id}')">View</button></td>
     </tr>`).join('');
 }
 
@@ -555,7 +555,7 @@ function showReceipt(feeId) {
         <hr class="receipt-divider">
         <div class="receipt-row" style="font-size:16px;font-weight:800;"><span>Total Paid</span><span style="color:#16a34a;">₹${Number(fee.amount||0).toLocaleString('en-IN')}</span></div>
         <hr class="receipt-divider">
-        <div style="text-align:center;font-size:11px;color:#94a3b8;margin-top:8px;">Status: <strong style="color:#16a34a;">PAID ✓</strong> | Generated by Finance Portal</div>
+        <div style="text-align:center;font-size:11px;color:#94a3b8;margin-top:8px;">Status: <strong style="color:#16a34a;">PAID</strong> | Generated by Finance Portal</div>
     </div>`;
     openFinModal('receiptModal');
 }
@@ -583,7 +583,7 @@ async function submitAddFee() {
         await finApi('/fees',{method:'POST',body:JSON.stringify({student_id:sid,fee_type:ft,amount:Number(amt),due_date:due,semester:sem})});
         finToast('Fee record added!','success'); closeFinModal('addFeeModal');
         if (window.Notifications?.send) {
-            window.Notifications.send(sid, 'Finance Department', `📢 New Fee Due: ₹${Number(amt).toLocaleString('en-IN')} for "${ft}". Due date: ${due}. Please clear dues via student portal.`, 'alert');
+            window.Notifications.send(sid, 'Finance Department', `New Fee Due: ₹${Number(amt).toLocaleString('en-IN')} for "${ft}". Due date: ${due}. Please clear dues via student portal.`, 'alert');
         }
         await loadFees(); renderFeeTable(_fees); loadDashboard();
     } catch(e) { finToast('Error: '+e.message,'error'); }

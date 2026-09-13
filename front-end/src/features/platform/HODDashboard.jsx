@@ -47,7 +47,7 @@ export default function HODDashboard() {
       <div className="bg-gradient-to-r from-blue-950/60 to-slate-900 p-6 rounded-3xl border border-blue-800/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-bold mb-2">
-            <span>🎓 Level 2: Department Admin / HOD Control</span>
+            <span>Level 2: Department Admin / HOD Control</span>
           </div>
           <h1 className="text-2xl font-black text-white">Computer Science Department Control</h1>
           <p className="text-xs text-blue-200/70 mt-1">

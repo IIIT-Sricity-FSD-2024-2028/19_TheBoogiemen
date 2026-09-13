@@ -16,7 +16,7 @@ export const tokenAuthMiddleware = (store) => (next) => async (action) => {
     const refreshToken = state.auth?.refreshToken;
 
     if (refreshToken && !state.auth?.isRefreshing) {
-      console.warn('🔑 tokenAuthMiddleware: Access token expired. Dispatching automatic refresh thunk...');
+      console.warn('[AUTH] tokenAuthMiddleware: Access token expired. Dispatching automatic refresh thunk...');
       // Dispatch refresh token thunk
       try {
         const { refreshAccessTokenThunk } = await import('../features/auth/authSlice');

@@ -56,3 +56,15 @@ export const CurrentUserRole = createParamDecorator(
     return request.user.role;
   },
 );
+
+export const CurrentUserCollegeId = createParamDecorator(
+  (_data: unknown, ctx: ExecutionContext): string | null => {
+    const request = ctx.switchToHttp().getRequest();
+    if (!request.user) {
+      throw new InternalServerErrorException(
+        'CurrentUserCollegeId requested on a route without authentication.',
+      );
+    }
+    return request.user.college_id ?? request.user.tenant_id ?? null;
+  },
+);

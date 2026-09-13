@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { LeaveRepository } from './leave.leave.repository';
 import { NotificationService } from '../../common/services/notification.service';
 import { ApplyLeaveInputDto } from './dto/apply-leave.input.dto';
@@ -14,6 +14,11 @@ export class LeaveService {
   ) {}
 
   async applyLeave(dto: ApplyLeaveInputDto): Promise<LeaveOutputDto> {
+    if (dto.end_date && dto.start_date && dto.end_date < dto.start_date) {
+      throw new BadRequestException(
+        errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'End date cannot be before start date.'),
+      );
+    }
     const leave = await this.leaveRepo.createLeave({
       leave_id: uuidv4(),
       student_id: dto.student_id,

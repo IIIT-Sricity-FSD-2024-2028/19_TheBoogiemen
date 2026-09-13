@@ -62,7 +62,10 @@ export class RolesGuard implements CanActivate {
       normalizedRoles.push('FINANCE_ADMIN', 'finance', 'admin');
     }
     if (userRole === 'PLATFORM_SUPER_ADMIN') {
-      normalizedRoles.push('PLATFORM_SUPER_ADMIN', 'superadmin', 'admin', 'head', 'faculty');
+      normalizedRoles.push('PLATFORM_SUPER_ADMIN', 'PLATFORM_SUPPORT_MANAGER', 'PLATFORM_TECH_SUPPORT', 'PLATFORM_SUPPORT_AGENT', 'PLATFORM_SALES_SUPPORT', 'superadmin', 'admin', 'head', 'faculty');
+    }
+    if (userRole === 'PLATFORM_SUPPORT_MANAGER') {
+      normalizedRoles.push('PLATFORM_SUPPORT_MANAGER', 'PLATFORM_SUPPORT_AGENT');
     }
 
     const hasAccess = requiredRoles.some((r) => normalizedRoles.includes(r));

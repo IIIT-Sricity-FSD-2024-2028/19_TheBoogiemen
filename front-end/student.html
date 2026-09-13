@@ -94,7 +94,7 @@
             <div id="upcoming-meetings-card" style="display:none;margin-bottom:20px;">
                 <div class="stats-card" style="border-left:4px solid #6366f1;">
                     <div class="stats-card-header">
-                        <h3>📅 Upcoming Meetings</h3>
+                        <h3>Upcoming Meetings</h3>
                         <span id="meetings-count" style="padding:4px 10px;background:#eff6ff;color:#1e40af;border-radius:20px;font-size:12px;font-weight:700;"></span>
                     </div>
                     <div class="stats-card-body" style="padding:16px;" id="upcoming-meetings-list"></div>
@@ -104,7 +104,7 @@
             <div id="pending-submissions-card" style="display:none;margin-bottom:20px;">
                 <div class="stats-card">
                     <div class="stats-card-header">
-                        <h3>📤 Pending Online Submissions</h3>
+                        <h3>Pending Online Submissions</h3>
                         <span id="pending-sub-count" style="padding:4px 10px;background:#fef3c7;color:#92400e;border-radius:20px;font-size:12px;font-weight:700;"></span>
                     </div>
                     <div class="stats-card-body" style="padding:16px;" id="pending-submissions-list"></div>
@@ -114,20 +114,19 @@
             <div class="stats-card" style="border-left:4px solid #10b981;margin-bottom:20px;background:#f0fdf4;">
                 <div class="stats-card-header" style="background:transparent;border-bottom:1px solid #bbf7d0;">
                     <div style="display:flex;align-items:center;gap:10px;">
-                        <span style="font-size:20px;">📄</span>
                         <div>
                             <h3 style="color:#065f46;margin:0;">Official Academic Progress Report (M2026)</h3>
                             <p style="font-size:12px;color:#047857;margin:2px 0 0;">Ingested & verified by Academic Dean Office</p>
                         </div>
                     </div>
-                    <a href="/api/uploads/download/doc_sample_report_u1" class="page-action-btn" style="background:#059669;color:#fff;text-decoration:none;display:inline-flex;align-items:center;gap:6px;" download>
-                        ⬇ Download Official PDF
+                    <a href="/api/uploads/download/doc_sample_report_u1" onclick="event.preventDefault(); downloadStudentProgressReportPdf();" class="page-action-btn" style="background:#059669;color:#fff;text-decoration:none;display:inline-flex;align-items:center;gap:6px;cursor:pointer;" download>
+                        Download Official PDF
                     </a>
                 </div>
             </div>
 
             <div class="stats-card">
-                <div class="stats-card-header"><h3>📚 Syllabus Completion Tracker</h3></div>
+                <div class="stats-card-header"><h3>Syllabus Completion Tracker</h3></div>
                 <div class="stats-card-body" style="padding:20px;" id="syllabus-tracker-body">
                     <div style="text-align:center;color:#64748b;padding:16px;">Loading syllabus data...</div>
                 </div>
@@ -139,7 +138,7 @@
             <div class="stats-card">
                 <div class="stats-card-header">
                     <div>
-                        <h3>📑 Academic Progress Reports & Documents</h3>
+                        <h3>Academic Progress Reports & Documents</h3>
                         <p style="font-size:13px;color:#64748b;">Official term progress summaries and grade cards available for download</p>
                     </div>
                 </div>
@@ -147,15 +146,14 @@
                     <div style="display:grid;grid-template-columns:1fr;gap:16px;">
                         <div style="border:1.5px solid #e2e8f0;border-radius:12px;padding:20px;background:#fff;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
                             <div style="display:flex;align-items:center;gap:16px;">
-                                <div style="width:48px;height:48px;border-radius:10px;background:#eff6ff;color:#2563eb;display:flex;align-items:center;justify-content:center;font-size:24px;">📊</div>
                                 <div>
                                     <h4 style="margin:0;font-size:15px;color:#0f172a;">Spring 2026 Comprehensive Progress Report</h4>
                                     <p style="margin:4px 0 0;font-size:12px;color:#64748b;">Includes attendance (92%), CGPA (8.85), course breakdown, and remarks</p>
                                     <span style="display:inline-block;margin-top:6px;font-size:11px;font-weight:700;color:#059669;background:#dcfce7;padding:2px 8px;border-radius:12px;">Official Verified PDF</span>
                                 </div>
                             </div>
-                            <a href="/api/uploads/download/doc_sample_report_u1" class="page-action-btn" style="background:#2563eb;color:#fff;text-decoration:none;" download>
-                                ⬇ Download Report PDF
+                            <a href="/api/uploads/download/doc_sample_report_u1" onclick="event.preventDefault(); downloadStudentProgressReportPdf();" class="page-action-btn" style="background:#2563eb;color:#fff;text-decoration:none;cursor:pointer;" download>
+                                Download Report PDF
                             </a>
                         </div>
                     </div>
@@ -216,7 +214,7 @@
             <div class="stats-card">
                 <div class="stats-card-header">
                     <h3>Enrolled Courses</h3>
-                    <span style="padding:6px 14px;background:#f0fdf4;color:#15803d;border-radius:20px;font-size:12px;font-weight:600;border:1px solid #bbf7d0;">✓ Faculty-assigned courses</span>
+                    <span style="padding:6px 14px;background:#f0fdf4;color:#15803d;border-radius:20px;font-size:12px;font-weight:600;border:1px solid #bbf7d0;">Faculty-assigned courses</span>
                 </div>
                 <div class="stats-card-body" style="padding:24px;">
                     <div id="my-courses-list" style="display:grid;grid-template-columns:1fr;gap:15px;"></div>
@@ -283,13 +281,14 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Start Date</label>
-                        <input type="date" id="leaveStart">
+                        <input type="date" id="leaveStart" oninput="validateLeaveDates()" onchange="validateLeaveDates()">
                     </div>
                     <div class="form-group">
                         <label>End Date</label>
-                        <input type="date" id="leaveEnd">
+                        <input type="date" id="leaveEnd" oninput="validateLeaveDates()" onchange="validateLeaveDates()">
                     </div>
                 </div>
+                <div id="leaveDateError" style="display:none;color:#dc2626;font-size:12px;font-weight:600;margin-top:-6px;margin-bottom:12px;">End date cannot be before start date.</div>
                 <div class="form-group">
                     <label>Reason</label>
                     <textarea id="leaveReason" placeholder="Provide detailed reason for leave..."></textarea>
@@ -300,10 +299,10 @@
                         onclick="document.getElementById('leaveFileInput').click()"
                         ondragover="event.preventDefault();this.style.borderColor='#6366f1';this.style.background='#eef2ff';"
                         ondragleave="this.style.borderColor='#cbd5e1';this.style.background='#f8fafc';"
-                        ondrop="event.preventDefault();this.style.borderColor='#16a34a';this.style.background='#f0fdf4';var f=event.dataTransfer.files[0];if(f){document.getElementById('leaveFileInput').files=event.dataTransfer.files;document.getElementById('leaveFileName').textContent=f.name;document.getElementById('leaveFileIcon').textContent='✅';}">
+                        ondrop="event.preventDefault();this.style.borderColor='#16a34a';this.style.background='#f0fdf4';var f=event.dataTransfer.files[0];if(f){document.getElementById('leaveFileInput').files=event.dataTransfer.files;document.getElementById('leaveFileName').textContent=f.name;document.getElementById('leaveFileIcon').textContent='File attached';}">
                         <input type="file" id="leaveFileInput" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style="display:none;"
-                            onchange="var f=this.files[0];document.getElementById('leaveFileName').textContent=f?f.name:'No file chosen';document.getElementById('leaveFileIcon').textContent=f?'✅':'📄';document.getElementById('leaveDropZone').style.borderColor=f?'#16a34a':'#cbd5e1';document.getElementById('leaveDropZone').style.background=f?'#f0fdf4':'#f8fafc';">
-                        <div id="leaveFileIcon" style="font-size:32px;margin-bottom:8px;">📄</div>
+                            onchange="var f=this.files[0];document.getElementById('leaveFileName').textContent=f?f.name:'No file chosen';document.getElementById('leaveFileIcon').textContent=f?'File attached':'';document.getElementById('leaveDropZone').style.borderColor=f?'#16a34a':'#cbd5e1';document.getElementById('leaveDropZone').style.background=f?'#f0fdf4':'#f8fafc';">
+                        <div id="leaveFileIcon" style="font-size:13px;font-weight:600;color:#64748b;margin-bottom:8px;">Document Upload</div>
                         <button type="button" style="padding:8px 18px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">Choose File</button>
                         <div id="leaveFileName" style="margin-top:10px;font-size:12px;color:#64748b;font-weight:600;">No file chosen</div>
                         <div style="font-size:11px;color:#94a3b8;margin-top:4px;">PDF, JPG, PNG up to 5MB</div>
@@ -449,7 +448,7 @@
 <div id="submitWorkModal" class="modal-backdrop">
     <div class="modal-window">
         <div class="modal-header">
-            <h2>📤 Submit Work</h2>
+            <h2>Submit Work</h2>
             <button class="close-modal" onclick="closeModal('submitWorkModal')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
         </div>
         <form id="submitWorkForm" onsubmit="event.preventDefault(); submitOnlineWork();">
@@ -466,14 +465,14 @@
                     <label>Attach File (PDF, DOCX, ZIP – max 15MB)</label>
                     <div style="border:2px dashed #e2e8f0;border-radius:8px;padding:20px;text-align:center;background:#f8fafc;">
                         <input type="file" id="submissionFileInput" accept=".pdf,.doc,.docx,.zip,.ppt,.pptx" style="display:none;" onchange="document.getElementById('submissionFileName').textContent = this.files[0]?.name || 'No file chosen';">
-                        <div style="font-size:32px;margin-bottom:8px;">📎</div>
+                        <div style="font-size:13px;font-weight:600;color:#64748b;margin-bottom:8px;">File Attachment</div>
                         <button type="button" onclick="document.getElementById('submissionFileInput').click()" style="padding:10px 20px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">Choose File</button>
                         <div id="submissionFileName" style="margin-top:8px;font-size:12px;color:#64748b;">No file chosen (optional)</div>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="submit" class="submit-btn" style="flex:1;">✓ Submit Work</button>
+                <button type="submit" class="submit-btn" style="flex:1;">Submit Work</button>
                 <button type="button" class="btn-cancel" onclick="closeModal('submitWorkModal')">Cancel</button>
             </div>
         </form>

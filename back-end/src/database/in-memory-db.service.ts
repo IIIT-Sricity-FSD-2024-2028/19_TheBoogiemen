@@ -28,6 +28,14 @@ export class InMemoryDbService implements OnModuleInit {
   public syllabus_progress = this.createProxyArray([]);
   public attendance_requests = this.createProxyArray([]);
   public resource_bookings = this.createProxyArray([]);
+  public course_sections = this.createProxyArray([]);
+  public colleges = this.createProxyArray([]);
+  public support_threads = this.createProxyArray([]);
+  public support_messages = this.createProxyArray([]);
+  public onboarding_sessions = this.createProxyArray([]);
+  public quotes = this.createProxyArray([]);
+  public payments = this.createProxyArray([]);
+  public subscriptions = this.createProxyArray([]);
 
   constructor(
     @InjectPinoLogger(InMemoryDbService.name) private readonly logger: PinoLogger,
@@ -132,6 +140,14 @@ export class InMemoryDbService implements OnModuleInit {
         syllabus_progress: this.syllabus_progress,
         attendance_requests: this.attendance_requests,
         resource_bookings: this.resource_bookings,
+        course_sections: this.course_sections,
+        colleges: this.colleges,
+        support_threads: this.support_threads,
+        support_messages: this.support_messages,
+        onboarding_sessions: this.onboarding_sessions,
+        quotes: this.quotes,
+        payments: this.payments,
+        subscriptions: this.subscriptions,
       };
 
       fs.writeFileSync(dataPath, JSON.stringify(dataToSave, null, 2), 'utf8');

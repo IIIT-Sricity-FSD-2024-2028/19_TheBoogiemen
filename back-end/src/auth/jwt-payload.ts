@@ -19,8 +19,11 @@ export const ROLES = [
   'DEPARTMENT_ADMIN_HOD',
   'FINANCE_ADMIN',
   'PLATFORM_SUPER_ADMIN',
+  'PLATFORM_SUPPORT_MANAGER',
   'PLATFORM_SALES_SUPPORT',
   'PLATFORM_TECH_SUPPORT',
+  'PLATFORM_SUPPORT_AGENT',
+  'spoc',
 ] as const;
 export type Role = typeof ROLES[number];
 
@@ -33,6 +36,9 @@ export interface JwtPayload {
   sub: string;
   role: Role;
   email?: string;
+  college_id?: string;
+  tenant_id?: string;
+  tenant_code?: string;
   /** Issued-at / expiry, populated by the signer. */
   iat?: number;
   exp?: number;

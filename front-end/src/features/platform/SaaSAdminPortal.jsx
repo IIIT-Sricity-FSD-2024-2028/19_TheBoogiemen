@@ -22,7 +22,7 @@ export default function SaaSAdminPortal() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-purple-950/40 p-6 rounded-3xl border border-purple-800/50">
         <div>
           <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-xs font-bold mb-2">
-            <span>🌐 Level 0: SaaS Owner Dashboard</span>
+            <span>Level 0: Support Portal Dashboard</span>
           </div>
           <h1 className="text-2xl md:text-3xl font-black text-white">Platform Super Admin Control</h1>
           <p className="text-xs text-purple-200/70 mt-1">
@@ -93,7 +93,7 @@ export default function SaaSAdminPortal() {
                 return (
                   <tr key={t.tenant_id} className="hover:bg-slate-800/40">
                     <td className="p-4 font-bold flex items-center space-x-2">
-                      <span className="text-xl">{t.logo || '🏫'}</span>
+                      <span className="w-7 h-7 rounded-lg bg-indigo-900/60 border border-indigo-700/50 flex items-center justify-center text-xs font-bold text-indigo-200">{t.code ? t.code.slice(0, 3).toUpperCase() : 'INS'}</span>
                       <div>
                         <div className="text-slate-100">{t.name}</div>
                         <div className="text-[10px] text-slate-500 font-mono">{t.domain}</div>

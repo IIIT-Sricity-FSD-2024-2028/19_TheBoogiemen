@@ -10,7 +10,7 @@ export default function ParentPortal() {
       <div className="bg-gradient-to-r from-pink-950/60 to-slate-900 p-6 rounded-3xl border border-pink-800/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-pink-500/20 text-pink-300 text-xs font-bold mb-2">
-            <span>👪 Level 5: Parent & Guardian Portal</span>
+            <span>Level 5: Parent &amp; Guardian Portal</span>
           </div>
           <h1 className="text-2xl font-black text-white">Student Progress Report: John Doe (u1)</h1>
           <p className="text-xs text-pink-200/70 mt-1">
@@ -20,7 +20,7 @@ export default function ParentPortal() {
 
         <div className="bg-slate-900 px-4 py-2 rounded-2xl border border-pink-800/50 text-right">
           <div className="text-[10px] text-pink-400 font-bold uppercase">Fee Compliance Status</div>
-          <div className="text-sm font-bold text-emerald-400">✓ Up to Date</div>
+          <div className="text-sm font-bold text-emerald-400">Up to Date</div>
         </div>
       </div>
 

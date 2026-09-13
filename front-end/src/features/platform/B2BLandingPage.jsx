@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { loginThunk } from '../features/auth/authSlice';
-import { onboardInstituteThunk } from '../features/tenant/tenantSlice';
-import { setActiveView } from '../features/ui/uiSlice';
+import { loginThunk } from '../auth/authSlice';
+import { setActiveView } from '../ui/uiSlice';
+import OnboardingModal from './OnboardingModal';
 
 export default function B2BLandingPage() {
   const dispatch = useDispatch();
@@ -10,21 +10,12 @@ export default function B2BLandingPage() {
 
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showOnboardModal, setShowOnboardModal] = useState(false);
+  const [selectedTier, setSelectedTier] = useState('Free Trial');
 
   // Login form state
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('Pass@123');
-  const [tenantCode, setTenantCode] = useState('IIITS');
-
-  // Onboard form state
-  const [onboardData, setOnboardData] = useState({
-    name: '',
-    code: '',
-    domain: '',
-    subscription_tier: 'Growth Campus',
-    contact_email: '',
-  });
-  const [onboardSuccess, setOnboardSuccess] = useState(null);
+  const [password, setPassword] = useState('');
+  const [tenantCode, setTenantCode] = useState('');
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
@@ -41,145 +32,191 @@ export default function B2BLandingPage() {
     }
   };
 
-  const handleQuickRoleLogin = async (roleEmail, code = 'IIITS') => {
-    setEmail(roleEmail);
-    const result = await dispatch(loginThunk({ email: roleEmail, password: 'Pass@123', tenant_code: code }));
-    if (loginThunk.fulfilled.match(result)) {
-      setShowLoginModal(false);
-      const role = result.payload.user?.role;
-      if (role === 'PLATFORM_SUPER_ADMIN') dispatch(setActiveView('saas-admin'));
-      else if (role === 'INSTITUTE_SUPER_ADMIN' || role === 'superadmin' || role === 'admin') dispatch(setActiveView('institute-admin'));
-      else if (role === 'DEPARTMENT_ADMIN_HOD' || role === 'head') dispatch(setActiveView('hod'));
-      else if (role === 'faculty') dispatch(setActiveView('faculty'));
-      else if (role === 'parent') dispatch(setActiveView('parent'));
-      else dispatch(setActiveView('student'));
-    }
-  };
-
-  const handleOnboardSubmit = async (e) => {
-    e.preventDefault();
-    const res = await dispatch(onboardInstituteThunk(onboardData));
-    if (onboardInstituteThunk.fulfilled.match(res)) {
-      setOnboardSuccess(res.payload);
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans">
       {/* Hero Section */}
-      <section className="relative pt-20 pb-24 px-6 max-w-7xl mx-auto text-center flex flex-col items-center">
-        <div className="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-xs font-semibold mb-8 animate-pulse">
-          <span>✨ Enterprise B2B SaaS Edition 2.0</span>
+      <section className="relative pt-24 pb-20 px-6 max-w-7xl mx-auto text-center flex flex-col items-center">
+        <div className="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold mb-8">
+          <span>Enterprise Academic Governance Platform</span>
           <span>•</span>
-          <span>Multi-Tenant Token Engine</span>
+          <span>Outcome-Based Education</span>
         </div>
 
-        <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-tight max-w-4xl bg-clip-text text-transparent bg-gradient-to-r from-white via-indigo-100 to-purple-300 mb-6">
-          The Enterprise EdTech Platform for World-Class Institutions
+        <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-tight max-w-4xl text-slate-900 mb-6">
+          Enterprise Academic Performance &amp; Governance Platform
         </h1>
 
-        <p className="text-lg md:text-xl text-slate-400 max-w-2xl mb-10 leading-relaxed font-light">
-          Transform your university or college into a digital campus. Complete with multi-tenant data isolation, dual-tier admin hierarchies, real-time risk tracking, and API token quota management.
+        <p className="text-lg md:text-xl text-slate-600 max-w-3xl mb-10 leading-relaxed font-normal">
+          A unified institutional operating system for Outcome-Based Education (OBE), automated accreditation compliance, real-time attendance analytics, and multi-tier campus governance.
         </p>
 
         <div className="flex flex-wrap items-center justify-center gap-4">
           <button
-            onClick={() => setShowOnboardModal(true)}
-            className="px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white font-bold text-base shadow-xl shadow-indigo-600/30 hover:scale-105 transition-all"
+            onClick={() => {
+              setSelectedTier('Free Trial');
+              setShowOnboardModal(true);
+            }}
+            className="px-8 py-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-base shadow-lg shadow-blue-600/25 hover:-translate-y-0.5 transition-all"
           >
-            🏢 Onboard Your Institute
+            Onboard Your Institute
           </button>
           <button
             onClick={() => setShowLoginModal(true)}
-            className="px-8 py-4 rounded-2xl bg-slate-900 hover:bg-slate-800 text-slate-200 font-bold text-base border border-slate-800 hover:border-slate-700 transition-all hover:scale-105"
+            className="px-8 py-4 rounded-xl bg-white hover:bg-slate-100 text-slate-800 font-bold text-base border border-slate-300 hover:border-slate-400 shadow-sm hover:-translate-y-0.5 transition-all"
           >
-            🔑 Access Campus Portal
+            Access Campus Portal
           </button>
+          <a
+            href="saas-login.html"
+            className="px-6 py-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm transition-all"
+          >
+            Support Portal
+          </a>
         </div>
 
-        {/* Floating Stat Badges */}
+        {/* 4 Enterprise Metrics */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-16 w-full max-w-5xl">
-          <div className="bg-slate-900/60 p-6 rounded-2xl border border-slate-800 text-left">
-            <div className="text-3xl font-extrabold text-indigo-400">100%</div>
-            <div className="text-xs text-slate-400 font-medium mt-1">Tenant Isolation & Security</div>
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-left">
+            <div className="text-3xl font-extrabold text-blue-600">100%</div>
+            <div className="text-xs text-slate-600 font-medium mt-1">Audited Data Privacy &amp; Security</div>
           </div>
-          <div className="bg-slate-900/60 p-6 rounded-2xl border border-slate-800 text-left">
-            <div className="text-3xl font-extrabold text-purple-400">6 Roles</div>
-            <div className="text-xs text-slate-400 font-medium mt-1">Dual-Tier Hierarchy</div>
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-left">
+            <div className="text-3xl font-extrabold text-indigo-600">6 Roles</div>
+            <div className="text-xs text-slate-600 font-medium mt-1">Dedicated Governance Portals</div>
           </div>
-          <div className="bg-slate-900/60 p-6 rounded-2xl border border-slate-800 text-left">
-            <div className="text-3xl font-extrabold text-emerald-400">JWT + API</div>
-            <div className="text-xs text-slate-400 font-medium mt-1">Token Quota Engine</div>
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-left">
+            <div className="text-3xl font-extrabold text-slate-900">OBE Mapped</div>
+            <div className="text-xs text-slate-600 font-medium mt-1">Accreditation &amp; Attainment Reporting</div>
           </div>
-          <div className="bg-slate-900/60 p-6 rounded-2xl border border-slate-800 text-left">
-            <div className="text-3xl font-extrabold text-pink-400">React Redux</div>
-            <div className="text-xs text-slate-400 font-medium mt-1">Middleware Architecture</div>
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-left">
+            <div className="text-3xl font-extrabold text-blue-600">Real-Time</div>
+            <div className="text-xs text-slate-600 font-medium mt-1">Attendance, Grading &amp; Fee Insights</div>
           </div>
         </div>
       </section>
 
-      {/* Demo Credentials Quick-Launch Grid */}
-      <section className="py-12 bg-slate-900/40 border-y border-slate-800 px-6">
+      {/* 6 Dedicated Campus Portals Grid */}
+      <section className="py-16 bg-white border-y border-slate-200 px-6">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-slate-100">Explore Demo Hierarchy Portals</h2>
-            <p className="text-xs text-slate-400 mt-1">Click any role to log in instantly and test the B2B multi-tenant environment</p>
+          <div className="text-center mb-12">
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Dedicated Institutional Portals</h2>
+            <p className="text-sm text-slate-500 mt-2">Role-specific administrative workspaces engineered with strict domain authorization</p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <button
-              onClick={() => handleQuickRoleLogin('saasadmin@platform.com')}
-              className="bg-purple-950/40 hover:bg-purple-900/60 p-4 rounded-xl border border-purple-700/50 text-left transition-all group"
-            >
-              <div className="text-xs font-bold text-purple-300 uppercase tracking-wider">Level 0: SaaS Admin</div>
-              <div className="text-sm font-semibold text-white mt-1 group-hover:text-purple-200">Global Owner</div>
-              <div className="text-[10px] text-purple-400/80 mt-1 font-mono">saasadmin@platform.com</div>
-            </button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Student Portal */}
+            <div className="bg-slate-50 hover:bg-white p-6 rounded-2xl border border-slate-200 hover:border-blue-400 hover:shadow-md transition-all flex flex-col justify-between">
+              <div>
+                <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm mb-4">
+                  STU
+                </div>
+                <h3 className="text-lg font-bold text-slate-900 mb-2">Student Portal</h3>
+                <p className="text-xs text-slate-600 leading-relaxed mb-6">
+                  Track enrolled courses, verified attendance records, CGPA progression, and official leave requisitions.
+                </p>
+              </div>
+              <a
+                href="student.html"
+                className="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1"
+              >
+                Access Portal &rarr;
+              </a>
+            </div>
 
-            <button
-              onClick={() => handleQuickRoleLogin('director@iiits.in')}
-              className="bg-amber-950/40 hover:bg-amber-900/60 p-4 rounded-xl border border-amber-700/50 text-left transition-all group"
-            >
-              <div className="text-xs font-bold text-amber-300 uppercase tracking-wider">Level 1: Campus Admin</div>
-              <div className="text-sm font-semibold text-white mt-1 group-hover:text-amber-200">Institute Director</div>
-              <div className="text-[10px] text-amber-400/80 mt-1 font-mono">director@iiits.in</div>
-            </button>
+            {/* Faculty Portal */}
+            <div className="bg-slate-50 hover:bg-white p-6 rounded-2xl border border-slate-200 hover:border-blue-400 hover:shadow-md transition-all flex flex-col justify-between">
+              <div>
+                <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm mb-4">
+                  FAC
+                </div>
+                <h3 className="text-lg font-bold text-slate-900 mb-2">Faculty Portal</h3>
+                <p className="text-xs text-slate-600 leading-relaxed mb-6">
+                  Session-wise attendance tracking, continuous internal evaluation, syllabus delivery, and assignment grading.
+                </p>
+              </div>
+              <a
+                href="faculty.html"
+                className="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1"
+              >
+                Access Portal &rarr;
+              </a>
+            </div>
 
-            <button
-              onClick={() => handleQuickRoleLogin('head@iiits.in')}
-              className="bg-blue-950/40 hover:bg-blue-900/60 p-4 rounded-xl border border-blue-700/50 text-left transition-all group"
-            >
-              <div className="text-xs font-bold text-blue-300 uppercase tracking-wider">Level 2: Dept Head</div>
-              <div className="text-sm font-semibold text-white mt-1 group-hover:text-blue-200">HOD (Computer Sci)</div>
-              <div className="text-[10px] text-blue-400/80 mt-1 font-mono">head@iiits.in</div>
-            </button>
+            {/* HOD Portal */}
+            <div className="bg-slate-50 hover:bg-white p-6 rounded-2xl border border-slate-200 hover:border-blue-400 hover:shadow-md transition-all flex flex-col justify-between">
+              <div>
+                <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-sm mb-4">
+                  HOD
+                </div>
+                <h3 className="text-lg font-bold text-slate-900 mb-2">HOD / Academic Head</h3>
+                <p className="text-xs text-slate-600 leading-relaxed mb-6">
+                  Course workload allocation, department syllabus progression, curriculum review, and approval pipelines.
+                </p>
+              </div>
+              <a
+                href="hod.html"
+                className="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1"
+              >
+                Access Portal &rarr;
+              </a>
+            </div>
 
-            <button
-              onClick={() => handleQuickRoleLogin('faculty@iiits.in')}
-              className="bg-emerald-950/40 hover:bg-emerald-900/60 p-4 rounded-xl border border-emerald-700/50 text-left transition-all group"
-            >
-              <div className="text-xs font-bold text-emerald-300 uppercase tracking-wider">Level 3: Faculty</div>
-              <div className="text-sm font-semibold text-white mt-1 group-hover:text-emerald-200">Prof. Jane Smith</div>
-              <div className="text-[10px] text-emerald-400/80 mt-1 font-mono">faculty@iiits.in</div>
-            </button>
+            {/* Director Portal */}
+            <div className="bg-slate-50 hover:bg-white p-6 rounded-2xl border border-slate-200 hover:border-blue-400 hover:shadow-md transition-all flex flex-col justify-between">
+              <div>
+                <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-sm mb-4">
+                  DIR
+                </div>
+                <h3 className="text-lg font-bold text-slate-900 mb-2">Institute Director</h3>
+                <p className="text-xs text-slate-600 leading-relaxed mb-6">
+                  Executive institutional governance, NBA/NAAC attainment matrices, institutional risk radars, and faculty analytics.
+                </p>
+              </div>
+              <a
+                href="director.html"
+                className="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1"
+              >
+                Access Portal &rarr;
+              </a>
+            </div>
 
-            <button
-              onClick={() => handleQuickRoleLogin('student@iiits.in')}
-              className="bg-indigo-950/40 hover:bg-indigo-900/60 p-4 rounded-xl border border-indigo-700/50 text-left transition-all group"
-            >
-              <div className="text-xs font-bold text-indigo-300 uppercase tracking-wider">Level 4: Student</div>
-              <div className="text-sm font-semibold text-white mt-1 group-hover:text-indigo-200">John Doe</div>
-              <div className="text-[10px] text-indigo-400/80 mt-1 font-mono">student@iiits.in</div>
-            </button>
+            {/* Finance Portal */}
+            <div className="bg-slate-50 hover:bg-white p-6 rounded-2xl border border-slate-200 hover:border-blue-400 hover:shadow-md transition-all flex flex-col justify-between">
+              <div>
+                <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm mb-4">
+                  FIN
+                </div>
+                <h3 className="text-lg font-bold text-slate-900 mb-2">Finance Officer</h3>
+                <p className="text-xs text-slate-600 leading-relaxed mb-6">
+                  Comprehensive fee collection, student dues reconciliations, transaction histories, and digital payment receipts.
+                </p>
+              </div>
+              <a
+                href="finance.html"
+                className="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1"
+              >
+                Access Portal &rarr;
+              </a>
+            </div>
 
-            <button
-              onClick={() => handleQuickRoleLogin('parent.john@gmail.com')}
-              className="bg-pink-950/40 hover:bg-pink-900/60 p-4 rounded-xl border border-pink-700/50 text-left transition-all group"
-            >
-              <div className="text-xs font-bold text-pink-300 uppercase tracking-wider">Level 5: Parent</div>
-              <div className="text-sm font-semibold text-white mt-1 group-hover:text-pink-200">Mr. Mark Doe</div>
-              <div className="text-[10px] text-pink-400/80 mt-1 font-mono">parent.john@gmail.com</div>
-            </button>
+            {/* Support Portal */}
+            <div className="bg-slate-50 hover:bg-white p-6 rounded-2xl border border-slate-200 hover:border-blue-400 hover:shadow-md transition-all flex flex-col justify-between">
+              <div>
+                <div className="w-10 h-10 rounded-xl bg-slate-200 text-slate-800 flex items-center justify-center font-bold text-sm mb-4">
+                  OPS
+                </div>
+                <h3 className="text-lg font-bold text-slate-900 mb-2">Support Portal</h3>
+                <p className="text-xs text-slate-600 leading-relaxed mb-6">
+                  Multi-tenant institution administration, platform health monitoring, subscription quotas, and system configuration.
+                </p>
+              </div>
+              <a
+                href="saas.html"
+                className="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1"
+              >
+                Access Portal &rarr;
+              </a>
+            </div>
           </div>
         </div>
       </section>
@@ -187,147 +224,201 @@ export default function B2BLandingPage() {
       {/* Subscription Pricing Tiers */}
       <section className="py-20 px-6 max-w-7xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-3xl font-extrabold text-white">B2B Institute Subscription Packages</h2>
-          <p className="text-slate-400 mt-2 text-sm max-w-xl mx-auto">
-            Transparent pricing tailored for institutions of all sizes — from growing colleges to enterprise universities.
+          <h2 className="text-3xl font-extrabold text-slate-900">Institutional Subscription Packages</h2>
+          <p className="text-slate-600 mt-2 text-sm max-w-xl mx-auto">
+            Predictable licensing tailored for institutions of all sizes, from growing colleges to multi-campus universities.
           </p>
         </div>
 
+        {/* Dynamic Interactive Pricing Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Plan 1 */}
-          <div className="bg-slate-900 p-8 rounded-3xl border border-slate-800 flex flex-col justify-between hover:border-slate-700 transition-all">
-            <div>
-              <div className="text-xs font-bold uppercase tracking-wider text-slate-400">Starter</div>
-              <div className="text-2xl font-black text-white mt-1">Free Trial</div>
-              <div className="text-4xl font-extrabold text-indigo-400 mt-4">$0 <span className="text-xs text-slate-400 font-normal">/ month</span></div>
-              <div className="text-xs text-slate-400 mt-2">Up to 50 Student Seats • 50k API Tokens</div>
+          {[
+            {
+              id: 'starter',
+              tierName: 'Free Trial',
+              badge: 'Starter',
+              name: 'Free Trial',
+              price: '$0',
+              period: '/ month',
+              subtitle: 'Up to 50 Student Accounts • Core Academic Features',
+              features: [
+                'Academic Progress & Attendance',
+                'Assessment & Marks Tracking',
+                'Institutional Notice & Discussions',
+                'Dedicated Institute Code',
+              ],
+              btnText: 'Start Free Trial',
+            },
+            {
+              id: 'growth',
+              tierName: 'Growth Campus',
+              badge: 'Growth',
+              name: 'Growth Campus',
+              price: '$299',
+              period: '/ month',
+              popular: true,
+              subtitle: 'Up to 250 Student Accounts • Department Operations',
+              features: [
+                'All Starter Features Included',
+                'Department & HOD Governance',
+                'Finance Dues & Receipt Tracking',
+                'Multi-Level Leave Approval Pipeline',
+                'Custom Institution Branding',
+              ],
+              btnText: 'Subscribe Growth Campus',
+            },
+            {
+              id: 'enterprise',
+              tierName: 'Enterprise University',
+              badge: 'Enterprise',
+              name: 'Enterprise University',
+              price: '$799',
+              period: '/ month',
+              subtitle: 'Unlimited Student Accounts • Complete Governance',
+              features: [
+                'Complete Multi-Tier Actor Delegation',
+                'Official Accreditation & NBA Reports',
+                'Priority 24/7 Support Service Level',
+                'Custom Domain & Institutional Isolation',
+              ],
+              btnText: 'Get Enterprise License',
+            },
+          ].map((plan) => {
+            const isSelected = selectedTier === plan.tierName;
+            return (
+              <div
+                key={plan.id}
+                onClick={() => setSelectedTier(plan.tierName)}
+                className={`p-8 rounded-3xl flex flex-col justify-between relative cursor-pointer transition-all duration-200 ${
+                  isSelected
+                    ? 'bg-blue-50/20 border-2 border-blue-600 shadow-md ring-1 ring-blue-500/20 -translate-y-1'
+                    : 'bg-white border border-slate-200 hover:border-slate-300 shadow-sm hover:shadow'
+                }`}
+              >
+                {plan.popular && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[10px] font-bold uppercase tracking-widest px-3 py-0.5 rounded-full shadow-sm">
+                    Most Popular
+                  </div>
+                )}
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{plan.badge}</span>
+                    {isSelected && (
+                      <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">
+                        Active Selection
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-2xl font-black text-slate-900 mt-1">{plan.name}</div>
+                  <div className="text-4xl font-extrabold text-slate-900 mt-4">
+                    {plan.price} <span className="text-xs text-slate-500 font-normal">{plan.period}</span>
+                  </div>
+                  <div className="text-xs text-slate-500 mt-2">{plan.subtitle}</div>
 
-              <ul className="mt-6 space-y-3 text-xs text-slate-300">
-                <li className="flex items-center space-x-2"><span>✅</span><span>Basic Progress & Attendance</span></li>
-                <li className="flex items-center space-x-2"><span>✅</span><span>Assessment & Grade Tracking</span></li>
-                <li className="flex items-center space-x-2"><span>✅</span><span>Discussion Forums</span></li>
-              </ul>
+                  <ul className="mt-6 space-y-3 text-xs text-slate-700">
+                    {plan.features.map((feat, idx) => (
+                      <li key={idx} className="flex items-center space-x-2">
+                        <svg className="w-4 h-4 text-blue-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        <span>{feat}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedTier(plan.tierName);
+                    setShowOnboardModal(true);
+                  }}
+                  className={`mt-8 w-full py-3 rounded-xl font-bold text-xs transition-all ${
+                    isSelected
+                      ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm'
+                      : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200'
+                  }`}
+                >
+                  {plan.btnText}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Dynamic Selection Summary Panel */}
+        <div className="mt-8 p-6 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="text-left">
+            <div className="text-xs font-bold text-blue-600 uppercase tracking-wider">Selected Package Tier</div>
+            <div className="text-lg font-black text-slate-900 mt-0.5">
+              {selectedTier}
             </div>
-            <button
-              onClick={() => {
-                setOnboardData({ ...onboardData, subscription_tier: 'Free Trial' });
-                setShowOnboardModal(true);
-              }}
-              className="mt-8 w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs transition-all"
-            >
-              Start Free Trial
-            </button>
+            <div className="text-xs text-slate-500 mt-0.5">
+              Click any package card above to switch tier configuration dynamically.
+            </div>
           </div>
-
-          {/* Plan 2 */}
-          <div className="bg-gradient-to-b from-indigo-950/60 to-slate-900 p-8 rounded-3xl border-2 border-indigo-500/80 flex flex-col justify-between relative shadow-2xl shadow-indigo-500/20">
-            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-md">
-              Most Popular
-            </div>
-            <div>
-              <div className="text-xs font-bold uppercase tracking-wider text-indigo-300">Growth</div>
-              <div className="text-2xl font-black text-white mt-1">Growth Campus</div>
-              <div className="text-4xl font-extrabold text-purple-400 mt-4">$299 <span className="text-xs text-slate-400 font-normal">/ month</span></div>
-              <div className="text-xs text-slate-400 mt-2">Up to 250 Student Seats • 500k API Tokens</div>
-
-              <ul className="mt-6 space-y-3 text-xs text-slate-200">
-                <li className="flex items-center space-x-2"><span>✅</span><span>All Starter Features</span></li>
-                <li className="flex items-center space-x-2"><span>✅</span><span>HOD & Department Hierarchies</span></li>
-                <li className="flex items-center space-x-2"><span>✅</span><span>BTP Milestone Review Workflow</span></li>
-                <li className="flex items-center space-x-2"><span>✅</span><span>Custom Institute Branding & Logo</span></li>
-              </ul>
-            </div>
-            <button
-              onClick={() => {
-                setOnboardData({ ...onboardData, subscription_tier: 'Growth Campus' });
-                setShowOnboardModal(true);
-              }}
-              className="mt-8 w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 transition-all"
-            >
-              Subscribe Growth Campus
-            </button>
-          </div>
-
-          {/* Plan 3 */}
-          <div className="bg-slate-900 p-8 rounded-3xl border border-slate-800 flex flex-col justify-between hover:border-slate-700 transition-all">
-            <div>
-              <div className="text-xs font-bold uppercase tracking-wider text-purple-400">Enterprise</div>
-              <div className="text-2xl font-black text-white mt-1">Enterprise University</div>
-              <div className="text-4xl font-extrabold text-pink-400 mt-4">$799 <span className="text-xs text-slate-400 font-normal">/ month</span></div>
-              <div className="text-xs text-slate-400 mt-2">5,000 Student Seats • 5M API Tokens</div>
-
-              <ul className="mt-6 space-y-3 text-xs text-slate-300">
-                <li className="flex items-center space-x-2"><span>✅</span><span>Unlimited Campus Capacity</span></li>
-                <li className="flex items-center space-x-2"><span>✅</span><span>API Key & ERP Integration Access</span></li>
-                <li className="flex items-center space-x-2"><span>✅</span><span>Audit Compliance & Logging</span></li>
-                <li className="flex items-center space-x-2"><span>✅</span><span>24/7 Dedicated Account Manager</span></li>
-              </ul>
-            </div>
-            <button
-              onClick={() => {
-                setOnboardData({ ...onboardData, subscription_tier: 'Enterprise University' });
-                setShowOnboardModal(true);
-              }}
-              className="mt-8 w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs transition-all"
-            >
-              Get Enterprise License
-            </button>
-          </div>
+          <button
+            onClick={() => setShowOnboardModal(true)}
+            className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm transition-all shrink-0"
+          >
+            Continue with {selectedTier} &rarr;
+          </button>
         </div>
       </section>
 
       {/* Login Modal */}
       {showLoginModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 w-full max-w-md p-6 rounded-3xl shadow-2xl relative">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 w-full max-w-md p-6 rounded-3xl shadow-2xl relative text-slate-900">
             <button
               onClick={() => setShowLoginModal(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white text-lg font-bold"
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-lg font-bold"
             >
-              ✕
+              &times;
             </button>
 
-            <h3 className="text-xl font-bold text-white mb-1">Sign In to Campus</h3>
-            <p className="text-xs text-slate-400 mb-6">Enter your email, password, and institutional code</p>
+            <h3 className="text-xl font-bold text-slate-900 mb-1">Sign In to Campus</h3>
+            <p className="text-xs text-slate-500 mb-6">Enter your institutional code, email address, and password</p>
 
             {error && (
-              <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs font-medium">
+              <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium">
                 {error}
               </div>
             )}
 
             <form onSubmit={handleLoginSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Institute Code</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Institute Code</label>
                 <input
                   type="text"
                   value={tenantCode}
                   onChange={(e) => setTenantCode(e.target.value)}
                   placeholder="e.g. IIITS, IITM, STANFORD"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono uppercase"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-blue-500 font-mono uppercase"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Email Address</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Email Address</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@institute.edu"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-blue-500"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Password</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Password</label>
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                  placeholder="Password"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-blue-500"
                   required
                 />
               </div>
@@ -335,7 +426,7 @@ export default function B2BLandingPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 transition-all mt-2"
+                className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-600/20 transition-all mt-2"
               >
                 {loading ? 'Authenticating...' : 'Sign In'}
               </button>
@@ -344,125 +435,12 @@ export default function B2BLandingPage() {
         </div>
       )}
 
-      {/* Onboard Modal */}
-      {showOnboardModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 w-full max-w-lg p-6 rounded-3xl shadow-2xl relative">
-            <button
-              onClick={() => {
-                setShowOnboardModal(false);
-                setOnboardSuccess(null);
-              }}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white text-lg font-bold"
-            >
-              ✕
-            </button>
-
-            {onboardSuccess ? (
-              <div className="text-center py-6">
-                <div className="text-4xl mb-3">🎉</div>
-                <h3 className="text-2xl font-bold text-white mb-2">Onboarding Successful!</h3>
-                <p className="text-xs text-slate-300 mb-6">{onboardSuccess.message}</p>
-
-                <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 text-left text-xs space-y-2 mb-6 font-mono">
-                  <div><span className="text-slate-400">Institute:</span> <span className="text-indigo-300 font-bold">{onboardSuccess.tenant?.name}</span></div>
-                  <div><span className="text-slate-400">Code:</span> <span className="text-purple-300 font-bold">{onboardSuccess.tenant?.code}</span></div>
-                  <div><span className="text-slate-400">Director Email:</span> <span className="text-emerald-300">{onboardSuccess.admin_credentials?.email}</span></div>
-                  <div><span className="text-slate-400">Password:</span> <span className="text-amber-300">{onboardSuccess.admin_credentials?.password}</span></div>
-                </div>
-
-                <button
-                  onClick={() => {
-                    setEmail(onboardSuccess.admin_credentials.email);
-                    setTenantCode(onboardSuccess.tenant.code);
-                    setShowOnboardModal(false);
-                    setShowLoginModal(true);
-                  }}
-                  className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs"
-                >
-                  Proceed to Login as Director
-                </button>
-              </div>
-            ) : (
-              <>
-                <h3 className="text-xl font-bold text-white mb-1">Onboard Your Institute</h3>
-                <p className="text-xs text-slate-400 mb-6">Register your college/university to get instant workspace access</p>
-
-                <form onSubmit={handleOnboardSubmit} className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">Institute Full Name</label>
-                    <input
-                      type="text"
-                      value={onboardData.name}
-                      onChange={(e) => setOnboardData({ ...onboardData, name: e.target.value })}
-                      placeholder="e.g. National Institute of Technology"
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
-                      required
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-300 mb-1">Unique Code</label>
-                      <input
-                        type="text"
-                        value={onboardData.code}
-                        onChange={(e) => setOnboardData({ ...onboardData, code: e.target.value })}
-                        placeholder="e.g. NITK"
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 uppercase font-mono"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-300 mb-1">Domain</label>
-                      <input
-                        type="text"
-                        value={onboardData.domain}
-                        onChange={(e) => setOnboardData({ ...onboardData, domain: e.target.value })}
-                        placeholder="nitk.ac.in"
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">Director / Contact Email</label>
-                    <input
-                      type="email"
-                      value={onboardData.contact_email}
-                      onChange={(e) => setOnboardData({ ...onboardData, contact_email: e.target.value })}
-                      placeholder="director@nitk.ac.in"
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">Selected Plan</label>
-                    <select
-                      value={onboardData.subscription_tier}
-                      onChange={(e) => setOnboardData({ ...onboardData, subscription_tier: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
-                    >
-                      <option value="Free Trial">Free Trial ($0/mo)</option>
-                      <option value="Growth Campus">Growth Campus ($299/mo)</option>
-                      <option value="Enterprise University">Enterprise University ($799/mo)</option>
-                    </select>
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 transition-all mt-2"
-                  >
-                    Complete Onboarding & Activate Workspace
-                  </button>
-                </form>
-              </>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Onboarding Modal */}
+      <OnboardingModal
+        isOpen={showOnboardModal}
+        onClose={() => setShowOnboardModal(false)}
+        initialTier={selectedTier}
+      />
     </div>
   );
 }

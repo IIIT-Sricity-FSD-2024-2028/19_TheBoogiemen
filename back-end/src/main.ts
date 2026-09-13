@@ -161,7 +161,7 @@ async function bootstrap() {
   SwaggerModule.setup('api/docs', app, document);
 
   // 8. Start Server
-  const PORT = 5001;
+  const PORT = Number(process.env.PORT) || 5001;
   await app.listen(PORT);
 
   // One structured line rather than a five-line ASCII box: separator rows carry

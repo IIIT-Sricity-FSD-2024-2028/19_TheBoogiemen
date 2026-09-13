@@ -69,7 +69,7 @@ export default function App() {
               onClick={() => dispatch(removeNotification(n.id))}
               className="text-xs font-bold opacity-70 hover:opacity-100 ml-3"
             >
-              ✕
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
           </div>
         ))}
@@ -83,7 +83,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center space-x-2 font-bold text-slate-400">
             <span className="w-5 h-5 rounded-md bg-indigo-600 text-white flex items-center justify-center text-[10px]">BP</span>
-            <span>BarelyPassing B2B SaaS Enterprise EdTech</span>
+            <span>BarelyPassing B2B Enterprise EdTech</span>
           </div>
           <div>React 18 • Redux Toolkit • Custom Token Middleware • Multi-Tenant Engine</div>
         </div>

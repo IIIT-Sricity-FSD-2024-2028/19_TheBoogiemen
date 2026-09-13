@@ -46,9 +46,9 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             <span>User Management</span>
         </a>
-        <a href="#" class="nav-item" style="color:#6366f1;" onclick="openDirectorSupportModal()">
+        <a href="#" class="nav-item" onclick="switchView('contact-support-view',this)">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            <span>Contact SaaS Support</span>
+            <span>Contact Support</span>
         </a>
     </nav>
     <div class="sidebar-footer">
@@ -68,7 +68,7 @@
         <h1 id="page-title">Dashboard</h1>
         <div class="header-badges" style="display:flex;align-items:center;gap:10px;">
             <button onclick="startDirectorTour(true)" style="background:#eef2ff;color:#4f46e5;border:1px solid #c7d2fe;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .2s;">
-                🎓 Step-by-Step Guide
+                Step-by-Step Guide
             </button>
             <span class="badge-term" id="dirInstitutionBadge">Spring 2026</span>
         </div>
@@ -82,7 +82,7 @@
                 <div class="metric-card"><div class="label">TOTAL STUDENTS</div><div class="value" id="total-students">0</div></div>
                 <div class="metric-card"><div class="label">FACULTY MEMBERS</div><div class="value" id="total-faculty">0</div></div>
                 <div class="metric-card"><div class="label">ACTIVE COURSES</div><div class="value" id="total-courses">0</div></div>
-                <div class="metric-card"><div class="label">AVG ATTAINMENT</div><div class="value">81.2%</div></div>
+                <div class="metric-card"><div class="label">AVG ATTAINMENT</div><div class="value" id="avg-attainment">--</div></div>
             </div>
             <div class="stats-card" style="margin-top:20px;">
                 <div class="stats-card-header">
@@ -92,7 +92,7 @@
             </div>
             <!-- Send Announcement -->
             <div class="stats-card" style="margin-top:20px;">
-                <div class="stats-card-header"><h3>📢 Send Announcement</h3></div>
+                <div class="stats-card-header"><h3>Send Announcement</h3></div>
                 <div class="stats-card-body" style="padding:24px;">
                     <div style="display:grid;grid-template-columns:1fr 2fr auto;gap:16px;align-items:end;">
                         <div>
@@ -121,10 +121,9 @@
         <div id="institutional-reports-view" class="view-section" style="display:none;">
             <div class="stats-card">
                 <div class="stats-card-header"><h3>Institutional Reports</h3></div>
-                <div class="stats-card-body" style="padding:24px;">
-                    <div style="display:flex;gap:15px;margin-bottom:20px;">
-                        <button class="submit-btn" onclick="alert('Generating Accreditation Report PDF...')">Generate NBA/NAAC Report</button>
-                        <button class="btn-cancel" onclick="alert('Exporting Cohort Analysis CSV...')">Export Cohort Analysis</button>
+                    <div style="display:flex;gap:15px;margin-bottom:20px;flex-wrap:wrap;">
+                        <button class="submit-btn" onclick="exportNbaReportPdf()">Export NBA/NAAC Report (PDF)</button>
+                        <button class="btn-cancel" onclick="exportCohortReportPdf()">Export Cohort Analysis (PDF)</button>
                     </div>
                 </div>
             </div>
@@ -193,6 +192,84 @@
 
         <!-- ── Settings View ── -->
         <div id="settings-view" class="view-section" style="display:none;"></div>
+
+        <!-- ── Contact Support View ── -->
+        <div id="contact-support-view" class="view-section" style="display:none;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                <div>
+                    <h2 style="font-size:20px;font-weight:700;color:#0f172a;margin:0;">Contact Central Support</h2>
+                    <p style="color:#64748b;font-size:14px;margin-top:4px;">Submit support requests, report technical issues, or request configuration changes.</p>
+                </div>
+                <button class="btn-cancel" onclick="switchView('dashboard-view', document.querySelector('.nav-item[onclick*=\'dashboard-view\']'))" style="display:flex;align-items:center;gap:6px;padding:8px 16px;cursor:pointer;">
+                    Back to Dashboard
+                </button>
+            </div>
+
+            <div class="stats-card" style="margin-bottom:24px;">
+                <div class="stats-card-header">
+                    <h3>Submit New Support Request</h3>
+                </div>
+                <div class="stats-card-body" style="padding:24px;">
+                    <form id="directorSupportForm" onsubmit="event.preventDefault(); submitDirectorSupportTicket();">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                            <div class="form-group">
+                                <label style="display:block;font-size:13px;font-weight:600;color:#334155;margin-bottom:6px;">Subject</label>
+                                <input type="text" id="dirSupportSubject" placeholder="e.g., Accreditation module configuration assistance" required style="width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:14px;">
+                            </div>
+                            <div class="form-group">
+                                <label style="display:block;font-size:13px;font-weight:600;color:#334155;margin-bottom:6px;">Category</label>
+                                <select id="dirSupportCategory" required style="width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:14px;background:#fff;">
+                                    <option value="Institutional Operations">Institutional Operations</option>
+                                    <option value="Accreditation / Reports">Accreditation / Reports</option>
+                                    <option value="Technical Platform Issue">Technical Platform Issue</option>
+                                    <option value="Account &amp; Access">Account &amp; Access Permissions</option>
+                                    <option value="General Inquiry">General Operational Inquiry</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-top:16px;">
+                            <label style="display:block;font-size:13px;font-weight:600;color:#334155;margin-bottom:6px;">Description</label>
+                            <textarea id="dirSupportMsg" rows="4" placeholder="Provide complete details of your request or issue..." required style="width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:14px;resize:vertical;"></textarea>
+                        </div>
+                        <div class="form-group" style="margin-top:16px;">
+                            <label style="display:block;font-size:13px;font-weight:600;color:#334155;margin-bottom:6px;">Attachment (Optional)</label>
+                            <input type="file" id="dirSupportAttachment" style="width:100%;padding:8px;border:1px dashed #cbd5e1;border-radius:6px;font-size:13px;background:#f8fafc;">
+                            <span style="font-size:12px;color:#94a3b8;margin-top:4px;display:block;">Supported formats: PDF, PNG, JPG, CSV (Max 5MB)</span>
+                        </div>
+                        <div style="margin-top:20px;display:flex;justify-content:flex-end;gap:12px;">
+                            <button type="submit" class="submit-btn" style="background:#0f172a;color:#fff;padding:10px 24px;border-radius:6px;font-weight:600;cursor:pointer;border:none;">
+                                Submit Request
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Existing Requests History -->
+            <div class="stats-card">
+                <div class="stats-card-header" style="display:flex;justify-content:space-between;align-items:center;">
+                    <h3>Support Request History</h3>
+                    <button type="button" onclick="renderDirectorSupportHistory()" style="background:transparent;border:1px solid #cbd5e1;border-radius:4px;padding:4px 12px;font-size:12px;cursor:pointer;color:#475569;">Refresh</button>
+                </div>
+                <div class="stats-card-body" style="padding:0;overflow-x:auto;">
+                    <table class="data-table" style="width:100%;border-collapse:collapse;">
+                        <thead>
+                            <tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0;text-align:left;">
+                                <th style="padding:12px 16px;font-size:12px;font-weight:600;color:#475569;">Request ID</th>
+                                <th style="padding:12px 16px;font-size:12px;font-weight:600;color:#475569;">Subject</th>
+                                <th style="padding:12px 16px;font-size:12px;font-weight:600;color:#475569;">Category</th>
+                                <th style="padding:12px 16px;font-size:12px;font-weight:600;color:#475569;">Submitted</th>
+                                <th style="padding:12px 16px;font-size:12px;font-weight:600;color:#475569;">Status</th>
+                                <th style="padding:12px 16px;font-size:12px;font-weight:600;color:#475569;">Latest Response</th>
+                            </tr>
+                        </thead>
+                        <tbody id="directorSupportHistoryTbody">
+                            <tr><td colspan="6" style="text-align:center;padding:24px;color:#94a3b8;">Loading support history...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
     </div><!-- /content-body -->
 </div><!-- /main-content -->
@@ -411,43 +488,13 @@
     </div>
 </div>
 
-<!-- ── Contact SaaS Support Modal ────────────────────────────────────── -->
-<div id="directorSupportModal" class="modal-backdrop">
-    <div class="modal-window" style="max-width:500px;">
-        <div class="modal-header"><h2>💬 Contact SaaS Support Platform</h2><button class="close-modal" onclick="closeModal('directorSupportModal')">&times;</button></div>
-        <div class="modal-body">
-            <p style="font-size:13px;color:#64748b;margin-bottom:16px;">Submit a support request directly to the BarelyPassing platform team.</p>
-            <div class="form-group">
-                <label>Issue Subject <span style="color:#ef4444">*</span></label>
-                <input type="text" id="dirSupportSubject" placeholder="e.g. End-of-Semester Grade Import Assistance">
-            </div>
-            <div class="form-group">
-                <label>Priority Level</label>
-                <select id="dirSupportPriority">
-                    <option value="Medium">Medium Priority</option>
-                    <option value="High">High Priority</option>
-                    <option value="Low">Low Priority</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Detailed Message <span style="color:#ef4444">*</span></label>
-                <textarea id="dirSupportMsg" rows="4" placeholder="Describe the feature request or technical issue for SaaS support…"></textarea>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="submit-btn" style="flex:1;background:linear-gradient(135deg,#6366f1,#8b5cf6);" onclick="submitDirectorSupportTicket()">🚀 Submit Ticket to SaaS Support</button>
-            <button class="btn-cancel" onclick="closeModal('directorSupportModal')">Cancel</button>
-        </div>
-    </div>
-</div>
-
 <!-- ── Interactive Step-by-Step Guided Tutorial Modal ── -->
 <div class="modal-overlay" id="directorTourModal" style="display:none;align-items:center;justify-content:center;background:rgba(15,23,42,0.7);z-index:99999;">
     <div class="modal" style="max-width:560px;width:92%;background:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 25px 60px rgba(0,0,0,0.3);border:1px solid #c7d2fe;padding:0;">
         <div style="background:linear-gradient(135deg,#0f172a,#312e81);padding:24px 28px;color:#fff;">
             <div style="display:flex;justify-content:space-between;align-items:center;">
                 <span id="tourBadge" style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.15);padding:4px 10px;border-radius:20px;font-size:11px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;color:#c7d2fe;">
-                    🎓 Director Walkthrough
+                    Director Walkthrough
                 </span>
                 <span id="tourStepIndicator" style="font-size:12px;font-weight:700;color:#94a3b8;">Step 1 of 4</span>
             </div>
@@ -532,7 +579,7 @@ function initTourData() {
             body: `
                 <p>Welcome, <strong>${directorName}</strong>! Your institutional workspace for <strong>${instName}</strong> (Tenant Code: <code style="background:#eef2ff;color:#4f46e5;padding:2px 6px;border-radius:4px;font-weight:700;">${tenantCode}</code>) is fully live.</p>
                 <div style="background:#f8fafc;padding:12px 14px;border-radius:10px;margin:14px 0;font-size:13px;border-left:4px solid #4f46e5;line-height:1.5;">
-                    📊 <strong>Real-Time Analytics:</strong> The top KPI metrics gauge active student enrollment, faculty members, semester course offerings, and overall Outcome Attainment in real time.
+                    <strong>Real-Time Analytics:</strong> The top KPI metrics gauge active student enrollment, faculty members, semester course offerings, and overall Outcome Attainment in real time.
                 </div>
                 <p style="font-size:13px;color:#64748b;">Let's take a quick 1-minute walkthrough through your core leadership tools.</p>
             `
@@ -543,7 +590,7 @@ function initTourData() {
             body: `
                 <p>Under <strong>Institutional Reports</strong>, view program-level Course Outcome (CO) and Program Outcome (PO) attainment calculated using Bloom's Taxonomy.</p>
                 <div style="background:#f8fafc;padding:12px 14px;border-radius:10px;margin:14px 0;font-size:13px;border-left:4px solid #059669;line-height:1.5;">
-                    📑 <strong>1-Click Audit Export:</strong> Generate certified cohort analysis reports and NBA/NAAC compliance sheets with one click.
+                    <strong>1-Click Audit Export:</strong> Generate certified cohort analysis reports and NBA/NAAC compliance sheets with one click.
                 </div>
             `
         },
@@ -553,17 +600,17 @@ function initTourData() {
             body: `
                 <p>Your campus is configured with working hours: <strong>08:45 AM – 05:30 PM (Mon – Sat)</strong>.</p>
                 <div style="background:#f8fafc;padding:12px 14px;border-radius:10px;margin:14px 0;font-size:13px;border-left:4px solid #f59e0b;line-height:1.5;">
-                    ☕ <strong>Built-In Breaks:</strong> Morning Tea (10:45 AM), Lunch Recess (1:00 PM – 2:15 PM), and Evening Break (4:15 PM – 4:30 PM) are pre-scheduled with 100% room conflict resolution.
+                    <strong>Built-In Breaks:</strong> Morning Tea (10:45 AM), Lunch Recess (1:00 PM – 2:15 PM), and Evening Break (4:15 PM – 4:30 PM) are pre-scheduled with 100% room conflict resolution.
                 </div>
             `
         },
         {
             badge: "Finance & Platform Support",
-            title: "4. Fee Management & Direct SaaS Escalations",
+            title: "4. Fee Management & Direct Support Escalations",
             body: `
                 <p>Audit fee collections and student dues under <strong>Fee Compliance</strong>.</p>
                 <div style="background:#f8fafc;padding:12px 14px;border-radius:10px;margin:14px 0;font-size:13px;border-left:4px solid #6366f1;line-height:1.5;">
-                    🛡️ <strong>Direct SaaS Support Channel:</strong> Need module upgrades or assistance? Click <em>"Contact SaaS Support"</em> in the sidebar to send high-priority tickets directly to central platform engineering.
+                    <strong>Direct Support Channel:</strong> Need module upgrades or assistance? Click <em>"Contact Support Portal"</em> in the sidebar to send high-priority tickets directly to central platform engineering.
                 </div>
             `
         }
@@ -582,7 +629,7 @@ function renderTourStep() {
     const step = tourData[currentTourStep];
     if (!step) return;
 
-    document.getElementById('tourBadge').textContent = '🎓 ' + step.badge;
+    document.getElementById('tourBadge').textContent = step.badge;
     document.getElementById('tourStepIndicator').textContent = `Step ${currentTourStep + 1} of ${tourData.length}`;
     document.getElementById('tourTitle').textContent = step.title;
     document.getElementById('tourBody').innerHTML = step.body;
@@ -591,7 +638,7 @@ function renderTourStep() {
     document.getElementById('tourPrevBtn').style.display = currentTourStep > 0 ? 'inline-block' : 'none';
     const nextBtn = document.getElementById('tourNextBtn');
     if (currentTourStep === tourData.length - 1) {
-        nextBtn.textContent = 'Finish & Start Managing 🚀';
+        nextBtn.textContent = 'Finish & Start Managing';
         nextBtn.style.background = 'linear-gradient(135deg,#059669,#10b981)';
     } else {
         nextBtn.textContent = 'Next Step →';
@@ -611,7 +658,7 @@ window.nextTourStep = function() {
         renderTourStep();
     } else {
         closeTourModal();
-        showToast('🎉 You are all set! Welcome to BarelyPassing.', 'success');
+        showToast('You are all set! Welcome to BarelyPassing.', 'success');
     }
 };
 
@@ -633,8 +680,8 @@ window.openDirectorSupportModal = function() {
 
 window.submitDirectorSupportTicket = function() {
     const subject = document.getElementById('dirSupportSubject')?.value.trim();
+    const category = document.getElementById('dirSupportCategory')?.value || 'General Inquiry';
     const msg = document.getElementById('dirSupportMsg')?.value.trim();
-    const priority = document.getElementById('dirSupportPriority')?.value || 'Medium';
 
     if (!subject || !msg) {
         showToast('Please fill in both subject and message', 'warning');
@@ -649,10 +696,11 @@ window.submitDirectorSupportTicket = function() {
             tenantId: user?.tenant_id || tenant?.code || 't1',
             contactEmail: user?.email || 'director@institution.ac.in',
             subject: subject,
-            priority: priority,
+            category: category,
+            priority: 'Medium',
             message: msg
         });
-        showToast(`✅ Ticket ${ticket.id} submitted directly to SaaS Support!`, 'success');
+        showToast(`Ticket ${ticket.id} submitted directly to Support Portal!`, 'success');
         closeModal('directorSupportModal');
         document.getElementById('dirSupportSubject').value = '';
         document.getElementById('dirSupportMsg').value = '';
@@ -668,9 +716,9 @@ window.sendAdminAnnouncement = function() {
     const user = window.Auth?.getUser?.();
     const fromName = user ? (user.name || user.first_name || user.username || 'Director') : 'Director';
     if (target === 'all') {
-        window.Notifications?.broadcastAll(fromName, '📢 ' + msg, 'announcement');
+        window.Notifications?.broadcastAll(fromName, msg, 'announcement');
     } else {
-        window.Notifications?.broadcast(target, fromName, '📢 ' + msg, 'announcement');
+        window.Notifications?.broadcast(target, fromName, msg, 'announcement');
     }
     showToast(`Announcement sent to ${target === 'all' ? 'everyone' : target + 's'}!`, 'success');
     document.getElementById('announceMsg').value = '';

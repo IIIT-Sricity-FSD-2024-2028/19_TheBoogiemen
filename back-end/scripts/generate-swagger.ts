@@ -21,7 +21,7 @@ async function generate() {
   
   const outputPath = path.resolve(__dirname, '../docs/swagger.json');
   fs.writeFileSync(outputPath, JSON.stringify(document, null, 2));
-  console.log(`✅ Swagger JSON generated at ${outputPath}`);
+  console.log(`[OK] Swagger JSON generated at ${outputPath}`);
   process.exit(0);
 }
 generate();

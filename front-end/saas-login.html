@@ -143,41 +143,73 @@
 </head>
 <body>
 
-    <div class="login-wrapper">
-        <div style="text-align:center;">
-            <span class="internal-badge">BarelyPassing Support Portal</span>
-        </div>
+    <div class="login-wrapper" style="max-width: 880px; width: 100%;">
+        <div class="card" style="padding: 0; overflow: hidden; display: grid; grid-template-columns: 360px 1fr; border-radius: 20px;">
+            <!-- Left Side: Support Role Menu -->
+            <div style="background: #f8fafc; border-right: 1px solid #e2e8f0; padding: 36px 28px; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <span class="internal-badge" style="margin-bottom: 16px;">Support Portal Console</span>
+                    <h2 style="font-size: 18px; font-weight: 800; color: #0f172a; margin-bottom: 6px;">Support Role Menu</h2>
+                    <p style="font-size: 13px; color: #64748b; margin-bottom: 20px;">Select your authorized operational tier</p>
 
-        <div class="card">
-            <div class="brand">
-                <div class="brand-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    <div style="display: flex; flex-direction: column; gap: 10px;" id="saasRoleList">
+                        <div class="support-role-card" onclick="fillSaaSRole('agent@platform.com', this)" style="padding: 14px; border: 1.5px solid #cbd5e1; border-radius: 12px; background: #fff; cursor: pointer; transition: all 0.2s;">
+                            <span style="font-size: 10px; font-weight: 800; color: #64748b; letter-spacing: 0.5px; display: block; margin-bottom: 2px;">LEVEL 1</span>
+                            <div style="font-size: 14px; font-weight: 700; color: #0f172a;">Support Agent</div>
+                            <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Ticket triage &amp; communications</div>
+                        </div>
+                        <div class="support-role-card" onclick="fillSaaSRole('techsupport@platform.com', this)" style="padding: 14px; border: 1.5px solid #cbd5e1; border-radius: 12px; background: #fff; cursor: pointer; transition: all 0.2s;">
+                            <span style="font-size: 10px; font-weight: 800; color: #d97706; letter-spacing: 0.5px; display: block; margin-bottom: 2px;">LEVEL 2</span>
+                            <div style="font-size: 14px; font-weight: 700; color: #0f172a;">Senior / Technical Support</div>
+                            <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Technical resolution &amp; system health</div>
+                        </div>
+                        <div class="support-role-card" onclick="fillSaaSRole('manager@platform.com', this)" style="padding: 14px; border: 1.5px solid #cbd5e1; border-radius: 12px; background: #fff; cursor: pointer; transition: all 0.2s;">
+                            <span style="font-size: 10px; font-weight: 800; color: #16a34a; letter-spacing: 0.5px; display: block; margin-bottom: 2px;">LEVEL 3</span>
+                            <div style="font-size: 14px; font-weight: 700; color: #0f172a;">Support Manager</div>
+                            <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Subscriptions, leads &amp; billing</div>
+                        </div>
+                        <div class="support-role-card active" onclick="fillSaaSRole('saasadmin@platform.com', this)" style="padding: 14px; border: 1.5px solid #4f46e5; border-radius: 12px; background: #eef2ff; cursor: pointer; transition: all 0.2s;">
+                            <span style="font-size: 10px; font-weight: 800; color: #4338ca; letter-spacing: 0.5px; display: block; margin-bottom: 2px;">LEVEL 4</span>
+                            <div style="font-size: 14px; font-weight: 700; color: #0f172a;">Platform Administrator</div>
+                            <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Full platform governance &amp; tenants</div>
+                        </div>
+                    </div>
                 </div>
-                <h1>BarelyPassing Support Portal</h1>
+                <div style="font-size: 11px; color: #94a3b8; margin-top: 20px;">
+                    Role selection configures console permissions and scope.
+                </div>
             </div>
-            <p class="card-subtitle">Platform engineering &amp; institutional support console. Authorized personnel only.</p>
 
-
-            <form id="saasLoginForm" novalidate onsubmit="handleSaaSLogin(event)">
-
-                <div class="form-group">
-                    <label>Support Email Address</label>
-                    <input type="email" id="saas-email" value="saasadmin@platform.com" placeholder="saasadmin@platform.com" autocomplete="email" required>
-                    <div class="error-msg" id="email-error">Enter a valid email address.</div>
+            <!-- Right Side: Login Form -->
+            <div style="padding: 40px 36px; display: flex; flex-direction: column; justify-content: center;">
+                <div class="brand">
+                    <div class="brand-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    </div>
+                    <h1>BarelyPassing Support Portal</h1>
                 </div>
+                <p class="card-subtitle">Platform engineering &amp; institutional support console. Authorized personnel only.</p>
 
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" id="saas-password" value="Pass@123" placeholder="Enter your password" required>
-                    <div class="error-msg" id="pw-error">Password is required.</div>
+                <form id="saasLoginForm" novalidate onsubmit="handleSaaSLogin(event)">
+                    <div class="form-group">
+                        <label>Support Email Address</label>
+                        <input type="email" id="saas-email" value="saasadmin@platform.com" placeholder="saasadmin@platform.com" autocomplete="email" required>
+                        <div class="error-msg" id="email-error">Enter a valid email address.</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="saas-password" value="Pass@123" placeholder="Enter your password" required>
+                        <div class="error-msg" id="pw-error">Password is required.</div>
+                    </div>
+
+                    <button type="submit" class="submit-btn" id="saasLoginBtn">Sign In to BarelyPassing Support Portal</button>
+                </form>
+
+                <div class="divider"></div>
+                <div class="back-link">
+                    <a href="index.html">&larr; Back to Landing Page</a>
                 </div>
-
-                <button type="submit" class="submit-btn" id="saasLoginBtn">Sign In to BarelyPassing Support Portal</button>
-            </form>
-
-            <div class="divider"></div>
-            <div class="back-link">
-                <a href="onboarding.html">← Back to Onboarding</a>
             </div>
         </div>
     </div>
@@ -227,7 +259,7 @@
             await window.Auth.login(email, password, 'global');
         } catch (err) {
             showToast(err.message || 'Login failed. Check your credentials.', 'error');
-            btn.textContent = 'Sign In to SaaS Support Portal';
+            btn.textContent = 'Sign In to Support Portal';
             btn.disabled = false;
         }
     }

@@ -21,7 +21,7 @@ export default function FacultyPortal() {
       <div className="bg-gradient-to-r from-emerald-950/60 to-slate-900 p-6 rounded-3xl border border-emerald-800/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold mb-2">
-            <span>👨‍🏫 Level 3: Faculty & Mentor Portal</span>
+            <span>Level 3: Faculty &amp; Mentor Portal</span>
           </div>
           <h1 className="text-2xl font-black text-white">Prof. Jane Smith Dashboard</h1>
           <p className="text-xs text-emerald-200/70 mt-1">
@@ -41,7 +41,7 @@ export default function FacultyPortal() {
 
             {attendanceSaved && (
               <span className="px-3 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold rounded-xl animate-fade-in">
-                ✓ Attendance Recorded & Risk Checked!
+                Attendance Recorded &amp; Risk Checked!
               </span>
             )}
           </div>

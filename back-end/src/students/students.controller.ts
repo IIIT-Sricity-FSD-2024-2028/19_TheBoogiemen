@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, BadRequestException } from '@nestjs/common';
 import { StudentsService } from './students.service';
 import { Roles } from '../auth/roles.guard';
 import { CurrentUserId } from '../common/decorators/current-user.decorator';
@@ -16,6 +16,13 @@ export class StudentsController {
   @ApiResponse({ status: 200, description: 'Student profile data' })
   @ApiResponse({ status: 403, description: 'Access denied — students only' })
   async getProfile(@CurrentUserId() userId: string) {
+    return this.studentsService.getProfile(userId);
+  }
+
+  @Get('profile/:userId')
+  @ApiOperation({ summary: 'Get student profile by user ID' })
+  @ApiResponse({ status: 200, description: 'Student profile data' })
+  async getProfileById(@Param('userId') userId: string) {
     return this.studentsService.getProfile(userId);
   }
 

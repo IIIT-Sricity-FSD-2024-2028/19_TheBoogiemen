@@ -88,7 +88,7 @@
             </div>
             <!-- Send Announcement -->
             <div class="stats-card" style="margin-top:20px;">
-                <div class="stats-card-header"><h3>📢 Send Announcement</h3></div>
+                <div class="stats-card-header"><h3> Send Announcement</h3></div>
                 <div class="stats-card-body" style="padding:24px;">
                     <div style="display:grid;grid-template-columns:1fr 2fr auto;gap:16px;align-items:end;">
                         <div>
@@ -450,9 +450,9 @@ window.sendAdminAnnouncement = function() {
     const user = window.Auth?.getUser?.();
     const fromName = user ? (user.first_name || user.username || 'Admin') : 'Admin';
     if (target === 'all') {
-        window.Notifications?.broadcastAll(fromName, '📢 ' + msg, 'announcement');
+        window.Notifications?.broadcastAll(fromName, ' ' + msg, 'announcement');
     } else {
-        window.Notifications?.broadcast(target, fromName, '📢 ' + msg, 'announcement');
+        window.Notifications?.broadcast(target, fromName, ' ' + msg, 'announcement');
     }
     showToast(`Announcement sent to ${target === 'all' ? 'everyone' : target + 's'}!`, 'success');
     document.getElementById('announceMsg').value = '';

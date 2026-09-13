@@ -16,42 +16,53 @@ export class StudentsService {
   }
 
   async getAttendance(userId: string) {
-    let records = this.db.attendance_log.filter((a) => a.student_id === userId);
-
-    // If student has few/no log entries, seed realistic course attendance records
     const enrollments = this.db.enrollment.filter((e) => e.student_id === userId);
-    if (records.length === 0 && enrollments.length > 0) {
-      const dates = ['2026-08-10', '2026-08-12', '2026-08-14', '2026-08-17', '2026-08-19', '2026-08-21', '2026-08-24', '2026-08-26'];
-      enrollments.forEach((e, eIdx) => {
-        dates.forEach((d, dIdx) => {
-          const isAbsent = (eIdx + dIdx) % 7 === 0;
-          const isExcused = (eIdx + dIdx) % 11 === 0;
-          const status = isExcused ? 'excused' : (isAbsent ? 'absent' : 'present');
-          this.db.attendance_log.push({
-            log_id: `al_gen_${userId}_${e.course_id}_${dIdx}`,
-            student_id: userId,
-            course_id: e.course_id,
-            date: d,
-            status,
-          });
-        });
-      });
-      records = this.db.attendance_log.filter((a) => a.student_id === userId);
-    }
 
-    // Group by course to create summary
-    const byCourse: Record<string, any[]> = {};
-    records.forEach(r => {
-      (byCourse[r.course_id] ||= []).push(r);
+    // Ensure EVERY enrolled course has realistic attendance records
+    enrollments.forEach((e, eIdx) => {
+      const existing = this.db.attendance_log.filter(
+        (a) => a.student_id === userId && a.course_id === e.course_id
+      );
+      if (existing.length < 5) {
+        const dates = [
+          '2026-08-10', '2026-08-12', '2026-08-14', '2026-08-17', '2026-08-19',
+          '2026-08-21', '2026-08-24', '2026-08-26', '2026-08-28', '2026-08-31'
+        ];
+        dates.forEach((d, dIdx) => {
+          const isAbsent = (eIdx * 2 + dIdx) % 7 === 0;
+          const isExcused = (eIdx * 2 + dIdx) % 11 === 0;
+          const status = isExcused ? 'excused' : (isAbsent ? 'absent' : 'present');
+          if (!existing.some(x => x.date === d)) {
+            this.db.attendance_log.push({
+              log_id: `al_gen_${userId}_${e.course_id}_${dIdx}`,
+              student_id: userId,
+              course_id: e.course_id,
+              date: d,
+              status,
+            });
+          }
+        });
+      }
     });
 
-    const summary = Object.entries(byCourse).map(([course_id, rows]) => {
-      const c = this.db.courses.find(course => course.course_id === course_id);
+    const records = this.db.attendance_log.filter((a) => a.student_id === userId);
+
+    // Group by enrolled courses to guarantee exact 1-to-1 sync with getCourses
+    const summary = enrollments.map((e) => {
+      const c = this.db.courses.find((course) => course.course_id === e.course_id);
+      const rows = records.filter((r) => r.course_id === e.course_id);
       const stats = summariseAttendance(rows);
+      const sectionId = (e as any).section_id || `sec_${e.course_id}_${e.section || 'A'}`;
+      const semId = `sem_${c?.semester || 3}`;
       return {
-        course_id,
-        course_code: c?.course_code || course_id,
-        course_name: c?.course_name || 'Unknown',
+        enrollment_id: e.enrollment_id,
+        course_id: e.course_id,
+        course_code: c?.course_code || e.course_id,
+        course_name: c?.course_name || 'Course ' + e.course_id,
+        section: e.section || 'A',
+        section_id: sectionId,
+        semester_id: semId,
+        semester: c?.semester || 3,
         present: stats.present,
         absent: stats.absent,
         excused: stats.excused,
@@ -60,15 +71,31 @@ export class StudentsService {
       };
     });
 
+    const enrichedRecords = records.map((r) => {
+      const enr = enrollments.find((e) => e.course_id === r.course_id);
+      const c = this.db.courses.find((course) => course.course_id === r.course_id);
+      return {
+        ...r,
+        enrollment_id: enr?.enrollment_id || 'e1',
+        section_id: enr ? ((enr as any).section_id || `sec_${r.course_id}_${enr.section || 'A'}`) : `sec_${r.course_id}_A`,
+        section: enr?.section || 'A',
+        semester_id: `sem_${c?.semester || 3}`,
+        course_code: c?.course_code || r.course_id,
+        course_name: c?.course_name || 'Course ' + r.course_id,
+      };
+    });
+
     const overall = summariseAttendance(records);
 
     return {
+      currentSemester: 3,
+      currentSemesterId: 'sem_3',
       summary,
-      records,
-      totalPresent: overall.present || 28,
-      totalAbsent: overall.absent || 3,
-      totalExcused: overall.excused || 1,
-      overallPct: overall.percentage || 88,
+      records: enrichedRecords,
+      totalPresent: overall.present,
+      totalAbsent: overall.absent,
+      totalExcused: overall.excused,
+      overallPct: overall.percentage,
     };
   }
 
@@ -89,31 +116,48 @@ export class StudentsService {
       const course = this.db.courses.find(c => c.course_id === e.course_id);
       if (!course) return null;
 
-      // Calculate attendance for this course
+      // Calculate attendance for this course from the EXACT same attendance records
       const courseRecords = this.db.attendance_log.filter(a => a.student_id === userId && a.course_id === e.course_id);
       const attStats = summariseAttendance(courseRecords);
-      const attendance_pct = courseRecords.length > 0 ? attStats.percentage : 88;
+      const attendance_pct = attStats.percentage;
 
-      // Get syllabus progress
-      const syllInfo = syllabusCourseMap[e.course_id] || {
+      // Get syllabus progress from db.syllabus_progress if available, else fallback map
+      const dbSyllabus = this.db.syllabus_progress?.find(s => s.course_id === e.course_id && (s.section === e.section || s.section === 'A'));
+      const syllInfo = dbSyllabus ? {
+        progress: dbSyllabus.progress,
+        modules: dbSyllabus.modules || []
+      } : (syllabusCourseMap[e.course_id] || {
         progress: 75,
         modules: [
           { name: 'Unit 1: Fundamentals', progress: 100 },
           { name: 'Unit 2: Core Concepts', progress: 75 },
           { name: 'Unit 3: Applied Topics', progress: 50 },
         ],
-      };
+      });
 
       // Get faculty details
       const faculty = this.db.faculty.find(f => f.user_id === course.faculty_id);
       const faculty_name = course.faculty_name || (faculty ? `${faculty.first_name} ${faculty.last_name}` : 'Dr. Jane Smith');
+      const sectionId = (e as any).section_id || `sec_${e.course_id}_${e.section || 'A'}`;
+      const semId = `sem_${course.semester || 3}`;
 
       return {
         ...course,
         faculty_name,
+        enrollment_id: e.enrollment_id,
         enrollment_status: e.status || 'active',
         section: e.section || 'A',
+        section_id: sectionId,
+        semester_id: semId,
+        current_semester: 3,
         attendance_pct,
+        attendance_summary: {
+          present: attStats.present,
+          absent: attStats.absent,
+          excused: attStats.excused,
+          total: attStats.total,
+          percentage: attStats.percentage,
+        },
         syllabus_progress: syllInfo.progress,
         modules: syllInfo.modules,
       };

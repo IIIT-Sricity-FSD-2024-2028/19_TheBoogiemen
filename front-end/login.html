@@ -9,9 +9,9 @@
 </head>
 <body class="login-body">
 
-    <!-- Simple Back to Onboarding Link -->
-    <a href="onboarding.html" style="position:fixed;top:20px;left:24px;font-size:13px;color:#475569;text-decoration:none;font-weight:600;display:inline-flex;align-items:center;gap:6px;background:#ffffff;padding:7px 14px;border-radius:8px;border:1px solid #e2e8f0;box-shadow:0 2px 6px rgba(0,0,0,0.05);z-index:999;">
-        ← Back to Onboarding
+    <!-- Back to Landing Page -->
+    <a href="index.html" class="back-to-landing-btn" style="position:fixed;top:20px;left:24px;font-size:13px;color:#2563eb;text-decoration:none;font-weight:600;display:inline-flex;align-items:center;gap:6px;background:#ffffff;padding:8px 16px;border-radius:8px;border:1px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,0.06);z-index:999;transition:all 0.2s ease;">
+        ← Back to Landing Page
     </a>
 
     <!-- Top Branding -->
@@ -151,7 +151,9 @@
     <div class="footer-contact">
         Need help? Contact <a href="mailto:support@barelypassing.in">support@barelypassing.in</a>
         &nbsp;&nbsp;|&nbsp;&nbsp;
-        <a href="saas-login.html" style="color:#64748b;font-size:12px;">BarelyPassing Support Portal →</a>
+        <a href="index.html" style="color:#64748b;font-size:12px;">← Back to Landing Page</a>
+        &nbsp;&nbsp;|&nbsp;&nbsp;
+        <a href="saas-login.html" style="color:#64748b;font-size:12px;">Support Portal →</a>
     </div>
 
     <script src="state.js"></script>
@@ -264,7 +266,7 @@
 <div id="forgotPasswordModal" class="modal-backdrop" style="display:none;">
     <div class="modal-window" style="max-width:440px;">
         <div class="modal-header">
-            <h2>🔑 Reset Password</h2>
+            <h2>Reset Password</h2>
             <button class="close-modal" onclick="closeModal('forgotPasswordModal')">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
@@ -291,7 +293,7 @@
             </div>
             <!-- Step 3: New password -->
             <div id="fpStep3" style="display:none;">
-                <p style="font-size:14px;color:#16a34a;font-weight:600;margin-bottom:16px;">✅ Identity verified! Set your new password.</p>
+                <p style="font-size:14px;color:#16a34a;font-weight:600;margin-bottom:16px;">Identity verified! Set your new password.</p>
                 <div class="form-group">
                     <label style="font-size:13px;font-weight:600;">New Password</label>
                     <input type="password" id="fpNewPass" placeholder="Minimum 6 characters" minlength="6" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;box-sizing:border-box;">
