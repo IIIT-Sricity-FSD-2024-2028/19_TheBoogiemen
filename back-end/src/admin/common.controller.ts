@@ -677,6 +677,326 @@ export class CommonController {
     };
   }
 
+  @Get('platform/queue/summary')
+  @Roles(
+    'PLATFORM_SUPER_ADMIN',
+    'PLATFORM_SUPPORT_MANAGER',
+    'PLATFORM_TECH_SUPPORT',
+    'PLATFORM_SUPPORT_AGENT',
+    'superadmin',
+    'admin',
+  )
+  @ApiOperation({ summary: 'Get live support queue summary metrics' })
+  async getQueueSummary() {
+    const tickets = this.db.support_tickets || [];
+    const nonResolved = tickets.filter(t => (t.status || '').toLowerCase() !== 'resolved');
+    const unassigned = nonResolved.filter(t => !t.assigned_to_id || t.assigned_to_id === 'null' || !t.assigned_to);
+    const assigned = nonResolved.filter(t => t.assigned_to_id && t.assigned_to_id !== 'null' && t.assigned_to);
+    const waiting = nonResolved.filter(t => (t.status || '').toLowerCase() === 'waiting' || (t.status || '').toLowerCase() === 'open');
+    const escalated = nonResolved.filter(t => (t.status || '').toLowerCase() === 'escalated' || (t.escalation_state || '').toLowerCase().includes('escalated'));
+
+    const tierCounts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0 };
+    nonResolved.forEach(t => {
+      const tier = t.assigned_tier || 1;
+      tierCounts[tier] = (tierCounts[tier] || 0) + 1;
+    });
+
+    return {
+      success: true,
+      data: {
+        total_queued: nonResolved.length,
+        unassigned: unassigned.length,
+        assigned: assigned.length,
+        waiting: waiting.length,
+        escalated: escalated.length,
+        open_count: waiting.length,
+        resolved_count: tickets.filter(t => (t.status || '').toLowerCase() === 'resolved').length,
+        total_all_tickets: tickets.length,
+        tier_counts: tierCounts,
+      },
+    };
+  }
+
+  @Get('platform/tickets')
+  @Roles(
+    'PLATFORM_SUPER_ADMIN',
+    'PLATFORM_SUPPORT_MANAGER',
+    'PLATFORM_TECH_SUPPORT',
+    'PLATFORM_SUPPORT_AGENT',
+    'superadmin',
+    'admin',
+  )
+  @ApiOperation({ summary: 'Get all platform support tickets with optional tier, status, assignment, and search filters' })
+  async getSupportTickets(
+    @Query('tier') tierParam?: string,
+    @Query('status') statusParam?: string,
+    @Query('assigned_to_id') assignedToId?: string,
+    @Query('unassigned') unassignedParam?: string,
+    @Query('search') searchQuery?: string,
+  ) {
+    let tickets = this.db.support_tickets || [];
+    if (tierParam && tierParam !== 'all') {
+      const tierNum = parseInt(tierParam, 10);
+      if (!isNaN(tierNum)) {
+        tickets = tickets.filter(t => t.assigned_tier === tierNum);
+      }
+    }
+    if (statusParam && statusParam !== 'all') {
+      tickets = tickets.filter(
+        t => (t.status || '').toLowerCase() === statusParam.toLowerCase(),
+      );
+    }
+    if (unassignedParam === 'true') {
+      tickets = tickets.filter(t => !t.assigned_to_id || t.assigned_to_id === 'null' || !t.assigned_to);
+    } else if (assignedToId && assignedToId !== 'all') {
+      tickets = tickets.filter(t => t.assigned_to_id === assignedToId);
+    }
+    if (searchQuery && searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      tickets = tickets.filter(t =>
+        (t.id && t.id.toLowerCase().includes(q)) ||
+        (t.ticket_display_id && t.ticket_display_id.toLowerCase().includes(q)) ||
+        (t.subject && t.subject.toLowerCase().includes(q)) ||
+        (t.institution && t.institution.toLowerCase().includes(q)) ||
+        (t.category && t.category.toLowerCase().includes(q)) ||
+        (t.contact_email && t.contact_email.toLowerCase().includes(q)) ||
+        (t.assigned_to && t.assigned_to.toLowerCase().includes(q))
+      );
+    }
+
+    return {
+      success: true,
+      count: tickets.length,
+      data: tickets,
+    };
+  }
+
+  @Get('platform/tickets/:id')
+  @Roles(
+    'PLATFORM_SUPER_ADMIN',
+    'PLATFORM_SUPPORT_MANAGER',
+    'PLATFORM_TECH_SUPPORT',
+    'PLATFORM_SUPPORT_AGENT',
+    'superadmin',
+    'admin',
+  )
+  @ApiOperation({ summary: 'Get single platform support ticket by ID' })
+  async getSingleSupportTicket(@Param('id') id: string) {
+    const ticket = (this.db.support_tickets || []).find(
+      t => t.id === id || t.ticket_display_id === id,
+    );
+    if (!ticket) {
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, `Support ticket ${id} not found`),
+      );
+    }
+    return {
+      success: true,
+      data: ticket,
+    };
+  }
+
+  @Post('platform/tickets/:id/reply')
+  @Roles(
+    'PLATFORM_SUPER_ADMIN',
+    'PLATFORM_SUPPORT_MANAGER',
+    'PLATFORM_TECH_SUPPORT',
+    'PLATFORM_SUPPORT_AGENT',
+    'superadmin',
+    'admin',
+  )
+  @ApiOperation({ summary: 'Post a response message to a support ticket' })
+  async replySupportTicket(
+    @Param('id') id: string,
+    @Body() body: { text?: string; message?: string; from?: string },
+    @CurrentUserRole() role: string,
+  ) {
+    const replyText = (body?.text || body?.message || '').trim();
+    if (!replyText) {
+      throw new BadRequestException(
+        errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'Reply text is required'),
+      );
+    }
+    const ticket = (this.db.support_tickets || []).find(
+      t => t.id === id || t.ticket_display_id === id,
+    );
+    if (!ticket) {
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, `Support ticket ${id} not found`),
+      );
+    }
+    if (!ticket.conversation) ticket.conversation = [];
+    const replyItem = {
+      from: body.from || 'Platform Support Staff',
+      role: role || 'PLATFORM_SUPPORT',
+      text: replyText,
+      created_at: 'Just now',
+    };
+    ticket.conversation.push(replyItem);
+    if (ticket.status === 'Open') ticket.status = 'In Progress';
+
+    return {
+      success: true,
+      message: 'Reply dispatched successfully',
+      data: ticket,
+    };
+  }
+
+  @Post('platform/tickets/:id/assign')
+  @Roles(
+    'PLATFORM_SUPER_ADMIN',
+    'PLATFORM_SUPPORT_MANAGER',
+    'PLATFORM_TECH_SUPPORT',
+    'PLATFORM_SUPPORT_AGENT',
+    'superadmin',
+    'admin',
+  )
+  @ApiOperation({ summary: 'Assign or reassign support ticket to a support staff personnel' })
+  async assignSupportTicket(
+    @Param('id') id: string,
+    @Body() body: { assigned_to_id: string; assigned_to: string; assigned_tier?: number },
+    @CurrentUserRole() role: string,
+  ) {
+    if (!body?.assigned_to || !body?.assigned_to_id) {
+      throw new BadRequestException(
+        errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'assigned_to and assigned_to_id are required'),
+      );
+    }
+    const ticket = (this.db.support_tickets || []).find(
+      t => t.id === id || t.ticket_display_id === id,
+    );
+    if (!ticket) {
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, `Support ticket ${id} not found`),
+      );
+    }
+    const prevAssignee = ticket.assigned_to || 'Unassigned';
+    ticket.assigned_to = body.assigned_to;
+    ticket.assigned_to_id = body.assigned_to_id;
+    if (body.assigned_tier) {
+      ticket.assigned_tier = body.assigned_tier;
+      const tierMap: Record<number, string> = {
+        1: 'Support Agent',
+        2: 'Senior / Technical Support',
+        3: 'Support Manager',
+        4: 'Platform Administrator',
+      };
+      ticket.assigned_tier_name = tierMap[body.assigned_tier] || `Level ${body.assigned_tier}`;
+    }
+    if (ticket.status === 'Open' || ticket.status === 'Waiting') {
+      ticket.status = 'In Progress';
+    }
+    if (!ticket.conversation) ticket.conversation = [];
+    ticket.conversation.push({
+      from: 'Platform Assignment System',
+      role: role || 'PLATFORM_DISPATCH',
+      text: `Ticket assigned to ${body.assigned_to} (previously: ${prevAssignee}). Status set to In Progress.`,
+      created_at: 'Just now',
+    });
+
+    return {
+      success: true,
+      message: `Ticket successfully assigned to ${body.assigned_to}`,
+      data: ticket,
+    };
+  }
+
+  @Post('platform/tickets/:id/resolve')
+  @Roles(
+    'PLATFORM_SUPER_ADMIN',
+    'PLATFORM_SUPPORT_MANAGER',
+    'PLATFORM_TECH_SUPPORT',
+    'PLATFORM_SUPPORT_AGENT',
+    'superadmin',
+    'admin',
+  )
+  @ApiOperation({ summary: 'Mark support ticket as resolved' })
+  async resolveSupportTicket(
+    @Param('id') id: string,
+    @Body() body: { resolution_note?: string; from?: string },
+    @CurrentUserRole() role: string,
+  ) {
+    const ticket = (this.db.support_tickets || []).find(
+      t => t.id === id || t.ticket_display_id === id,
+    );
+    if (!ticket) {
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, `Support ticket ${id} not found`),
+      );
+    }
+    ticket.status = 'Resolved';
+    if (body?.resolution_note?.trim()) {
+      if (!ticket.conversation) ticket.conversation = [];
+      ticket.conversation.push({
+        from: body.from || 'Platform Support',
+        role: role || 'PLATFORM_SUPPORT',
+        text: `Resolved: ${body.resolution_note.trim()}`,
+        created_at: 'Just now',
+      });
+    }
+
+    return {
+      success: true,
+      message: 'Ticket marked as resolved',
+      data: ticket,
+    };
+  }
+
+  @Post('platform/tickets/:id/escalate')
+  @Roles(
+    'PLATFORM_SUPER_ADMIN',
+    'PLATFORM_SUPPORT_MANAGER',
+    'PLATFORM_TECH_SUPPORT',
+    'PLATFORM_SUPPORT_AGENT',
+    'superadmin',
+    'admin',
+  )
+  @ApiOperation({ summary: 'Escalate support ticket to higher operational tier' })
+  async escalateSupportTicket(
+    @Param('id') id: string,
+    @Body() body: { to_tier: number; reason?: string; from?: string },
+  ) {
+    const tierNum = Number(body.to_tier);
+    if (!tierNum || tierNum < 1 || tierNum > 4) {
+      throw new BadRequestException(
+        errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'Valid target tier (1-4) is required'),
+      );
+    }
+    const ticket = (this.db.support_tickets || []).find(
+      t => t.id === id || t.ticket_display_id === id,
+    );
+    if (!ticket) {
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, `Support ticket ${id} not found`),
+      );
+    }
+    const tierNames: Record<number, string> = {
+      1: 'Support Agent',
+      2: 'Senior / Technical Support',
+      3: 'Support Manager',
+      4: 'Platform Administrator',
+    };
+    ticket.assigned_tier = tierNum;
+    ticket.assigned_tier_name = tierNames[tierNum] || `Level ${tierNum}`;
+    if (tierNum >= 2 && ticket.priority === 'Low') ticket.priority = 'Medium';
+    if (tierNum >= 3) ticket.priority = 'High';
+    ticket.status = 'In Progress';
+
+    if (!ticket.conversation) ticket.conversation = [];
+    ticket.conversation.push({
+      from: body.from || 'Platform Operations',
+      role: 'SYSTEM',
+      text: `Escalated to Level ${tierNum} (${ticket.assigned_tier_name})${body.reason ? ': ' + body.reason : ''}`,
+      created_at: 'Just now',
+    });
+
+    return {
+      success: true,
+      message: `Ticket escalated to Level ${tierNum}`,
+      data: ticket,
+    };
+  }
+
   @Post('users')
   @Roles('admin', 'superadmin', 'head')
   @StrictBody()

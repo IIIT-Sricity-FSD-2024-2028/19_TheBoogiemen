@@ -32,6 +32,7 @@ export class InMemoryDbService implements OnModuleInit {
   public colleges = this.createProxyArray([]);
   public support_threads = this.createProxyArray([]);
   public support_messages = this.createProxyArray([]);
+  public support_tickets = this.createProxyArray([]);
   public onboarding_sessions = this.createProxyArray([]);
   public quotes = this.createProxyArray([]);
   public payments = this.createProxyArray([]);
@@ -144,6 +145,7 @@ export class InMemoryDbService implements OnModuleInit {
         colleges: this.colleges,
         support_threads: this.support_threads,
         support_messages: this.support_messages,
+        support_tickets: this.support_tickets,
         onboarding_sessions: this.onboarding_sessions,
         quotes: this.quotes,
         payments: this.payments,

@@ -1650,5 +1650,233 @@
       "ends_on": "2028-09-11",
       "created_at": "2026-09-11T18:42:40.345Z"
     }
+  ],
+  "support_tickets": [
+    {
+      "id": "REQ-20261044",
+      "ticket_display_id": "REQ-20261044",
+      "institution": "Anna University",
+      "tenant_id": "t7",
+      "contact_name": "Dr. K. Swaminathan",
+      "contact_email": "director@annauniv.edu",
+      "subject": "Database replication lag exceeding 120s on secondary node",
+      "category": "Platform Infrastructure",
+      "description": "Read replica lag spiked past SLA safety threshold during end-of-semester course registration window. Requesting Level 2 technical failover inspection.",
+      "priority": "Critical",
+      "status": "Escalated",
+      "assigned_tier": 2,
+      "assigned_tier_name": "Senior / Technical Support",
+      "assigned_to": "David Chen",
+      "assigned_to_id": "u_tech_support_1",
+      "raised_at": "1 hour ago",
+      "waiting_duration": "1h 10m",
+      "escalation_state": "Escalated from Level 1",
+      "conversation": [
+        {
+          "from": "Dr. K. Swaminathan (Anna University)",
+          "role": "Campus Director",
+          "text": "Replica lag exceeded 120 seconds on secondary read node. Student grade queries are stalling.",
+          "created_at": "1 hour ago"
+        },
+        {
+          "from": "Alex Mercer",
+          "role": "Support Agent",
+          "text": "Verified replication delay metric in monitoring stream. Escalating to Level 2 Technical Support for WAL replication slot tuning.",
+          "created_at": "50 minutes ago"
+        }
+      ]
+    },
+    {
+      "id": "REQ-20261043",
+      "ticket_display_id": "REQ-20261043",
+      "institution": "BITS Pilani",
+      "tenant_id": "t6",
+      "contact_name": "Prof. S. R. Venkatesh",
+      "contact_email": "ict@pilani.bits-pilani.ac.in",
+      "subject": "Webhook verification failure on student enrollment sync",
+      "category": "Integration / API",
+      "description": "Outbound student enrollment webhook payloads fail HMAC verification on custom campus endpoint. Need secret rotation and payload inspection.",
+      "priority": "High",
+      "status": "Waiting",
+      "assigned_tier": 1,
+      "assigned_tier_name": "Support Agent",
+      "assigned_to": null,
+      "assigned_to_id": null,
+      "raised_at": "35 minutes ago",
+      "waiting_duration": "35m",
+      "escalation_state": "Standard",
+      "conversation": [
+        {
+          "from": "Prof. S. R. Venkatesh (BITS Pilani)",
+          "role": "ICT Coordinator",
+          "text": "Automated sync webhook receiving invalid signature code 401 from payload validator.",
+          "created_at": "35 minutes ago"
+        }
+      ]
+    },
+    {
+      "id": "REQ-20261042",
+      "ticket_display_id": "REQ-20261042",
+      "institution": "IIIT Sri City",
+      "tenant_id": "t1",
+      "contact_name": "Dr. Ramesh Babu",
+      "contact_email": "director@iiits.in",
+      "subject": "Grade import system timeout for Semester 3",
+      "category": "Technical / Database",
+      "description": "Our examination cell is experiencing automated gateway timeouts while performing bulk CSV grade import for CSE semester 3 courses. Please inspect API trace and database transaction limits.",
+      "priority": "High",
+      "status": "In Progress",
+      "assigned_tier": 2,
+      "assigned_tier_name": "Senior / Technical Support",
+      "assigned_to": "David Chen",
+      "assigned_to_id": "u_tech_support_1",
+      "raised_at": "2 hours ago",
+      "waiting_duration": "2h 15m",
+      "escalation_state": "Standard",
+      "conversation": [
+        {
+          "from": "Dr. Ramesh Babu (IIIT Sri City)",
+          "role": "Institution Director",
+          "text": "Bulk grade imports for CSE 3rd semester failed with gateway timeout after 30 seconds.",
+          "created_at": "2 hours ago"
+        },
+        {
+          "from": "David Chen",
+          "role": "Senior / Technical Support",
+          "text": "Investigated API trace. Found unindexed query during bulk marks validation. Patching the transaction batch size to 250 records.",
+          "created_at": "1 hour ago"
+        }
+      ]
+    },
+    {
+      "id": "REQ-20261041",
+      "ticket_display_id": "REQ-20261041",
+      "institution": "VIT Vellore",
+      "tenant_id": "t2",
+      "contact_name": "Prof. Ananya Roy",
+      "contact_email": "admin@vit.ac.in",
+      "subject": "Hostel fee compliance permission error 403",
+      "category": "Permissions & RBAC",
+      "description": "Faculty finance coordinators receive an unexpected HTTP 403 Forbidden code when attempting to verify hostel mess rebate fee waivers. Need permission scope escalation.",
+      "priority": "Medium",
+      "status": "Open",
+      "assigned_tier": 1,
+      "assigned_tier_name": "Support Agent",
+      "assigned_to": "Alex Mercer",
+      "assigned_to_id": "u_support_agent_1",
+      "raised_at": "4 hours ago",
+      "waiting_duration": "4h 05m",
+      "escalation_state": "Standard",
+      "conversation": [
+        {
+          "from": "Prof. Ananya Roy (VIT Vellore)",
+          "role": "Campus Admin",
+          "text": "Faculty coordinators are blocked from updating fee concessions due to 403 error.",
+          "created_at": "4 hours ago"
+        }
+      ]
+    },
+    {
+      "id": "REQ-20261040",
+      "ticket_display_id": "REQ-20261040",
+      "institution": "IIT Madras",
+      "tenant_id": "t3",
+      "contact_name": "Dean Academic Affairs",
+      "contact_email": "dean.academics@iitm.ac.in",
+      "subject": "B2B Professional Tier seat quota expansion request",
+      "category": "Billing & Licensing",
+      "description": "We are onboarding 1,500 new graduate scholars next month and need to expand our institutional seat license quota from 2,000 to 3,500 students with adjusted annual billing invoice.",
+      "priority": "Medium",
+      "status": "In Progress",
+      "assigned_tier": 3,
+      "assigned_tier_name": "Support Manager",
+      "assigned_to": "Sarah Jenkins",
+      "assigned_to_id": "u_support_mgr_1",
+      "raised_at": "Yesterday",
+      "waiting_duration": "1d 02h",
+      "escalation_state": "Standard",
+      "conversation": [
+        {
+          "from": "Dean Academic Affairs (IIT Madras)",
+          "role": "Institutional Lead",
+          "text": "Requesting additional 1,500 student seats on our active Professional Tier agreement.",
+          "created_at": "Yesterday"
+        },
+        {
+          "from": "Sarah Jenkins",
+          "role": "Support Manager",
+          "text": "Prepared prorated quote Q-202609-IITM with 15% academic discount. Dispatched invoice preview to finance.",
+          "created_at": "5 hours ago"
+        }
+      ]
+    },
+    {
+      "id": "REQ-20261039",
+      "ticket_display_id": "REQ-20261039",
+      "institution": "NIT Warangal",
+      "tenant_id": "t4",
+      "contact_name": "Registrar Office",
+      "contact_email": "registrar@nitw.ac.in",
+      "subject": "Multi-tenant database shard isolation verification",
+      "category": "Security & Compliance",
+      "description": "Security audit compliance check requested for cross-campus data isolation policies, encryption at rest keys, and audit log immutability.",
+      "priority": "High",
+      "status": "In Progress",
+      "assigned_tier": 4,
+      "assigned_tier_name": "Platform Administrator",
+      "assigned_to": "Eleanor Vance",
+      "assigned_to_id": "saas_admin",
+      "raised_at": "2 days ago",
+      "waiting_duration": "2d 06h",
+      "escalation_state": "Standard",
+      "conversation": [
+        {
+          "from": "Registrar Office (NIT Warangal)",
+          "role": "Registrar",
+          "text": "Need certified isolation report for state audit team.",
+          "created_at": "2 days ago"
+        },
+        {
+          "from": "Eleanor Vance",
+          "role": "Platform Administrator",
+          "text": "Generated full cryptographic tenant isolation report and audit ledger hash verification.",
+          "created_at": "1 day ago"
+        }
+      ]
+    },
+    {
+      "id": "REQ-20261038",
+      "ticket_display_id": "REQ-20261038",
+      "institution": "Amrita University",
+      "tenant_id": "t5",
+      "contact_name": "Dr. Rajesh Kumar",
+      "contact_email": "admin@amrita.edu",
+      "subject": "Initial SAML SSO configuration for campus portal",
+      "category": "Authentication / SSO",
+      "description": "SSO certificate metadata exchange is complete. Testing authentication handshake across student and faculty subdomains.",
+      "priority": "Low",
+      "status": "Resolved",
+      "assigned_tier": 2,
+      "assigned_tier_name": "Senior / Technical Support",
+      "assigned_to": "David Chen",
+      "assigned_to_id": "u_tech_support_1",
+      "raised_at": "3 days ago",
+      "waiting_duration": "Resolved",
+      "escalation_state": "Resolved",
+      "conversation": [
+        {
+          "from": "Dr. Rajesh Kumar (Amrita University)",
+          "role": "Campus Director",
+          "text": "Please confirm certificate thumbprint matching for metadata.xml.",
+          "created_at": "3 days ago"
+        },
+        {
+          "from": "David Chen",
+          "role": "Senior / Technical Support",
+          "text": "SSO assertion endpoints validated and active. Successful test login verified.",
+          "created_at": "2 days ago"
+        }
+      ]
+    }
   ]
 }

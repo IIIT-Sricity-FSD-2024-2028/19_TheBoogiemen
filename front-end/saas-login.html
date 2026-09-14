@@ -23,91 +23,192 @@
         }
 
         .login-wrapper {
-            position: relative; z-index: 1;
-            width: 100%; max-width: 440px;
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 900px;
         }
 
-        /* Internal badge */
         .internal-badge {
-            display: inline-flex; align-items: center; gap: 6px;
-            background: #e0e7ff; border: 1px solid #c7d2fe;
-            color: #3730a3; font-size: 11px; font-weight: 700;
-            letter-spacing: 1.2px; text-transform: uppercase;
-            padding: 6px 14px; border-radius: 20px;
-            margin-bottom: 20px; box-shadow: 0 2px 6px rgba(99,102,241,0.12);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #e0e7ff;
+            border: 1px solid #c7d2fe;
+            color: #3730a3;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 6px 14px;
+            border-radius: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 6px rgba(99,102,241,0.12);
         }
         .internal-badge::before {
-            content: ''; width: 7px; height: 7px; border-radius: 50%;
+            content: '';
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
             background: #4f46e5;
             box-shadow: 0 0 8px #4f46e5;
-            animation: pulse 2s ease-in-out infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(0.85); }
         }
 
         .card {
             background: #ffffff;
             border: 1px solid #e2e8f0;
             border-radius: 20px;
-            padding: 40px;
+            padding: 0;
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 360px 1fr;
             box-shadow: 0 20px 25px -5px rgba(15,23,42,0.08), 0 10px 10px -5px rgba(15,23,42,0.04);
         }
 
+        /* Support role card states */
+        .support-role-card {
+            padding: 14px;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 12px;
+            background: #ffffff;
+            cursor: pointer;
+            transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+            position: relative;
+            outline: none;
+            user-select: none;
+        }
+        .support-role-card:hover {
+            border-color: #94a3b8;
+            background: #f8fafc;
+            transform: translateY(-1px);
+        }
+        .support-role-card:focus-visible {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+        }
+        .support-role-card.active {
+            border-color: #2563eb;
+            background: #eff6ff;
+            box-shadow: 0 4px 12px rgba(37,99,235,0.12);
+        }
+        .support-role-card.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 12px;
+            bottom: 12px;
+            width: 4px;
+            border-radius: 0 4px 4px 0;
+            background: #2563eb;
+        }
+        .support-role-card.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
         .brand {
-            display: flex; align-items: center; gap: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
             margin-bottom: 8px;
         }
         .brand-icon {
-            width: 44px; height: 44px; border-radius: 12px;
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
             background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-            display: flex; align-items: center; justify-content: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             box-shadow: 0 4px 14px rgba(15,23,42,0.25);
         }
         .brand-icon svg { color: white; }
         .brand h1 {
-            font-size: 22px; font-weight: 800; color: #0f172a;
+            font-size: 20px;
+            font-weight: 800;
+            color: #0f172a;
             letter-spacing: -0.5px;
         }
 
         .card-subtitle {
-            color: #64748b; font-size: 14px; margin-bottom: 32px;
+            color: #64748b;
+            font-size: 13px;
+            margin-bottom: 24px;
             line-height: 1.5;
         }
 
-        .form-group { margin-bottom: 20px; }
+        .form-group { margin-bottom: 18px; }
         .form-group label {
-            display: block; font-size: 12px; font-weight: 700;
-            color: #475569; text-transform: uppercase; letter-spacing: 0.8px;
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
             margin-bottom: 8px;
         }
         .form-group input {
-            width: 100%; padding: 12px 16px;
+            width: 100%;
+            padding: 12px 16px;
             background: #ffffff;
             border: 1.5px solid #cbd5e1;
-            border-radius: 10px; color: #0f172a; font-size: 14px;
-            font-family: inherit; outline: none;
+            border-radius: 10px;
+            color: #0f172a;
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
             transition: border-color 0.2s, box-shadow 0.2s;
         }
         .form-group input:focus {
-            border-color: #4f46e5;
-            box-shadow: 0 0 0 3px rgba(79,70,229,0.15);
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
         }
         .form-group input::placeholder { color: #94a3b8; }
 
         .error-msg {
-            display: none; color: #ef4444; font-size: 12px; margin-top: 6px; font-weight: 500;
+            display: none;
+            color: #dc2626;
+            font-size: 12px;
+            margin-top: 6px;
+            font-weight: 600;
+        }
+
+        .auth-error-banner {
+            display: none;
+            background: #fef2f2;
+            border: 1.5px solid #fecaca;
+            color: #991b1b;
+            padding: 12px 14px;
+            border-radius: 10px;
+            margin-bottom: 18px;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        .auth-error-banner.show {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
         }
 
         .submit-btn {
-            width: 100%; padding: 13px;
+            width: 100%;
+            padding: 13px;
             background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-            border: none; border-radius: 10px;
-            color: white; font-size: 15px; font-weight: 700;
-            cursor: pointer; transition: all 0.2s;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
             box-shadow: 0 4px 14px rgba(15,23,42,0.25);
-            font-family: inherit; margin-top: 8px;
+            font-family: inherit;
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
         .submit-btn:hover {
             transform: translateY(-1px);
@@ -117,70 +218,103 @@
         .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
         .divider {
-            height: 1px; background: #e2e8f0;
-            margin: 28px 0;
+            height: 1px;
+            background: #e2e8f0;
+            margin: 24px 0;
         }
 
         .back-link {
-            text-align: center; font-size: 13px; color: #64748b;
+            text-align: center;
+            font-size: 13px;
+            color: #64748b;
         }
         .back-link a {
-            color: #4f46e5; text-decoration: none; font-weight: 600;
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 600;
         }
         .back-link a:hover { text-decoration: underline; }
 
         .toast {
-            position: fixed; bottom: 24px; right: 24px;
-            background: #0f172a; color: #ffffff; padding: 14px 20px; border-radius: 12px;
-            font-size: 14px; z-index: 9999;
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #0f172a;
+            color: #ffffff;
+            padding: 14px 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            z-index: 9999;
             box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-            transform: translateY(100px); opacity: 0;
+            transform: translateY(100px);
+            opacity: 0;
             transition: all 0.3s ease;
         }
         .toast.show { transform: translateY(0); opacity: 1; }
-        .toast.error { background: #ef4444; }
+        .toast.error { background: #dc2626; }
+
+        @media (max-width: 768px) {
+            .card {
+                grid-template-columns: 1fr;
+            }
+            .card > div:first-child {
+                border-right: none !important;
+                border-bottom: 1px solid #e2e8f0;
+                padding: 24px 20px !important;
+            }
+            .card > div:last-child {
+                padding: 28px 20px !important;
+            }
+        }
     </style>
 </head>
 <body>
 
-    <div class="login-wrapper" style="max-width: 880px; width: 100%;">
-        <div class="card" style="padding: 0; overflow: hidden; display: grid; grid-template-columns: 360px 1fr; border-radius: 20px;">
-            <!-- Left Side: Support Role Menu -->
+    <div class="login-wrapper">
+        <div class="card">
+            <!-- Left Side: Support Role Hierarchy Menu -->
             <div style="background: #f8fafc; border-right: 1px solid #e2e8f0; padding: 36px 28px; display: flex; flex-direction: column; justify-content: space-between;">
                 <div>
-                    <span class="internal-badge" style="margin-bottom: 16px;">Support Portal Console</span>
+                    <span class="internal-badge">Support Portal Console</span>
                     <h2 style="font-size: 18px; font-weight: 800; color: #0f172a; margin-bottom: 6px;">Support Role Menu</h2>
                     <p style="font-size: 13px; color: #64748b; margin-bottom: 20px;">Select your authorized operational tier</p>
 
-                    <div style="display: flex; flex-direction: column; gap: 10px;" id="saasRoleList">
-                        <div class="support-role-card" onclick="fillSaaSRole('agent@platform.com', this)" style="padding: 14px; border: 1.5px solid #cbd5e1; border-radius: 12px; background: #fff; cursor: pointer; transition: all 0.2s;">
+                    <div style="display: flex; flex-direction: column; gap: 10px;" id="saasRoleList" role="radiogroup" aria-label="Support Role Tiers">
+                        <!-- Level 1 -->
+                        <div class="support-role-card" id="role-tier-1" onclick="selectLoginTier(1)" tabindex="0" role="radio" aria-checked="false">
                             <span style="font-size: 10px; font-weight: 800; color: #64748b; letter-spacing: 0.5px; display: block; margin-bottom: 2px;">LEVEL 1</span>
                             <div style="font-size: 14px; font-weight: 700; color: #0f172a;">Support Agent</div>
-                            <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Ticket triage &amp; communications</div>
+                            <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Ticket triage &amp; initial inquiry communications</div>
                         </div>
-                        <div class="support-role-card" onclick="fillSaaSRole('techsupport@platform.com', this)" style="padding: 14px; border: 1.5px solid #cbd5e1; border-radius: 12px; background: #fff; cursor: pointer; transition: all 0.2s;">
+
+                        <!-- Level 2 -->
+                        <div class="support-role-card" id="role-tier-2" onclick="selectLoginTier(2)" tabindex="0" role="radio" aria-checked="false">
                             <span style="font-size: 10px; font-weight: 800; color: #d97706; letter-spacing: 0.5px; display: block; margin-bottom: 2px;">LEVEL 2</span>
                             <div style="font-size: 14px; font-weight: 700; color: #0f172a;">Senior / Technical Support</div>
-                            <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Technical resolution &amp; system health</div>
+                            <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Technical diagnosis &amp; bug resolution</div>
                         </div>
-                        <div class="support-role-card" onclick="fillSaaSRole('manager@platform.com', this)" style="padding: 14px; border: 1.5px solid #cbd5e1; border-radius: 12px; background: #fff; cursor: pointer; transition: all 0.2s;">
+
+                        <!-- Level 3 -->
+                        <div class="support-role-card" id="role-tier-3" onclick="selectLoginTier(3)" tabindex="0" role="radio" aria-checked="false">
                             <span style="font-size: 10px; font-weight: 800; color: #16a34a; letter-spacing: 0.5px; display: block; margin-bottom: 2px;">LEVEL 3</span>
                             <div style="font-size: 14px; font-weight: 700; color: #0f172a;">Support Manager</div>
-                            <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Subscriptions, leads &amp; billing</div>
+                            <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Subscriptions, SLAs &amp; team management</div>
                         </div>
-                        <div class="support-role-card active" onclick="fillSaaSRole('saasadmin@platform.com', this)" style="padding: 14px; border: 1.5px solid #4f46e5; border-radius: 12px; background: #eef2ff; cursor: pointer; transition: all 0.2s;">
+
+                        <!-- Level 4 -->
+                        <div class="support-role-card" id="role-tier-4" onclick="selectLoginTier(4)" tabindex="0" role="radio" aria-checked="false">
                             <span style="font-size: 10px; font-weight: 800; color: #4338ca; letter-spacing: 0.5px; display: block; margin-bottom: 2px;">LEVEL 4</span>
                             <div style="font-size: 14px; font-weight: 700; color: #0f172a;">Platform Administrator</div>
-                            <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Full platform governance &amp; tenants</div>
+                            <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Full platform governance &amp; tenant isolation</div>
                         </div>
                     </div>
                 </div>
                 <div style="font-size: 11px; color: #94a3b8; margin-top: 20px;">
-                    Role selection configures console permissions and scope.
+                    Role selection sets active operational tier and API authorization scope.
                 </div>
             </div>
 
-            <!-- Right Side: Login Form -->
+            <!-- Right Side: State-Driven Login Workspace -->
             <div style="padding: 40px 36px; display: flex; flex-direction: column; justify-content: center;">
                 <div class="brand">
                     <div class="brand-icon">
@@ -188,22 +322,39 @@
                     </div>
                     <h1>BarelyPassing Support Portal</h1>
                 </div>
-                <p class="card-subtitle">Platform engineering &amp; institutional support console. Authorized personnel only.</p>
+                <p class="card-subtitle" id="workspaceSubtitle">Platform engineering &amp; institutional support console. Authorized personnel only.</p>
+
+                <!-- Active Role Banner -->
+                <div id="activeRoleNotice" style="margin-bottom: 20px; padding: 12px 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; display: flex; align-items: center; justify-content: space-between;">
+                    <div>
+                        <div style="font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Active Authorization Level</div>
+                        <div style="font-size: 13px; font-weight: 700; color: #0f172a;" id="activeRoleTitle">Level 1 — Support Agent</div>
+                    </div>
+                    <span id="activeRoleBadge" style="font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;">Tier 1</span>
+                </div>
+
+                <!-- Red Error Banner -->
+                <div id="authErrorBanner" class="auth-error-banner">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" style="flex-shrink:0; margin-top:1px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <div id="authErrorMessage">Authentication failed. Check your credentials.</div>
+                </div>
 
                 <form id="saasLoginForm" novalidate onsubmit="handleSaaSLogin(event)">
                     <div class="form-group">
-                        <label>Support Email Address</label>
-                        <input type="email" id="saas-email" value="saasadmin@platform.com" placeholder="saasadmin@platform.com" autocomplete="email" required>
+                        <label>Support Account Email</label>
+                        <input type="email" id="saas-email" placeholder="agent@platform.com" autocomplete="email" required>
                         <div class="error-msg" id="email-error">Enter a valid email address.</div>
                     </div>
 
                     <div class="form-group">
-                        <label>Password</label>
-                        <input type="password" id="saas-password" value="Pass@123" placeholder="Enter your password" required>
+                        <label>Account Password</label>
+                        <input type="password" id="saas-password" value="Pass@123" placeholder="Enter account password" required>
                         <div class="error-msg" id="pw-error">Password is required.</div>
                     </div>
 
-                    <button type="submit" class="submit-btn" id="saasLoginBtn">Sign In to BarelyPassing Support Portal</button>
+                    <button type="submit" class="submit-btn" id="saasLoginBtn">
+                        <span>Sign In to Support Console</span>
+                    </button>
                 </form>
 
                 <div class="divider"></div>
@@ -218,11 +369,107 @@
 
     <script src="state.js"></script>
     <script>
-    function fillSaaSRole(email) {
-        document.getElementById('saas-email').value = email;
-        document.getElementById('saas-password').value = 'Pass@123';
+    // State-driven role data table
+    const SUPPORT_LOGIN_TIERS = {
+        1: {
+            level: 'Level 1',
+            title: 'Support Agent',
+            email: 'agent@platform.com',
+            badge: 'Tier 1',
+            badgeBg: '#eff6ff',
+            badgeColor: '#1d4ed8',
+            badgeBorder: '#bfdbfe',
+            subtitle: 'Level 1 triage workspace: Customer inquiries, general tickets, and response routing.'
+        },
+        2: {
+            level: 'Level 2',
+            title: 'Senior / Technical Support',
+            email: 'techsupport@platform.com',
+            badge: 'Tier 2',
+            badgeBg: '#fffbeb',
+            badgeColor: '#b45309',
+            badgeBorder: '#fde68a',
+            subtitle: 'Level 2 engineering workspace: Latency investigation, bug diagnostics, and technical triage.'
+        },
+        3: {
+            level: 'Level 3',
+            title: 'Support Manager',
+            email: 'manager@platform.com',
+            badge: 'Tier 3',
+            badgeBg: '#f0fdf4',
+            badgeColor: '#15803d',
+            badgeBorder: '#bbf7d0',
+            subtitle: 'Level 3 operations workspace: SLA tracking, institutional leads, and staff performance oversight.'
+        },
+        4: {
+            level: 'Level 4',
+            title: 'Platform Administrator',
+            email: 'saasadmin@platform.com',
+            badge: 'Tier 4',
+            badgeBg: '#eef2ff',
+            badgeColor: '#4338ca',
+            badgeBorder: '#c7d2fe',
+            subtitle: 'Level 4 governance console: Master database control, tenant isolation, and administrative audit logs.'
+        }
+    };
+
+    let selectedSupportLoginTier = 1;
+
+    function selectLoginTier(tierNum) {
+        if (!SUPPORT_LOGIN_TIERS[tierNum]) return;
+        selectedSupportLoginTier = tierNum;
+
+        // 1. Move active selection indicator across left cards
+        [1, 2, 3, 4].forEach(t => {
+            const card = document.getElementById(`role-tier-${t}`);
+            if (card) {
+                if (t === tierNum) {
+                    card.classList.add('active');
+                    card.setAttribute('aria-checked', 'true');
+                } else {
+                    card.classList.remove('active');
+                    card.setAttribute('aria-checked', 'false');
+                }
+            }
+        });
+
+        // 2. Update right-side workspace based on selected role
+        const config = SUPPORT_LOGIN_TIERS[tierNum];
+        const emailInput = document.getElementById('saas-email');
+        const passInput  = document.getElementById('saas-password');
+        const roleTitle  = document.getElementById('activeRoleTitle');
+        const roleBadge  = document.getElementById('activeRoleBadge');
+        const sub        = document.getElementById('workspaceSubtitle');
+
+        if (emailInput) emailInput.value = config.email;
+        if (passInput) passInput.value = 'Pass@123';
+        if (roleTitle) roleTitle.textContent = `${config.level} — ${config.title}`;
+        if (roleBadge) {
+            roleBadge.textContent = config.badge;
+            roleBadge.style.background = config.badgeBg;
+            roleBadge.style.color = config.badgeColor;
+            roleBadge.style.borderColor = config.badgeBorder;
+        }
+        if (sub) sub.textContent = config.subtitle;
+
+        // 3. Clear errors
+        hideAuthError();
         document.getElementById('email-error').style.display = 'none';
         document.getElementById('pw-error').style.display = 'none';
+    }
+
+    function showAuthError(msg) {
+        const banner = document.getElementById('authErrorBanner');
+        const msgEl  = document.getElementById('authErrorMessage');
+        if (banner && msgEl) {
+            msgEl.textContent = msg;
+            banner.classList.add('show');
+        }
+    }
+
+    function hideAuthError() {
+        const banner = document.getElementById('authErrorBanner');
+        if (banner) banner.classList.remove('show');
     }
 
     function showToast(msg, type) {
@@ -234,6 +481,8 @@
 
     async function handleSaaSLogin(e) {
         e.preventDefault();
+        hideAuthError();
+
         const email    = document.getElementById('saas-email').value.trim();
         const password = document.getElementById('saas-password').value;
         const btn      = document.getElementById('saasLoginBtn');
@@ -252,17 +501,37 @@
 
         if (!ok) return;
 
-        btn.textContent = 'Authenticating…';
+        btn.innerHTML = '<span>Authenticating Credentials...</span>';
         btn.disabled = true;
 
         try {
-            await window.Auth.login(email, password, 'global');
+            await window.Auth.login(email, password, 'PLATFORM');
         } catch (err) {
-            showToast(err.message || 'Login failed. Check your credentials.', 'error');
-            btn.textContent = 'Sign In to Support Portal';
+            const msg = err.message || 'Authentication rejected by platform security server.';
+            showAuthError(msg);
+            showToast(msg, 'error');
+            btn.innerHTML = '<span>Sign In to Support Console</span>';
             btn.disabled = false;
         }
     }
+
+    // Keyboard navigation support for role cards
+    document.addEventListener('DOMContentLoaded', () => {
+        [1, 2, 3, 4].forEach(tier => {
+            const el = document.getElementById(`role-tier-${tier}`);
+            if (el) {
+                el.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        selectLoginTier(tier);
+                    }
+                });
+            }
+        });
+
+        // Initialize state on Level 1
+        selectLoginTier(1);
+    });
     </script>
 </body>
 </html>

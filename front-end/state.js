@@ -267,56 +267,7 @@ window.Auth = {
         if (!cleanPass)  throw new Error('Please enter your password.');
         if (!cleanTenant) throw new Error('Please enter your institute code.');
 
-        // 1. Support Platform 4-Tier Hierarchy Credentials
-        if (cleanEmail === 'agent@platform.com') {
-            const user = { user_id: 'saas_agent_1', name: 'Support Agent', email: 'agent@platform.com', role: 'PLATFORM_SUPPORT_AGENT', level: 'Level 1: Support Agent' };
-            const tenant = { tenant_id: 'global', name: 'BarelyPassing Support Global', code: 'PLATFORM' };
-            localStorage.setItem('bp_token', 'jwt_saas_agent_' + Date.now());
-            localStorage.setItem('bp_user', JSON.stringify(user));
-            localStorage.setItem('bp_tenant', JSON.stringify(tenant));
-            localStorage.setItem('user', JSON.stringify(user));
-            localStorage.setItem('tenant', JSON.stringify(tenant));
-            window.location.href = 'saas.html';
-            return true;
-        }
-
-        if (cleanEmail === 'techsupport@platform.com' || cleanEmail === 'support@platform.com') {
-            const user = { user_id: 'saas_tech_1', name: 'Technical Support', email: 'techsupport@platform.com', role: 'PLATFORM_TECH_SUPPORT', level: 'Level 2: Senior / Technical Support' };
-            const tenant = { tenant_id: 'global', name: 'BarelyPassing Support Global', code: 'PLATFORM' };
-            localStorage.setItem('bp_token', 'jwt_saas_tech_' + Date.now());
-            localStorage.setItem('bp_user', JSON.stringify(user));
-            localStorage.setItem('bp_tenant', JSON.stringify(tenant));
-            localStorage.setItem('user', JSON.stringify(user));
-            localStorage.setItem('tenant', JSON.stringify(tenant));
-            window.location.href = 'saas.html';
-            return true;
-        }
-
-        if (cleanEmail === 'manager@platform.com' || cleanEmail === 'sales@platform.com') {
-            const user = { user_id: 'saas_mgr_1', name: 'Support Manager', email: 'manager@platform.com', role: 'PLATFORM_SUPPORT_MANAGER', level: 'Level 3: Support Manager' };
-            const tenant = { tenant_id: 'global', name: 'BarelyPassing Support Global', code: 'PLATFORM' };
-            localStorage.setItem('bp_token', 'jwt_saas_mgr_' + Date.now());
-            localStorage.setItem('bp_user', JSON.stringify(user));
-            localStorage.setItem('bp_tenant', JSON.stringify(tenant));
-            localStorage.setItem('user', JSON.stringify(user));
-            localStorage.setItem('tenant', JSON.stringify(tenant));
-            window.location.href = 'saas.html';
-            return true;
-        }
-
-        if (cleanEmail === 'saasadmin@platform.com' || cleanEmail === 'saasadmin' || cleanEmail === 'admin@platform.com') {
-            const user = { user_id: 'saas_admin_1', name: 'Platform Administrator', email: 'saasadmin@platform.com', role: 'PLATFORM_SUPER_ADMIN', level: 'Level 4: Platform Administrator' };
-            const tenant = { tenant_id: 'global', name: 'BarelyPassing Support Global', code: 'PLATFORM' };
-            localStorage.setItem('bp_token', 'jwt_saas_super_' + Date.now());
-            localStorage.setItem('bp_user', JSON.stringify(user));
-            localStorage.setItem('bp_tenant', JSON.stringify(tenant));
-            localStorage.setItem('user', JSON.stringify(user));
-            localStorage.setItem('tenant', JSON.stringify(tenant));
-            window.location.href = 'saas.html';
-            return true;
-        }
-
-        // 2. Attempt API Authentication with backend
+        // 1. Attempt API Authentication with backend
         try {
             const res = await fetch(`${API_BASE}/auth/login`, {
                 method:  'POST',
@@ -328,13 +279,16 @@ window.Auth = {
             if (res.ok) {
                 const payload = await res.json();
                 const { token, accessToken, user } = payload;
-                const activeToken = token || accessToken || ('jwt_' + Date.now());
+                const activeToken = token || accessToken;
+                const isPlatform = (user.role && user.role.startsWith('PLATFORM_')) || cleanEmail.includes('platform');
                 const activeUser  = {
                     ...user,
                     email: cleanEmail,
                     role: user.role === 'superadmin' ? 'INSTITUTE_SUPER_ADMIN' : user.role
                 };
-                const activeTenant = { tenant_id: 't1', name: cleanTenant === 'NITW' ? 'NIT Warangal' : 'IIIT Sri City', code: cleanTenant };
+                const activeTenant = isPlatform
+                    ? { tenant_id: 'global', name: 'BarelyPassing Support Global', code: 'PLATFORM' }
+                    : { tenant_id: 't1', name: cleanTenant === 'NITW' ? 'NIT Warangal' : 'IIIT Sri City', code: cleanTenant };
 
                 localStorage.setItem('bp_token',  activeToken);
                 localStorage.setItem('bp_user',   JSON.stringify(activeUser));
@@ -345,6 +299,10 @@ window.Auth = {
                 localStorage.setItem('tenant', JSON.stringify(activeTenant));
 
                 const role = activeUser.role;
+                if (role.startsWith('PLATFORM_') || isPlatform) {
+                    window.location.href = 'saas.html';
+                    return true;
+                }
                 if (role === 'INSTITUTE_SUPER_ADMIN' || role === 'superadmin' || role === 'admin') {
                     window.location.href = 'director.html';
                     return true;
@@ -363,8 +321,17 @@ window.Auth = {
                 }
                 window.location.href = 'student.html';
                 return true;
+            } else {
+                const errData = await res.json().catch(() => ({}));
+                const errMsg = errData?.message || (Array.isArray(errData?.message) ? errData.message.join(', ') : 'Invalid email or password.');
+                if (cleanEmail.includes('platform')) {
+                    throw new Error(errMsg);
+                }
             }
         } catch (apiErr) {
+            if (cleanEmail.includes('platform')) {
+                throw apiErr;
+            }
             console.warn('API login request failed, falling back to local tenant auth:', apiErr);
         }
 
