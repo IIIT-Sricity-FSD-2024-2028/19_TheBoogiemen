@@ -15,6 +15,7 @@ import {
   IsString,
   MaxLength,
   MinLength,
+  Matches,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -41,6 +42,11 @@ export class CollegeDetailsDto {
   @IsOptional()
   @IsIn(['government', 'private', 'deemed'])
   type?: string;
+
+  @ApiPropertyOptional({ example: 'SXCE', description: 'Short unique college code (2-10 letters/digits)' })
+  @IsOptional()
+  @Matches(/^[A-Za-z0-9]{2,10}$/, { message: 'College code must be 2-10 letters or digits' })
+  code?: string;
 }
 
 export class SpocDetailsDto {

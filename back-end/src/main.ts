@@ -118,24 +118,31 @@ async function bootstrap() {
   // and the caller got a 200 back having changed nothing.
   app.useGlobalPipes(new ValidationPipe(VALIDATION_PIPE_OPTIONS));
 
-  // 5. Serve Static Files (Windows & Mac Compatible)
-  // Check candidate locations for 'front-end' directory
-  const candidateFrontendPaths = [
-    path.join(__dirname, '..', '..', 'front-end'),
-    path.join(__dirname, '..', '..', '..', 'front-end'),
-    path.resolve(process.cwd(), 'front-end'),
-    path.resolve(process.cwd(), '..', 'front-end'),
-  ];
-  let frontendPath = path.resolve(process.cwd(), '..', 'front-end');
+  // 5. Serve the React single-page app (front-end/dist, produced by
+  // `npm run build` in front-end). Unknown non-API GET requests that accept HTML
+  // get index.html so client-side routes such as /student/attendance survive a
+  // refresh or a pasted link. /api is never shadowed.
   const fs = require('fs');
-  for (const p of candidateFrontendPaths) {
-    if (fs.existsSync(p)) {
-      frontendPath = p;
-      break;
-    }
+  const candidateDistPaths = [
+    process.env.FRONTEND_DIST,
+    path.join(__dirname, '..', '..', 'front-end', 'dist'),
+    path.join(__dirname, '..', '..', '..', 'front-end', 'dist'),
+    path.resolve(process.cwd(), 'front-end', 'dist'),
+    path.resolve(process.cwd(), '..', 'front-end', 'dist'),
+  ].filter(Boolean) as string[];
+  const distPath = candidateDistPaths.find((p) => fs.existsSync(path.join(p, 'index.html')));
+  if (distPath) {
+    const indexHtml = path.join(distPath, 'index.html');
+    logger.log({ distPath, msg: 'Serving React app' });
+    app.use(express.static(distPath, { index: false }));
+    app.use((req: any, res: any, next: any) => {
+      const isApi = req.path === '/api' || req.path.startsWith('/api/');
+      if (req.method === 'GET' && !isApi && req.accepts('html')) return res.sendFile(indexHtml);
+      return next();
+    });
+  } else {
+    logger.warn({ msg: 'front-end/dist not found. Run `npm run build` in front-end, or use the Vite dev server on :3000.' });
   }
-  logger.log({ frontendPath, msg: 'Serving static frontend' });
-  app.use(express.static(frontendPath));
 
   // 6. Global API Prefix
   // Note: All your endpoints will now start with /api (e.g., /api/auth/login)

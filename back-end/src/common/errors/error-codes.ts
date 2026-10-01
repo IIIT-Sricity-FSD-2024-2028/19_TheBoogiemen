@@ -28,6 +28,7 @@ export enum ErrorCode {
 
   // ── 403 Forbidden ──────────────────────────────────────────────────────────
   INSUFFICIENT_ROLE = 'INSUFFICIENT_ROLE',
+  ROLE_MISMATCH = 'ROLE_MISMATCH',
   NOT_RESOURCE_OWNER = 'NOT_RESOURCE_OWNER',
   PRIVILEGE_CEILING = 'PRIVILEGE_CEILING',
   ENVIRONMENT_RESTRICTED = 'ENVIRONMENT_RESTRICTED',

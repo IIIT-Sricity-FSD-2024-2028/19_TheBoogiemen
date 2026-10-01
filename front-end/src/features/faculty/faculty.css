@@ -1,0 +1,89 @@
+/* Faculty Portal extras. Colours come only from the shared tokens. */
+
+/* Hero band (page header) contents on the dashboard. */
+.fac-hero-greeting { display: flex; flex-direction: column; gap: 4px; }
+.fac-hero-date { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #8fa6d6; font-weight: 600; }
+.fac-today { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.fac-today-item {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 180px;
+  padding: 10px 14px; border-radius: 14px; font: inherit; text-align: left; cursor: pointer;
+  background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff;
+  transition: background var(--sp-ease), border-color var(--sp-ease), transform var(--sp-ease);
+}
+.fac-today-item:hover { background: rgba(255, 255, 255, 0.18); border-color: #fff; transform: translateY(-2px); }
+.fac-today-item:active { transform: translateY(0); }
+.fac-today-item:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.fac-today-item small { color: #c7d2ea; font-size: 12px; }
+.fac-today-item strong { font-size: 15px; }
+.fac-today-status { margin-top: 4px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+.fac-today-empty { color: #c7d2ea; font-size: 13px; margin-top: 14px; }
+
+/* Quick actions tile. */
+.fac-quick { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.fac-quick button {
+  display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 12px; font: inherit; font-size: 13px; font-weight: 600;
+  background: var(--sp-card-alt); border: 1px solid var(--sp-border); color: var(--sp-text); cursor: pointer; text-align: left;
+  transition: background var(--sp-ease), border-color var(--sp-ease), transform var(--sp-ease), box-shadow var(--sp-ease);
+}
+.fac-quick button:hover { background: var(--sp-accent-soft); border-color: var(--navy-500); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(11, 31, 75, 0.1); }
+.fac-quick button:active { transform: translateY(0); box-shadow: none; }
+.fac-quick .fac-quick-icon { width: 30px; height: 30px; border-radius: 9px; background: var(--navy-900); color: #fff; display: grid; place-items: center; flex-shrink: 0; }
+.fac-quick .fac-count { margin-left: auto; }
+
+/* Clickable list rows (at-risk, upcoming). */
+.fac-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.fac-list-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 10px; border-radius: 10px; transition: background var(--sp-ease); }
+.fac-list-row:hover { background: var(--sp-card-alt); }
+.fac-list-row .fac-list-main { min-width: 0; }
+.fac-list-row .fac-list-main div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Section cards. */
+.fac-section-card { display: flex; flex-direction: column; gap: 10px; text-align: left; font: inherit; color: inherit; width: 100%; }
+.fac-section-card:focus-visible { outline: 2px solid var(--sp-accent); outline-offset: 2px; }
+.fac-section-meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--sp-muted); }
+
+/* Syllabus unit editor. */
+.fac-unit-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(140px, 220px) 72px auto; gap: 10px; align-items: center; }
+.fac-unit-row + .fac-unit-row { margin-top: 10px; }
+@media (max-width: 640px) { .fac-unit-row { grid-template-columns: 1fr 1fr; } }
+
+/* Attendance marking. */
+.fac-att-summary { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.fac-status-toggle { display: inline-flex; padding: 3px; gap: 2px; border-radius: 10px; background: var(--sp-card-alt); border: 1px solid var(--sp-border); }
+.fac-status-toggle button {
+  border: 0; background: transparent; padding: 6px 12px; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 600;
+  color: var(--sp-text-2); cursor: pointer; display: inline-flex; align-items: center; gap: 4px;
+  transition: background var(--sp-ease), color var(--sp-ease);
+}
+.fac-status-toggle button:hover:not(:disabled) { background: var(--sp-accent-soft); color: var(--sp-accent-text); }
+.fac-status-toggle button:disabled { cursor: not-allowed; opacity: 0.6; }
+.fac-status-toggle button[aria-pressed='true'].is-present { background: var(--sp-badge-success-bg); color: var(--sp-badge-success-fg); }
+.fac-status-toggle button[aria-pressed='true'].is-absent { background: var(--sp-badge-danger-bg); color: var(--sp-badge-danger-fg); }
+.fac-row-changed td:first-child { box-shadow: inset 3px 0 0 var(--navy-600); }
+.fac-sticky-bar { position: sticky; bottom: 0; z-index: 5; margin-top: 16px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+
+/* Marks grid. */
+.fac-marks-input { width: 96px; text-align: right; }
+
+/* Weekly timetable. */
+.fac-week { display: grid; grid-template-columns: 70px repeat(6, minmax(120px, 1fr)); min-width: 820px; }
+.fac-week > div { border-bottom: 1px solid var(--sp-border); border-right: 1px solid var(--sp-border); padding: 8px; min-height: 64px; }
+.fac-week .fac-week-head { min-height: 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--sp-muted); background: var(--sp-card-alt); }
+.fac-week .fac-week-head.is-today { color: var(--sp-accent-text); background: var(--sp-accent-soft); }
+.fac-week .fac-week-time { font-size: 12px; font-weight: 600; color: var(--sp-muted); font-variant-numeric: tabular-nums; }
+.fac-week .is-today-col { background: color-mix(in srgb, var(--sp-accent-soft) 45%, transparent); }
+.fac-week .sp-slot { cursor: pointer; transition: transform var(--sp-ease), box-shadow var(--sp-ease); }
+.fac-week .sp-slot:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(11, 31, 75, 0.12); }
+.fac-week-wrap { overflow-x: auto; }
+.fac-day-list { display: none; }
+@media (max-width: 720px) {
+  .fac-week-wrap { display: none; }
+  .fac-day-list { display: grid; gap: 12px; }
+}
+
+/* Milestones. */
+.fac-milestone { display: grid; grid-template-columns: minmax(0, 1fr) 150px 150px auto; gap: 8px; align-items: center; }
+.fac-milestone + .fac-milestone { margin-top: 8px; }
+@media (max-width: 720px) { .fac-milestone { grid-template-columns: 1fr 1fr; } }
+
+.fac-chip-row { display: flex; flex-wrap: wrap; gap: 8px; }

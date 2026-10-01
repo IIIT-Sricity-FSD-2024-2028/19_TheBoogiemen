@@ -29,3 +29,6 @@ npm-debug.log*
 Videos/
 FFSD_CoursePlan_S2026.pdf
 *.zip
+
+# Files uploaded through the app (leave attachments, research files, photos)
+back-end/uploads/

@@ -90,8 +90,10 @@ export function assertSeatAvailable(
   assertNotExpired(sub);
 
   const cap = role === 'student' ? sub.student_seats : sub.faculty_seats;
+  // Deactivated accounts free their seat; HODs teach, so they use faculty seats.
+  const seatRoles = role === 'student' ? ['student'] : ['faculty', 'head', 'DEPARTMENT_ADMIN_HOD'];
   const current = db.users.filter(
-    (u) => u.college_id === collegeId && u.role === role,
+    (u) => u.college_id === collegeId && seatRoles.includes(u.role) && u.status !== 'inactive',
   ).length;
   if (current >= cap) {
     throw new ForbiddenException(

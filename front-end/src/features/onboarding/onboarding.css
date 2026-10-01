@@ -1,0 +1,47 @@
+/* Institute onboarding wizard (public). Uses tokens from shared/styles.css. */
+
+.ob-page { min-height: 100vh; background: var(--sp-bg); display: flex; flex-direction: column; }
+.ob-head { color: #fff; padding: 36px 32px 76px; }
+.ob-head-inner { max-width: 1080px; margin: 0 auto; }
+.ob-head h1 { margin: 6px 0 6px; font-size: 30px; letter-spacing: -0.02em; }
+.ob-head p { margin: 0; color: #c7d2ea; max-width: 640px; }
+.ob-body { max-width: 1080px; width: 100%; margin: -48px auto 0; padding: 0 32px 56px; flex: 1; }
+
+.ob-steps { list-style: none; margin: 0 0 18px; padding: 10px; display: flex; gap: 6px; background: var(--sp-card); border: 1px solid var(--sp-border); border-radius: 14px; box-shadow: var(--sp-shadow); overflow-x: auto; }
+.ob-step { flex: 1; min-width: 132px; display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; font-size: 13px; color: var(--sp-muted); white-space: nowrap; }
+.ob-step.is-current { background: var(--sp-accent-soft); color: var(--sp-text); font-weight: 700; }
+.ob-step.is-done { color: var(--sp-text-2); }
+.ob-step-num { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; flex-shrink: 0; border: 1.5px solid var(--sp-border-strong); background: var(--sp-card); }
+.ob-step.is-current .ob-step-num { background: var(--navy-800); border-color: var(--navy-800); color: #fff; }
+.ob-step.is-done .ob-step-num { background: var(--sp-success); border-color: var(--sp-success); color: #fff; }
+
+.ob-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr); gap: 20px; align-items: start; }
+.ob-grid.is-single { grid-template-columns: minmax(0, 760px); justify-content: center; }
+.ob-card { padding: 26px; }
+.ob-card h2 { margin: 0 0 4px; font-size: 20px; letter-spacing: -0.01em; }
+.ob-actions { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 8px; padding-top: 16px; border-top: 1px solid var(--sp-border); }
+
+.ob-summary { position: sticky; top: 84px; background: var(--navy-900); color: #fff; border-radius: 16px; padding: 24px; }
+.ob-summary .sp-table td { border-color: rgba(255, 255, 255, 0.12); color: #dbe4f7; padding: 8px 0; }
+.ob-summary .sp-table tbody tr:hover { background: transparent; }
+.ob-summary-label { font-size: 13px; color: #c7d2ea; }
+.ob-summary-price { font-size: 32px; font-weight: 800; letter-spacing: -0.02em; }
+
+.ob-presets { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.ob-preset { text-align: left; font: inherit; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--sp-border-strong); background: var(--sp-card); cursor: pointer; transition: border-color var(--sp-ease), background var(--sp-ease); }
+.ob-preset:hover { border-color: var(--navy-500); background: var(--navy-50); }
+.ob-preset[aria-pressed='true'] { border-color: var(--navy-800); box-shadow: 0 0 0 2px var(--navy-100); background: var(--navy-50); }
+.ob-preset strong { display: block; font-size: 14px; }
+.ob-preset span { font-size: 12.5px; color: var(--sp-muted); }
+
+.ob-test { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: 12px; border: 2px dashed var(--sp-warning); background: var(--sp-badge-warning-bg); color: var(--sp-badge-warning-fg); }
+.ob-test strong { display: block; text-transform: uppercase; letter-spacing: 0.06em; font-size: 12px; }
+.ob-order { display: grid; gap: 4px; padding: 16px; border-radius: 12px; background: var(--sp-card-alt); border: 1px solid var(--sp-border); }
+
+@media (max-width: 900px) {
+  .ob-head { padding: 28px 16px 68px; }
+  .ob-body { padding: 0 16px 40px; }
+  .ob-grid { grid-template-columns: 1fr; }
+  .ob-summary { position: static; }
+  .ob-card { padding: 18px; }
+}

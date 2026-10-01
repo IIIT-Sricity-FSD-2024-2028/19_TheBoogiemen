@@ -1,0 +1,59 @@
+/* College administration (people, import, configuration). Uses tokens from shared/styles.css. */
+
+.cl-filter { width: auto; min-width: 140px; }
+.cl-person-name { white-space: nowrap; text-align: left; }
+
+.cl-seats { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px 24px; }
+.cl-seat-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
+.cl-seat-row strong { font-weight: 700; }
+
+.cl-row-actions { display: flex; flex-wrap: nowrap; gap: 4px; justify-content: flex-end; }
+
+.cl-secret { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 14px; border-radius: 10px; background: var(--navy-50); border: 1px dashed var(--navy-200); }
+.cl-secret code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 16px; font-weight: 700; letter-spacing: 0.04em; color: var(--navy-900); word-break: break-all; }
+
+.cl-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--sp-border); margin-bottom: 18px; overflow-x: auto; overflow-y: hidden; }
+.cl-tabs button { border: 0; background: transparent; font: inherit; font-size: 14px; font-weight: 600; color: var(--sp-muted); padding: 10px 14px; border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap; transition: color var(--sp-ease), border-color var(--sp-ease); }
+.cl-tabs button:hover { color: var(--sp-accent-text); }
+.cl-tabs button[aria-selected='true'] { color: var(--sp-text); border-bottom-color: var(--sp-accent); }
+.cl-tabs button:focus-visible { outline: 2px solid var(--sp-accent); outline-offset: -2px; }
+
+.cl-list-editor { display: grid; gap: 10px; container-type: inline-size; }
+.cl-list-editor > * { min-width: 0; }
+.cl-list-row { display: grid; gap: 10px; align-items: end; padding: 12px; border: 1px solid var(--sp-border); border-radius: 10px; background: var(--sp-card); }
+.cl-list-row.is-4 { grid-template-columns: minmax(90px, 1fr) minmax(160px, 2fr) minmax(90px, 1fr) auto; }
+.cl-list-row.is-5 { grid-template-columns: minmax(110px, 1.2fr) minmax(90px, 1fr) minmax(140px, 1.5fr) minmax(90px, 1fr) auto; }
+.cl-list-row.is-band { grid-template-columns: repeat(3, minmax(80px, 1fr)) auto; }
+.cl-list-row.is-field { grid-template-columns: minmax(150px, 2fr) minmax(110px, 1fr) minmax(110px, 1fr) minmax(150px, 2fr) auto auto; }
+/* The editor also lives in the narrow setup-wizard panel, so rows wrap by the
+   width of their own container, not the window. */
+@container (max-width: 640px) {
+  .cl-list-row.is-4, .cl-list-row.is-5, .cl-list-row.is-field { grid-template-columns: 1fr 1fr; }
+}
+@container (max-width: 380px) {
+  .cl-list-row.is-band { grid-template-columns: 1fr 1fr; }
+}
+
+.cl-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.cl-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px 4px 12px; border-radius: 999px; background: var(--navy-100); color: var(--navy-800); font-size: 13px; font-weight: 600; }
+.cl-chip button { border: 0; background: transparent; color: inherit; cursor: pointer; display: grid; place-items: center; padding: 2px; border-radius: 50%; }
+.cl-chip button:hover { background: var(--navy-200); }
+
+.cl-token-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.cl-token { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; padding: 10px 12px; border: 1px solid var(--sp-border); border-left: 3px solid var(--navy-700); border-radius: 10px; background: var(--sp-card); }
+.cl-token-name { font-weight: 700; font-size: 13px; min-width: 120px; align-self: center; }
+.cl-token .sp-field { min-width: 110px; }
+.cl-token-actions { margin-left: auto; display: flex; gap: 4px; align-self: center; }
+.cl-preview { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; padding: 14px 16px; border-radius: 10px; background: var(--navy-900); color: #fff; }
+.cl-preview code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 20px; font-weight: 700; letter-spacing: 0.03em; }
+.cl-preview .cl-preview-more { color: #c7d2ea; font-size: 13px; }
+
+.cl-import-drop { display: grid; gap: 10px; padding: 18px; border: 2px dashed var(--sp-border-strong); border-radius: 12px; background: var(--sp-card-alt); }
+.cl-import-drop.is-over { border-color: var(--sp-accent); background: var(--navy-50); }
+.cl-row-errors { margin: 0; padding-left: 16px; color: var(--sp-badge-danger-fg); font-size: 13px; }
+
+.cl-dept-grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); align-items: start; }
+.cl-dept-grid > * { min-width: 0; }
+@media (max-width: 1000px) { .cl-dept-grid { grid-template-columns: 1fr; } }
+
+.cl-form-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 6px; }

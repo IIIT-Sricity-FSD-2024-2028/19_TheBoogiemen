@@ -1,0 +1,30 @@
+/* SPOC portal (dashboard, setup wizard, subscription). Uses tokens from shared/styles.css. */
+
+.spoc-checklist { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.spoc-checklist li { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.spoc-check { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; border: 2px solid var(--sp-border-strong); color: transparent; }
+.spoc-check.is-done { background: var(--sp-success); border-color: var(--sp-success); color: #fff; }
+
+.spoc-cta { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: space-between; padding: 18px 22px; border-radius: 14px; margin-bottom: 18px; color: #fff; background: linear-gradient(135deg, var(--navy-900) 0%, var(--navy-700) 100%); box-shadow: var(--sp-shadow); }
+.spoc-cta h2 { margin: 0 0 2px; font-size: 17px; }
+.spoc-cta p { margin: 0; color: #c7d2ea; font-size: 14px; }
+
+.spoc-seat { margin-bottom: 14px; }
+.spoc-seat-row { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; margin-bottom: 6px; }
+
+.spoc-wizard { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 1000px) { .spoc-wizard { grid-template-columns: 1fr; } }
+.spoc-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+@media (max-width: 1000px) { .spoc-steps { display: flex; overflow-x: auto; gap: 6px; padding-bottom: 4px; } }
+.spoc-step { width: 100%; display: flex; align-items: center; gap: 10px; text-align: left; padding: 10px 12px; border-radius: 10px; border: 1px solid transparent; background: transparent; font: inherit; font-size: 14px; color: var(--sp-text-2); cursor: pointer; white-space: nowrap; transition: background var(--sp-ease), border-color var(--sp-ease); }
+.spoc-step:hover { background: var(--sp-accent-soft); }
+.spoc-step[aria-current='step'] { background: var(--sp-accent-soft); border-color: var(--navy-200); color: var(--sp-text); font-weight: 600; }
+.spoc-step-num { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; flex-shrink: 0; background: var(--sp-card); border: 1.5px solid var(--sp-border-strong); color: var(--sp-text-2); }
+.spoc-step.is-done .spoc-step-num { background: var(--sp-success); border-color: var(--sp-success); color: #fff; }
+.spoc-wizard-nav { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--sp-border); }
+
+.spoc-modules { display: flex; flex-wrap: wrap; gap: 6px; }
+.spoc-plan-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.spoc-plan { border: 1px solid var(--sp-border); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+.spoc-plan.is-current { border-color: var(--navy-700); box-shadow: 0 0 0 2px var(--navy-100); }
+.spoc-plan ul { margin: 0; padding-left: 18px; font-size: 13px; color: var(--sp-text-2); display: grid; gap: 3px; }

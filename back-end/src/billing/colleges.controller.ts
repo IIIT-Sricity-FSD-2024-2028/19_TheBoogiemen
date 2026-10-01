@@ -25,7 +25,7 @@ export class CollegesController {
   constructor(private readonly colleges: CollegesService) {}
 
   @Post()
-  @Roles('superadmin')
+  @Roles('PLATFORM_SUPER_ADMIN')
   @ApiOperation({
     summary: 'Provision a college and its SPOC in one action (superadmin only)',
   })
@@ -36,7 +36,7 @@ export class CollegesController {
   }
 
   @Get()
-  @Roles('superadmin')
+  @Roles('PLATFORM_SUPER_ADMIN')
   @ApiOperation({ summary: 'List every registered college (the vendor cockpit)' })
   async findAll() {
     return { success: true, data: await this.colleges.findAll() };
@@ -83,7 +83,7 @@ export class CollegesController {
   }
 
   @Get(':id')
-  @Roles('superadmin')
+  @Roles('PLATFORM_SUPER_ADMIN')
   @ApiOperation({ summary: 'One college in full: SPOC, admins, basic counts' })
   async findOne(@Param('id') id: string) {
     return { success: true, data: await this.colleges.findOne(id) };

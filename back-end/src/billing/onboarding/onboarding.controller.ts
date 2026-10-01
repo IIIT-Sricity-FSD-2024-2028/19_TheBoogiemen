@@ -16,6 +16,7 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Public } from '../../auth/public.decorator';
 import { setAuthCookie, tokenTtlMs } from '../../auth/auth-cookie';
 import { computeQuote } from '../pricing/pricing.service';
+import { pricedPlans } from '../pricing/plans';
 import { EstimateDto } from '../dto/estimate.dto';
 import { OnboardingStartDto } from '../dto/onboarding-start.dto';
 import { OnboardingMetricsDto } from '../dto/onboarding-metrics.dto';
@@ -34,6 +35,13 @@ export class OnboardingController {
   @ApiOperation({ summary: 'Stateless live price preview — nothing is stored' })
   async estimate(@Body() body: EstimateDto) {
     return { success: true, data: computeQuote(body) };
+  }
+
+  @Get('plans')
+  @Public()
+  @ApiOperation({ summary: 'Named plan presets, priced live by the current rate card' })
+  plans() {
+    return { success: true, data: pricedPlans() };
   }
 
   @Get(['estimate', 'pricing/estimate'])

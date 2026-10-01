@@ -1,93 +1,67 @@
-import React from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import Navbar from './components/Navbar';
-import B2BLandingPage from './features/platform/B2BLandingPage';
-import SaaSAdminPortal from './features/platform/SaaSAdminPortal';
-import InstituteAdminPortal from './features/platform/InstituteAdminPortal';
-import HODDashboard from './features/platform/HODDashboard';
-import FacultyPortal from './features/platform/FacultyPortal';
-import StudentPortal from './features/platform/StudentPortal';
-import ParentPortal from './features/platform/ParentPortal';
-import { removeNotification } from './features/ui/uiSlice';
+import React, { Suspense, lazy, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { Route, Routes } from 'react-router-dom';
+import { fetchSession, selectAuth } from './features/auth/authSlice';
+import { PORTALS } from './app/roleRoutes';
+import RequireAuth from './shared/ui/RequireAuth';
+import Toasts from './shared/ui/Toasts';
+import { BootScreen, ForbiddenPage, NotFoundPage, ServerDownPage } from './features/public/StatusPages';
+
+const LandingPage = lazy(() => import('./features/public/LandingPage'));
+const LoginPage = lazy(() => import('./features/auth/LoginPage'));
+const SignupPage = lazy(() => import('./features/auth/SignupPage'));
+const ForgotPasswordPage = lazy(() => import('./features/auth/ForgotPasswordPage'));
+const ResetPasswordPage = lazy(() => import('./features/auth/ResetPasswordPage'));
+const OnboardingPage = lazy(() => import('./features/onboarding/OnboardingPage'));
+
+/** One lazily loaded chunk per portal; PORTALS decides the path and roles. */
+const PORTAL_COMPONENTS = {
+  student: lazy(() => import('./features/student/StudentPortal')),
+  faculty: lazy(() => import('./features/faculty/FacultyPortal')),
+  hod: lazy(() => import('./features/hod/HodPortal')),
+  director: lazy(() => import('./features/director/DirectorPortal')),
+  finance: lazy(() => import('./features/finance/FinancePortal')),
+  spoc: lazy(() => import('./features/spoc/SpocPortal')),
+  support: lazy(() => import('./features/support/SupportPortal')),
+};
 
 export default function App() {
   const dispatch = useDispatch();
-  const { activeView, notifications } = useSelector((state) => state.ui);
-  const { isAuthenticated, user } = useSelector((state) => state.auth);
+  const { status, bootError } = useSelector(selectAuth);
 
-  const renderActiveView = () => {
-    switch (activeView) {
-      case 'saas-admin':
-        return <SaaSAdminPortal />;
-      case 'institute-admin':
-        return <InstituteAdminPortal />;
-      case 'hod':
-        return <HODDashboard />;
-      case 'faculty':
-        return <FacultyPortal />;
-      case 'student':
-        return <StudentPortal />;
-      case 'parent':
-        return <ParentPortal />;
-      case 'landing':
-      default:
-        if (isAuthenticated) {
-          if (user?.role === 'PLATFORM_SUPER_ADMIN') return <SaaSAdminPortal />;
-          if (user?.role === 'INSTITUTE_SUPER_ADMIN' || user?.role === 'superadmin' || user?.role === 'admin') return <InstituteAdminPortal />;
-          if (user?.role === 'DEPARTMENT_ADMIN_HOD' || user?.role === 'head') return <HODDashboard />;
-          if (user?.role === 'faculty') return <FacultyPortal />;
-          if (user?.role === 'parent') return <ParentPortal />;
-          return <StudentPortal />;
-        }
-        return <B2BLandingPage />;
-    }
-  };
+  // Ask the server who is signed in on every page load (cookie-based session).
+  useEffect(() => {
+    dispatch(fetchSession());
+  }, [dispatch]);
+
+  if (status === 'checking') return <BootScreen />;
+  if (bootError) return <ServerDownPage error={bootError} onRetry={() => dispatch(fetchSession())} />;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
-      {/* Global Top Navbar */}
-      <Navbar />
+    <>
+      <a href="#main" className="sp-visually-hidden">Skip to content</a>
+      <Suspense fallback={<BootScreen />}>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/onboarding" element={<OnboardingPage />} />
 
-      {/* Toast Notification Container */}
-      <div className="fixed bottom-6 right-6 z-50 space-y-3 max-w-md w-full px-4 pointer-events-none">
-        {notifications.map((n) => (
-          <div
-            key={n.id}
-            className={`pointer-events-auto p-4 rounded-2xl border shadow-2xl flex items-start justify-between backdrop-blur-md transition-all animate-bounce ${
-              n.type === 'danger'
-                ? 'bg-red-950/90 border-red-500/80 text-red-100'
-                : n.type === 'warning'
-                ? 'bg-amber-950/90 border-amber-500/80 text-amber-100'
-                : 'bg-indigo-950/90 border-indigo-500/80 text-indigo-100'
-            }`}
-          >
-            <div>
-              <div className="font-bold text-xs">{n.title}</div>
-              <div className="text-[11px] opacity-90 mt-0.5 leading-snug">{n.message}</div>
-            </div>
-            <button
-              onClick={() => dispatch(removeNotification(n.id))}
-              className="text-xs font-bold opacity-70 hover:opacity-100 ml-3"
-            >
-              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            </button>
-          </div>
-        ))}
-      </div>
+          {Object.entries(PORTAL_COMPONENTS).map(([key, Portal]) => (
+            <Route
+              key={key}
+              path={`${PORTALS[key].path}/*`}
+              element={<RequireAuth roles={PORTALS[key].roles}><Portal /></RequireAuth>}
+            />
+          ))}
 
-      {/* Main View Area */}
-      <main className="flex-1">{renderActiveView()}</main>
-
-      {/* Footer */}
-      <footer className="border-t border-slate-800/80 bg-slate-950 py-8 px-6 text-center text-xs text-slate-400">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center space-x-2 font-bold text-slate-400">
-            <span className="w-5 h-5 rounded-md bg-indigo-600 text-white flex items-center justify-center text-[10px]">BP</span>
-            <span>BarelyPassing B2B Enterprise EdTech</span>
-          </div>
-          <div>React 18 • Redux Toolkit • Custom Token Middleware • Multi-Tenant Engine</div>
-        </div>
-      </footer>
-    </div>
+          <Route path="/403" element={<ForbiddenPage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </Suspense>
+      <Toasts />
+    </>
   );
 }

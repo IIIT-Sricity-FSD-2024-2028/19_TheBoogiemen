@@ -11,8 +11,6 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { CollegesController } from './colleges.controller';
 import { CollegesService } from './colleges.service';
-import { SupportController } from './support.controller';
-import { SupportService } from './support.service';
 import { OnboardingController } from './onboarding/onboarding.controller';
 import { OnboardingService } from './onboarding/onboarding.service';
 import { OnboardingSessionGuard } from './onboarding/onboarding-session.guard';
@@ -21,10 +19,9 @@ import { PAYMENT_GATEWAY } from './payments/payment-gateway.interface';
 import { MockGateway } from './payments/mock.gateway';
 
 @Module({
-  controllers: [CollegesController, SupportController, OnboardingController],
+  controllers: [CollegesController, OnboardingController],
   providers: [
     CollegesService,
-    SupportService,
     OnboardingService,
     OnboardingSessionGuard,
     OnboardingRateLimitMiddleware,

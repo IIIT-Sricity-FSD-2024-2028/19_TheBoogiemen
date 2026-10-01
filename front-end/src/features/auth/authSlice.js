@@ -1,125 +1,135 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { api, toErrorPayload } from '../../services/apiClient';
 
-// Async Thunks
-export const loginThunk = createAsyncThunk(
-  'auth/login',
-  async ({ email, password, tenant_code }, { rejectWithValue }) => {
-    try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, tenant_code }),
-      });
-      const data = await response.json();
-      if (!response.ok || !data.success) {
-        return rejectWithValue(data.message || 'Login failed');
-      }
-      return data;
-    } catch (err) {
-      return rejectWithValue(err.message || 'Network error');
-    }
+/**
+ * Authentication state — the single source of truth for "who is signed in".
+ *
+ * The credential is the httpOnly `bp_session` cookie, which JavaScript cannot
+ * read. Nothing about the user is kept in localStorage: on every page load
+ * `fetchSession` asks the server (GET /api/auth/me), so an expired or revoked
+ * session is detected immediately instead of showing a stale dashboard.
+ *
+ * status: 'checking'      — waiting for /auth/me on page load
+ *         'authenticated' — user is known
+ *         'anonymous'     — no valid session
+ */
+
+export const fetchSession = createAsyncThunk('auth/fetchSession', async (_arg, { rejectWithValue }) => {
+  try {
+    return await api.get('/auth/me');
+  } catch (err) {
+    return rejectWithValue(toErrorPayload(err));
   }
-);
+});
 
-export const refreshAccessTokenThunk = createAsyncThunk(
-  'auth/refreshAccessToken',
-  async (_, { getState, rejectWithValue }) => {
-    try {
-      const refreshToken = getState().auth.refreshToken;
-      if (!refreshToken) return rejectWithValue('No refresh token available');
-
-      const response = await fetch('/api/auth/refresh', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken }),
-      });
-      const data = await response.json();
-      if (!response.ok) return rejectWithValue(data.message || 'Refresh failed');
-      return data;
-    } catch (err) {
-      return rejectWithValue(err.message || 'Network error');
-    }
+export const loginThunk = createAsyncThunk('auth/login', async ({ email, password, portal }, { rejectWithValue }) => {
+  try {
+    const body = { email: email.trim(), password };
+    if (portal) body.portal = portal;
+    return await api.post('/auth/login', body);
+  } catch (err) {
+    const payload = toErrorPayload(err);
+    // 401 from the login endpoint means wrong credentials, not an expired session.
+    if (payload.status === 401) payload.message = 'Incorrect email or password.';
+    if (payload.status === 429) payload.message = 'Too many sign-in attempts. Please wait a minute and try again.';
+    return rejectWithValue(payload);
   }
-);
+});
+
+// Clears the cookie on the server. Local state is cleared in the reducer whether
+// or not the request succeeds, so signing out always works.
+export const logoutThunk = createAsyncThunk('auth/logout', async () => {
+  try {
+    await api.post('/auth/logout');
+  } catch {
+    // The cookie also expires on its own; nothing else to recover.
+  }
+});
 
 const initialState = {
-  accessToken: localStorage.getItem('accessToken') || null,
-  refreshToken: localStorage.getItem('refreshToken') || null,
-  user: JSON.parse(localStorage.getItem('user') || 'null'),
-  tenant: JSON.parse(localStorage.getItem('tenant') || 'null'),
-  isAuthenticated: !!localStorage.getItem('accessToken'),
-  loading: false,
-  error: null,
+  status: 'checking',
+  user: null,
+  expiresAt: null,
+  loginStatus: 'idle',
+  loginError: null,
+  // Why the last session ended: null | 'expired' | 'signed-out'
+  endReason: null,
+  // Set when /auth/me failed for a reason other than "not signed in".
+  bootError: null,
 };
+
+function endSession(state, reason) {
+  state.status = 'anonymous';
+  state.user = null;
+  state.expiresAt = null;
+  state.endReason = reason;
+}
 
 const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    logout: (state) => {
-      state.accessToken = null;
-      state.refreshToken = null;
-      state.user = null;
-      state.tenant = null;
-      state.isAuthenticated = false;
-      state.error = null;
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('user');
-      localStorage.removeItem('tenant');
+    // Dispatched by tokenAuthMiddleware (401) and sessionTimerMiddleware (expiry).
+    sessionExpired: (state) => {
+      if (state.status === 'authenticated') endSession(state, 'expired');
     },
-    clearAuthError: (state) => {
-      state.error = null;
+    // Another browser tab signed out.
+    signedOutElsewhere: (state) => {
+      if (state.status === 'authenticated') endSession(state, 'signed-out');
     },
-    setCredentials: (state, action) => {
-      state.isAuthenticated = true;
-      state.user = action.payload.user;
-      state.accessToken = action.payload.accessToken || state.accessToken;
-      if (action.payload.tenant) state.tenant = action.payload.tenant;
-      localStorage.setItem('user', JSON.stringify(action.payload.user));
-      localStorage.setItem('bp_user', JSON.stringify(action.payload.user));
+    profileUpdated: (state, action) => {
+      if (state.user) state.user = { ...state.user, ...action.payload };
+    },
+    clearLoginError: (state) => {
+      state.loginError = null;
+    },
+    clearEndReason: (state) => {
+      state.endReason = null;
     },
   },
   extraReducers: (builder) => {
     builder
-      // Login
+      .addCase(fetchSession.fulfilled, (state, action) => {
+        state.status = 'authenticated';
+        state.user = action.payload.user;
+        state.expiresAt = action.payload.expires_at ?? null;
+      })
+      .addCase(fetchSession.rejected, (state, action) => {
+        state.status = 'anonymous';
+        state.user = null;
+        // A network/server failure on load is not "signed out": keep the error so
+        // the app can say the server is unreachable instead of showing a login form.
+        state.bootError = action.payload?.status === 401 ? null : action.payload;
+      })
       .addCase(loginThunk.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+        state.loginStatus = 'loading';
+        state.loginError = null;
       })
       .addCase(loginThunk.fulfilled, (state, action) => {
-        state.loading = false;
-        state.isAuthenticated = true;
-        state.accessToken = action.payload.accessToken || action.payload.token;
-        state.refreshToken = action.payload.refreshToken;
+        state.loginStatus = 'idle';
+        state.status = 'authenticated';
         state.user = action.payload.user;
-        state.tenant = action.payload.tenant;
-
-        localStorage.setItem('accessToken', state.accessToken);
-        if (state.refreshToken) localStorage.setItem('refreshToken', state.refreshToken);
-        localStorage.setItem('user', JSON.stringify(state.user));
-        localStorage.setItem('tenant', JSON.stringify(state.tenant));
+        state.expiresAt = action.payload.expires_at ?? null;
+        state.endReason = null;
+        state.bootError = null;
       })
       .addCase(loginThunk.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload || 'Login failed';
+        state.loginStatus = 'idle';
+        state.loginError = action.payload?.message || 'Sign-in failed.';
       })
-      // Refresh token
-      .addCase(refreshAccessTokenThunk.fulfilled, (state, action) => {
-        state.accessToken = action.payload.accessToken;
-        state.refreshToken = action.payload.refreshToken;
-        localStorage.setItem('accessToken', state.accessToken);
-        localStorage.setItem('refreshToken', state.refreshToken);
-      })
-      .addCase(refreshAccessTokenThunk.rejected, (state) => {
-        // Clear auth state on refresh failure
-        state.accessToken = null;
-        state.refreshToken = null;
-        state.isAuthenticated = false;
-        localStorage.clear();
+      .addCase(logoutThunk.pending, (state) => {
+        endSession(state, 'signed-out');
       });
   },
 });
 
-export const { logout, clearAuthError, setCredentials } = authSlice.actions;
+export const { sessionExpired, signedOutElsewhere, profileUpdated, clearLoginError, clearEndReason } = authSlice.actions;
+
+/** Actions after which all per-user cached data must be discarded. */
+export const SESSION_END_ACTIONS = [sessionExpired.type, signedOutElsewhere.type, logoutThunk.pending.type];
+
+export const selectAuth = (state) => state.auth;
+export const selectCurrentUser = (state) => state.auth.user;
+export const selectIsAuthenticated = (state) => state.auth.status === 'authenticated';
+
 export default authSlice.reducer;
