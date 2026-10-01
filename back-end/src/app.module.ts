@@ -16,22 +16,18 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { RequiresModuleGuard } from './common/guards/requires-module.guard';
 import { AuthModule } from './auth/auth.module';
 import { StudentsModule } from './students/students.module';
-import { FacultyModule } from './faculty/faculty.module';
-import { AdminModule } from './admin/admin.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { BillingModule } from './billing/billing.module';
-
-// Academic workflow modules from FFSD 2
-import { FeeModule } from './modules/fee/fee.fee.module';
-import { ReportModule } from './modules/report/report.report.module';
-import { UserModule } from './modules/user/user.user.module';
-import { AttendanceModule } from './modules/attendance/attendance.attendance.module';
-import { ResourceModule } from './modules/resource/resource.resource.module';
-import { ResearchModule } from './modules/research/research.research.module';
-import { ForumModule } from './modules/forum/forum.forum.module';
-import { LeaveModule } from './modules/leave/leave.leave.module';
-import { AssessmentModule } from './modules/assessment/assessment.assessment.module';
-import { OutcomeModule } from './modules/outcome/outcome.outcome.module';
+import { NotificationsModule } from './notifications/notifications.module';
+// Campus domain modules. Every record is scoped to the caller's college.
+import { CollegeModule } from './college/college.module';
+import { AcademicsModule } from './academics/academics.module';
+import { AttendanceModule } from './attendance/attendance.module';
+import { LeaveModule } from './leave/leave.module';
+import { FeesModule } from './fees/fees.module';
+import { CampusModule } from './campus/campus.module';
+import { ReportsModule } from './reports/reports.module';
+import { SupportModule } from './support/support.module';
 
 // Mandatory FDFED Middleware Suite
 import { FileLoggerService } from './common/services/file-logger.service';
@@ -47,22 +43,18 @@ import { AuditLoggerMiddleware } from './common/middleware/audit-logger.middlewa
     LoggerModule.forRoot(buildLoggerConfig()),
     DatabaseModule,
     AuthModule,
+    CollegeModule,
+    AcademicsModule,
+    AttendanceModule,
+    LeaveModule,
+    FeesModule,
+    CampusModule,
+    ReportsModule,
     StudentsModule,
-    FacultyModule,
-    AdminModule,
+    SupportModule,
     UploadsModule,
     BillingModule,
-    // Academic workflow modules
-    FeeModule,
-    ReportModule,
-    UserModule,
-    AttendanceModule,
-    ResourceModule,
-    ResearchModule,
-    ForumModule,
-    LeaveModule,
-    AssessmentModule,
-    OutcomeModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [

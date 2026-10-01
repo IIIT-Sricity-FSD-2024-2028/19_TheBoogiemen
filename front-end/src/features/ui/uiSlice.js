@@ -1,43 +1,48 @@
 import { createSlice } from '@reduxjs/toolkit';
+import { SESSION_END_ACTIONS } from '../auth/authSlice';
+
+/**
+ * App-wide UI state: toasts and the signed-in user's recent activity.
+ * Page-local UI state (open modals, filters, form values) stays in components.
+ */
 
 const initialState = {
-  theme: localStorage.getItem('theme') || 'dark',
-  activeView: 'landing', // 'landing' | 'saas-admin' | 'institute-admin' | 'hod' | 'faculty' | 'student' | 'parent'
-  notifications: [],
-  sidebarOpen: true,
-  modalState: { isOpen: false, type: null, data: null },
-  quotaAlert80Shown: false,
-  quotaAlert95Shown: false,
+  toasts: [],
+  recentActivity: [],
 };
+
+let toastSeq = 0;
 
 const uiSlice = createSlice({
   name: 'ui',
   initialState,
   reducers: {
-    setTheme: (state, action) => {
-      state.theme = action.payload;
-      localStorage.setItem('theme', action.payload);
+    addToast: {
+      reducer: (state, action) => {
+        state.toasts.push(action.payload);
+        if (state.toasts.length > 4) state.toasts.shift();
+      },
+      prepare: ({ type = 'info', title, message }) => ({
+        payload: { id: `t${Date.now()}_${toastSeq++}`, type, title, message },
+      }),
     },
-    setActiveView: (state, action) => {
-      state.activeView = action.payload;
+    removeToast: (state, action) => {
+      state.toasts = state.toasts.filter((t) => t.id !== action.payload);
     },
-    toggleSidebar: (state) => {
-      state.sidebarOpen = !state.sidebarOpen;
+    activityRecorded: (state, action) => {
+      state.recentActivity.unshift(action.payload);
+      state.recentActivity = state.recentActivity.slice(0, 20);
     },
-    addNotification: (state, action) => {
-      state.notifications.unshift(action.payload);
-    },
-    removeNotification: (state, action) => {
-      state.notifications = state.notifications.filter((n) => n.id !== action.payload);
-    },
-    openModal: (state, action) => {
-      state.modalState = { isOpen: true, type: action.payload.type, data: action.payload.data };
-    },
-    closeModal: (state) => {
-      state.modalState = { isOpen: false, type: null, data: null };
-    },
+  },
+  extraReducers: (builder) => {
+    builder.addMatcher(
+      (action) => SESSION_END_ACTIONS.includes(action.type),
+      (state) => {
+        state.recentActivity = [];
+      }
+    );
   },
 });
 
-export const { setTheme, setActiveView, toggleSidebar, addNotification, removeNotification, openModal, closeModal } = uiSlice.actions;
+export const { addToast, removeToast, activityRecorded } = uiSlice.actions;
 export default uiSlice.reducer;

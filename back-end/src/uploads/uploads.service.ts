@@ -21,14 +21,18 @@ export type UploadContext =
   | 'leave'
   | 'attendance_request'
   | 'research_milestone'
-  | 'assessment_submission';
+  | 'assessment_submission'
+  | 'profile_photo';
 
 export const UPLOAD_CONTEXTS: UploadContext[] = [
   'leave',
   'attendance_request',
   'research_milestone',
   'assessment_submission',
+  'profile_photo',
 ];
+
+export const PHOTO_MIME_TYPES = ['image/jpeg', 'image/png'];
 
 export interface UploadRecord {
   file_id: string;
@@ -53,9 +57,7 @@ export class UploadsService {
 
   /** The collection is created lazily so no migration is needed for the JSON store. */
   private get records(): UploadRecord[] {
-    const store = this.db as any;
-    if (!store.uploads) store.uploads = [];
-    return store.uploads;
+    return this.db.uploads as UploadRecord[];
   }
 
   record(file: Express.Multer.File, context: UploadContext, userId: string): UploadRecord {
@@ -131,11 +133,28 @@ export class UploadsService {
    * These are medical certificates and coursework, so the default is "only the
    * person who uploaded it". Staff may read any document because approving leave
    * or reviewing a milestone requires seeing the attachment — a student may not
-   * read another student's.
+   * read another student's, except a file attached to a research project they
+   * are on. Staff are limited to documents from their own college.
    */
+  private sameCollege(ownerId: string, readerId: string): boolean {
+    const users = this.db.users ?? [];
+    const owner = users.find((u: any) => u.user_id === ownerId);
+    const reader = users.find((u: any) => u.user_id === readerId);
+    // Records that predate college scoping have no college on either side.
+    return (owner?.college_id ?? null) === (reader?.college_id ?? null);
+  }
+
   assertCanRead(record: UploadRecord, userId: string, role: Role): void {
     if (record.uploaded_by === userId) return;
-    if (REVIEWER_ROLES.includes(role)) return;
+    // Staff review documents of their own college only.
+    if (REVIEWER_ROLES.includes(role) && this.sameCollege(record.uploaded_by, userId)) return;
+    // A file attached to a research project is shared with that project's team.
+    const shared = (this.db.research_projects ?? []).some(
+      (p: any) =>
+        (p.uploads ?? []).some((u: any) => u.file_id === record.file_id) &&
+        (p.supervisor_id === userId || (p.students ?? []).some((st: any) => st.user_id === userId)),
+    );
+    if (shared) return;
 
     this.logger.warn(
       { fileId: record.file_id, userId, role, owner: record.uploaded_by },

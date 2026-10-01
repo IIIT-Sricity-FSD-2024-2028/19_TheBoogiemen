@@ -3,50 +3,92 @@ import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import * as fs from 'fs';
 import * as path from 'path';
 
+/**
+ * Every collection the application stores. Adding a collection here is the
+ * only step needed: it is created empty, loaded from the JSON file when
+ * present, and written back by persist(). (Previously the field list and the
+ * persist() list were maintained separately and drifted, so some collections
+ * were silently never saved.)
+ */
+export const COLLECTIONS = [
+  // Tenancy and configuration
+  'colleges', 'college_settings', 'departments',
+  // People
+  'users', 'students', 'faculty',
+  // Academics
+  'courses', 'course_sections', 'enrollment', 'timetable', 'syllabus_progress',
+  'assessments', 'marks_entry', 'submissions',
+  // Attendance and leave
+  'attendance_log', 'attendance_requests', 'leave_applications',
+  // Campus life
+  'discussion_posts', 'discussion_replies', 'research_projects', 'meetings',
+  'events', 'resources', 'resource_bookings', 'announcements',
+  // Fees
+  'fee_structures', 'fees', 'fee_payments',
+  // Support and platform
+  'support_tickets', 'support_threads', 'support_messages',
+  // Billing and onboarding
+  'onboarding_sessions', 'quotes', 'payments', 'subscriptions',
+  // Account and system
+  'password_resets', 'notification_reads', 'uploads', 'audit_log',
+] as const;
+
+export type CollectionName = (typeof COLLECTIONS)[number];
+
 @Injectable()
 export class InMemoryDbService implements OnModuleInit {
   private isLoaded = false;
 
-  public departments = this.createProxyArray([]);
-  public users = this.createProxyArray([]);
-  public students = this.createProxyArray([]);
-  public faculty = this.createProxyArray([]);
-  public courses = this.createProxyArray([]);
-  public enrollment = this.createProxyArray([]);
-  public attendance_log = this.createProxyArray([]);
-  public assessments = this.createProxyArray([]);
-  public marks_entry = this.createProxyArray([]);
-  public leave_applications = this.createProxyArray([]);
-  public research_projects = this.createProxyArray([]);
-  public discussion_posts = this.createProxyArray([]);
-  public discussion_replies = this.createProxyArray([]);
-  public events = this.createProxyArray([]);
-  public resources = this.createProxyArray([]);
-  public fees = this.createProxyArray([]);
-  public submissions = this.createProxyArray([]);
-  public timetable = this.createProxyArray([]);
-  public syllabus_progress = this.createProxyArray([]);
-  public attendance_requests = this.createProxyArray([]);
-  public resource_bookings = this.createProxyArray([]);
-  public course_sections = this.createProxyArray([]);
-  public colleges = this.createProxyArray([]);
-  public support_threads = this.createProxyArray([]);
-  public support_messages = this.createProxyArray([]);
-  public support_tickets = this.createProxyArray([]);
-  public onboarding_sessions = this.createProxyArray([]);
-  public quotes = this.createProxyArray([]);
-  public payments = this.createProxyArray([]);
-  public subscriptions = this.createProxyArray([]);
+  public colleges: any[] = this.createProxyArray([]);
+  public college_settings: any[] = this.createProxyArray([]);
+  public departments: any[] = this.createProxyArray([]);
+  public users: any[] = this.createProxyArray([]);
+  public students: any[] = this.createProxyArray([]);
+  public faculty: any[] = this.createProxyArray([]);
+  public courses: any[] = this.createProxyArray([]);
+  public course_sections: any[] = this.createProxyArray([]);
+  public enrollment: any[] = this.createProxyArray([]);
+  public timetable: any[] = this.createProxyArray([]);
+  public syllabus_progress: any[] = this.createProxyArray([]);
+  public assessments: any[] = this.createProxyArray([]);
+  public marks_entry: any[] = this.createProxyArray([]);
+  public submissions: any[] = this.createProxyArray([]);
+  public attendance_log: any[] = this.createProxyArray([]);
+  public attendance_requests: any[] = this.createProxyArray([]);
+  public leave_applications: any[] = this.createProxyArray([]);
+  public discussion_posts: any[] = this.createProxyArray([]);
+  public discussion_replies: any[] = this.createProxyArray([]);
+  public research_projects: any[] = this.createProxyArray([]);
+  public meetings: any[] = this.createProxyArray([]);
+  public events: any[] = this.createProxyArray([]);
+  public resources: any[] = this.createProxyArray([]);
+  public resource_bookings: any[] = this.createProxyArray([]);
+  public announcements: any[] = this.createProxyArray([]);
+  public fee_structures: any[] = this.createProxyArray([]);
+  public fees: any[] = this.createProxyArray([]);
+  public fee_payments: any[] = this.createProxyArray([]);
+  public support_tickets: any[] = this.createProxyArray([]);
+  public support_threads: any[] = this.createProxyArray([]);
+  public support_messages: any[] = this.createProxyArray([]);
+  public onboarding_sessions: any[] = this.createProxyArray([]);
+  public quotes: any[] = this.createProxyArray([]);
+  public payments: any[] = this.createProxyArray([]);
+  public subscriptions: any[] = this.createProxyArray([]);
+  public password_resets: any[] = this.createProxyArray([]);
+  public notification_reads: any[] = this.createProxyArray([]);
+  public uploads: any[] = this.createProxyArray([]);
+  public audit_log: any[] = this.createProxyArray([]);
 
   constructor(
     @InjectPinoLogger(InMemoryDbService.name) private readonly logger: PinoLogger,
   ) {}
 
+  /** `MOCK_DB_PATH` lets tests run against a temporary copy of the seed. */
   public getDataPath(): string {
+    if (process.env.MOCK_DB_PATH) return path.resolve(process.env.MOCK_DB_PATH);
     const candidates = [
       path.join(__dirname, '..', '..', 'data', 'mock-db.json'),
       path.join(__dirname, '..', '..', '..', 'data', 'mock-db.json'),
-      path.join(__dirname, '..', '..', '..', 'back-end', 'data', 'mock-db.json'),
       path.resolve(process.cwd(), 'data', 'mock-db.json'),
       path.resolve(process.cwd(), 'back-end', 'data', 'mock-db.json'),
     ];
@@ -77,7 +119,7 @@ export class InMemoryDbService implements OnModuleInit {
         const result = Reflect.set(target, prop, value, receiver);
         if (this.isLoaded && prop !== 'length') this.persist();
         return result;
-      }
+      },
     });
   }
 
@@ -85,30 +127,18 @@ export class InMemoryDbService implements OnModuleInit {
     const dataPath = this.getDataPath();
     try {
       if (fs.existsSync(dataPath)) {
-        const rawData = fs.readFileSync(dataPath, 'utf8');
-        const data = JSON.parse(rawData);
-        
-        // Disable persistence during bulk load
+        const data = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
         this.isLoaded = false;
-        
-        for (const key in data) {
-          if (Array.isArray(data[key]) && this[key]) {
-            this[key].length = 0; // Clear proxy array
-            this[key].push(...data[key]); // Push into proxy array (will not persist due to isLoaded=false)
-          }
+        for (const key of COLLECTIONS) {
+          const target = (this as any)[key] as any[];
+          target.length = 0;
+          if (Array.isArray(data[key])) target.push(...data[key]);
         }
-        
         this.isLoaded = true;
-        this.logger.info(
-          { path: dataPath, collections: Object.keys(data).length },
-          'Loaded seed data',
-        );
+        this.logger.info({ path: dataPath, collections: COLLECTIONS.length }, 'Loaded seed data');
       } else {
         this.isLoaded = true;
-        this.logger.warn(
-          { path: dataPath },
-          'Seed data file not found — starting with empty collections',
-        );
+        this.logger.warn({ path: dataPath }, 'Seed data file not found — starting with empty collections');
       }
     } catch (error) {
       this.isLoaded = true;
@@ -116,43 +146,16 @@ export class InMemoryDbService implements OnModuleInit {
     }
   }
 
+  /**
+   * Writes every collection to disk. Call after changing fields of an existing
+   * record: in-place edits do not go through the array proxy.
+   */
   public persist() {
     const dataPath = this.getDataPath();
     try {
-      const dataToSave = {
-        departments: this.departments,
-        users: this.users,
-        students: this.students,
-        faculty: this.faculty,
-        courses: this.courses,
-        enrollment: this.enrollment,
-        attendance_log: this.attendance_log,
-        assessments: this.assessments,
-        marks_entry: this.marks_entry,
-        leave_applications: this.leave_applications,
-        research_projects: this.research_projects,
-        discussion_posts: this.discussion_posts,
-        discussion_replies: this.discussion_replies,
-        events: this.events,
-        resources: this.resources,
-        fees: this.fees,
-        submissions: this.submissions,
-        timetable: this.timetable,
-        syllabus_progress: this.syllabus_progress,
-        attendance_requests: this.attendance_requests,
-        resource_bookings: this.resource_bookings,
-        course_sections: this.course_sections,
-        colleges: this.colleges,
-        support_threads: this.support_threads,
-        support_messages: this.support_messages,
-        support_tickets: this.support_tickets,
-        onboarding_sessions: this.onboarding_sessions,
-        quotes: this.quotes,
-        payments: this.payments,
-        subscriptions: this.subscriptions,
-      };
-
-      fs.writeFileSync(dataPath, JSON.stringify(dataToSave, null, 2), 'utf8');
+      const data: Record<string, unknown> = {};
+      for (const key of COLLECTIONS) data[key] = (this as any)[key];
+      fs.writeFileSync(dataPath, JSON.stringify(data, null, 2), 'utf8');
     } catch (error) {
       this.logger.error({ err: error, path: dataPath }, 'Failed to persist data');
     }

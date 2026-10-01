@@ -1,0 +1,26 @@
+/* Shared sections (announcements, events, bookings). Uses the design tokens from shared/styles.css. */
+.sp-announce-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.sp-announce-item { border: 1px solid var(--sp-border); border-radius: 12px; padding: 14px 16px; transition: border-color .15s, box-shadow .15s, transform .15s; }
+.sp-announce-item:hover { border-color: var(--sp-accent); box-shadow: var(--sp-shadow); transform: translateY(-1px); }
+.sp-announce-head { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+.sp-announce-body { margin: 6px 0 10px; white-space: pre-wrap; line-height: 1.55; }
+.sp-announce-meta { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; font-size: 13px; color: var(--sp-muted); }
+
+.sp-event-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.sp-event-card { display: flex; gap: 14px; border: 1px solid var(--sp-border); border-radius: 14px; padding: 14px; background: var(--sp-card); transition: border-color .15s, box-shadow .15s, transform .15s; }
+.sp-event-card:hover { border-color: var(--sp-accent); box-shadow: var(--sp-shadow-hover); transform: translateY(-2px); }
+.sp-event-card.is-past { opacity: .7; }
+.sp-event-date { flex: 0 0 56px; height: 60px; border-radius: 12px; background: var(--sp-accent); color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1; }
+.sp-event-date .m { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; opacity: .85; }
+.sp-event-date .d { font-size: 22px; font-weight: 700; }
+.sp-event-body { min-width: 0; flex: 1; }
+.sp-event-body h3 { margin: 0 0 4px; font-size: 15px; }
+.sp-event-meta { font-size: 13px; color: var(--sp-muted); display: flex; flex-wrap: wrap; gap: 4px 10px; }
+.sp-event-desc { font-size: 13.5px; margin: 8px 0 0; line-height: 1.5; }
+.sp-event-actions { display: flex; gap: 6px; margin-top: 10px; }
+
+.sp-resource-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.sp-resource-card { border: 1px solid var(--sp-border); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 6px; transition: border-color .15s, box-shadow .15s, transform .15s; }
+.sp-resource-card:hover { border-color: var(--sp-accent); box-shadow: var(--sp-shadow-hover); transform: translateY(-2px); }
+.sp-resource-card h3 { margin: 0; font-size: 15px; }
+.sp-resource-card .sp-btn-row { margin-top: auto; padding-top: 6px; }

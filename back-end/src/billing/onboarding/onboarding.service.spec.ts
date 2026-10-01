@@ -35,6 +35,7 @@ function fakeDb() {
   return {
     users: [] as any[],
     colleges: [] as any[],
+    college_settings: [] as any[],
     onboarding_sessions: [] as any[],
     quotes: [] as any[],
     payments: [] as any[],

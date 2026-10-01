@@ -1,136 +1,94 @@
-# BarelyPassing - Academic Management Platform
+# Setup
 
-## Quick Setup (Windows / Mac / Linux)
+Requirements: Node.js 20 or later, and npm.
 
-### Prerequisites
-- **Node.js** (v18 or higher): Download from https://nodejs.org/
-- **npm** (comes bundled with Node.js)
+## 1. Backend configuration
 
-> **Note:** This project works on **all operating systems** — Windows, macOS, and Linux.
-
----
-
-### Step 1: Install Backend Dependencies
-
-Open a **terminal** (Mac/Linux) or **Command Prompt / PowerShell** (Windows) and navigate to the project folder:
-
-**Windows (Command Prompt / PowerShell):**
-```cmd
-cd back-end
-npm install
-```
-
-**Mac / Linux (Terminal):**
 ```bash
 cd back-end
 npm install
+cp .env.example .env
 ```
 
-### Step 2: Start the Server
+Open `back-end/.env` and set `JWT_SECRET` to a random string of at least 32 characters:
 
 ```bash
-npm run start
+node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
 ```
 
-If `npm run start` doesn't work, try one of these alternatives:
+The app uses the JSON store `back-end/data/mock-db.json` by default (`DATA_STORE=memory`). Changes
+made in the app are written back to that file.
+
+## 2. Build the frontend
 
 ```bash
-npx nest start
+cd front-end
+npm install
+npm run build
 ```
 
-Or run directly:
+This writes `front-end/dist`, which the backend serves.
+
+## 3. Run
 
 ```bash
-node node_modules/@nestjs/cli/bin/nest.js start
+cd back-end
+npm run start:dev
 ```
 
-### Step 3: Open the Application
+- App: <http://localhost:5001>
+- API docs (Swagger): <http://localhost:5001/api/docs>
 
-Once the server says it's running, open your browser and go to:
+To work on the UI with hot reload, keep the backend running and start Vite in a second terminal. It
+serves <http://localhost:3000> and proxies `/api` to port 5001:
 
-🔗 **http://localhost:5001**
-
----
-
-## Login Credentials
-
-All accounts use the password: **`Pass@123`**
-
-| Role           | Email                    | Password    |
-|----------------|--------------------------|-------------|
-| Student        | student@iiits.in         | Pass@123    |
-| Student 2      | student2@iiits.in        | Pass@123    |
-| Faculty        | faculty@iiits.in         | Pass@123    |
-| Faculty 2      | faculty2@iiits.in        | Pass@123    |
-| Admin          | admin@iiits.in           | Pass@123    |
-| Academic Head  | head@iiits.in            | Pass@123    |
-| Super Admin    | superadmin@iiits.in      | Pass@123    |
-
----
-
-## Project Structure
-```
-├── front-end/              # HTML, CSS, JS (served automatically by backend)
-│   ├── index.html          # Landing page
-│   ├── login.html          # Login page
-│   ├── student.html        # Student dashboard
-│   ├── faculty.html        # Faculty dashboard
-│   ├── super-user.html     # Admin / Academic Head dashboard
-│   ├── super-admin.html    # Super Admin dashboard
-│   ├── fixes.js            # Core business logic
-│   ├── script.js           # Shared utilities
-│   ├── state.js            # State management
-│   └── style.css           # Global styles
-│
-├── back-end/               # NestJS Backend (TypeScript)
-│   └── src/
-│       ├── auth/           # Authentication (login, signup, password change)
-│       ├── students/       # Student APIs
-│       ├── faculty/        # Faculty APIs
-│       ├── admin/          # Admin/Common APIs
-│       ├── database/       # In-memory database
-│       ├── modules/        # Modular backend services
-│       │   ├── fee/
-│       │   ├── assessment/
-│       │   ├── attendance/
-│       │   ├── forum/
-│       │   ├── leave/
-│       │   ├── outcome/
-│       │   ├── report/
-│       │   ├── research/
-│       │   ├── resource/
-│       │   └── user/
-│       └── common/         # Shared guards, filters, DTOs, interceptors
-│
-├── Database/               # ER diagrams & SQL schema
-├── Figma Designs/          # UI/UX design files
-└── SRS.pdf                 # Software Requirements Specification
+```bash
+cd front-end
+npm run dev
 ```
 
-## API Documentation
+## Scripts (back-end)
 
-After starting the server, visit: **http://localhost:5001/api/docs**
+| Command | What it does |
+|---|---|
+| `npm run start:dev` | API and built frontend on port 5001, restarting on change |
+| `npm run build` | Compile the backend |
+| `npm test` | Unit tests |
+| `npm run test:e2e` | Cross-role flow tests on a temporary copy of the seed (the real data file is not touched) |
+| `npm run seed:demo` | Rebuild `data/mock-db.json` with the demo colleges. This **replaces** any data you created |
 
----
+The demo accounts are listed in [README.md](README.md#demo-accounts).
+
+## Logs
+
+Live output appears in the terminal where the backend is running. The same information is kept in
+files under `back-end/logs/`:
+
+| File | What it holds |
+|---|---|
+| `error.log` | Server errors (HTTP 500), with the request and stack trace |
+| `access.log` | Every request: time, method, path, status code, user and college |
+| `audit.log` | Every change (create, update, delete): who did it and what was sent |
+
+To watch errors as they happen:
+
+```bash
+tail -f back-end/logs/error.log
+```
+
+To see only failed requests in the access log:
+
+```bash
+grep -E " (4|5)[0-9]{2} " back-end/logs/access.log | tail -20
+```
+
+In the browser, errors are shown on the page (red message with a Retry button, or a toast at the
+bottom right). The browser's developer tools (F12, Console and Network tabs) show the details.
 
 ## Troubleshooting
 
-### Windows Users
-- Use **Command Prompt** or **PowerShell** (not Git Bash for npm commands)
-- If you get `EACCES` errors, right-click terminal → **Run as Administrator**
-- If `nest` command is not found, use: `npx nest start`
-
-### Mac Users
-- If port 5001 is busy: `kill $(lsof -ti:5001)` then restart
-- On macOS Monterey+, AirPlay Receiver may use port 5001 — disable it in **System Settings → General → AirDrop & Handoff → AirPlay Receiver**
-
-### Linux Users
-- If port 5001 is busy: `fuser -k 5001/tcp` then restart
-- Ensure Node.js is v18+: `node --version`
-
-### Common Issues
-- **"Module not found"**: Run `npm install` inside the `back-end` folder again
-- **Port already in use**: Kill the process on port 5001 and retry
-- **"nest: command not found"**: Use `npx nest start` instead of `npm run start`
-- **Permission denied (EACCES)**: On Mac/Linux try `sudo npm install`, on Windows run as Administrator
-- **Blank page after login**: Make sure you're on `http://localhost:5001` (not a file:// URL)
+- **"JWT_SECRET is missing"**: set it in `back-end/.env`, as in step 1.
+- **Blank page or "Cannot GET /"**: build the frontend (step 2) before starting the backend.
+- **Signed-in state lost after changing `JWT_SECRET`**: expected. Existing sessions become invalid, so
+  sign in again.
+- **Port 5001 already in use**: stop the other process, or set `PORT` in `.env`.

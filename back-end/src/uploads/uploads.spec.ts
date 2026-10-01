@@ -96,6 +96,24 @@ describe('UploadsService access control', () => {
       .toThrow(ForbiddenException);
   });
 
+  const serviceWith = (db: any) => new UploadsService({ uploads: [], persist: jest.fn(), ...db }, { info: jest.fn(), warn: jest.fn(), error: jest.fn() } as any);
+
+  it('shares a research project file with the team and supervisor, not other students', () => {
+    const svc = serviceWith({
+      research_projects: [{ supervisor_id: 'f1', students: [{ user_id: 'u1' }, { user_id: 'u2' }], uploads: [{ file_id: 'f1' }] }],
+    });
+    expect(() => svc.assertCanRead(record(), 'u2', 'student')).not.toThrow();
+    expect(() => svc.assertCanRead(record(), 'u9', 'student')).toThrow(ForbiddenException);
+    // A file not attached to the project stays private.
+    expect(() => svc.assertCanRead(record({ file_id: 'other' }), 'u2', 'student')).toThrow(ForbiddenException);
+  });
+
+  it('blocks staff of another college', () => {
+    const svc = serviceWith({ users: [{ user_id: 'u1', college_id: 'A' }, { user_id: 'fa', college_id: 'A' }, { user_id: 'fb', college_id: 'B' }] });
+    expect(() => svc.assertCanRead(record(), 'fa', 'faculty')).not.toThrow();
+    expect(() => svc.assertCanRead(record(), 'fb', 'faculty')).toThrow(ForbiddenException);
+  });
+
   it('lets reviewing staff read any document', () => {
     for (const role of ['faculty', 'admin', 'head', 'superadmin'] as const) {
       expect(() => service().assertCanRead(record(), 'someone-else', role)).not.toThrow();

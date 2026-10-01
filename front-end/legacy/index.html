@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BarelyPassing - Academic Performance & Institutional Governance Platform</title>
+    <!-- Standard Typography: Outfit & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --navy: #0f172a;
+            --navy-mid: #1e1b4b;
+            --navy-light: #1e293b;
+            --primary: #0f172a;
+            --primary-hover: #1e293b;
+            --blue: #2563eb;
+            --blue-hover: #1d4ed8;
+            --indigo: #6366f1;
+            --white: #ffffff;
+            --bg-page: #f8fafc;
+            --bg-subtle: #f1f5f9;
+            --border: #e2e8f0;
+            --border-hover: #cbd5e1;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --text-light: #94a3b8;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+            --shadow-md: 0 4px 12px -2px rgba(15,23,42,0.08);
+            --shadow-lg: 0 10px 25px -4px rgba(15,23,42,0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-page);
+            color: var(--text-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Navbar */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 8%;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            background: rgba(15, 23, 42, 0.96);
+            backdrop-filter: blur(12px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.15);
+        }
+
+        .logo {
+            font-size: 21px;
+            font-weight: 800;
+            color: #ffffff;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+            color: #ffffff;
+        }
+
+        .logo-badge {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            padding: 3px 8px;
+            border-radius: 20px;
+            background: rgba(99, 102, 241, 0.2);
+            color: #a5b4fc;
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            margin-left: 4px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: #cbd5e1;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: #ffffff;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-nav-primary {
+            background: var(--blue);
+            color: #ffffff;
+            border: none;
+            box-shadow: 0 2px 10px rgba(37, 99, 235, 0.35);
+        }
+
+        .btn-nav-primary:hover {
+            background: var(--blue-hover);
+            transform: translateY(-1px);
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 140px 24px 70px;
+            position: relative;
+            background: radial-gradient(circle at 50% 15%, #ffffff 0%, #f8fafc 60%, #f1f5f9 100%);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .hero-glow {
+            position: absolute;
+            width: 700px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(37, 99, 235, 0.08) 0%, rgba(248, 250, 252, 0) 70%);
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1e40af;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 7px 18px;
+            border-radius: 30px;
+            margin-bottom: 24px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero h1 {
+            font-size: clamp(34px, 5.5vw, 56px);
+            font-weight: 800;
+            color: var(--navy);
+            letter-spacing: -1.5px;
+            margin-bottom: 20px;
+            max-width: 920px;
+            line-height: 1.15;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero h1 span {
+            background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #4338ca 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: 18px;
+            color: var(--text-muted);
+            max-width: 720px;
+            margin-bottom: 40px;
+            line-height: 1.65;
+            font-weight: 400;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-btns {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            justify-content: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn-navy {
+            background: var(--navy);
+            color: #ffffff;
+            border: none;
+            padding: 14px 28px;
+            font-size: 15px;
+            font-weight: 700;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.25);
+        }
+
+        .btn-navy:hover {
+            background: var(--navy-light);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.35);
+        }
+
+        .btn-blue {
+            background: var(--blue);
+            color: #ffffff;
+            border: none;
+            padding: 14px 28px;
+            font-size: 15px;
+            font-weight: 700;
+            box-shadow: 0 4px 16px rgba(37, 99, 235, 0.25);
+        }
+
+        .btn-blue:hover {
+            background: var(--blue-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(37, 99, 235, 0.35);
+        }
+
+        .btn-white {
+            background: #ffffff;
+            color: var(--navy);
+            border: 1.5px solid var(--border);
+            padding: 14px 24px;
+            font-size: 15px;
+            font-weight: 700;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-white:hover {
+            border-color: var(--border-hover);
+            background: #f8fafc;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Metric Highlights Bar */
+        .metrics-bar {
+            max-width: 1100px;
+            margin: 40px auto 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        .metric-item {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px 20px;
+            text-align: left;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .metric-val {
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--navy);
+            letter-spacing: -0.5px;
+        }
+
+        .metric-lbl {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+        /* Role Quick Access Bar */
+        .roles-bar {
+            max-width: 1160px;
+            margin: -40px auto 70px;
+            padding: 0 24px;
+            position: relative;
+            z-index: 20;
+        }
+
+        .roles-card {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 28px 32px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .roles-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .roles-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--navy);
+        }
+
+        .roles-subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .roles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 14px;
+        }
+
+        .role-pill {
+            padding: 14px;
+            background: var(--bg-page);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            text-decoration: none;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.25s ease;
+        }
+
+        .role-pill:hover {
+            background: #ffffff;
+            border-color: #cbd5e1;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .role-pill.p-student { border-left: 4px solid #6366f1; }
+        .role-pill.p-faculty { border-left: 4px solid #10b981; }
+        .role-pill.p-hod     { border-left: 4px solid #2563eb; }
+        .role-pill.p-director{ border-left: 4px solid #f59e0b; }
+        .role-pill.p-finance { border-left: 4px solid #06b6d4; }
+        .role-pill.p-saas    { border-left: 4px solid #8b5cf6; }
+
+        .role-pill-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 800;
+            flex-shrink: 0;
+            background: #ffffff;
+            border: 1px solid var(--border);
+            color: var(--navy);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+
+        .role-pill-info h4 {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--navy);
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .role-pill-info p {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 3px;
+        }
+
+        /* Features Section */
+        .features {
+            padding: 80px 8%;
+            background: var(--bg-subtle);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--navy);
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            font-size: 16px;
+            color: var(--text-muted);
+            max-width: 640px;
+            margin: 0 auto 50px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 28px;
+            max-width: 1160px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: #ffffff;
+            padding: 36px 30px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+            border-color: #cbd5e1;
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: #eff6ff;
+            color: var(--blue);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 12px;
+            margin-bottom: 22px;
+            border: 1px solid #dbeafe;
+        }
+
+        .feature-card h3 {
+            font-size: 19px;
+            margin-bottom: 12px;
+            font-weight: 700;
+            color: var(--navy);
+        }
+
+        .feature-card p {
+            color: var(--text-muted);
+            font-size: 14px;
+            line-height: 1.65;
+        }
+
+        /* Pricing Tiers Section - Subtle Hover Effect */
+        .pricing-section {
+            padding: 80px 8%;
+            max-width: 1160px;
+            margin: 0 auto;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 28px;
+            margin-top: 40px;
+        }
+
+        .pricing-card {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 36px 30px;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+
+        /* Subtle, contained hover effect */
+        .pricing-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px -2px rgba(15,23,42,0.08);
+            border-color: #cbd5e1;
+        }
+
+        .pricing-card {
+            background: #ffffff;
+            border: 1.5px solid var(--border);
+            border-radius: 18px;
+            padding: 34px 28px;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            cursor: pointer;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px -2px rgba(15,23,42,0.08);
+            border-color: #cbd5e1;
+        }
+
+        .pricing-card.selected-plan {
+            border: 2px solid var(--blue);
+            background: #fbfdff;
+            box-shadow: 0 10px 24px -2px rgba(37, 99, 235, 0.12);
+            transform: translateY(-2px);
+        }
+
+        .plan-selected-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--blue);
+            color: #ffffff;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 4px 14px;
+            border-radius: 20px;
+            display: none;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+        }
+
+        .pricing-card.selected-plan .plan-selected-badge {
+            display: inline-block;
+        }
+
+        .plan-tag {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+        }
+
+        .plan-title {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--navy);
+            margin-top: 4px;
+        }
+
+        .plan-price {
+            font-size: 40px;
+            font-weight: 900;
+            color: var(--navy);
+            margin: 16px 0 6px;
+        }
+
+        .plan-price span {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .plan-specs {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+            font-weight: 500;
+        }
+
+        .plan-features {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 30px;
+            font-size: 13px;
+            color: var(--text-main);
+        }
+
+        .plan-features li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .check-icon {
+            width: 16px;
+            height: 16px;
+            color: #10b981;
+            flex-shrink: 0;
+        }
+
+        .plan-btn {
+            width: 100%;
+            padding: 13px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 13px;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: block;
+        }
+
+        /* Footer */
+        footer {
+            padding: 48px 8%;
+            text-align: center;
+            color: var(--text-light);
+            background: var(--navy);
+            font-size: 13px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        footer a {
+            color: #93c5fd;
+            text-decoration: none;
+            margin: 0 8px;
+            transition: color 0.2s;
+        }
+
+        footer a:hover {
+            color: #ffffff;
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            nav { padding: 14px 5%; }
+            .nav-links { gap: 12px; }
+            .hero { padding: 120px 20px 50px; }
+            .hero h1 { font-size: 32px; }
+            .hero-btns { flex-direction: column; width: 100%; }
+            .hero-btns .btn { width: 100%; }
+            .roles-bar { margin-top: -20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Navigation Bar -->
+    <nav>
+        <a href="index.html" class="logo">
+            <div class="logo-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+            </div>
+            <span>BarelyPassing</span>
+            <span class="logo-badge">Platform</span>
+        </a>
+        <div class="nav-links">
+            <a href="onboarding.html">Institutional Onboarding</a>
+            <a href="saas-login.html">Support Portal</a>
+            <a href="login.html" class="btn btn-nav-primary">Sign In</a>
+        </div>
+    </nav>
+
+    <!-- White + Navy Hero Section -->
+    <section class="hero">
+        <div class="hero-glow"></div>
+        <div class="hero-badge">Enterprise Academic Operations Platform</div>
+        <h1>Modernize your campus with <span>BarelyPassing</span></h1>
+        <p>A centralized academic operations platform for Outcome-Based Education, managing student attendance, faculty assessments, accreditation reporting, fee compliance, and institutional governance.</p>
+        
+        <div class="hero-btns">
+            <a href="login.html" class="btn btn-navy">Campus Login Portal</a>
+            <a href="onboarding.html" class="btn btn-blue">Onboard Your Institute</a>
+            <a href="saas-login.html" class="btn btn-white">Support Portal</a>
+        </div>
+
+        <!-- Metric Highlights Bar -->
+        <div class="metrics-bar">
+            <div class="metric-item">
+                <div class="metric-val">100%</div>
+                <div class="metric-lbl">Audited Data Privacy &amp; Security</div>
+            </div>
+            <div class="metric-item">
+                <div class="metric-val">6 Roles</div>
+                <div class="metric-lbl">Dedicated Governance Portals</div>
+            </div>
+            <div class="metric-item">
+                <div class="metric-val">OBE Mapped</div>
+                <div class="metric-lbl">Accreditation &amp; Attainment Reporting</div>
+            </div>
+            <div class="metric-item">
+                <div class="metric-val">Real-Time</div>
+                <div class="metric-lbl">Attendance, Grading &amp; Fee Insights</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Role Quick Access Bar (6 Roles) -->
+    <div class="roles-bar">
+        <div class="roles-card">
+            <div class="roles-header">
+                <div>
+                    <h3 class="roles-title">Campus Portals</h3>
+                    <p class="roles-subtitle">Access your dedicated institutional workspace.</p>
+                </div>
+            </div>
+            <div class="roles-grid">
+                <a href="login.html?role=student" class="role-pill p-student">
+                    <div class="role-pill-icon">STU</div>
+                    <div class="role-pill-info">
+                        <h4>Student Portal</h4>
+                        <p>Courses, CGPA, Leave</p>
+                    </div>
+                </a>
+                <a href="login.html?role=faculty" class="role-pill p-faculty">
+                    <div class="role-pill-icon">FAC</div>
+                    <div class="role-pill-info">
+                        <h4>Faculty Portal</h4>
+                        <p>Attendance &amp; Marks</p>
+                    </div>
+                </a>
+                <a href="login.html?role=head" class="role-pill p-hod">
+                    <div class="role-pill-icon">HOD</div>
+                    <div class="role-pill-info">
+                        <h4>HOD / Academic Head</h4>
+                        <p>Allocation &amp; Approvals</p>
+                    </div>
+                </a>
+                <a href="login.html?role=director" class="role-pill p-director">
+                    <div class="role-pill-icon">DIR</div>
+                    <div class="role-pill-info">
+                        <h4>Institute Director</h4>
+                        <p>Accreditation Reports</p>
+                    </div>
+                </a>
+                <a href="login.html?role=finance" class="role-pill p-finance">
+                    <div class="role-pill-icon">FIN</div>
+                    <div class="role-pill-info">
+                        <h4>Finance Officer</h4>
+                        <p>Fee Dues &amp; Receipts</p>
+                    </div>
+                </a>
+                <a href="saas-login.html" class="role-pill p-saas">
+                    <div class="role-pill-icon">OPS</div>
+                    <div class="role-pill-info">
+                        <h4>Support Portal</h4>
+                        <p>Institutional Support &amp; Operations</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <h2 class="section-title">Everything you need to run an institution</h2>
+        <p class="section-subtitle">Designed specifically for Outcome-Based Education, institutional accreditation compliance, and multi-tier campus governance.</p>
+        <div class="grid-3">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20v-6M6 20v-4M18 20V10M2 20h20M4 10l8-8 8 8"></path></svg>
+                </div>
+                <h3>Academic Progress &amp; Attainment</h3>
+                <p>Track student performance, calculate Outcome-Based Education mapping for accreditation automatically, and identify students requiring early academic support.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75M9 7a4 4 0 100 8 4 4 0 000-8z"></path></svg>
+                </div>
+                <h3>6 Role-Based Portals</h3>
+                <p>Dedicated access workflows for Students, Faculty, Academic Heads, Directors, Finance Officers, and Platform Support. Each user views only authorized domain data.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                </div>
+                <h3>Attendance &amp; Leave Processing</h3>
+                <p>Automated attendance tracking with verified medical excuse credits, fee clearance verification, and structured multi-level approval workflows for leave requests.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- B2B Subscription Pricing Packages -->
+    <section class="pricing-section">
+        <div class="section-intro">
+            <h2>Institutional Subscription Packages</h2>
+            <p>Predictable pricing tailored for educational institutions — from emerging colleges to enterprise universities.</p>
+        </div>
+
+        <div class="pricing-grid">
+            <!-- Plan 1 -->
+            <div class="pricing-card" data-plan-id="starter" onclick="selectPricingPlan('starter')" role="button" tabindex="0" aria-label="Select Free Trial Plan">
+                <div class="plan-selected-badge">Selected Package</div>
+                <div>
+                    <div class="plan-tag">Starter</div>
+                    <div class="plan-title">Free Trial</div>
+                    <div class="plan-price">$0 <span>/ month</span></div>
+                    <div class="plan-specs">Up to 50 Student Accounts · Core Academic Features</div>
+                    <ul class="plan-features">
+                        <li>
+                            <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                            <span>Academic Progress &amp; Attendance</span>
+                        </li>
+                        <li>
+                            <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                            <span>Assessment &amp; Marks Tracking</span>
+                        </li>
+                        <li>
+                            <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                            <span>Institutional Notice &amp; Discussions</span>
+                        </li>
+                        <li>
+                            <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                            <span>Dedicated Institute Code</span>
+                        </li>
+                    </ul>
+                </div>
+                <button type="button" class="plan-btn btn-white" onclick="event.stopPropagation(); selectPricingPlan('starter'); window.location.href='onboarding.html?plan=starter';">Select Free Trial</button>
+            </div>
+
+            <!-- Plan 2 -->
+            <div class="pricing-card selected-plan" data-plan-id="growth" onclick="selectPricingPlan('growth')" role="button" tabindex="0" aria-label="Select Growth Campus Plan">
+                <div class="plan-selected-badge">Selected Package</div>
+                <div>
+                    <div class="plan-tag" style="color: var(--blue);">Growth Campus</div>
+                    <div class="plan-title">Growth Campus</div>
+                    <div class="plan-price" style="color: var(--blue);">$299 <span>/ month</span></div>
+                    <div class="plan-specs">Up to 250 Student Accounts · Department Operations</div>
+                    <ul class="plan-features">
+                        <li>
+                            <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                            <span>All Starter Features Included</span>
+                        </li>
+                        <li>
+                            <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                            <span>Department &amp; HOD Governance</span>
+                        </li>
+                        <li>
+                            <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                            <span>Finance Dues &amp; Receipt Tracking</span>
+                        </li>
+                        <li>
+                            <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                            <span>Multi-Level Leave Approval Pipeline</span>
+                        </li>
+                        <li>
+                            <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                            <span>Custom Institution Branding</span>
+                        </li>
+                    </ul>
+                </div>
+                <button type="button" class="plan-btn btn-blue" onclick="event.stopPropagation(); selectPricingPlan('growth'); window.location.href='onboarding.html?plan=growth';">Selected: Subscribe Growth</button>
+            </div>
+
+            <!-- Plan 3 -->
+            <div class="pricing-card" data-plan-id="enterprise" onclick="selectPricingPlan('enterprise')" role="button" tabindex="0" aria-label="Select Enterprise University Plan">
+                <div class="plan-selected-badge">Selected Package</div>
+                <div>
+                    <div class="plan-tag">Enterprise</div>
+                    <div class="plan-title">Enterprise University</div>
+                    <div class="plan-price">$799 <span>/ month</span></div>
+                    <div class="plan-specs">Unlimited Student Accounts · Complete Governance</div>
+                    <ul class="plan-features">
+                        <li>
+                            <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                            <span>Complete Multi-Tier Actor Delegation</span>
+                        </li>
+                        <li>
+                            <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                            <span>Official Accreditation &amp; NBA Reports</span>
+                        </li>
+                        <li>
+                            <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                            <span>Priority 24/7 Support Service Level</span>
+                        </li>
+                        <li>
+                            <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                            <span>Custom Domain &amp; Institutional Isolation</span>
+                        </li>
+                    </ul>
+                </div>
+                <button type="button" class="plan-btn btn-white" onclick="event.stopPropagation(); selectPricingPlan('enterprise'); window.location.href='onboarding.html?plan=enterprise';">Select Enterprise</button>
+            </div>
+        </div>
+
+        <!-- Selected Plan Interactive Summary Panel -->
+        <div id="pricingSelectionSummary" style="margin-top: 36px; background: #ffffff; border: 1.5px solid var(--border); border-radius: 16px; padding: 22px 28px; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-sm); flex-wrap: wrap; gap: 16px;">
+            <div>
+                <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--blue);" id="summaryPlanCategory">Selected Package Overview</div>
+                <h3 style="font-size: 18px; font-weight: 800; color: var(--navy); margin-top: 2px;" id="summaryPlanTitle">Growth Campus ($299 / month)</h3>
+                <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;" id="summaryPlanDescription">Includes up to 250 student accounts, department governance, fee tracking, and multi-level leave approvals.</p>
+            </div>
+            <a href="onboarding.html?plan=growth" id="summaryPlanCta" class="btn btn-primary" style="padding: 12px 26px; font-size: 14px; text-decoration: none;">
+                Proceed with Selected Package &rarr;
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 BarelyPassing Educational Platforms · Enterprise Academic Governance Ecosystem</p>
+        <p style="margin-top: 10px;">
+            <a href="login.html">Campus Login</a> · 
+            <a href="onboarding.html">Institute Onboarding</a> · 
+            <a href="saas-login.html">Support Portal</a> · 
+            <a href="/api/docs">API Documentation</a>
+        </p>
+    </footer>
+
+    <script>
+        const pricingPlans = {
+            starter: {
+                name: 'Free Trial',
+                price: '$0 / month',
+                category: 'Starter Tier Selected',
+                desc: 'Includes core academic features, progress & attendance tracking for up to 50 student accounts.',
+                url: 'onboarding.html?plan=starter',
+                btnText: 'Selected: Start Free Trial'
+            },
+            growth: {
+                name: 'Growth Campus',
+                price: '$299 / month',
+                category: 'Growth Tier Selected · Most Popular',
+                desc: 'Includes up to 250 student accounts, department & HOD governance, dues tracking, and approval pipelines.',
+                url: 'onboarding.html?plan=growth',
+                btnText: 'Selected: Subscribe Growth'
+            },
+            enterprise: {
+                name: 'Enterprise University',
+                price: '$799 / month',
+                category: 'Enterprise Tier Selected',
+                desc: 'Unlimited student accounts, official NBA/NAAC accreditation reports, custom domain, and priority 24/7 support.',
+                url: 'onboarding.html?plan=enterprise',
+                btnText: 'Selected: Onboard University'
+            }
+        };
+
+        let currentActivePlan = 'growth';
+
+        function selectPricingPlan(planId) {
+            currentActivePlan = planId;
+            const data = pricingPlans[planId] || pricingPlans.growth;
+
+            document.querySelectorAll('.pricing-card').forEach(card => {
+                const id = card.getAttribute('data-plan-id');
+                const btn = card.querySelector('.plan-btn');
+                if (id === planId) {
+                    card.classList.add('selected-plan');
+                    card.setAttribute('aria-selected', 'true');
+                    if (btn) {
+                        btn.className = 'plan-btn btn-blue';
+                        btn.textContent = data.btnText;
+                    }
+                } else {
+                    card.classList.remove('selected-plan');
+                    card.setAttribute('aria-selected', 'false');
+                    if (btn) {
+                        btn.className = 'plan-btn btn-white';
+                        const fallbackText = id === 'starter' ? 'Select Free Trial' : (id === 'growth' ? 'Select Growth Campus' : 'Select Enterprise');
+                        btn.textContent = fallbackText;
+                    }
+                }
+            });
+
+            const titleEl = document.getElementById('summaryPlanTitle');
+            const catEl = document.getElementById('summaryPlanCategory');
+            const descEl = document.getElementById('summaryPlanDescription');
+            const ctaEl = document.getElementById('summaryPlanCta');
+            if (titleEl) titleEl.textContent = `${data.name} (${data.price})`;
+            if (catEl) catEl.textContent = data.category;
+            if (descEl) descEl.textContent = data.desc;
+            if (ctaEl) {
+                ctaEl.href = data.url;
+                ctaEl.textContent = `Proceed with ${data.name} →`;
+            }
+        }
+
+        // Initialize with Growth plan
+        document.addEventListener('DOMContentLoaded', () => {
+            selectPricingPlan('growth');
+        });
+    </script>
+
+</body>
+</html>

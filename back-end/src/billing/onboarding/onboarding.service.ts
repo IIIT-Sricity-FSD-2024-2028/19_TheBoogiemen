@@ -66,6 +66,7 @@ export class OnboardingService {
       last_name: dto.last_name ?? null,
       phone: dto.phone ?? null,
       college_name: dto.college.name,
+      college_code: dto.college.code ? dto.college.code.toUpperCase() : null,
       city: dto.college.city ?? null,
       state: dto.college.state ?? null,
       type: dto.college.type ?? null,
@@ -199,6 +200,7 @@ export class OnboardingService {
 
     const { college, spocUser } = await this.collegesService.createCollegeAndSpoc({
       collegeName: draft.college_name,
+      collegeCode: draft.college_code,
       city: draft.city,
       state: draft.state,
       type: draft.type,
@@ -232,6 +234,8 @@ export class OnboardingService {
       created_at: new Date().toISOString(),
     });
     payment.subscription_id = subscriptionId;
+    // College-scoped reads (GET /college/overview payments) filter on college_id.
+    payment.college_id = college.college_id;
 
     // The users row now owns the only live copy of this hash — a completed
     // draft has no further reason to hold a credential.

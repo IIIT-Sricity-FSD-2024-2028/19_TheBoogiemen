@@ -1,82 +1,92 @@
-import { Controller, Get, Post, Body, Param, BadRequestException } from '@nestjs/common';
-import { StudentsService } from './students.service';
+import { Controller, Get } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../auth/roles.guard';
-import { CurrentUserId } from '../common/decorators/current-user.decorator';
-import { ApiTags, ApiOperation, ApiResponse , ApiBody} from '@nestjs/swagger';
-import { ErrorCode, errorBody } from '../common/errors/error-codes';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import type { AuthenticatedUser } from '../auth/jwt-payload';
+import { InMemoryDbService } from '../database/in-memory-db.service';
+import { summariseAttendance } from '../common/academic-rules';
+import { campusScope } from '../core/scope';
+import { fullName } from '../core/util';
+import { AttendanceService } from '../attendance/attendance.service';
+import { AcademicsService } from '../academics/academics.service';
 
+/** The signed-in student's own data (read-only views over the academic records). */
 @ApiTags('Students')
-@Controller('students')
+@ApiBearerAuth()
+@Controller()
 export class StudentsController {
-  constructor(private studentsService: StudentsService) {}
+  constructor(private readonly db: InMemoryDbService, private readonly attendance: AttendanceService, private readonly academics: AcademicsService) {}
 
-  @Get('me')
+  @Get('students/me')
   @Roles('student')
-  @ApiOperation({ summary: 'Get current student profile' })
-  @ApiResponse({ status: 200, description: 'Student profile data' })
-  @ApiResponse({ status: 403, description: 'Access denied — students only' })
-  async getProfile(@CurrentUserId() userId: string) {
-    return this.studentsService.getProfile(userId);
+  profile(@CurrentUser() u: AuthenticatedUser) {
+    const scope = campusScope(this.db, u);
+    const st = this.db.students.find((s) => s.user_id === scope.userId);
+    const settings = this.db.college_settings.find((s) => s.college_id === scope.collegeId);
+    const dept = this.db.departments.find((d) => d.department_id === st?.department_id);
+    const programme = settings?.programmes?.find((p: any) => p.programme_id === st?.programme_id);
+    const fields = (settings?.custom_fields || []).filter((f: any) => f.applies_to === 'student');
+    return {
+      ...st,
+      department_name: dept?.department_name ?? null,
+      department_code: dept?.department_code ?? null,
+      programme: programme?.name ?? null,
+      college: this.db.colleges.find((c) => c.college_id === scope.collegeId)?.name ?? null,
+      custom_fields: fields.map((f: any) => ({ key: f.key, label: f.label, value: st?.custom_fields?.[f.key] ?? null })),
+    };
   }
 
-  @Get('profile/:userId')
-  @ApiOperation({ summary: 'Get student profile by user ID' })
-  @ApiResponse({ status: 200, description: 'Student profile data' })
-  async getProfileById(@Param('userId') userId: string) {
-    return this.studentsService.getProfile(userId);
+  @Get('students/me/courses')
+  @Roles('student')
+  courses(@CurrentUser() u: AuthenticatedUser) {
+    const scope = campusScope(this.db, u);
+    return this.db.enrollment
+      .filter((e) => e.student_id === scope.userId && e.status === 'active')
+      .map((e) => {
+        const course = this.db.courses.find((c) => c.course_id === e.course_id);
+        const cs = this.db.course_sections.find((s) => s.course_section_id === e.course_section_id);
+        const att = summariseAttendance(this.db.attendance_log.filter((a) => a.enrollment_id === e.enrollment_id));
+        const syllabus = this.db.syllabus_progress.find((s) => s.course_section_id === e.course_section_id);
+        return {
+          ...course,
+          faculty_id: cs?.faculty_id ?? null,
+          faculty_name: cs ? fullName(this.db.users.find((x) => x.user_id === cs.faculty_id)) || null : null,
+          enrollment_id: e.enrollment_id,
+          enrollment_status: e.status,
+          section: e.section,
+          section_id: e.course_section_id,
+          course_section_id: e.course_section_id,
+          attendance_pct: att.total ? att.percentage : null,
+          attendance_summary: att,
+          syllabus_progress: syllabus?.progress ?? null,
+          modules: syllabus?.modules ?? [],
+        };
+      });
   }
 
-  @Get('me/attendance')
+  @Get('students/me/attendance')
   @Roles('student')
-  @ApiOperation({ summary: 'Get attendance summary and records for current student' })
-  @ApiResponse({ status: 200, description: 'Attendance records and per-course summary' })
-  async getAttendance(@CurrentUserId() userId: string) {
-    return this.studentsService.getAttendance(userId);
+  attendanceMine(@CurrentUser() u: AuthenticatedUser) {
+    return this.attendance.mine(campusScope(this.db, u));
   }
 
-  @Get('me/courses')
+  @Get('students/me/marks')
   @Roles('student')
-  @ApiOperation({ summary: 'Get enrolled courses for current student' })
-  @ApiResponse({ status: 200, description: 'List of enrolled courses with enrollment status' })
-  async getCourses(@CurrentUserId() userId: string) {
-    return this.studentsService.getCourses(userId);
+  marks(@CurrentUser() u: AuthenticatedUser) {
+    return this.academics.studentResults(campusScope(this.db, u)).assessments;
   }
 
-  @Get('me/marks')
+  @Get('student-timetable')
   @Roles('student')
-  @ApiOperation({ summary: 'Get marks/assessments for current student' })
-  @ApiResponse({ status: 200, description: 'Marks with assessment and course details' })
-  async getMarks(@CurrentUserId() userId: string) {
-    return this.studentsService.getMarks(userId);
-  }
-
-  @Get('me/fees')
-  @Roles('student')
-  @ApiOperation({ summary: 'Get fee records for current student' })
-  @ApiResponse({ status: 200, description: 'Student fee records' })
-  async getFees(@CurrentUserId() userId: string) {
-    return this.studentsService.getFees(userId);
-  }
-
-  @Get('me/timetable')
-  @Roles('student')
-  @ApiOperation({ summary: 'Get timetable for current student (based on their section)' })
-  @ApiResponse({ status: 200, description: 'Weekly timetable grid for student section' })
-  async getTimetable(@CurrentUserId() userId: string) {
-    return this.studentsService.getTimetable(userId);
-  }
-
-  @Post('enroll')
-  @Roles('student')
-  @ApiOperation({ summary: 'Enroll in a course' })
-  @ApiResponse({ status: 201, description: 'Enrollment successful' })
-  @ApiResponse({ status: 400, description: 'Already enrolled or course not found' })
-  @ApiBody({ schema: { type: 'object', additionalProperties: true } })
-  async enroll(@Body() body: any, @CurrentUserId() userId: string) {
-    const courseId = body.course_id || body.courseId;
-    if (!courseId) throw new BadRequestException(
-      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'course_id is required'),
-    );
-    return this.studentsService.enroll(userId, courseId);
+  timetable(@CurrentUser() u: AuthenticatedUser) {
+    const slots = this.academics.timetable(campusScope(this.db, u), {});
+    const grid: Record<string, Record<string, any>> = {};
+    for (const s of slots) {
+      grid[s.day] = grid[s.day] || {};
+      const cur = grid[s.day][s.time];
+      grid[s.day][s.time] = cur ? [...(Array.isArray(cur) ? cur : [cur]), s] : s;
+    }
+    const times = [...new Set(slots.map((s) => s.time))].sort();
+    return { grid, days: ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].filter((d) => d !== 'SAT' || grid.SAT), times };
   }
 }

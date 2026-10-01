@@ -1,0 +1,15 @@
+/* Finance Portal additions (tokens from shared/styles.css only). */
+.fin-filters { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 16px; }
+.fin-filters .sp-field { min-width: 180px; }
+.fin-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.fin-list li { display: flex; justify-content: space-between; gap: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--sp-border); }
+.fin-list li:last-child { border-bottom: 0; padding-bottom: 0; }
+.fin-fieldset { border: 1px solid var(--sp-border); border-radius: var(--sp-radius); padding: 12px 14px; margin: 0; display: grid; gap: 10px; }
+.fin-fieldset legend { font-size: 13px; font-weight: 600; color: var(--sp-text-2); padding: 0 4px; }
+.fin-component-row { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto; gap: 10px; align-items: start; }
+.fin-component-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.fin-receipt-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding-bottom: 12px; margin-bottom: 12px; border-bottom: 1px solid var(--sp-border); }
+.fin-row-selected td { background: var(--sp-accent-soft); }
+.fin-test-banner { border: 2px dashed var(--sp-warning); border-radius: var(--sp-radius); padding: 10px 12px; background: var(--sp-badge-warning-bg); color: var(--sp-badge-warning-fg); font-size: 13px; }
+.fin-test-banner strong { display: block; letter-spacing: 0.04em; }
+@media (max-width: 560px) { .fin-component-row { grid-template-columns: 1fr auto; } .fin-component-row .sp-field:nth-child(2) { grid-column: 1; } }

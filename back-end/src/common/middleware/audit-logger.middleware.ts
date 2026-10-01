@@ -1,6 +1,8 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import type { Request, Response, NextFunction } from 'express';
+import { JwtService } from '@nestjs/jwt';
 import { FileLoggerService } from '../services/file-logger.service';
+import { requestIdentity } from './request-identity';
 
 const SENSITIVE_FIELDS = new Set(['password', 'password_hash', 'token', 'secret', 'authorization', 'cookie']);
 
@@ -22,15 +24,17 @@ function sanitizePayload(payload: any): any {
 
 @Injectable()
 export class AuditLoggerMiddleware implements NestMiddleware {
-  constructor(private readonly fileLogger: FileLoggerService) {}
+  constructor(private readonly fileLogger: FileLoggerService, private readonly jwt: JwtService) {}
 
   use(req: Request, res: Response, next: NextFunction) {
     const isMutation = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method.toUpperCase());
     if (!isMutation) return next();
 
     const timestamp = new Date().toISOString();
-    const actorId = (req as any).user?.sub || (req.headers['user-id'] as string) || 'anonymous';
-    const actorRole = (req as any).user?.role || (req.headers['role'] as string) || 'guest';
+    // The actor is taken from the verified session token only.
+    const identity = requestIdentity(req, this.jwt);
+    const actorId = identity.userId || 'anonymous';
+    const actorRole = identity.role || 'guest';
     const resource = req.originalUrl;
     const method = req.method;
     const ip = req.ip || req.socket.remoteAddress || '';

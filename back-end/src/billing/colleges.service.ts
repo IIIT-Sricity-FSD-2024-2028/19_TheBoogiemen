@@ -8,6 +8,7 @@
  * invented for "how to create an account" — only "what a college is" is new.
  */
 
+import { defaultSettings } from '../college/college.service';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { InMemoryDbService } from '../database/in-memory-db.service';
@@ -24,6 +25,7 @@ export function sanitizeUser<T extends Record<string, any>>(user: T): Partial<T>
 
 export interface CreateCollegeAndSpocParams {
   collegeName: string;
+  collegeCode?: string | null;
   city?: string | null;
   state?: string | null;
   type?: string | null;
@@ -57,6 +59,17 @@ export class CollegesService {
    * those two paths cannot drift — a bug fixed in one is fixed in both,
    * because there is only one implementation to fix.
    */
+  /** A short unique code from the given code or the college name's initials. */
+  private uniqueCode(source: string) {
+    const clean = String(source || '').toUpperCase().replace(/[^A-Z0-9 ]/g, '');
+    let base = /\s/.test(clean.trim()) ? clean.split(/\s+/).filter(Boolean).map((w) => w[0]).join('') : clean;
+    base = (base || 'COL').slice(0, 8);
+    if (base.length < 2) base = `${base}C`;
+    let code = base;
+    for (let i = 2; this.db.colleges.some((c) => c.code === code); i++) code = `${base}${i}`;
+    return code;
+  }
+
   async createCollegeAndSpoc(params: CreateCollegeAndSpocParams) {
     if (this.db.users.find((u) => u.email === params.spocEmail)) {
       throw new BadRequestException(
@@ -64,30 +77,40 @@ export class CollegesService {
       );
     }
 
-    const collegeId = `col${Date.now()}`;
+    const collegeId = `col_${Date.now().toString(36)}`;
+    const code = this.uniqueCode(params.collegeCode || params.collegeName);
+    const now = new Date().toISOString();
     const college = {
       college_id: collegeId,
+      code,
       name: params.collegeName,
       city: params.city ?? null,
       state: params.state ?? null,
       type: params.type ?? null,
       status: 'active' as const,
-      created_at: new Date().toISOString(),
+      created_at: now,
     };
     this.db.colleges.push(college);
+    // Every college starts with default settings the SPOC completes in setup.
+    this.db.college_settings.push(defaultSettings(collegeId));
 
-    const userId = `u${Date.now()}s`;
+    const userId = `u_${Date.now().toString(36)}s`;
     const firstName = params.spocFirstName || params.spocEmail.split('@')[0];
     const spocUser = {
       user_id: userId,
-      username: firstName,
+      username: params.spocEmail.split('@')[0],
       first_name: firstName,
       last_name: params.spocLastName || '',
       email: params.spocEmail,
-      phone: params.spocPhone || '',
+      phone: params.spocPhone || null,
       role: 'spoc' as const,
       college_id: collegeId,
+      status: 'active',
+      must_change_password: false,
+      department_id: null,
+      display_id: `${code}-SPOC-001`,
       password_hash: params.spocPasswordHash,
+      created_at: now,
     };
     this.db.users.push(spocUser);
 

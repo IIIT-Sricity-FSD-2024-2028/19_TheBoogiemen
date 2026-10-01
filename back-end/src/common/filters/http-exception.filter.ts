@@ -1,3 +1,5 @@
+import * as fs from 'fs';
+import * as path from 'path';
 import {
   ArgumentsHost,
   Catch,
@@ -30,6 +32,17 @@ import { mapDatabaseError } from '../errors/database-error.mapper';
 export class AllExceptionsFilter implements ExceptionFilter {
   constructor(private readonly logger: Logger) {}
 
+  /** Server errors are also kept in logs/error.log, so they can be read after the terminal has scrolled away. */
+  private appendErrorLog(entry: Record<string, unknown>) {
+    try {
+      const dir = path.join(process.cwd(), 'logs');
+      fs.mkdirSync(dir, { recursive: true });
+      fs.appendFileSync(path.join(dir, 'error.log'), `[${new Date().toISOString()}] [ERROR] ${JSON.stringify(entry)}\n`);
+    } catch {
+      // Logging must never turn one failure into two.
+    }
+  }
+
   catch(exception: unknown, host: ArgumentsHost) {
     // Non-HTTP contexts have no response to write to; let them propagate.
     if (host.getType() !== 'http') throw exception;
@@ -61,6 +74,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
         err: exception,
         msg: `Unhandled exception on ${request.method} ${request.url}`,
       });
+      this.appendErrorLog({ ...logContext, error: (exception as any)?.message ?? String(exception), stack: (exception as any)?.stack });
     } else {
       this.logger.debug({
         ...logContext,

@@ -5,19 +5,15 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3000,
-    open: '/react.html',
     proxy: {
       '/api': {
-        target: 'http://localhost:5002',
+        target: 'http://localhost:5001',
         changeOrigin: true,
       },
     },
   },
   build: {
-    rollupOptions: {
-      input: {
-        main: './react.html',
-      },
-    },
+    outDir: 'dist',
+    emptyOutDir: true,
   },
 });

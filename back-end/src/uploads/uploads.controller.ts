@@ -11,6 +11,7 @@ import {
   BadRequestException,
   Controller,
   Get,
+  NotFoundException,
   Param,
   Post,
   Query,
@@ -21,18 +22,22 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
-import { CurrentUserId, CurrentUserRole } from '../common/decorators/current-user.decorator';
+import { CurrentUser, CurrentUserId, CurrentUserRole } from '../common/decorators/current-user.decorator';
+import { InMemoryDbService } from '../database/in-memory-db.service';
 import { ErrorCode, errorBody } from '../common/errors/error-codes';
 import { generatePdfBuffer } from '../common/pdf-generator';
 import { UPLOAD_OPTIONS, ALLOWED_EXTENSIONS, MAX_FILE_BYTES } from './upload.config';
-import { UploadContext, UPLOAD_CONTEXTS, UploadsService } from './uploads.service';
-import type { Role } from '../auth/jwt-payload';
+import { PHOTO_MIME_TYPES, UploadContext, UPLOAD_CONTEXTS, UploadsService } from './uploads.service';
+import type { AuthenticatedUser, Role } from '../auth/jwt-payload';
 
 @ApiTags('Documents')
 @ApiBearerAuth()
 @Controller('uploads')
 export class UploadsController {
-  constructor(private readonly uploads: UploadsService) {}
+  constructor(
+    private readonly uploads: UploadsService,
+    private readonly db: InMemoryDbService,
+  ) {}
 
   @Post()
   // No @Roles: any authenticated user may attach a document to their own work.
@@ -125,6 +130,29 @@ export class UploadsController {
       return res.end(pdfBuf);
     }
     return this.download(fileId, userId, role, res);
+  }
+
+  @Get('me/photo')
+  @ApiOperation({ summary: "The signed-in user's profile photo (image, shown inline)" })
+  @ApiResponse({ status: 404, description: 'No profile photo set' })
+  async myPhoto(@CurrentUser() claims: AuthenticatedUser, @Res() res: Response) {
+    const user: any =
+      this.db.users.find((u) => u.user_id === claims.sub && u.email === claims.email) ??
+      this.db.users.find((u) => u.user_id === claims.sub);
+    if (!user?.photo_file_id) {
+      throw new NotFoundException(errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'No profile photo set'));
+    }
+    const record = this.uploads.findById(user.photo_file_id);
+    this.uploads.assertCanRead(record, claims.sub, claims.role as Role);
+    // Inline is safe only because profile photos are restricted to JPEG/PNG
+    // (checked by extension and MIME on upload and again here).
+    if (!PHOTO_MIME_TYPES.includes(record.mime_type)) {
+      throw new NotFoundException(errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'No profile photo set'));
+    }
+    res.setHeader('Content-Type', record.mime_type);
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Cache-Control', 'private, max-age=300');
+    res.sendFile(this.uploads.resolvePath(record));
   }
 
   @Get(':fileId')
