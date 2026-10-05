@@ -1,0 +1,85 @@
+/*
+ * Ported from legacy front-end/index.html's inline <style> block, scoped
+ * under .landing instead of bare element/`*` selectors — Vite keeps an
+ * imported stylesheet mounted for the life of the page, so an unscoped
+ * `* { margin: 0 }` here would leak into every other route once visited,
+ * not just this one page the way it did when index.html was its own
+ * document. Values are unchanged; only the selectors are scoped.
+ */
+
+.landing,
+.landing * {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Inter', sans-serif;
+}
+
+.landing {
+  --bg-dark: #0f172a;
+  --bg-card: #1e293b;
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  line-height: 1.6;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* Navbar */
+.landing nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 8%;
+  position: fixed;
+  width: 100%;
+  top: 0;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(12px);
+  z-index: 100;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.landing .logo {
+  font-size: 24px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #60a5fa, #a78bfa);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.landing .nav-links { display: flex; gap: 32px; align-items: center; }
+.landing .nav-links a { color: var(--text-main); text-decoration: none; font-weight: 500; transition: color 0.3s; }
+.landing .nav-links a:hover { color: var(--primary); }
+
+.landing .btn { padding: 12px 24px; border-radius: 8px; font-weight: 600; text-decoration: none; transition: all 0.3s; cursor: pointer; display: inline-block; }
+.landing .btn-outline { border: 1px solid rgba(255, 255, 255, 0.2); color: white; }
+.landing .btn-outline:hover { background: rgba(255, 255, 255, 0.1); }
+.landing .btn-primary { background: var(--primary); color: white; border: none; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4); }
+.landing .btn-primary:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6); }
+
+/* Hero */
+.landing .hero { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 0 20px; position: relative; }
+.landing .hero-glow { position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, rgba(15, 23, 42, 0) 70%); top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: -1; pointer-events: none; }
+.landing .hero h1 { font-size: 64px; font-weight: 800; letter-spacing: -1px; margin-bottom: 24px; max-width: 900px; line-height: 1.1; }
+.landing .hero h1 span { background: linear-gradient(135deg, #60a5fa, #c084fc); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.landing .hero p { font-size: 20px; color: var(--text-muted); max-width: 600px; margin-bottom: 40px; }
+.landing .hero-btns { display: flex; gap: 16px; }
+
+/* Features */
+.landing .features { padding: 100px 8%; background: #0b1121; }
+.landing .section-title { text-align: center; font-size: 36px; margin-bottom: 64px; }
+.landing .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 32px; }
+.landing .feature-card { background: var(--bg-card); padding: 40px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.05); transition: transform 0.3s, box-shadow 0.3s; }
+.landing .feature-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
+.landing .feature-icon { width: 48px; height: 48px; background: rgba(59, 130, 246, 0.1); color: var(--primary); display: flex; justify-content: center; align-items: center; border-radius: 12px; margin-bottom: 24px; }
+.landing .feature-icon svg { width: 24px; height: 24px; }
+.landing .feature-card h3 { font-size: 20px; margin-bottom: 12px; }
+.landing .feature-card p { color: var(--text-muted); font-size: 15px; }
+
+/* Footer */
+.landing footer { padding: 40px 8%; text-align: center; color: var(--text-muted); border-top: 1px solid rgba(255, 255, 255, 0.05); font-size: 14px; }
