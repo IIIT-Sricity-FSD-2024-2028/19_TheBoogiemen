@@ -10,14 +10,20 @@ import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationsContext';
 
+// viewId values match the actual view ids each dashboard settles on (kept
+// consistent across actors on purpose, same as legacy's shared
+// view-section ids e.g. "leave-management-view" on every page that has
+// one) — not every actor has every view (e.g. only students have
+// 'attendance'), so a click for a type that actor can't receive anyway is
+// a non-issue rather than something worth a per-actor map.
 const TYPE_META = {
   meeting: { icon: '📅', bg: '#eff6ff', border: '#bfdbfe', color: '#1e40af', label: 'Meeting', viewId: 'dashboard' },
   event: { icon: '🎉', bg: '#faf5ff', border: '#e9d5ff', color: '#7c3aed', label: 'Event', viewId: 'event-scheduler' },
   alert: { icon: '⚠️', bg: '#fef2f2', border: '#fecaca', color: '#dc2626', label: 'Alert', viewId: 'dashboard' },
-  info: { icon: '💡', bg: '#f0fdf4', border: '#bbf7d0', color: '#15803d', label: 'Info', viewId: 'research-projects' },
+  info: { icon: '💡', bg: '#f0fdf4', border: '#bbf7d0', color: '#15803d', label: 'Info', viewId: 'research' },
   fee: { icon: '💳', bg: '#fff7ed', border: '#fed7aa', color: '#c2410c', label: 'Fee', viewId: 'fee-compliance' },
   marks: { icon: '📊', bg: '#eff6ff', border: '#bfdbfe', color: '#1d4ed8', label: 'Marks', viewId: 'attendance' },
-  leave: { icon: '🗓️', bg: '#f0fdf4', border: '#bbf7d0', color: '#166534', label: 'Leave', viewId: 'leave-management' },
+  leave: { icon: '🗓️', bg: '#f0fdf4', border: '#bbf7d0', color: '#166534', label: 'Leave', viewId: 'leave' },
   default: { icon: '🔔', bg: '#f8fafc', border: '#e2e8f0', color: '#475569', label: 'Notice', viewId: 'dashboard' },
 };
 
