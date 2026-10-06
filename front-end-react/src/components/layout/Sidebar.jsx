@@ -11,9 +11,19 @@
 
 import { useAuth } from '../../context/AuthContext';
 
-export default function Sidebar({ brandSubtitle, avatarLetter, avatarClassName = 'avatar-default', roleLabel, navItems, activeView, onSelect, onLogout }) {
+export default function Sidebar({ brandSubtitle, avatarLetter, avatarClassName = 'avatar-default', roleLabel, navItems, licensedModules, activeView, onSelect, onLogout }) {
   const { user } = useAuth();
   const name = user ? `${user.first_name || ''} ${user.last_name || user.username || ''}`.trim() : '';
+
+  // Hides a nav item whose `module` isn't in the college's licensed module
+  // set — ported from legacy script.js applyModuleGating(). The real gate is
+  // the backend's RequiresModuleGuard; this only keeps the UI from offering
+  // a link that would 403. `licensedModules === null` means "not loaded yet
+  // or the lookup failed" — fail open, same as legacy, rather than hiding
+  // navigation over a transient network issue.
+  const visibleItems = navItems.filter(
+    (item) => !item.module || !licensedModules || licensedModules.includes(item.module),
+  );
 
   return (
     <aside className="sidebar">
@@ -31,7 +41,7 @@ export default function Sidebar({ brandSubtitle, avatarLetter, avatarClassName =
       </div>
 
       <nav className="sidebar-nav">
-        {navItems.map((item) => (
+        {visibleItems.map((item) => (
           <button
             key={item.id}
             type="button"

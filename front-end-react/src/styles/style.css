@@ -46,6 +46,17 @@ input.error {
     font-family: 'Outfit', 'Inter', system-ui, sans-serif;
 }
 
+/* Every legacy page's chrome (body.login-body, body.dashboard-body, …) was
+   written assuming its flex/centered children are direct children of
+   <body> — true in the old multi-page app, never true in this SPA, which
+   always has Vite's #root wrapper div in between. display:contents removes
+   that wrapper from the box model entirely, so body's flex rules reach the
+   real content exactly as the legacy CSS expects, with no layout rule
+   duplicated or rewritten. */
+#root {
+    display: contents;
+}
+
 /* ═══════════════════════════════════════════════
    LOGIN PAGE (Modern Refined)
    ═══════════════════════════════════════════════ */
