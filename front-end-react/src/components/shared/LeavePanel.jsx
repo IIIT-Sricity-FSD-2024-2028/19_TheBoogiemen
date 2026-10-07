@@ -1,17 +1,18 @@
 /**
  * LeavePanel — ported from legacy fixes.js renderStudentLeave() +
- * submitLeaveApplication() (student.html's leaveModal) and
+ * submitLeaveApplication() (student.html's leaveModal),
  * renderFacultyLeaveList() + submitFacultyLeave() (faculty.html's
- * fLeaveModal). The `role` prop is the extension point: admin/head's
- * approval view (renderLeaveManagement) arrives in Phase 3 as a third
- * branch — the legacy code already treated this as one feature with three
- * audiences, just different markup per audience (student: card list,
- * faculty: table, both with their own near-identical apply modal).
+ * fLeaveModal), and renderLeaveManagement() + updateLeave() (admin/head's
+ * approval view, super-user.html). Three different audiences for the same
+ * underlying `/leave` resource, each with genuinely different markup —
+ * admin/head's view has no metrics grid and no apply button at all (they
+ * only approve/reject), unlike student/faculty's apply-and-track views.
  */
 
 import { useEffect, useState } from 'react';
 import { apiFetch } from '../../api/client';
 import { uploadFile, downloadDocument } from '../../api/uploads';
+import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationsContext';
 import Modal from './Modal';
 
@@ -208,7 +209,101 @@ function LeaveApplyModal({ role, open, onClose, onSubmitted }) {
   );
 }
 
+function AdminLeaveRow({ leave, onDecide }) {
+  const [bg, fg] = STATUS_COLORS[leave.status] || ['#f1f5f9', '#475569'];
+  return (
+    <div style={{ padding: 12, border: '1px solid #e2e8f0', borderRadius: 8, marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div>
+        <div style={{ fontWeight: 600 }}>{leave.student_name || leave.student_id}</div>
+        <div style={{ fontSize: 12, color: '#64748b' }}>{leave.leave_type} • {leave.start_date} to {leave.end_date}</div>
+        <div style={{ fontSize: 12, marginTop: 4 }}>{leave.reason}</div>
+        {leave.file_id && (
+          <button
+            type="button"
+            onClick={() => downloadDocument(leave.file_id)}
+            style={{ marginTop: 6, padding: '4px 10px', fontSize: 11, fontWeight: 700, background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 6, cursor: 'pointer' }}
+          >
+            📎 View document
+          </button>
+        )}
+      </div>
+      <div>
+        {leave.status === 'pending' ? (
+          <>
+            <button
+              onClick={() => onDecide(leave, 'approved')}
+              style={{ padding: '6px 14px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 600, marginRight: 6 }}
+            >
+              ✓ Approve
+            </button>
+            <button
+              onClick={() => onDecide(leave, 'rejected')}
+              style={{ padding: '6px 14px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}
+            >
+              ✕ Reject
+            </button>
+          </>
+        ) : (
+          <span style={{ padding: '4px 8px', borderRadius: 4, fontSize: 11, background: bg, color: fg }}>{leave.status}</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AdminLeaveManagement() {
+  const { user } = useAuth();
+  const { showToast, send } = useNotifications();
+  const [leaves, setLeaves] = useState(undefined);
+
+  const load = () => apiFetch('/leave').then(setLeaves).catch(() => setLeaves([]));
+  useEffect(() => {
+    load();
+  }, []);
+
+  const decide = async (leave, status) => {
+    try {
+      await apiFetch(`/leave/${leave.leave_id}`, { method: 'PATCH', body: JSON.stringify({ status }) });
+      showToast(`Leave ${status === 'approved' ? 'approved ✅' : 'rejected ❌'}`, status === 'approved' ? 'success' : 'warning');
+      const studentId = leave.student_id || leave.user_id;
+      if (studentId) {
+        const from = user?.first_name || 'Admin';
+        const msg = status === 'approved'
+          ? `🗓 Your leave request has been APPROVED by ${from}. Enjoy your time off!`
+          : `❌ Your leave request has been REJECTED by ${from}. Please contact them for details.`;
+        send(studentId, from, msg, status === 'approved' ? 'info' : 'alert');
+      }
+      load();
+    } catch {
+      showToast('Failed', 'error');
+    }
+  };
+
+  return (
+    <div className="stats-card">
+      <div className="stats-card-header"><h3>Leave Request Management</h3></div>
+      <div className="stats-card-body" style={{ padding: 24 }}>
+        {leaves === undefined ? (
+          <div style={{ textAlign: 'center', color: '#64748b' }}>Loading...</div>
+        ) : leaves.length === 0 ? (
+          <p style={{ textAlign: 'center', color: '#64748b' }}>No leaves.</p>
+        ) : (
+          leaves.map((l) => <AdminLeaveRow key={l.leave_id} leave={l} onDecide={decide} />)
+        )}
+      </div>
+    </div>
+  );
+}
+
+// A thin dispatcher, no hooks of its own — avoids a wasted /leave fetch on
+// the admin/head path, which renders an entirely different component.
 export default function LeavePanel({ role }) {
+  if (role === 'admin' || role === 'head') return <AdminLeaveManagement />;
+  if (role === 'student' || role === 'faculty') return <PersonalLeavePanel role={role} />;
+  return null;
+}
+
+function PersonalLeavePanel({ role }) {
   const [leaves, setLeaves] = useState(undefined);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -216,8 +311,6 @@ export default function LeavePanel({ role }) {
   useEffect(() => {
     load();
   }, []);
-
-  if (role !== 'student' && role !== 'faculty') return null; // admin/head branch arrives in Phase 3
 
   const total = leaves?.length ?? 0;
   const rejected = leaves?.filter((l) => l.status === 'rejected').length ?? 0;
