@@ -30,3 +30,34 @@ export async function uploadFile(file, context) {
  * plain <a href> — fetch it with apiFetch and open the resulting blob.
  */
 export const fileUrl = (fileId) => `/api/uploads/${encodeURIComponent(fileId)}`;
+
+/**
+ * Fetch a stored document and hand it to the browser as a download.
+ * The session cookie is httpOnly and can't be attached by hand — `fetch`
+ * with `credentials` is the only way to reach an authenticated download.
+ */
+export async function downloadDocument(fileId, suggestedName) {
+  if (!fileId) throw new Error('No document attached');
+  const res = await fetch(fileUrl(fileId), { credentials: 'same-origin' });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.message || `Download failed (HTTP ${res.status})`);
+  }
+
+  // Prefer the filename the server put in Content-Disposition; it is the
+  // sanitised original name.
+  const disposition = res.headers.get('Content-Disposition') || '';
+  const match = disposition.match(/filename="([^"]+)"/);
+  const filename = match ? match[1] : suggestedName || 'document';
+
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  // Revoking immediately can cancel the download in some browsers.
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
