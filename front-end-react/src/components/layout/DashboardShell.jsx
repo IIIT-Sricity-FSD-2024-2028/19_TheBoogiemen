@@ -23,6 +23,7 @@ export default function DashboardShell({
   activeView,
   onSelect,
   title,
+  badges = [],
   children,
 }) {
   useBodyClass('dashboard-body');
@@ -57,7 +58,7 @@ export default function DashboardShell({
         onLogout={handleLogout}
       />
       <div className="main-content">
-        <Topbar title={title}>
+        <Topbar title={title} badges={badges}>
           <NotificationBell onNavigate={onSelect} />
         </Topbar>
         <div className="content-body">{children}</div>
