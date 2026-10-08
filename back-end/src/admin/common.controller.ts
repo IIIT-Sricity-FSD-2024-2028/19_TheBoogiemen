@@ -273,12 +273,25 @@ export class CommonController {
       );
       if (!isSameCollege(faculty, collegeId))
         notFoundInMyCollege('Faculty member');
+      // Display name lives in the separate faculty-profile collection, not
+      // on the bare user record (which only ever has username/email) — a
+      // user-only lookup here previously produced the literal string
+      // "undefined" via template interpolation. Joined the same way every
+      // other faculty_name lookup in this file does it (e.g. getResearch()'s
+      // supervisor_name), with the same last-resort fallback for the
+      // (expected never to happen) case where a user has no profile row.
+      const facultyProfile = this.db.faculty.find(
+        (f) => f.user_id === faculty.user_id,
+      );
+      const faculty_name = facultyProfile
+        ? `${facultyProfile.first_name} ${facultyProfile.last_name || ''}`.trim()
+        : faculty.username;
       return {
         course_section_id: uuidv4(),
         course_id: courseId,
         section,
         faculty_id: faculty.user_id,
-        faculty_name: `${faculty.first_name} ${faculty.last_name || ''}`.trim(),
+        faculty_name,
         college_id: collegeId,
       };
     });
