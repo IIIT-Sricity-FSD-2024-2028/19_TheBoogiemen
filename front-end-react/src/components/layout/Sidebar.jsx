@@ -45,8 +45,12 @@ export default function Sidebar({ brandSubtitle, avatarLetter, avatarClassName =
           <button
             key={item.id}
             type="button"
-            className={`nav-item ${activeView === item.id ? 'active' : ''}`}
-            onClick={() => onSelect(item.id)}
+            // `onAction` items (e.g. "Request Resources") trigger a one-off
+            // action — opening a modal — instead of switching the active
+            // view, matching legacy's onclick="openXModal(); return false;"
+            // nav links that never carried a view-section of their own.
+            className={`nav-item ${!item.onAction && activeView === item.id ? 'active' : ''}`}
+            onClick={() => (item.onAction ? item.onAction() : onSelect(item.id))}
           >
             {item.icon}
             <span>{item.label}</span>

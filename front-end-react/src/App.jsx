@@ -8,10 +8,11 @@ import Login from './pages/Login';
 import Onboarding from './pages/Onboarding';
 import NotFound from './pages/NotFound';
 import StudentDashboard from './pages/student/StudentDashboard';
+import FacultyDashboard from './pages/faculty/FacultyDashboard';
 
-// /faculty, /admin, /spoc, /superadmin are added one at a time in Phases
-// 2–5 of FRONTEND_REACT_MIGRATION_PLAN.md. Until then they (and any other
-// unknown path) fall through to NotFound.
+// /admin, /spoc, /superadmin are added one at a time in Phases 3–5 of
+// FRONTEND_REACT_MIGRATION_PLAN.md. Until then they (and any other unknown
+// path) fall through to NotFound.
 export default function App() {
   return (
     <BrowserRouter>
@@ -26,6 +27,14 @@ export default function App() {
               element={
                 <ProtectedRoute roles={['student']}>
                   <StudentDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/faculty/*"
+              element={
+                <ProtectedRoute roles={['faculty']}>
+                  <FacultyDashboard />
                 </ProtectedRoute>
               }
             />

@@ -171,6 +171,35 @@ function BTPUploadModal({ project, onClose, onSubmitted }) {
   );
 }
 
+// Faculty's research list is deliberately read-only here, matching the
+// legacy app's actually-reachable behavior: renderFacultyResearch() (wired
+// to the live Research Projects nav item) never renders an update button.
+// A richer renderFacultyResearchEnhanced()/openFacultyBTPModal() pair does
+// exist in fixes.js with a working "Update Progress" flow, but nothing in
+// faculty.html or the view-dispatch table ever calls it — it's dead code,
+// superseded by the simpler read-only renderer. Not wired up here either,
+// unlike Phase 1's enroll-course fix: that was one finished flow missing a
+// button; this is a whole second implementation that was abandoned in
+// favor of a different one, which reads as a deliberate simplification
+// rather than an oversight.
+function FacultyProjectCard({ project }) {
+  return (
+    <div style={{ padding: 16, border: '1px solid #e2e8f0', borderRadius: 8, marginBottom: 12 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+        <h4 style={{ margin: 0 }}>{project.title}</h4>
+        <span style={{ padding: '3px 8px', borderRadius: 4, fontSize: 11, background: '#e2e8f0' }}>{project.status}</span>
+      </div>
+      <p style={{ fontSize: 13, color: '#64748b' }}>{project.abstract || ''}</p>
+      <div style={{ marginTop: 12 }}>
+        <div style={{ fontSize: 12, marginBottom: 4 }}>Progress: {project.progress || 0}%</div>
+        <div style={{ height: 6, background: '#e2e8f0', borderRadius: 3, overflow: 'hidden' }}>
+          <div style={{ height: '100%', background: '#6366f1', width: `${project.progress || 0}%` }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ResearchPanel({ role }) {
   const [projects, setProjects] = useState(undefined);
   const [uploadTarget, setUploadTarget] = useState(null);
@@ -180,9 +209,15 @@ export default function ResearchPanel({ role }) {
     load();
   }, []);
 
-  if (role !== 'student') return null; // faculty branch arrives in Phase 2
+  if (role !== 'student' && role !== 'faculty') return null; // admin branch, if any, is a later phase
 
   if (projects === undefined) return null;
+
+  if (role === 'faculty') {
+    if (!projects.length) return <p style={{ color: '#64748b', textAlign: 'center' }}>No research projects.</p>;
+    return projects.map((p) => <FacultyProjectCard key={p.project_id} project={p} />);
+  }
+
   if (!projects.length) {
     return (
       <div style={{ padding: 32, textAlign: 'center', color: '#64748b' }}>
