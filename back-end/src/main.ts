@@ -120,11 +120,33 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe(VALIDATION_PIPE_OPTIONS));
 
   // 5. Serve Static Files (Windows & Mac Compatible)
-  // This resolves the 'front-end' folder relative to your current project location
-  // Add one extra '..' to go out of the back-end folder and into the root
-  const frontendPath = path.join(__dirname, '..', '..', '..', 'front-end');
+  // This resolves the 'front-end-react/dist' folder relative to your current
+  // project location. Add one extra '..' to go out of the back-end folder
+  // and into the root.
+  const frontendPath = path.join(
+    __dirname,
+    '..',
+    '..',
+    '..',
+    'front-end-react',
+    'dist',
+  );
   logger.log({ frontendPath, msg: 'Serving static frontend' });
   app.use(express.static(frontendPath));
+
+  // The React app is a single-page app: react-router-dom's BrowserRouter
+  // owns every non-API path client-side (/student, /login, /spoc/team, …),
+  // none of which exist as files on disk. express.static above already
+  // handles real assets (JS/CSS/images) and falls through via next() for
+  // anything it can't find; this catches what's left and hands back the
+  // SPA shell so the router can take it from there on a fresh load or a
+  // refresh. Must run after express.static (real files still win) and must
+  // exclude /api so an actually-unmatched API route still 404s as JSON
+  // instead of getting the HTML shell.
+  app.use((req, res, next) => {
+    if (req.method !== 'GET' || req.path.startsWith('/api')) return next();
+    res.sendFile(path.join(frontendPath, 'index.html'));
+  });
 
   // 6. Global API Prefix
   // Note: All your endpoints will now start with /api (e.g., /api/auth/login)
