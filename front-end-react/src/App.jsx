@@ -10,10 +10,10 @@ import NotFound from './pages/NotFound';
 import StudentDashboard from './pages/student/StudentDashboard';
 import FacultyDashboard from './pages/faculty/FacultyDashboard';
 import AdminHeadDashboard from './pages/admin/AdminHeadDashboard';
+import SpocDashboard from './pages/spoc/SpocDashboard';
+import SuperadminDashboard from './pages/superadmin/SuperadminDashboard';
 
-// /spoc, /superadmin are added one at a time in Phases 4–5 of
-// FRONTEND_REACT_MIGRATION_PLAN.md. Until then they (and any other unknown
-// path) fall through to NotFound.
+// Any unknown path falls through to NotFound.
 export default function App() {
   return (
     <BrowserRouter>
@@ -44,6 +44,22 @@ export default function App() {
               element={
                 <ProtectedRoute roles={['admin', 'head']}>
                   <AdminHeadDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/spoc/*"
+              element={
+                <ProtectedRoute roles={['spoc']}>
+                  <SpocDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/superadmin/*"
+              element={
+                <ProtectedRoute roles={['superadmin']}>
+                  <SuperadminDashboard />
                 </ProtectedRoute>
               }
             />

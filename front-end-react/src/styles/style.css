@@ -185,6 +185,8 @@ body.dashboard-body {
 .avatar-m  { background:#553c9a; }  /* Faculty (M) */
 .avatar-h  { background:#276749; }  /* Head (H) */
 .avatar-f  { background:#2b6cb0; }  /* Faham (F) */
+.avatar-s  { background:var(--accent-primary); }  /* SPOC (S) */
+.avatar-sa { background:#475569; }  /* Superadmin (S) */
 .avatar-default { background:#4a5568; }
 .user-info h3 { font-size:13px; font-weight:600; color:white; line-height:1.2; }
 .user-info p  { font-size:11px; color:#718096; margin-top:2px; }
