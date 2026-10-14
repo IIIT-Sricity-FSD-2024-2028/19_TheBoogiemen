@@ -108,7 +108,7 @@ function ActionRequired({ onNavigate }) {
         const pendAtt = attReqs.filter((r) => r.admin_status === 'pending').length;
         const pendBook = bookings.filter((b) => b.status === 'pending').length;
         const list = [];
-        if (pendLeaves) list.push({ icon: '🗓️', text: `${pendLeaves} leave(s) pending approval`, view: 'leave-management' });
+        if (pendLeaves) list.push({ icon: '🗓️', text: `${pendLeaves} leave(s) pending approval`, view: 'leave' });
         if (pendAtt) list.push({ icon: '📝', text: `${pendAtt} attendance request(s) pending`, view: 'attendance-override' });
         if (pendBook) list.push({ icon: '🏢', text: `${pendBook} resource booking(s) pending`, view: 'resource-management' });
         setItems(list);

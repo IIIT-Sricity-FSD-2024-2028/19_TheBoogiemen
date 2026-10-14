@@ -71,7 +71,7 @@ function AddUserModal({ open, onClose, onCreated }) {
           </div>
           <div className="form-group">
             <label>Password</label>
-            <input type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Minimum 6 characters" />
+            <input type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Minimum 8 characters" />
           </div>
           <div className="form-group">
             <label>Role</label>
