@@ -59,6 +59,41 @@ Open your browser and go to: **http://localhost:5001**
 
 ---
 
+## Running the React Frontend
+
+The React app (`front-end-react/`, React 18 + Vite + React Router v6) is the
+migrated frontend for every portal: Student, Faculty, Admin/Head, SPOC and
+Superadmin. It needs the backend from the steps above to be running on port 5001.
+
+Open a **second terminal** from the project root:
+
+```bash
+cd front-end-react
+npm install
+npm run dev
+```
+
+Then open **http://localhost:5173** and log in with one of the credentials below.
+
+The Vite dev server proxies every `/api` request to `http://localhost:5001`
+(see `front-end-react/vite.config.js`), so no CORS setup is needed.
+
+Other scripts:
+
+| Command | What it does |
+|---------|--------------|
+| `npm run build` | Production build into `front-end-react/dist/` |
+| `npm run preview` | Serves the production build locally (the backend must still be running) |
+
+### Testing the React app
+
+1. Start the backend (`cd back-end && npm run start`) and the React dev server (`cd front-end-react && npm run dev`).
+2. Log in at http://localhost:5173 with each account in the table below. Each role lands on its own portal (`/student`, `/faculty`, `/admin` for Admin and Head, `/superadmin`).
+3. Admin example flow: **User Management → + Add User** creates a user. **Event Scheduler → Schedule Event** broadcasts a notification. **Leave Requests** lets you approve or reject a pending leave.
+4. Opening another role's portal URL redirects to `/login` (`ProtectedRoute`). The backend's role guards still enforce access on every API call.
+
+---
+
 ## Login Credentials
 
 Demo accounts only. These are seeded fixtures for local development — do not
