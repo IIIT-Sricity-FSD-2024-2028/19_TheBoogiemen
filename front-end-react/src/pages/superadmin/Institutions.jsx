@@ -9,7 +9,7 @@
  * legacy comment on this exact table explains why.
  */
 
-import { useEffect, useState } from 'react';
+import { useCallback,useEffect, useState } from 'react';
 import { apiFetch } from '../../api/client';
 import { useNotifications } from '../../context/NotificationsContext';
 import Modal from '../../components/shared/Modal';
@@ -152,11 +152,17 @@ function SupportInbox() {
   const [threads, setThreads] = useState(undefined);
   const [openThreadId, setOpenThreadId] = useState(null);
 
-  const load = () =>
+  // We define `load` using useCallback so it has a stable reference 
+  // for the useEffect dependency array and the ThreadModal's onReplied prop.
+  const load = useCallback(() => {
     apiFetch('/billing/support/threads')
       .then((res) => setThreads(res?.data || []))
       .catch((e) => showToast('Failed to load support inbox: ' + e.message, 'error'));
-  useEffect(load, []);
+  }, [showToast]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   return (
     <div className="stats-card">
