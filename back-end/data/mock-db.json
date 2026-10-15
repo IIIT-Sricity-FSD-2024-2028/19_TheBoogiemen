@@ -101,6 +101,17 @@
       "role": "admin",
       "college_id": "c-default",
       "password_hash": "$2b$12$GwCmcL3TlncGSYWiNBnwPeazpqGXzNBrE5Un5FTkx2Er7/fOt2pxW"
+    },
+    {
+      "user_id": "u1792070686679",
+      "username": "Pranjal",
+      "first_name": "Pranjal",
+      "last_name": "Srivastava",
+      "email": "pranjalsrivastava014@gmail.com",
+      "phone": "",
+      "role": "admin",
+      "college_id": "c-default",
+      "password_hash": "$2b$12$b8AdsDj1oTb4CHX6O7Zr6.r41FqWFh7b.cjjmg4zkIxiWfB.3zpEm"
     }
   ],
   "students": [
