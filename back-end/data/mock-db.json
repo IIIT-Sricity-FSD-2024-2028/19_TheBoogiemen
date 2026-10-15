@@ -939,7 +939,7 @@
       "student_name": "John Doe",
       "status": "active",
       "abstract": "Implementing a decentralized ledger for securing university diplomas.",
-      "progress": 45,
+      "progress": 50,
       "students": [
         {
           "user_id": "u1",
@@ -947,7 +947,13 @@
           "last_name": "Doe"
         }
       ],
-      "uploads": [],
+      "uploads": [
+        {
+          "file_id": "46f0b2f6-7275-4195-82b2-7530770d32c8",
+          "original_name": "SRS.pdf",
+          "uploaded_at": "2026-10-15T07:24:37.950Z"
+        }
+      ],
       "milestones": [
         {
           "title": "Inception",
@@ -960,7 +966,9 @@
           "status": "in-progress"
         }
       ],
-      "college_id": "c-default"
+      "college_id": "c-default",
+      "submission_notes": "completed the attack mitigation",
+      "faculty_feedback": "Good progress!"
     },
     {
       "project_id": "rp2",
