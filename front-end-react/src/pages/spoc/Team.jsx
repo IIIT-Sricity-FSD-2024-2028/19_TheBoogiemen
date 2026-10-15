@@ -1,13 +1,12 @@
 /**
- * Team — ported from spoc.html's team-view + the admin-roster half of
- * loadSubscriptionAndAdmins() + the hireAdminModal/submitHireAdmin flow.
- *
- * `role` is never sent to the server — the legacy comment on this exact
- * call explains why: the backend stamps 'admin' + this SPOC's own
- * college_id itself (ROLE_GRANTS in common/dto/user.dto.ts), so a form
- * field here would be decoration.
- */
-
+* Team — ported from spoc.html's team-view + the admin-roster half of
+* loadSubscriptionAndAdmins() + the hireAdminModal/submitHireAdmin flow.
+*
+* `role` is never sent to the server — the legacy comment on this exact
+* call explains why: the backend stamps 'admin' + this SPOC's own
+* college_id itself (ROLE_GRANTS in common/dto/user.dto.ts), so a form
+* field here would be decoration.
+*/
 import { useEffect, useState } from 'react';
 import { apiFetch } from '../../api/client';
 import { useNotifications } from '../../context/NotificationsContext';
@@ -31,6 +30,15 @@ function HireAdminModal({ open, onClose, onHired }) {
 
   const submit = async (e) => {
     e.preventDefault();
+
+    // Client-side validation: catch short passwords before they hit the
+    // backend's @MinLength(8) constraint, which would return a 400 that
+    // the catch block below surfaces as a generic error toast.
+    if (password.length < 8) {
+      showToast('Password must be at least 8 characters', 'warning');
+      return;
+    }
+
     setSubmitting(true);
     try {
       await apiFetch('/users', {
@@ -87,11 +95,22 @@ export default function Team() {
   const [admins, setAdmins] = useState(undefined);
   const [hireOpen, setHireOpen] = useState(false);
 
-  const load = () =>
-    apiFetch('/billing/colleges/me')
-      .then((res) => setAdmins(res?.data?.admins || []))
-      .catch(() => setAdmins([]));
-  useEffect(load, []);
+  // FIX: Wrap the async call in a synchronous function inside useEffect.
+  // The previous `useEffect(load, [])` returned a Promise from the effect
+  // callback, which violates React's contract (effects must return undefined
+  // or a cleanup function). In React 18 strict mode, this can cause the
+  // component to fail to mount properly, resulting in a blank page.
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await apiFetch('/billing/colleges/me');
+        setAdmins(res?.data?.admins || []);
+      } catch {
+        setAdmins([]);
+      }
+    };
+    load();
+  }, []);
 
   return (
     <div className="stats-card">
@@ -124,7 +143,12 @@ export default function Team() {
           })
         )}
       </div>
-      <HireAdminModal open={hireOpen} onClose={() => setHireOpen(false)} onHired={load} />
+      <HireAdminModal open={hireOpen} onClose={() => setHireOpen(false)} onHired={() => {
+        // Re-fetch the admin list after a successful hire
+        apiFetch('/billing/colleges/me')
+          .then((res) => setAdmins(res?.data?.admins || []))
+          .catch(() => setAdmins([]));
+      }} />
     </div>
   );
 }
