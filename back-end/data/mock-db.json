@@ -257,6 +257,13 @@
       "credits": 4,
       "semester": 1,
       "college_id": "c-default"
+    },
+    {
+      "course_id": "c1791660079788",
+      "course_code": "AUDIT101",
+      "course_name": "Audit Test Course",
+      "credits": 3,
+      "college_id": "c-default"
     }
   ],
   "course_sections": [
@@ -343,6 +350,14 @@
     {
       "course_section_id": "8f7dfad3-0e40-4a82-a66f-4799ab31649c",
       "course_id": "c1791355567387",
+      "section": "A",
+      "faculty_id": "u2",
+      "faculty_name": "Jane Smith",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "27ceffb4-54a3-4fd3-8712-379c24cdb1a9",
+      "course_id": "c1791660079788",
       "section": "A",
       "faculty_id": "u2",
       "faculty_name": "Jane Smith",
