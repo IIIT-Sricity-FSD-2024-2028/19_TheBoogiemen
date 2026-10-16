@@ -97,7 +97,8 @@ Use any of the seeded demo accounts below to sign in:
    - [4.3 Modular SaaS Feature Gating (`RequiresModuleGuard`)](#43-modular-saas-feature-gating-requiresmoduleguard)
    - [4.4 Ephemeral Onboarding Session Guard (`OnboardingSessionGuard`)](#44-ephemeral-onboarding-session-guard-onboardingsessionguard)
 6. [🧩 Modern React Architecture & Portals](#-modern-react-architecture--portals)
-7. [🧪 Automated Test Suite & Verification](#-automated-test-suite--verification)
+7. [📅 Timetable Scheduling Engine & Automated Conflict Prevention](#-timetable-scheduling-engine--automated-conflict-prevention)
+8. [🧪 Automated Test Suite & Verification](#-automated-test-suite--verification)
 
 ---
 
@@ -324,6 +325,76 @@ The frontend is built as a single, cohesive **React Single Page Application** in
 | 🛡️ **Admin & Head Portal** | `/admin/*` | `AdminHeadDashboard.jsx` | User lifecycle management, course allocations, institutional compliance reports, leave approvals, fee records |
 | 🤝 **SPOC Portal** | `/spoc/*` | `SpocDashboard.jsx` | Institution subscription management, billing tiers, team contacts |
 | 👑 **Super Admin** | `/superadmin/*` | `SuperadminDashboard.jsx` | Global institutional governance, tenant onboarding reviews |
+
+---
+
+## 📅 Timetable Scheduling Engine & Automated Conflict Prevention
+
+The academic schedule is managed dynamically via an end-to-end scheduling engine designed to eliminate double-booking across sections, faculty, and physical classrooms/laboratories.
+
+```
+                  ┌──────────────────────────────────────────────┐
+                  │      POST /api/timetable (Slot Request)      │
+                  │  (course_id, section, day, time, room, type) │
+                  └──────────────────────┬───────────────────────┘
+                                         │
+                    ┌────────────────────┴────────────────────┐
+                    ▼                                         ▼
+   ┌─────────────────────────────────┐       ┌─────────────────────────────────┐
+   │    1. Section Conflict Check    │       │     2. Room Conflict Check      │
+   │ Is Section (A/B) busy at (D,T)? │       │  Is Room/Lab occupied at (D,T)? │
+   └────────────────┬────────────────┘       └────────────────┬────────────────┘
+                    │                                         │
+                    │ No Conflict                             │ No Conflict
+                    └────────────────────┬────────────────────┘
+                                         ▼
+                      ┌──────────────────────────────────────┐
+                      │  Create Slot & Persist to Database   │
+                      │  • Auto-resolves code & name         │
+                      │  • Injects authenticated college_id  │
+                      └──────────────────┬───────────────────┘
+                                         │
+                    ┌────────────────────┴────────────────────┐
+                    ▼                                         ▼
+   ┌─────────────────────────────────┐       ┌─────────────────────────────────┐
+   │      Student Timetable View     │       │      Faculty Timetable View     │
+   │  GET /api/student-timetable     │       │  GET /api/timetable/faculty     │
+   │  Filtered to enrolled courses   │       │  Filtered to assigned sections  │
+   └─────────────────────────────────┘       └─────────────────────────────────┘
+```
+
+### 1. Timetable Endpoints Matrix
+
+| HTTP Method | Route | Authorization Roles | Purpose & Filter Semantics |
+|---|---|---|---|
+| `GET` | `/api/student-timetable` | `student` | Returns personalized weekly matrix filtered **only to courses the authenticated student is actively enrolled in** within their section. |
+| `GET` | `/api/timetable/faculty` | `faculty` | Returns the weekly matrix of slots matching the faculty member's assigned `(course_id, section)` pairs in `course_sections`. |
+| `GET` | `/api/timetable` | `student`, `faculty`, `admin`, `head`, `superadmin` | Section-level schedule grid and raw slot array (`?section=A` or `?section=B`), scoped to tenant college. |
+| `POST` | `/api/timetable` | `student`, `faculty`, `admin`, `head`, `superadmin` | Dynamic slot creation with automated **Section Clash** and **Room Double-Booking** prevention. |
+| `DELETE` | `/api/timetable/:id` | `student`, `faculty`, `admin`, `head`, `superadmin` | Deletes a scheduled class slot with college-scoping security validation. |
+
+### 2. Dual-Layer Conflict Detection Engine
+Before committing any class slot to persistence, `common.controller.ts` validates two strict academic constraints:
+1. **Section Time Conflict**:
+   - Ensures students in Section `A` or `B` are not expected in two classes simultaneously.
+   - Rejects overlapping requests with `409 Conflict`:
+     `"Section A already has CS201 (Data Structures) scheduled on MON at 09:00."`
+2. **Room / Facility Double-Booking**:
+   - Ensures physical lecture halls (`101`, `102`, `201`, `202`) and specialized labs (`Lab 1`, `Lab 2`) are occupied by at most one cohort at any given day and time slot.
+   - Rejects overlapping room requests with `409 Conflict`:
+     `"Room '101' is already booked on MON at 09:00 for CS201 (Section A)."`
+
+### 3. Modern React `<Timetable />` Component (`front-end-react/src/components/shared/Timetable.jsx`)
+- **Interactive Calendar Grid**: Visual weekly schedule spanning Monday to Friday across 7 standard time blocks (`09:00` to `15:00`).
+- **Color-Coded Modality Badges**: Distinct themes and icons for **Lectures** (📖 Blue), **Labs** (🔬 Amber), and **Tutorials** (✏️ Green).
+- **Integrated `ScheduleClassModal`**:
+  - Course selection from institutional catalog.
+  - Section toggle (`Section A` / `Section B`).
+  - Day & time slot picker.
+  - Room input with instant presets (`101`, `102`, `Lab 1`, `Lab 2`).
+  - Real-time conflict feedback banners showing the exact conflict reason returned by the backend.
+- **One-Click Slot Deletion**: Interactive removal button (`×`) on class cards with confirmation.
+- **Metrics Footer**: Live computation of weekly class count, lecture hours, lab hours, and tutorial sessions.
 
 ---
 

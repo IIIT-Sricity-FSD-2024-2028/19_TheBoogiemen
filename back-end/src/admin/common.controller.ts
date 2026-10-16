@@ -10,6 +10,7 @@ import {
   Delete,
   Req,
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   InternalServerErrorException,
   NotFoundException,
@@ -300,10 +301,11 @@ export class CommonController {
     @Query('section') section: string = 'A',
     @CurrentUserCollegeId() collegeId: string | null,
   ) {
+    const normSection = (section || 'A').toUpperCase();
     const slots = scopeToCollege(this.db.timetable, collegeId).filter(
-      (t) => t.section === section,
+      (t) => (t.section || 'A').toUpperCase() === normSection,
     );
-    return { grid: buildTimetableGrid(slots), ...TIMETABLE_AXES };
+    return { grid: buildTimetableGrid(slots), slots, section: normSection, ...TIMETABLE_AXES };
   }
 
   @Get('timetable/faculty')
@@ -317,10 +319,137 @@ export class CommonController {
     const mySections = sectionsTaughtBy(this.db, userId);
     const slots = scopeToCollege(this.db.timetable, collegeId).filter((t) =>
       mySections.some(
-        (cs) => cs.course_id === t.course_id && cs.section === t.section,
+        (cs) => cs.course_id === t.course_id && (cs.section || 'A').toUpperCase() === (t.section || 'A').toUpperCase(),
       ),
     );
-    return { grid: buildTimetableGrid(slots), ...TIMETABLE_AXES };
+    return { grid: buildTimetableGrid(slots), slots, ...TIMETABLE_AXES };
+  }
+
+  @Post('timetable')
+  @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
+  @ApiOperation({ summary: 'Schedule a new class slot with conflict checking' })
+  async createTimetableSlot(
+    @Body() body: any,
+    @CurrentUserId() userId: string,
+    @CurrentUserRole() userRole: string,
+    @CurrentUserCollegeId() collegeId: string | null,
+  ) {
+    let { course_id, section, day, time, room, type } = body || {};
+
+    if (!course_id) {
+      throw new BadRequestException('course_id is required');
+    }
+
+    // Lookup course
+    const course = scopeToCollege(this.db.courses, collegeId).find(
+      (c) => c.course_id === course_id || c.course_code?.toUpperCase() === String(course_id).toUpperCase(),
+    );
+    if (!course) {
+      throw new NotFoundException(`Course '${course_id}' not found`);
+    }
+
+    // Resolve section
+    if (userRole === 'student') {
+      const student = this.db.students.find((s) => s.user_id === userId);
+      section = (student?.section || 'A').toUpperCase();
+    } else {
+      section = (section || 'A').toUpperCase();
+    }
+
+    // Validate day
+    day = (day || '').trim().toUpperCase();
+    if (!TIMETABLE_AXES.days.includes(day)) {
+      throw new BadRequestException(
+        `Invalid day '${day}'. Allowed values: ${TIMETABLE_AXES.days.join(', ')}`,
+      );
+    }
+
+    // Validate time
+    time = (time || '').trim();
+    if (!TIMETABLE_AXES.times.includes(time)) {
+      throw new BadRequestException(
+        `Invalid time '${time}'. Allowed values: ${TIMETABLE_AXES.times.join(', ')}`,
+      );
+    }
+
+    room = (room || '101').trim();
+    type = (type || 'lecture').toLowerCase();
+    if (!['lecture', 'lab', 'tutorial'].includes(type)) {
+      type = 'lecture';
+    }
+
+    // Conflict Check 1: Section already has class at this day + time
+    const collegeSlots = scopeToCollege(this.db.timetable, collegeId);
+    const sectionConflict = collegeSlots.find(
+      (t) =>
+        t.day === day &&
+        t.time === time &&
+        (t.section || 'A').toUpperCase() === section,
+    );
+    if (sectionConflict) {
+      throw new ConflictException(
+        `Section ${section} already has ${sectionConflict.course_code} (${sectionConflict.course_name}) scheduled on ${day} at ${time}.`,
+      );
+    }
+
+    // Conflict Check 2: Room occupied at this day + time
+    const roomConflict = collegeSlots.find(
+      (t) =>
+        t.day === day &&
+        t.time === time &&
+        t.room &&
+        t.room.trim().toLowerCase() === room.toLowerCase(),
+    );
+    if (roomConflict) {
+      throw new ConflictException(
+        `Room "${room}" is already booked on ${day} at ${time} for ${roomConflict.course_code} (Section ${roomConflict.section}).`,
+      );
+    }
+
+    // Create and save new slot
+    const newSlot = {
+      slot_id: `t${Date.now()}`,
+      day,
+      time,
+      course_id: course.course_id,
+      course_code: course.course_code,
+      course_name: course.course_name,
+      room,
+      type,
+      section,
+      college_id: writeCollegeId(collegeId),
+    };
+
+    this.db.timetable.push(newSlot);
+    this.db.persist();
+
+    return {
+      success: true,
+      message: `Class scheduled successfully: ${course.course_code} on ${day} at ${time} in Room ${room}`,
+      slot: newSlot,
+    };
+  }
+
+  @Delete('timetable/:id')
+  @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
+  @ApiOperation({ summary: 'Delete a scheduled class slot' })
+  async deleteTimetableSlot(
+    @Param('id') slotId: string,
+    @CurrentUserCollegeId() collegeId: string | null,
+  ) {
+    const idx = this.db.timetable.findIndex(
+      (t) => t.slot_id === slotId && isSameCollege(t, collegeId),
+    );
+    if (idx === -1) {
+      throw new NotFoundException(`Timetable slot '${slotId}' not found`);
+    }
+    const removed = this.db.timetable.splice(idx, 1)[0];
+    this.db.persist();
+    return {
+      success: true,
+      message: `Slot for ${removed.course_code} (${removed.day} ${removed.time}) removed`,
+      slot: removed,
+    };
   }
 
   // ── Assessments ──────────────────────────────────────────────────────────────
@@ -2088,14 +2217,16 @@ export class CommonController {
     @CurrentUserCollegeId() collegeId: string | null,
   ) {
     const student = this.db.students.find((s) => s.user_id === userId);
-    const section = student?.section || 'A';
+    const section = (student?.section || 'A').toUpperCase();
     const enrolledCourseIds = this.db.enrollment
       .filter((e) => e.student_id === userId && e.status === 'active')
       .map((e) => e.course_id);
     const slots = scopeToCollege(this.db.timetable, collegeId).filter(
-      (t) => t.section === section && enrolledCourseIds.includes(t.course_id),
+      (t) =>
+        (t.section || 'A').toUpperCase() === section &&
+        enrolledCourseIds.includes(t.course_id),
     );
-    return { grid: buildTimetableGrid(slots), ...TIMETABLE_AXES };
+    return { grid: buildTimetableGrid(slots), slots, section, ...TIMETABLE_AXES };
   }
 }
 

@@ -90,6 +90,17 @@
       "role": "spoc",
       "college_id": "col1791187823669",
       "password_hash": "$2b$12$1Qz9ro9NvATbNnI9v7zRd.5SWa8NPk07L2WJEmX8ODniEcUiJMqBm"
+    },
+    {
+      "user_id": "u1792145915270",
+      "username": "Harshini",
+      "first_name": "Harshini",
+      "last_name": "",
+      "email": "harshini@example.com",
+      "phone": "",
+      "role": "student",
+      "college_id": "c-default",
+      "password_hash": "$2b$12$KmsMjBo8Yw6fveIBQBNbPOkPvfWmEX4MR7qN8yRIjsopKqaSMoMLC"
     }
   ],
   "students": [
@@ -119,6 +130,20 @@
       "phone": "9876543211",
       "join_date": "2022-08-01",
       "email": "student2@example.com",
+      "college_id": "c-default"
+    },
+    {
+      "user_id": "u1792145915270",
+      "first_name": "Harshini",
+      "last_name": "",
+      "branch": "CSE",
+      "batch": "2024-2028",
+      "cgpa": 7,
+      "section": "A",
+      "email": "harshini@example.com",
+      "join_date": "2026-10-16",
+      "dob": "2005-01-01",
+      "phone": "",
       "college_id": "c-default"
     }
   ],
@@ -274,6 +299,70 @@
       "faculty_id": "u7",
       "faculty_name": "Robert Wilson",
       "college_id": "c-default"
+    },
+    {
+      "course_section_id": "cs-c1-b",
+      "course_id": "c1",
+      "section": "B",
+      "faculty_id": "u7",
+      "faculty_name": "Robert Wilson",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "cs-c2-b",
+      "course_id": "c2",
+      "section": "B",
+      "faculty_id": "u7",
+      "faculty_name": "Robert Wilson",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "cs-c3-b",
+      "course_id": "c3",
+      "section": "B",
+      "faculty_id": "u2",
+      "faculty_name": "Jane Smith",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "cs-c4-b",
+      "course_id": "c4",
+      "section": "B",
+      "faculty_id": "u2",
+      "faculty_name": "Jane Smith",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "cs-c5-b",
+      "course_id": "c5",
+      "section": "B",
+      "faculty_id": "u7",
+      "faculty_name": "Robert Wilson",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "cs-c6-b",
+      "course_id": "c6",
+      "section": "B",
+      "faculty_id": "u2",
+      "faculty_name": "Jane Smith",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "cs-c7-b",
+      "course_id": "c7",
+      "section": "B",
+      "faculty_id": "u7",
+      "faculty_name": "Robert Wilson",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "cs-c8-b",
+      "course_id": "c8",
+      "section": "B",
+      "faculty_id": "u2",
+      "faculty_name": "Jane Smith",
+      "college_id": "c-default"
     }
   ],
   "enrollment": [
@@ -329,6 +418,24 @@
       "year_id": "2025",
       "status": "active",
       "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "enrollment_id": "e1792159230726",
+      "student_id": "u1792145915270",
+      "course_id": "c1",
+      "year_id": "2026",
+      "status": "active",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "enrollment_id": "e1792159243111",
+      "student_id": "u1792145915270",
+      "course_id": "c4",
+      "year_id": "2026",
+      "status": "active",
+      "section": "A",
       "college_id": "c-default"
     }
   ],
@@ -1021,6 +1128,102 @@
       "college_id": "c-default"
     },
     {
+      "slot_id": "t25",
+      "day": "MON",
+      "time": "12:00",
+      "course_id": "c3",
+      "course_code": "CS301",
+      "course_name": "Algorithms",
+      "room": "101",
+      "type": "lecture",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t26",
+      "day": "WED",
+      "time": "12:00",
+      "course_id": "c3",
+      "course_code": "CS301",
+      "course_name": "Algorithms",
+      "room": "101",
+      "type": "lecture",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t27",
+      "day": "THU",
+      "time": "12:00",
+      "course_id": "c3",
+      "course_code": "CS301",
+      "course_name": "Algorithms",
+      "room": "101",
+      "type": "lecture",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t28",
+      "day": "FRI",
+      "time": "12:00",
+      "course_id": "c3",
+      "course_code": "CS301",
+      "course_name": "Algorithms",
+      "room": "Lab 1",
+      "type": "lab",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t29",
+      "day": "MON",
+      "time": "14:00",
+      "course_id": "c4",
+      "course_code": "CS302",
+      "course_name": "Theory of Computation",
+      "room": "102",
+      "type": "lecture",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t30",
+      "day": "TUE",
+      "time": "14:00",
+      "course_id": "c4",
+      "course_code": "CS302",
+      "course_name": "Theory of Computation",
+      "room": "102",
+      "type": "lecture",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t31",
+      "day": "WED",
+      "time": "14:00",
+      "course_id": "c4",
+      "course_code": "CS302",
+      "course_name": "Theory of Computation",
+      "room": "102",
+      "type": "lecture",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t32",
+      "day": "THU",
+      "time": "14:00",
+      "course_id": "c4",
+      "course_code": "CS302",
+      "course_name": "Theory of Computation",
+      "room": "102",
+      "type": "tutorial",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
       "slot_id": "t9",
       "day": "MON",
       "time": "11:00",
@@ -1069,6 +1272,54 @@
       "college_id": "c-default"
     },
     {
+      "slot_id": "t33",
+      "day": "MON",
+      "time": "15:00",
+      "course_id": "c6",
+      "course_code": "CS402",
+      "course_name": "Operating Systems",
+      "room": "103",
+      "type": "lecture",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t34",
+      "day": "TUE",
+      "time": "15:00",
+      "course_id": "c6",
+      "course_code": "CS402",
+      "course_name": "Operating Systems",
+      "room": "103",
+      "type": "lecture",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t35",
+      "day": "WED",
+      "time": "15:00",
+      "course_id": "c6",
+      "course_code": "CS402",
+      "course_name": "Operating Systems",
+      "room": "Lab 2",
+      "type": "lab",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t36",
+      "day": "FRI",
+      "time": "15:00",
+      "course_id": "c6",
+      "course_code": "CS402",
+      "course_name": "Operating Systems",
+      "room": "103",
+      "type": "lecture",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
       "slot_id": "t13",
       "day": "TUE",
       "time": "10:00",
@@ -1111,6 +1362,42 @@
       "course_id": "c7",
       "course_code": "CS403",
       "course_name": "Advanced DSA",
+      "room": "Lab 2",
+      "type": "lab",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t37",
+      "day": "TUE",
+      "time": "12:00",
+      "course_id": "c8",
+      "course_code": "CS404",
+      "course_name": "Artificial Intelligence",
+      "room": "104",
+      "type": "lecture",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t38",
+      "day": "WED",
+      "time": "13:00",
+      "course_id": "c8",
+      "course_code": "CS404",
+      "course_name": "Artificial Intelligence",
+      "room": "104",
+      "type": "lecture",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t39",
+      "day": "THU",
+      "time": "15:00",
+      "course_id": "c8",
+      "course_code": "CS404",
+      "course_name": "Artificial Intelligence",
       "room": "Lab 2",
       "type": "lab",
       "section": "A",
@@ -1165,6 +1452,54 @@
       "college_id": "c-default"
     },
     {
+      "slot_id": "t40",
+      "day": "MON",
+      "time": "10:00",
+      "course_id": "c2",
+      "course_code": "CS202",
+      "course_name": "Database Systems",
+      "room": "201",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t41",
+      "day": "WED",
+      "time": "10:00",
+      "course_id": "c2",
+      "course_code": "CS202",
+      "course_name": "Database Systems",
+      "room": "201",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t42",
+      "day": "THU",
+      "time": "10:00",
+      "course_id": "c2",
+      "course_code": "CS202",
+      "course_name": "Database Systems",
+      "room": "201",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t43",
+      "day": "FRI",
+      "time": "10:00",
+      "course_id": "c2",
+      "course_code": "CS202",
+      "course_name": "Database Systems",
+      "room": "Lab 2",
+      "type": "lab",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
       "slot_id": "t21",
       "day": "MON",
       "time": "14:00",
@@ -1209,6 +1544,234 @@
       "course_name": "Algorithms",
       "room": "Lab 2",
       "type": "lab",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t44",
+      "day": "MON",
+      "time": "09:00",
+      "course_id": "c4",
+      "course_code": "CS302",
+      "course_name": "Theory of Computation",
+      "room": "202",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t45",
+      "day": "WED",
+      "time": "09:00",
+      "course_id": "c4",
+      "course_code": "CS302",
+      "course_name": "Theory of Computation",
+      "room": "202",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t46",
+      "day": "THU",
+      "time": "09:00",
+      "course_id": "c4",
+      "course_code": "CS302",
+      "course_name": "Theory of Computation",
+      "room": "202",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t47",
+      "day": "FRI",
+      "time": "09:00",
+      "course_id": "c4",
+      "course_code": "CS302",
+      "course_name": "Theory of Computation",
+      "room": "202",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t48",
+      "day": "TUE",
+      "time": "09:00",
+      "course_id": "c5",
+      "course_code": "CS401",
+      "course_name": "Computer Networks",
+      "room": "201",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t49",
+      "day": "WED",
+      "time": "11:00",
+      "course_id": "c5",
+      "course_code": "CS401",
+      "course_name": "Computer Networks",
+      "room": "201",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t50",
+      "day": "THU",
+      "time": "11:00",
+      "course_id": "c5",
+      "course_code": "CS401",
+      "course_name": "Computer Networks",
+      "room": "201",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t51",
+      "day": "FRI",
+      "time": "11:00",
+      "course_id": "c5",
+      "course_code": "CS401",
+      "course_name": "Computer Networks",
+      "room": "201",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t52",
+      "day": "TUE",
+      "time": "10:00",
+      "course_id": "c6",
+      "course_code": "CS402",
+      "course_name": "Operating Systems",
+      "room": "202",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t53",
+      "day": "WED",
+      "time": "12:00",
+      "course_id": "c6",
+      "course_code": "CS402",
+      "course_name": "Operating Systems",
+      "room": "202",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t54",
+      "day": "THU",
+      "time": "12:00",
+      "course_id": "c6",
+      "course_code": "CS402",
+      "course_name": "Operating Systems",
+      "room": "202",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t55",
+      "day": "FRI",
+      "time": "12:00",
+      "course_id": "c6",
+      "course_code": "CS402",
+      "course_name": "Operating Systems",
+      "room": "Lab 2",
+      "type": "lab",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t56",
+      "day": "MON",
+      "time": "12:00",
+      "course_id": "c7",
+      "course_code": "CS403",
+      "course_name": "Advanced DSA",
+      "room": "201",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t57",
+      "day": "TUE",
+      "time": "12:00",
+      "course_id": "c7",
+      "course_code": "CS403",
+      "course_name": "Advanced DSA",
+      "room": "201",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t58",
+      "day": "WED",
+      "time": "15:00",
+      "course_id": "c7",
+      "course_code": "CS403",
+      "course_name": "Advanced DSA",
+      "room": "201",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t59",
+      "day": "THU",
+      "time": "15:00",
+      "course_id": "c7",
+      "course_code": "CS403",
+      "course_name": "Advanced DSA",
+      "room": "Lab 1",
+      "type": "lab",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t60",
+      "day": "MON",
+      "time": "15:00",
+      "course_id": "c8",
+      "course_code": "CS404",
+      "course_name": "Artificial Intelligence",
+      "room": "202",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t61",
+      "day": "TUE",
+      "time": "15:00",
+      "course_id": "c8",
+      "course_code": "CS404",
+      "course_name": "Artificial Intelligence",
+      "room": "202",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t62",
+      "day": "FRI",
+      "time": "10:00",
+      "course_id": "c8",
+      "course_code": "CS404",
+      "course_name": "Artificial Intelligence",
+      "room": "202",
+      "type": "lecture",
       "section": "B",
       "college_id": "c-default"
     }
