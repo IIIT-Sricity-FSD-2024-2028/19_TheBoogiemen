@@ -39,9 +39,9 @@ setTimeout(async () => {
 try {
 const users = await apiFetch('/admin/users');
 const nu = users.find((u) => u.email === email.trim());
-if (nu) send(nu.user_id, 'Admin', `ðŸ‘‹ Welcome to BarelyPassing! Your account (${role}) is ready.`, 'info');
+if (nu) send(nu.user_id, 'Admin', `Welcome to BarelyPassing! Your account (${role}) is ready.`, 'info');
 } catch {
-// Best-effort â€” the account is already created either way.
+// Best-effort the account is already created either way.
 }
 }, 500);
 } catch (e2) {
@@ -78,7 +78,7 @@ return (
 </div>
 <div className="modal-footer">
 <button type="submit" className="submit-btn" style={{ flex: 1 }} disabled={submitting}>
-{submitting ? 'Creatingâ€¦' : 'Create User'}
+{submitting ? 'Creating' : 'Create User'}
 </button>
 </div>
 </form>
