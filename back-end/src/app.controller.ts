@@ -13,6 +13,6 @@ export class AppController {
   @Public()
   @HttpCode(200)
   serveRoot(@Res() res: Response) {
-    res.redirect('/login.html');
+    res.redirect('/login');
   }
 }

@@ -1,15 +1,18 @@
 /**
  * LeavePanel — ported from legacy fixes.js renderStudentLeave() +
- * submitLeaveApplication() (the leaveModal form in student.html). The
- * `role` prop is the extension point: faculty's and admin/head's leave
- * views (renderFacultyLeaveList / renderLeaveManagement) are added here in
- * Phases 2 and 3 as additional branches, not separate components — the
- * legacy code already treated this as one feature with three audiences.
+ * submitLeaveApplication() (student.html's leaveModal),
+ * renderFacultyLeaveList() + submitFacultyLeave() (faculty.html's
+ * fLeaveModal), and renderLeaveManagement() + updateLeave() (admin/head's
+ * approval view, super-user.html). Three different audiences for the same
+ * underlying `/leave` resource, each with genuinely different markup —
+ * admin/head's view has no metrics grid and no apply button at all (they
+ * only approve/reject), unlike student/faculty's apply-and-track views.
  */
 
 import { useEffect, useState } from 'react';
 import { apiFetch } from '../../api/client';
 import { uploadFile, downloadDocument } from '../../api/uploads';
+import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationsContext';
 import Modal from './Modal';
 
@@ -45,7 +48,35 @@ function LeaveRow({ leave }) {
   );
 }
 
-function LeaveApplyModal({ open, onClose, onSubmitted }) {
+function LeaveTable({ leaves }) {
+  return (
+    <table className="crud-table">
+      <thead>
+        <tr><th>Type</th><th>Start</th><th>End</th><th>Reason</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        {leaves.length === 0 ? (
+          <tr><td colSpan={5} style={{ textAlign: 'center' }}>No leave applications</td></tr>
+        ) : (
+          leaves.map((l) => {
+            const [bg, fg] = STATUS_COLORS[l.status] || ['#f1f5f9', '#475569'];
+            return (
+              <tr key={l.leave_id}>
+                <td>{l.leave_type || 'Leave'}</td>
+                <td>{l.start_date || ''}</td>
+                <td>{l.end_date || ''}</td>
+                <td>{l.reason || ''}</td>
+                <td><span style={{ padding: '4px 8px', borderRadius: 12, fontSize: 11, fontWeight: 700, background: bg, color: fg }}>{l.status}</span></td>
+              </tr>
+            );
+          })
+        )}
+      </tbody>
+    </table>
+  );
+}
+
+function LeaveApplyModal({ role, open, onClose, onSubmitted }) {
   const { showToast } = useNotifications();
   const [leaveType, setLeaveType] = useState('');
   const [start, setStart] = useState('');
@@ -76,7 +107,9 @@ function LeaveApplyModal({ open, onClose, onSubmitted }) {
     if (!start) return showToast('Start date is required', 'warning');
     if (!end) return showToast('End date is required', 'warning');
     if (end < start) return showToast('End date cannot be before start date', 'warning');
-    if (!reason || reason.trim().length < 10) return showToast('Please provide a reason (at least 10 characters)', 'warning');
+    if (!reason || reason.trim().length < 10) {
+      return showToast(role === 'faculty' ? 'Reason must be at least 10 characters' : 'Please provide a reason (at least 10 characters)', 'warning');
+    }
 
     setSubmitting(true);
     try {
@@ -85,7 +118,8 @@ function LeaveApplyModal({ open, onClose, onSubmitted }) {
         method: 'POST',
         body: JSON.stringify({ leave_type: leaveType, start_date: start, end_date: end, reason: reason.trim(), file_id: uploaded?.file_id ?? null }),
       });
-      showToast(uploaded ? `Leave application submitted with ${uploaded.original_name}! ✅` : 'Leave application submitted!', 'success');
+      const verb = role === 'faculty' ? 'Leave applied' : 'Leave application submitted';
+      showToast(uploaded ? `${verb} with ${uploaded.original_name}! ✅` : `${verb}!`, 'success');
       handleClose();
       onSubmitted();
     } catch (e2) {
@@ -105,7 +139,7 @@ function LeaveApplyModal({ open, onClose, onSubmitted }) {
               <option value="">Select leave type</option>
               <option value="medical">Medical Leave</option>
               <option value="personal">Personal Leave</option>
-              <option value="event">Event Participation</option>
+              <option value="event">{role === 'faculty' ? 'Event/Conference' : 'Event Participation'}</option>
             </select>
           </div>
           <div className="form-row">
@@ -175,7 +209,101 @@ function LeaveApplyModal({ open, onClose, onSubmitted }) {
   );
 }
 
+function AdminLeaveRow({ leave, onDecide }) {
+  const [bg, fg] = STATUS_COLORS[leave.status] || ['#f1f5f9', '#475569'];
+  return (
+    <div style={{ padding: 12, border: '1px solid #e2e8f0', borderRadius: 8, marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div>
+        <div style={{ fontWeight: 600 }}>{leave.student_name || leave.student_id}</div>
+        <div style={{ fontSize: 12, color: '#64748b' }}>{leave.leave_type} • {leave.start_date} to {leave.end_date}</div>
+        <div style={{ fontSize: 12, marginTop: 4 }}>{leave.reason}</div>
+        {leave.file_id && (
+          <button
+            type="button"
+            onClick={() => downloadDocument(leave.file_id)}
+            style={{ marginTop: 6, padding: '4px 10px', fontSize: 11, fontWeight: 700, background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 6, cursor: 'pointer' }}
+          >
+            📎 View document
+          </button>
+        )}
+      </div>
+      <div>
+        {leave.status === 'pending' ? (
+          <>
+            <button
+              onClick={() => onDecide(leave, 'approved')}
+              style={{ padding: '6px 14px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 600, marginRight: 6 }}
+            >
+              ✓ Approve
+            </button>
+            <button
+              onClick={() => onDecide(leave, 'rejected')}
+              style={{ padding: '6px 14px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}
+            >
+              ✕ Reject
+            </button>
+          </>
+        ) : (
+          <span style={{ padding: '4px 8px', borderRadius: 4, fontSize: 11, background: bg, color: fg }}>{leave.status}</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AdminLeaveManagement() {
+  const { user } = useAuth();
+  const { showToast, send } = useNotifications();
+  const [leaves, setLeaves] = useState(undefined);
+
+  const load = () => apiFetch('/leave').then(setLeaves).catch(() => setLeaves([]));
+  useEffect(() => {
+    load();
+  }, []);
+
+  const decide = async (leave, status) => {
+    try {
+      await apiFetch(`/leave/${leave.leave_id}`, { method: 'PATCH', body: JSON.stringify({ status }) });
+      showToast(`Leave ${status === 'approved' ? 'approved ✅' : 'rejected ❌'}`, status === 'approved' ? 'success' : 'warning');
+      const studentId = leave.student_id || leave.user_id;
+      if (studentId) {
+        const from = user?.first_name || 'Admin';
+        const msg = status === 'approved'
+          ? `🗓 Your leave request has been APPROVED by ${from}. Enjoy your time off!`
+          : `❌ Your leave request has been REJECTED by ${from}. Please contact them for details.`;
+        send(studentId, from, msg, status === 'approved' ? 'info' : 'alert');
+      }
+      load();
+    } catch {
+      showToast('Failed', 'error');
+    }
+  };
+
+  return (
+    <div className="stats-card">
+      <div className="stats-card-header"><h3>Leave Request Management</h3></div>
+      <div className="stats-card-body" style={{ padding: 24 }}>
+        {leaves === undefined ? (
+          <div style={{ textAlign: 'center', color: '#64748b' }}>Loading...</div>
+        ) : leaves.length === 0 ? (
+          <p style={{ textAlign: 'center', color: '#64748b' }}>No leaves.</p>
+        ) : (
+          leaves.map((l) => <AdminLeaveRow key={l.leave_id} leave={l} onDecide={decide} />)
+        )}
+      </div>
+    </div>
+  );
+}
+
+// A thin dispatcher, no hooks of its own — avoids a wasted /leave fetch on
+// the admin/head path, which renders an entirely different component.
 export default function LeavePanel({ role }) {
+  if (role === 'admin' || role === 'head') return <AdminLeaveManagement />;
+  if (role === 'student' || role === 'faculty') return <PersonalLeavePanel role={role} />;
+  return null;
+}
+
+function PersonalLeavePanel({ role }) {
   const [leaves, setLeaves] = useState(undefined);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -183,8 +311,6 @@ export default function LeavePanel({ role }) {
   useEffect(() => {
     load();
   }, []);
-
-  if (role !== 'student') return null; // faculty/admin branches arrive in Phases 2–3
 
   const total = leaves?.length ?? 0;
   const rejected = leaves?.filter((l) => l.status === 'rejected').length ?? 0;
@@ -206,13 +332,15 @@ export default function LeavePanel({ role }) {
         <div className="stats-card-header">
           <div>
             <h3>Leave Applications</h3>
-            <p style={{ fontSize: 13, color: '#64748b' }}>Your submitted leave requests and their status</p>
+            {role === 'student' && <p style={{ fontSize: 13, color: '#64748b' }}>Your submitted leave requests and their status</p>}
           </div>
           <button className="page-action-btn" onClick={() => setModalOpen(true)}>+ Apply for Leave</button>
         </div>
         <div className="stats-card-body">
           {leaves === undefined ? (
             <div style={{ textAlign: 'center', color: '#64748b', padding: 20 }}>Loading...</div>
+          ) : role === 'faculty' ? (
+            <LeaveTable leaves={leaves} />
           ) : leaves.length === 0 ? (
             <div style={{ padding: 20, textAlign: 'center', color: '#64748b' }}>No leave applications yet.</div>
           ) : (
@@ -220,7 +348,7 @@ export default function LeavePanel({ role }) {
           )}
         </div>
       </div>
-      <LeaveApplyModal open={modalOpen} onClose={() => setModalOpen(false)} onSubmitted={load} />
+      <LeaveApplyModal role={role} open={modalOpen} onClose={() => setModalOpen(false)} onSubmitted={load} />
     </>
   );
 }

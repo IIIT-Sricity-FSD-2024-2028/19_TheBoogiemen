@@ -92,6 +92,7 @@
       "password_hash": "$2b$12$1Qz9ro9NvATbNnI9v7zRd.5SWa8NPk07L2WJEmX8ODniEcUiJMqBm"
     },
     {
+<<<<<<< HEAD
       "user_id": "u1792145915270",
       "username": "Harshini",
       "first_name": "Harshini",
@@ -101,6 +102,28 @@
       "role": "student",
       "college_id": "c-default",
       "password_hash": "$2b$12$KmsMjBo8Yw6fveIBQBNbPOkPvfWmEX4MR7qN8yRIjsopKqaSMoMLC"
+=======
+      "user_id": "u1791547377755",
+      "username": "Test",
+      "first_name": "Test",
+      "last_name": "Admin",
+      "email": "test.admin.spoc@example.com",
+      "phone": "",
+      "role": "admin",
+      "college_id": "c-default",
+      "password_hash": "$2b$12$GwCmcL3TlncGSYWiNBnwPeazpqGXzNBrE5Un5FTkx2Er7/fOt2pxW"
+    },
+    {
+      "user_id": "u1792070686679",
+      "username": "Pranjal",
+      "first_name": "Pranjal",
+      "last_name": "Srivastava",
+      "email": "pranjalsrivastava014@gmail.com",
+      "phone": "",
+      "role": "admin",
+      "college_id": "c-default",
+      "password_hash": "$2b$12$b8AdsDj1oTb4CHX6O7Zr6.r41FqWFh7b.cjjmg4zkIxiWfB.3zpEm"
+>>>>>>> 052ecafe08dec1dfa34ea518904bea795107b60f
     }
   ],
   "students": [
@@ -133,15 +156,25 @@
       "college_id": "c-default"
     },
     {
+<<<<<<< HEAD
       "user_id": "u1792145915270",
       "first_name": "Harshini",
+=======
+      "user_id": "u1791306434732",
+      "first_name": "SmokeTest",
+>>>>>>> 052ecafe08dec1dfa34ea518904bea795107b60f
       "last_name": "",
       "branch": "CSE",
       "batch": "2024-2028",
       "cgpa": 7,
       "section": "A",
+<<<<<<< HEAD
       "email": "harshini@example.com",
       "join_date": "2026-10-16",
+=======
+      "email": "smoketest.user@example.com",
+      "join_date": "2026-10-06",
+>>>>>>> 052ecafe08dec1dfa34ea518904bea795107b60f
       "dob": "2005-01-01",
       "phone": "",
       "college_id": "c-default"
@@ -233,6 +266,37 @@
       "credits": 4,
       "semester": 6,
       "college_id": "c-default"
+    },
+    {
+      "course_id": "c1791306173831",
+      "course_name": "Smoke Test Course",
+      "course_code": "A",
+      "credits": 4,
+      "semester": 1,
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c1791306246075",
+      "course_name": "Verify Course Two",
+      "course_code": "VC202",
+      "credits": 4,
+      "semester": 1,
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c1791355567387",
+      "course_name": "Bugfix Verify Course",
+      "course_code": "BFV101",
+      "credits": 4,
+      "semester": 1,
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c1791660079788",
+      "course_code": "AUDIT101",
+      "course_name": "Audit Test Course",
+      "credits": 3,
+      "college_id": "c-default"
     }
   ],
   "course_sections": [
@@ -301,6 +365,7 @@
       "college_id": "c-default"
     },
     {
+<<<<<<< HEAD
       "course_section_id": "cs-c1-b",
       "course_id": "c1",
       "section": "B",
@@ -320,11 +385,33 @@
       "course_section_id": "cs-c3-b",
       "course_id": "c3",
       "section": "B",
+=======
+      "course_section_id": "6c8ed15c-96f8-4601-9c00-6136868321fa",
+      "course_id": "c1791306173831",
+      "section": "A",
+      "faculty_id": "u2",
+      "faculty_name": "undefined",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "19210cfb-207f-4d34-9b61-3f73e7e5a70d",
+      "course_id": "c1791306246075",
+      "section": "B",
+      "faculty_id": "u2",
+      "faculty_name": "undefined",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "8f7dfad3-0e40-4a82-a66f-4799ab31649c",
+      "course_id": "c1791355567387",
+      "section": "A",
+>>>>>>> 052ecafe08dec1dfa34ea518904bea795107b60f
       "faculty_id": "u2",
       "faculty_name": "Jane Smith",
       "college_id": "c-default"
     },
     {
+<<<<<<< HEAD
       "course_section_id": "cs-c4-b",
       "course_id": "c4",
       "section": "B",
@@ -360,6 +447,11 @@
       "course_section_id": "cs-c8-b",
       "course_id": "c8",
       "section": "B",
+=======
+      "course_section_id": "27ceffb4-54a3-4fd3-8712-379c24cdb1a9",
+      "course_id": "c1791660079788",
+      "section": "A",
+>>>>>>> 052ecafe08dec1dfa34ea518904bea795107b60f
       "faculty_id": "u2",
       "faculty_name": "Jane Smith",
       "college_id": "c-default"
@@ -421,21 +513,37 @@
       "college_id": "c-default"
     },
     {
+<<<<<<< HEAD
       "enrollment_id": "e1792159230726",
       "student_id": "u1792145915270",
       "course_id": "c1",
       "year_id": "2026",
+=======
+      "enrollment_id": "e1791189802937",
+      "student_id": "u1",
+      "course_id": "c3",
+      "year_id": "2025",
+>>>>>>> 052ecafe08dec1dfa34ea518904bea795107b60f
       "status": "active",
       "section": "A",
       "college_id": "c-default"
     },
     {
+<<<<<<< HEAD
       "enrollment_id": "e1792159243111",
       "student_id": "u1792145915270",
       "course_id": "c4",
       "year_id": "2026",
       "status": "active",
       "section": "A",
+=======
+      "enrollment_id": "e1791306328128",
+      "student_id": "u1",
+      "course_id": "c1791306246075",
+      "year_id": "2026",
+      "status": "active",
+      "section": "B",
+>>>>>>> 052ecafe08dec1dfa34ea518904bea795107b60f
       "college_id": "c-default"
     }
   ],
@@ -621,6 +729,158 @@
       "status": "excused",
       "source": "leave:l3",
       "college_id": "c-default"
+    },
+    {
+      "log_id": "acf06e38-b189-4ea9-acf0-79ecb2f6182b",
+      "student_id": "u1",
+      "course_id": "c1",
+      "date": "2026-10-06",
+      "status": "present",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "d927b70f-a9b4-49e0-a5cc-3ae776f7ec9e",
+      "student_id": "u1",
+      "course_id": "c1",
+      "date": "2026-11-01",
+      "status": "excused",
+      "source": "leave:l1791189782361"
+    },
+    {
+      "log_id": "5eff4323-2c39-4cde-bf23-bbc721611197",
+      "student_id": "u1",
+      "course_id": "c2",
+      "date": "2026-11-01",
+      "status": "excused",
+      "source": "leave:l1791189782361"
+    },
+    {
+      "log_id": "5670689d-e686-4c58-b96b-5946000247f2",
+      "student_id": "u1",
+      "course_id": "c5",
+      "date": "2026-11-01",
+      "status": "excused",
+      "source": "leave:l1791189782361"
+    },
+    {
+      "log_id": "dffefade-33f5-4c33-a131-4ab110ac62c2",
+      "student_id": "u1",
+      "course_id": "c7",
+      "date": "2026-11-01",
+      "status": "excused",
+      "source": "leave:l1791189782361"
+    },
+    {
+      "log_id": "ee1d25c4-f641-470b-ad99-7632a49b19a3",
+      "student_id": "u1",
+      "course_id": "c3",
+      "date": "2026-11-01",
+      "status": "excused",
+      "source": "leave:l1791189782361"
+    },
+    {
+      "log_id": "1ee534ad-97a0-40dc-8280-1979aa749db9",
+      "student_id": "u1",
+      "course_id": "c1791306246075",
+      "date": "2026-11-01",
+      "status": "excused",
+      "source": "leave:l1791189782361"
+    },
+    {
+      "log_id": "a05c2de6-a055-4815-92ae-f951a9c20f89",
+      "student_id": "u1",
+      "course_id": "c1",
+      "date": "2026-11-02",
+      "status": "excused",
+      "source": "leave:l1791189782361"
+    },
+    {
+      "log_id": "923b6206-2a51-4541-a22e-ad724f2455f2",
+      "student_id": "u1",
+      "course_id": "c2",
+      "date": "2026-11-02",
+      "status": "excused",
+      "source": "leave:l1791189782361"
+    },
+    {
+      "log_id": "4310ffb5-fbf8-4b90-896e-fce306d21f3a",
+      "student_id": "u1",
+      "course_id": "c5",
+      "date": "2026-11-02",
+      "status": "excused",
+      "source": "leave:l1791189782361"
+    },
+    {
+      "log_id": "accf4821-2d20-45dc-aab7-f78ed0fed28a",
+      "student_id": "u1",
+      "course_id": "c7",
+      "date": "2026-11-02",
+      "status": "excused",
+      "source": "leave:l1791189782361"
+    },
+    {
+      "log_id": "191e6277-e460-4239-b673-95a212227647",
+      "student_id": "u1",
+      "course_id": "c3",
+      "date": "2026-11-02",
+      "status": "excused",
+      "source": "leave:l1791189782361"
+    },
+    {
+      "log_id": "55b4ed02-a110-44a0-87bf-62e9db8dad52",
+      "student_id": "u1",
+      "course_id": "c1791306246075",
+      "date": "2026-11-02",
+      "status": "excused",
+      "source": "leave:l1791189782361"
+    },
+    {
+      "log_id": "6a78fa5f-210a-4dd3-a1ff-e23bccb82885",
+      "student_id": "u1",
+      "course_id": "c1",
+      "date": "2026-11-03",
+      "status": "excused",
+      "source": "leave:l1791189782361"
+    },
+    {
+      "log_id": "fdb4d23f-eaa0-4ba8-9a96-18656f6f8b21",
+      "student_id": "u1",
+      "course_id": "c2",
+      "date": "2026-11-03",
+      "status": "excused",
+      "source": "leave:l1791189782361"
+    },
+    {
+      "log_id": "8a070de8-e13d-4c77-8784-ca5ccc5e81a2",
+      "student_id": "u1",
+      "course_id": "c5",
+      "date": "2026-11-03",
+      "status": "excused",
+      "source": "leave:l1791189782361"
+    },
+    {
+      "log_id": "6b3327f1-ab55-4130-a105-3aa9c817587d",
+      "student_id": "u1",
+      "course_id": "c7",
+      "date": "2026-11-03",
+      "status": "excused",
+      "source": "leave:l1791189782361"
+    },
+    {
+      "log_id": "a97efe70-b221-4ce1-ba74-52e638d49d61",
+      "student_id": "u1",
+      "course_id": "c3",
+      "date": "2026-11-03",
+      "status": "excused",
+      "source": "leave:l1791189782361"
+    },
+    {
+      "log_id": "69df2785-acae-4aad-93b3-1e9aaf78b4df",
+      "student_id": "u1",
+      "course_id": "c1791306246075",
+      "date": "2026-11-03",
+      "status": "excused",
+      "source": "leave:l1791189782361"
     }
   ],
   "assessments": [
@@ -644,6 +904,19 @@
       "weightage": 10,
       "faculty_id": "u2",
       "date": "2026-03-20",
+      "college_id": "c-default"
+    },
+    {
+      "assessment_id": "a1791305106472",
+      "faculty_id": "u2",
+      "weightage": 10,
+      "name": "Smoke Test Quiz",
+      "type": "assignment",
+      "date": "2026-11-10",
+      "max_marks": 50,
+      "course_id": "c1",
+      "section": "A",
+      "exam_mode": "offline",
       "college_id": "c-default"
     }
   ],
@@ -691,6 +964,14 @@
       "grade": "C",
       "feedback_text": "Needs effort",
       "college_id": "c-default"
+    },
+    {
+      "entry_id": "m1791305120818",
+      "student_id": "u1",
+      "assessment_id": "a1791305106472",
+      "marks_obtained": 42,
+      "max_marks": 50,
+      "college_id": "c-default"
     }
   ],
   "leave_applications": [
@@ -729,6 +1010,32 @@
       "status": "approved",
       "applied_on": "2026-05-20",
       "college_id": "c-default"
+    },
+    {
+      "leave_id": "l1791189782361",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "status": "approved",
+      "applied_on": "2026-10-05",
+      "leave_type": "Medical",
+      "start_date": "2026-11-01",
+      "end_date": "2026-11-03",
+      "reason": "Scheduled medical procedure, doctor advised rest for three days.",
+      "file_id": null,
+      "college_id": "c-default"
+    },
+    {
+      "leave_id": "l1791305228834",
+      "student_id": "u2",
+      "student_name": "faculty",
+      "status": "rejected",
+      "applied_on": "2026-10-06",
+      "leave_type": "Event",
+      "start_date": "2026-12-10",
+      "end_date": "2026-12-12",
+      "reason": "Attending an academic conference out of state.",
+      "file_id": null,
+      "college_id": "c-default"
     }
   ],
   "research_projects": [
@@ -741,7 +1048,7 @@
       "student_name": "John Doe",
       "status": "active",
       "abstract": "Implementing a decentralized ledger for securing university diplomas.",
-      "progress": 45,
+      "progress": 50,
       "students": [
         {
           "user_id": "u1",
@@ -749,7 +1056,13 @@
           "last_name": "Doe"
         }
       ],
-      "uploads": [],
+      "uploads": [
+        {
+          "file_id": "46f0b2f6-7275-4195-82b2-7530770d32c8",
+          "original_name": "SRS.pdf",
+          "uploaded_at": "2026-10-15T07:24:37.950Z"
+        }
+      ],
       "milestones": [
         {
           "title": "Inception",
@@ -762,7 +1075,9 @@
           "status": "in-progress"
         }
       ],
-      "college_id": "c-default"
+      "college_id": "c-default",
+      "submission_notes": "completed the attack mitigation",
+      "faculty_feedback": "Good progress!"
     },
     {
       "project_id": "rp2",
@@ -779,6 +1094,26 @@
           "user_id": "u6",
           "first_name": "Alice",
           "last_name": "Vance"
+        }
+      ],
+      "uploads": [],
+      "milestones": [],
+      "college_id": "c-default"
+    },
+    {
+      "project_id": "rp1791305193830",
+      "title": "Smoke Test BTP Project",
+      "abstract": "Automated verification of the assign-BTP flow.",
+      "supervisor_id": "u2",
+      "supervisor_name": "Jane Smith",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "status": "active",
+      "progress": 0,
+      "students": [
+        {
+          "user_id": "u1",
+          "first_name": "John"
         }
       ],
       "uploads": [],
@@ -851,6 +1186,19 @@
       "created_at": "2026-08-18T11:37:56.227Z",
       "reply_count": 0,
       "college_id": "c-default"
+    },
+    {
+      "post_id": "p1791189831944",
+      "title": "React migration smoke test thread",
+      "content": "Verifying the discussion forum write path works end to end after the Phase 1 port.",
+      "author_id": "u1",
+      "author_name": "John Doe",
+      "author_role": "student",
+      "tag": "general",
+      "course_id": "",
+      "created_at": "2026-10-05T08:43:51.944Z",
+      "reply_count": 0,
+      "college_id": "c-default"
     }
   ],
   "discussion_replies": [
@@ -882,6 +1230,16 @@
       "author_role": "student",
       "content": "wassup",
       "created_at": "2026-08-18T11:38:19.530Z",
+      "college_id": "c-default"
+    },
+    {
+      "reply_id": "r1791189839934",
+      "post_id": "p1791189831944",
+      "author_id": "u1",
+      "author_name": "John Doe",
+      "author_role": "student",
+      "content": "Replying to confirm the reply path works too.",
+      "created_at": "2026-10-05T08:43:59.934Z",
       "college_id": "c-default"
     }
   ],
@@ -925,6 +1283,14 @@
       "venue": "Main Hall",
       "description": "Welcome session for new students.",
       "college_id": "c-default"
+    },
+    {
+      "event_id": "ev1791306414881",
+      "event_name": "Smoke Test Fest (Edited)",
+      "date": "2026-12-15",
+      "venue": "Main Lawn",
+      "description": "",
+      "college_id": "c-default"
     }
   ],
   "resources": [
@@ -934,7 +1300,7 @@
       "type": "Lab",
       "capacity": 50,
       "location": "Block A, 1st Floor",
-      "status": "available",
+      "status": "in_use",
       "college_id": "c-default"
     },
     {
@@ -981,6 +1347,15 @@
       "location": "Block A",
       "status": "maintenance",
       "college_id": "c-default"
+    },
+    {
+      "resource_id": "res1791306357236",
+      "status": "in_use",
+      "name": "Smoke Test Room",
+      "type": "Room",
+      "capacity": 30,
+      "location": "Block Z",
+      "college_id": "c-default"
     }
   ],
   "fees": [
@@ -992,8 +1367,9 @@
       "type": "Semester Fee",
       "amount": 150000,
       "due_date": "2026-06-01",
-      "status": "pending",
-      "college_id": "c-default"
+      "status": "paid",
+      "college_id": "c-default",
+      "paid_date": "6/10/2026"
     },
     {
       "fee_id": "f2",
@@ -1026,6 +1402,16 @@
       "amount": 8000,
       "due_date": "2026-05-20",
       "status": "pending",
+      "college_id": "c-default"
+    },
+    {
+      "fee_id": "f1791306379849",
+      "status": "pending",
+      "student_id": "u1",
+      "semester": "3",
+      "fee_type": "Lab Fee",
+      "amount": 2500,
+      "due_date": "2026-12-31",
       "college_id": "c-default"
     }
   ],
@@ -1929,13 +2315,28 @@
       "course_code": "CS202",
       "date": "2026-08-18",
       "reason": "43f343434g5g [Document: Class_Zero (1) (1).pdf]",
-      "admin_status": "pending",
+      "admin_status": "approved",
       "faculty_status": "pending",
       "created_at": "2026-08-18T11:37:28.185Z",
+      "college_id": "c-default",
+      "admin_reason": ""
+    }
+  ],
+  "resource_bookings": [
+    {
+      "booking_id": "rb1791305213814",
+      "resource_id": "res1",
+      "resource_name": "Computing Lab 1",
+      "requested_by": "u2",
+      "requester_name": "Jane Smith",
+      "date": "2026-12-05",
+      "time_slot": "Full Day",
+      "purpose": "Workshop session.",
+      "status": "approved",
+      "created_at": "2026-10-06T16:46:53.814Z",
       "college_id": "c-default"
     }
   ],
-  "resource_bookings": [],
   "colleges": [
     {
       "college_id": "c-default",
@@ -1956,8 +2357,34 @@
       "created_at": "2026-10-05T08:10:23.669Z"
     }
   ],
-  "support_threads": [],
-  "support_messages": [],
+  "support_threads": [
+    {
+      "thread_id": "st1791547318114",
+      "college_id": "c-default",
+      "subject": "Support",
+      "created_at": "2026-10-09T12:01:58.114Z"
+    }
+  ],
+  "support_messages": [
+    {
+      "message_id": "sm179154731811792e4",
+      "thread_id": "st1791547318114",
+      "sender_id": "u-spoc-demo",
+      "sender_name": "Priya Menon",
+      "sender_role": "spoc",
+      "content": "Hello, test message from SPOC",
+      "created_at": "2026-10-09T12:01:58.117Z"
+    },
+    {
+      "message_id": "sm1791551182535ajy1",
+      "thread_id": "st1791547318114",
+      "sender_id": "u5",
+      "sender_name": "superadmin",
+      "sender_role": "superadmin",
+      "content": "Thanks for reaching out, we are looking into it.",
+      "created_at": "2026-10-09T13:06:22.535Z"
+    }
+  ],
   "onboarding_sessions": [
     {
       "session_id": "os1791187766077",

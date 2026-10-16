@@ -7,7 +7,6 @@
  */
 
 import { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
 import DashboardShell from '../../components/layout/DashboardShell';
 import Settings from '../../components/shared/Settings';
 import Timetable from '../../components/shared/Timetable';
@@ -124,23 +123,17 @@ const VIEWS = {
 
 export default function StudentDashboard() {
   const [activeView, setActiveView] = useState('dashboard');
-  const { user } = useAuth();
-  const avatarLetter = (user?.first_name || user?.username || 'S')[0].toUpperCase();
 
   return (
     <DashboardShell
       brandSubtitle="Academic Performance"
-      avatarLetter={avatarLetter}
+      avatarLetter="F"
       avatarClassName="avatar-f"
       roleLabel="Student"
       navItems={NAV_ITEMS}
       activeView={activeView}
       onSelect={setActiveView}
       title={TITLES[activeView]}
-      badges={[
-        { label: 'Spring 2026', className: 'badge-term' },
-        { label: '4th Semester', className: 'badge-semester' },
-      ]}
     >
       {VIEWS[activeView]}
     </DashboardShell>
