@@ -26,3 +26,6 @@ back-end/uploads/
 
 # Log files (dated, one per day; permanent record)
 back-end/logs/
+
+# Archives & Submissions
+*.zip
