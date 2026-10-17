@@ -1744,7 +1744,9 @@ if (!isSameCollege(course, actorCollegeId)) notFoundInMyCollege('Course');
 // to this â€” same exemption createAssessment() already makes.
 if (
 actorRole === 'faculty' &&
-sectionTaughtIn(this.db, userId, body.course_id) !== body.section
+!sectionsTaughtBy(this.db, userId).some(
+(cs) => cs.course_id === body.course_id && cs.section === body.section,
+)
 )
 throw new ForbiddenException(
 errorBody(
