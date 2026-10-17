@@ -1014,7 +1014,28 @@ async getLeaves(
 ) {
 const scoped = scopeToCollege(this.db.leave_applications, collegeId);
 if (role === 'student') return scoped.filter((l) => l.student_id === userId);
-// Faculty/admin/head see all of THEIR college's student leaves (for approval).
+
+// Faculty see only (a) their own leave applications and (b) leave
+// applications from students they teach — i.e. students enrolled in
+// sections the faculty is assigned to.  This mirrors the section-scoped
+// ownership model used by getMyStudents, attendance, marks, etc.
+if (role === 'faculty') {
+  const mySections = sectionsTaughtBy(this.db, userId);
+  const myStudentIds = new Set(
+    this.db.enrollment
+      .filter((e) =>
+        mySections.some(
+          (cs) => cs.course_id === e.course_id && cs.section === e.section,
+        ),
+      )
+      .map((e) => e.student_id),
+  );
+  return scoped.filter(
+    (l) => l.student_id === userId || myStudentIds.has(l.student_id),
+  );
+}
+
+// Admin/head/superadmin see all of THEIR college's leaves (for approval).
 return scoped;
 }
 
