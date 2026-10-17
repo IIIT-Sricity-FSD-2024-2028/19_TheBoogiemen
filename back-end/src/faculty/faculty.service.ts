@@ -43,10 +43,16 @@ export class FacultyService {
     const courseIds = new Set(mySections.map((cs) => cs.course_id));
     return this.db.courses
       .filter((c) => courseIds.has(c.course_id))
-      .map((c) => ({
-        ...c,
-        section: mySections.find((cs) => cs.course_id === c.course_id)?.section,
-      }));
+      .map((c) => {
+        const sections = mySections
+          .filter((cs) => cs.course_id === c.course_id)
+          .map((cs) => cs.section);
+        return {
+          ...c,
+          section: sections[0] || null,
+          sections,
+        };
+      });
   }
 
   async getFacultyTimetable(userId: string) {
@@ -134,6 +140,7 @@ export class FacultyService {
     courseId: string,
     userId: string,
     collegeId: string | null,
+    section?: string,
   ) {
     // course_id is client-supplied (@Param) — without this check a faculty
     // member could read another college's roster by supplying that
@@ -144,11 +151,13 @@ export class FacultyService {
         errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Course not found'),
       );
 
-    // Section-scoped: a faculty may only mark attendance for the section of
+    // Section-scoped: a faculty may only mark attendance for the section(s) of
     // this course they were actually assigned — see
     // COURSE_OWNERSHIP_MIGRATION_PLAN.md §3/§5.
-    const mySection = sectionTaughtIn(this.db, userId, courseId);
-    if (!mySection)
+    const mySections = sectionsTaughtBy(this.db, userId).filter(
+      (cs) => cs.course_id === courseId,
+    );
+    if (!mySections.length)
       throw new ForbiddenException(
         errorBody(
           ErrorCode.PRIVILEGE_CEILING,
@@ -156,8 +165,21 @@ export class FacultyService {
         ),
       );
 
+    if (section && !mySections.some((cs) => cs.section === section)) {
+      throw new ForbiddenException(
+        errorBody(
+          ErrorCode.PRIVILEGE_CEILING,
+          `You are not assigned to Section ${section} of this course.`,
+        ),
+      );
+    }
+
+    const targetSections = section
+      ? [section]
+      : mySections.map((cs) => cs.section);
+
     const enrollment = this.db.enrollment.filter(
-      (e) => e.course_id === courseId && e.section === mySection,
+      (e) => e.course_id === courseId && targetSections.includes(e.section),
     );
     const studentIds = enrollment.map((e) => e.student_id);
     const today = new Date().toISOString().split('T')[0];
@@ -170,9 +192,19 @@ export class FacultyService {
             a.course_id === courseId &&
             a.date === today,
         );
-        return { ...s, today_status: todayLog?.status || 'present' };
+        const enrol = enrollment.find((e) => e.student_id === s.user_id);
+        return {
+          ...s,
+          section: enrol?.section,
+          today_status: todayLog?.status || 'present',
+        };
       });
-    return { students, date: today, course_id: courseId };
+    return {
+      students,
+      date: today,
+      course_id: courseId,
+      section: section || (mySections.length === 1 ? mySections[0].section : undefined),
+    };
   }
 
   async recordAttendance(
@@ -180,7 +212,7 @@ export class FacultyService {
     userId: string,
     actorCollegeId: string | null,
   ) {
-    const { course_id, date, records } = data;
+    const { course_id, date, records, section } = data;
 
     const course = this.db.courses.find((c) => c.course_id === course_id);
     if (!isSameCollege(course, actorCollegeId))
@@ -189,20 +221,38 @@ export class FacultyService {
       );
 
     // Section-scoped, same as getTodayAttendance: this faculty may only
-    // mark attendance for their own assigned section, and only for students
-    // actually enrolled in it — a student id from another section must not
+    // mark attendance for their own assigned section(s), and only for students
+    // actually enrolled in them — a student id from another section must not
     // be smuggled into the records array.
-    const mySection = sectionTaughtIn(this.db, userId, course_id);
-    if (!mySection)
+    const mySections = sectionsTaughtBy(this.db, userId).filter(
+      (cs) => cs.course_id === course_id,
+    );
+    if (!mySections.length)
       throw new ForbiddenException(
         errorBody(
           ErrorCode.PRIVILEGE_CEILING,
           'You are not assigned to any section of this course.',
         ),
       );
+
+    if (section && !mySections.some((cs) => cs.section === section)) {
+      throw new ForbiddenException(
+        errorBody(
+          ErrorCode.PRIVILEGE_CEILING,
+          `You are not assigned to Section ${section} of this course.`,
+        ),
+      );
+    }
+
+    const targetSections = section
+      ? [section]
+      : mySections.map((cs) => cs.section);
+
     const myStudentIds = new Set(
       this.db.enrollment
-        .filter((e) => e.course_id === course_id && e.section === mySection)
+        .filter(
+          (e) => e.course_id === course_id && targetSections.includes(e.section),
+        )
         .map((e) => e.student_id),
     );
 

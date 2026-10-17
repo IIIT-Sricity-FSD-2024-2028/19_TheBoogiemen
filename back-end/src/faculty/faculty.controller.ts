@@ -4,6 +4,7 @@ import {
   Post,
   Body,
   Param,
+  Query,
   BadRequestException,
 } from '@nestjs/common';
 import { FacultyService } from './faculty.service';
@@ -99,8 +100,14 @@ export class FacultyController {
     @Param('courseId') courseId: string,
     @CurrentUserId() userId: string,
     @CurrentUserCollegeId() collegeId: string | null,
+    @Query('section') section?: string,
   ) {
-    return this.facultyService.getTodayAttendance(courseId, userId, collegeId);
+    return this.facultyService.getTodayAttendance(
+      courseId,
+      userId,
+      collegeId,
+      section,
+    );
   }
 
   @Post('attendance')
