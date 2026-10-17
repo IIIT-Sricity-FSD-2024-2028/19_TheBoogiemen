@@ -14,7 +14,8 @@ import Modal from '../../components/shared/Modal';
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const name = user ? `${user.first_name || ''} ${user.last_name || user.username || ''}`.trim() : '';
+  const fullName = [user?.first_name, user?.last_name].filter(Boolean).join(' ').trim();
+  const name = fullName || user?.username || '';
 
   return (
     <>

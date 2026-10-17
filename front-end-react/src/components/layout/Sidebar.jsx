@@ -13,7 +13,8 @@ import { useAuth } from '../../context/AuthContext';
 
 export default function Sidebar({ brandSubtitle, avatarLetter, avatarClassName = 'avatar-default', roleLabel, navItems, licensedModules, activeView, onSelect, onLogout }) {
   const { user } = useAuth();
-  const name = user ? `${user.first_name || ''} ${user.last_name || user.username || ''}`.trim() : '';
+  const fullName = [user?.first_name, user?.last_name].filter(Boolean).join(' ').trim();
+  const name = fullName || user?.username || '';
 
   // Hides a nav item whose `module` isn't in the college's licensed module
   // set — ported from legacy script.js applyModuleGating(). The real gate is

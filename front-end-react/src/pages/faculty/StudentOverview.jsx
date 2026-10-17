@@ -99,7 +99,7 @@ function AssignBTPModal({ open, onClose, onAssigned }) {
 
 function StudentCard({ student, onAlert, onMeeting }) {
   const fullName = `${student.first_name || ''} ${student.last_name || ''}`.trim();
-  const initials = ((student.first_name || '?')[0] + (student.last_name || '?')[0]).toUpperCase();
+  const initials = ((student.first_name?.[0] || '?') + (student.last_name?.[0] || '')).toUpperCase();
   const riskColor = student.is_at_risk ? '#ef4444' : student.cgpa && student.cgpa < 7 ? '#d97706' : '#16a34a';
   const riskBg = student.is_at_risk ? '#fef2f2' : student.cgpa && student.cgpa < 7 ? '#fef9c3' : '#dcfce7';
   const riskLabel = student.is_at_risk ? 'AT RISK' : student.cgpa && student.cgpa < 7 ? 'LOW CGPA' : 'GOOD';
