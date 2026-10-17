@@ -49,6 +49,12 @@ export async function apiFetch(endpoint, options = {}) {
     ...(isMultipart ? {} : { 'Content-Type': 'application/json' }),
     ...(options.headers || {}),
   };
+  const isJsonObject =
+    options.body !== null &&
+    typeof options.body === 'object' &&
+    (Object.getPrototypeOf(options.body) === Object.prototype ||
+      Object.getPrototypeOf(options.body) === null);
+  const body = isMultipart || !isJsonObject ? options.body : JSON.stringify(options.body);
 
   if (isTokenExpired()) {
     forceLogout('Session expired');
@@ -57,6 +63,7 @@ export async function apiFetch(endpoint, options = {}) {
 
   const res = await fetch(`${API_BASE}${endpoint}`, {
     ...options,
+    body,
     headers,
     // Without this, fetch omits cookies on cross-origin requests.
     credentials: 'same-origin',

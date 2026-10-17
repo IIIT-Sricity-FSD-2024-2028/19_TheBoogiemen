@@ -1,29 +1,104 @@
 # 🎓 BarelyPassing – Enterprise Multi-Tenant EdTech Platform
-### *Comprehensive Architecture & Middleware Pipeline Reference*
+### *Modern React SPA & NestJS Multi-Tenant Architecture*
 
-> **BarelyPassing** is an enterprise-grade university ERP, LMS, and academic intelligence system engineered with NestJS and modern web technologies. It features strict multi-tenant institutional isolation, modular SaaS billing enforcement, granular assessment grading, attendance auditing, and a battle-tested **layered middleware and guard pipeline**.
+> **BarelyPassing** is an enterprise-grade university ERP, LMS, and academic intelligence platform engineered with a **React SPA frontend** (`front-end-react/`) and a **NestJS backend** (`back-end/`). It features strict multi-tenant institutional isolation, modular SaaS billing enforcement, granular assessment grading, attendance auditing, and a battle-tested **layered middleware and guard pipeline**.
+
+---
+
+## ⚡ Quick Start & Run Instructions
+
+Get the entire application up and running locally in under 3 minutes.
+
+### 📋 Prerequisites
+- **Node.js**: `v18.x` or higher ([Download Node.js](https://nodejs.org/))
+- **npm**: `v9.x` or higher (comes with Node.js)
+
+---
+
+### Step 1: Start the Backend Server (NestJS)
+
+Open a terminal in the project root:
+
+```bash
+# 1. Navigate to the backend directory
+cd back-end
+
+# 2. Install dependencies
+npm install
+
+# 3. Configure the environment (required)
+# Linux/macOS:
+cp .env.example .env
+# Windows (PowerShell/CMD):
+copy .env.example .env
+
+# 4. Initialize seed passwords (converts mock data to bcrypt hashes)
+npm run migrate:passwords
+
+# 5. Launch the NestJS backend
+npm run start:dev
+```
+
+* Backend API runs at: **`http://localhost:5001`**
+* Interactive Swagger API Docs: **`http://localhost:5001/api/docs`**
+
+---
+
+### Step 2: Start the Modern React Frontend (Vite + React SPA)
+
+Open a **second terminal** in the project root:
+
+```bash
+# 1. Navigate to the React frontend directory
+cd front-end-react
+
+# 2. Install dependencies
+npm install
+
+# 3. Launch the Vite development server
+npm run dev
+```
+
+* Modern React Application runs at: **`http://localhost:5173`**
+* The Vite dev server automatically proxies all `/api/*` calls to the backend running on port `5001`.
+
+---
+
+### Step 3: Login with Demo Accounts
+
+Use any of the seeded demo accounts below to sign in:
+
+| Role | Email | Password | Primary Portal Route (React) | Notes & Persona |
+|---|---|---|---|---|
+| 🎓 **Student** | `student@example.com` | `Student@123` | `/student` | John Doe (Enrolled in CSE courses) |
+| 👨‍🏫 **Faculty** | `faculty@example.com` | `Faculty@123` | `/faculty` | Dr. Jane Smith (Data Structures faculty) |
+| 🛡️ **Administrator** | `admin@example.com` | `password` | `/admin` | Campus System Administrator |
+| 🏛️ **Department Head** | `head@example.com` | `Head@123` | `/admin` | Academic Head of Department (HOD) |
+| 👑 **Super Admin** | `super@example.com` | `Super@123` | `/superadmin` | Institutional Director / Multi-Tenant Admin |
+| 🤝 **SPOC** | `spoc@example.com` | `Spoc@123` | `/spoc` | Partner Success / Single Point of Contact |
+
+> **Note on Legacy Frontend:** The legacy vanilla HTML/JS files remain preserved under `front-end/` for reference and can be viewed via the backend's static file server on `http://localhost:5001/` or run independently via `cd front-end && npx serve -l 3000`.
 
 ---
 
 ## 📑 Table of Contents
-1. [System Architecture & Multi-Tenancy](#-system-architecture--multi-tenancy)
-2. [Complete Request Lifecycle Pipeline](#-complete-request-lifecycle-pipeline)
-3. [Deep-Dive: Middleware Architecture](#-deep-dive-middleware-architecture)
+1. [⚡ Quick Start & Run Instructions](#-quick-start--run-instructions)
+2. [🏛 System Architecture & Multi-Tenancy](#-system-architecture--multi-tenancy)
+3. [🔄 Complete Request Lifecycle Pipeline](#-complete-request-lifecycle-pipeline)
+4. [🛡 Deep-Dive: Middleware Architecture](#-deep-dive-middleware-architecture)
    - [3.1 Request Audit Middleware (`RequestAuditMiddleware`)](#31-request-audit-middleware-requestauditmiddleware)
    - [3.2 Authentication Rate Limiter (`AuthRateLimitMiddleware`)](#32-authentication-rate-limiter-authratelimitmiddleware)
    - [3.3 Institutional Onboarding Limiter (`OnboardingRateLimitMiddleware`)](#33-institutional-onboarding-limiter-onboardingratelimitmiddleware)
    - [3.4 In-Memory Fixed Window Engine (`FixedWindowLimiter`)](#34-in-memory-fixed-window-engine-fixedwindowlimiter)
    - [3.5 Global Express Middleware & Security Headers](#35-global-express-middleware--security-headers)
-4. [Guards & Access Control Pipeline](#-guards--access-control-pipeline)
+5. [🚪 Guards & Access Control Pipeline](#-guards--access-control-pipeline)
    - [4.1 JWT Authentication Guard (`JwtAuthGuard`)](#41-jwt-authentication-guard-jwtauthguard)
    - [4.2 Role-Based Access Control (`RolesGuard`)](#42-role-based-access-control-rolesguard)
    - [4.3 Modular SaaS Feature Gating (`RequiresModuleGuard`)](#43-modular-saas-feature-gating-requiresmoduleguard)
    - [4.4 Ephemeral Onboarding Session Guard (`OnboardingSessionGuard`)](#44-ephemeral-onboarding-session-guard-onboardingsessionguard)
-5. [Exception Filtering & Error Handling](#-exception-filtering--error-handling)
-6. [Multi-Role Portals & Modules](#-multi-role-portals--modules)
-7. [Demo Credentials & Tenant Identifiers](#-demo-credentials--tenant-identifiers)
-8. [Setup & Quick Start](#-setup--quick-start)
-9. [Automated Test Suite & Verification](#-automated-test-suite--verification)
+6. [🧩 Modern React Architecture & Portals](#-modern-react-architecture--portals)
+7. [📅 Timetable Scheduling Engine & Automated Conflict Prevention](#-timetable-scheduling-engine--automated-conflict-prevention)
+8. [🧪 Automated Test Suite & Verification](#-automated-test-suite--verification)
 
 ---
 
@@ -142,7 +217,6 @@ The `RequestAuditMiddleware` provides an immutable, tamper-evident audit trail (
      .exclude(...AUDIT_EXCLUDED_ROUTES)
      .forRoutes({ path: '*path', method: RequestMethod.ALL });
    ```
-   *Note*: Uses named wildcard `*path` rather than `*` to adhere to Express 5 / `path-to-regexp` v8 syntax and allow NestJS to properly apply the `/api` prefix.
 5. **Excluded Routes**:
    - `POST /api/uploads`: Already audited with byte size, MIME, and checksums in `UploadsService`.
    - `POST /api/auth/logout`: Clears session cookie without altering stored business state.
@@ -175,11 +249,8 @@ Protects authentication endpoints (`/api/auth/*`) from password brute-force and 
 
 Protects the public self-service college onboarding pipeline (`/api/billing/onboarding/*`).
 
-#### Architectural Highlights:
-1. **All-Request Accrual Policy**:
-   Unlike login, onboarding routes allow unauthenticated clients to generate quotes, draft college registrations, and calculate seat tiers. Every request is counted towards the limit (default: 30 requests / 15 minutes per IP) to prevent spamming the draft database.
-2. **Scoped in `BillingModule`**:
-   Bound exclusively to `OnboardingController`.
+- **All-Request Accrual Policy**: Every request is counted towards the limit (default: 30 requests / 15 minutes per IP) to prevent spamming the draft database.
+- **Scoped in `BillingModule`**: Bound exclusively to `OnboardingController`.
 
 ---
 
@@ -187,39 +258,18 @@ Protects the public self-service college onboarding pipeline (`/api/billing/onbo
 **File**: `back-end/src/common/rate-limit/fixed-window-limiter.ts`
 
 A lightweight, dependency-free sliding window rate limiter implemented in pure TypeScript.
-
 - **Storage**: In-memory `Map<string, { count: number; resetAt: number }>`
 - **No Redis Dependency**: Zero external infrastructure overhead for single-instance deployments.
 - **Lazy Eviction**: Expired buckets are cleared on lookup; periodic sweep prevents memory leaks.
-
-```typescript
-export class FixedWindowLimiter {
-  constructor(private readonly max: number, private readonly windowMs: number) {}
-
-  retryAfterSeconds(key: string): number | null {
-    const entry = this.hits.get(key);
-    if (!entry) return null;
-    const now = Date.now();
-    if (now >= entry.resetAt) { this.hits.delete(key); return null; }
-    return entry.count >= this.max ? Math.ceil((entry.resetAt - now) / 1000) : null;
-  }
-}
-```
 
 ---
 
 ### 3.5 Global Express Middleware & Security Headers
 **File**: `back-end/src/main.ts`
 
-- **`cookieParser()`**: Parses signed and unsigned cookies from request headers, making session tokens available to `JwtAuthGuard` before guards run.
-- **`helmet()`**: Configures HTTP security headers:
-  - `Strict-Transport-Security` (HSTS)
-  - `X-Content-Type-Options: nosniff`
-  - `X-Frame-Options: SAMEORIGIN`
-  - `Cross-Origin-Resource-Policy: same-origin`
-  - `Cross-Origin-Opener-Policy: same-origin`
-  - `Referrer-Policy: no-referrer`
-- **CORS Protection**: Restricted to explicit origin lists configured via `CORS_ORIGIN`, supporting credentials and headers `Content-Type, Accept, Authorization`.
+- **`cookieParser()`**: Parses signed and unsigned cookies from request headers, making session tokens available to `JwtAuthGuard`.
+- **`helmet()`**: Configures HTTP security headers (`Strict-Transport-Security`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Cross-Origin-Resource-Policy`).
+- **CORS Protection**: Restricted to explicit origin lists configured via `CORS_ORIGIN`.
 
 ---
 
@@ -251,136 +301,106 @@ Controller Handler
 
 ### 4.2 Role-Based Access Control (`RolesGuard`)
 **File**: `back-end/src/auth/roles.guard.ts`
-- Evaluates controller and handler `@Roles('student', 'faculty', 'head', 'INSTITUTE_SUPER_ADMIN', 'FINANCE_ADMIN', 'spoc', 'PLATFORM_SUPER_ADMIN')` metadata against `request.user.role`.
-- Normalizes role aliases (e.g., `superadmin` ↔ `INSTITUTE_SUPER_ADMIN`, `head` ↔ `DEPARTMENT_ADMIN_HOD`).
+- Matches the caller's role against `@Roles(...)` metadata.
+- Supports role inheritance and multiple authorized roles.
 
 ### 4.3 Modular SaaS Feature Gating (`RequiresModuleGuard`)
-**File**: `back-end/src/common/guards/requires-module.guard.ts`
-- Enforces subscription tier boundaries (e.g., `@RequiresModule('fees')`, `@RequiresModule('research')`, `@RequiresModule('forum')`).
-- Inspects the active institution's licensed module array and denies access if the feature is not active for the tenant.
-
-### 4.4 Ephemeral Onboarding Session Guard (`OnboardingSessionGuard`)
-**File**: `back-end/src/billing/onboarding/onboarding-session.guard.ts`
-- Protects multi-step onboarding wizard progression using HMAC-signed ephemeral tokens (`x-onboarding-session`), preventing out-of-sequence step submission.
+**File**: `back-end/src/billing/requires-module.guard.ts`
+- Checks `@RequiresModule(BillingModule.FORUM)` against the college's active license.
+- Blocks unauthorized modules with a descriptive `403 MODULE_NOT_LICENSED`.
 
 ---
 
-## ⚠️ Exception Filtering & Error Handling
+## 🧩 Modern React Architecture & Portals
 
-### Global All-Exceptions Filter (`AllExceptionsFilter`)
-**File**: `back-end/src/common/filters/http-exception.filter.ts`
+The frontend is built as a single, cohesive **React Single Page Application** in `front-end-react/`:
 
-Standardizes every error response across the entire system into a single consistent JSON schema:
-
-```json
-{
-  "success": false,
-  "statusCode": 403,
-  "errorCode": "ACCESS_DENIED",
-  "message": "You do not have permission to perform this action.",
-  "timestamp": "2026-08-31T15:30:00.000Z",
-  "path": "/api/admin/users",
-  "requestId": "req-9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
-  "details": {}
-}
-```
-
-#### Core Error Codes:
-- `AUTHENTICATION_REQUIRED` (401): Missing or expired JWT token.
-- `ACCESS_DENIED` (403): Role mismatch or missing permissions.
-- `MODULE_NOT_LICENSED` (403): Feature not in tenant subscription.
-- `RATE_LIMITED` (429): Brute-force or request limit exceeded.
-- `VALIDATION_FAILED` (400): Class-validator DTO constraint failed.
-- `BUSINESS_RULE_VIOLATION` (400): Academic constraint violation.
-- `RESOURCE_NOT_FOUND` (404): Entity does not exist.
+| Portal / Role | React Route | Entry Component | Key Capabilities |
+|---|---|---|---|
+| **Public Gateway** | `/` | `Landing.jsx` | Platform introduction, SaaS features, live demo links |
+| **Authentication** | `/login` | `Login.jsx` | Multi-role credential authentication, redirect routing |
+| **Institutional Onboarding** | `/onboarding` | `Onboarding.jsx` | Multi-step college registration and module licensing wizard |
+| 🎓 **Student Portal** | `/student/*` | `StudentDashboard.jsx` | Timetable grid, syllabus tracker, course self-enrollment, attendance heatmap, leave requests with document upload, and BTP milestone submissions |
+| 👨‍🏫 **Faculty Portal** | `/faculty/*` | `FacultyDashboard.jsx` | Class rosters, student grade entry, attendance logging, meeting scheduling, research supervision |
+| 🛡️ **Admin & Head Portal** | `/admin/*` | `AdminHeadDashboard.jsx` | User lifecycle management, course allocations, institutional compliance reports, leave approvals, fee records |
+| 🤝 **SPOC Portal** | `/spoc/*` | `SpocDashboard.jsx` | Institution subscription management, billing tiers, team contacts |
+| 👑 **Super Admin** | `/superadmin/*` | `SuperadminDashboard.jsx` | Global institutional governance, tenant onboarding reviews |
 
 ---
 
-## 👥 Multi-Role Portals & Modules
+## 📅 Timetable Scheduling Engine & Automated Conflict Prevention
 
-| Portal / Role | File Entrypoint | Description & Capabilities |
-|---|---|---|
-| **Public Gateway** | `front-end/index.html` | Institution landing, tenant code selector, portal routing. |
-| **Institutional Onboarding** | `front-end/onboarding.html` | 4-step wizard for self-service university registration and module selection. |
-| **SaaS Platform Vendor** | `front-end/saas.html` | Vendor HQ dashboard for college lifecycle, module management, and support tickets. |
-| **Student Portal** | `front-end/student.html` | Timetable, syllabus tracking, marks review, attendance percentage, leave requests. |
-| **Faculty Portal** | `front-end/faculty.html` | Class roster with real names, individual student marks entry, attendance logging. |
-| **Department Head (HOD)** | `front-end/hod.html` | Course allocations, faculty review, timetable management, attendance overrides. |
-| **Institute Director** | `front-end/director.html` | Cross-department analytics, retention KPIs, institutional compliance audits. |
-| **Finance Officer** | `front-end/finance.html` | Fee record management, student dues tracking, payment receipts, fee structures. |
-| **SPOC / Support Desk** | `front-end/spoc.html` | Dedicated customer success channel for college partners. |
+The academic schedule is managed dynamically via an end-to-end scheduling engine designed to eliminate double-booking across sections, faculty, and physical classrooms/laboratories.
 
----
-
-## 🔑 Demo Credentials & Tenant Identifiers
-
-Use **Tenant Code**: `IIITS` (or `NITW`) during sign-in.
-
-| Role | Email | Password | Assigned Portal | Notes / Personas |
-|---|---|---|---|---|
-| **Student (CS-A)** | `student@iiits.in` | `Student@123` | `student.html` | John Doe (Roll: S20220010001) |
-| **Student (CS-B)** | `student2@iiits.in` | `Student@123` | `student.html` | Alice Vance (Roll: S20220010002) |
-| **Faculty** | `faculty@iiits.in` | `Faculty@123` | `faculty.html` | Dr. Jane Smith (Data Structures) |
-| **Department Head** | `head@iiits.in` | `Head@123` | `hod.html` | Academic Head CSE |
-| **Institute Director** | `director@iiits.in` | `Director@123` | `director.html` | Super Admin / Director |
-| **Finance Officer** | `finance@iiits.in` | `Finance@123` | `finance.html` | Finance Officer |
-| **College SPOC** | `spoc@example.com` | `Spoc@123` | `spoc.html` | Partner Success Lead |
-| **SaaS Platform Admin** | `saasadmin@platform.com` | `Platform@123` | `saas.html` | Global Platform Operator |
-
----
-
-## 🚀 Setup & Quick Start
-
-### Prerequisites
-- **Node.js**: v18.x or higher
-- **npm**: v9.x or higher
-
-### 1. Installation
-```bash
-# Clone the repository
-git clone git@github.com:IIIT-Sricity-FSD-2024-2028/19_TheBoogiemen.git
-cd 19_TheBoogiemen
-
-# Install backend dependencies
-cd back-end
-npm install
+```
+                  ┌──────────────────────────────────────────────┐
+                  │      POST /api/timetable (Slot Request)      │
+                  │  (course_id, section, day, time, room, type) │
+                  └──────────────────────┬───────────────────────┘
+                                         │
+                    ┌────────────────────┴────────────────────┐
+                    ▼                                         ▼
+   ┌─────────────────────────────────┐       ┌─────────────────────────────────┐
+   │    1. Section Conflict Check    │       │     2. Room Conflict Check      │
+   │ Is Section (A/B) busy at (D,T)? │       │  Is Room/Lab occupied at (D,T)? │
+   └────────────────┬────────────────┘       └────────────────┬────────────────┘
+                    │                                         │
+                    │ No Conflict                             │ No Conflict
+                    └────────────────────┬────────────────────┘
+                                         ▼
+                      ┌──────────────────────────────────────┐
+                      │  Create Slot & Persist to Database   │
+                      │  • Auto-resolves code & name         │
+                      │  • Injects authenticated college_id  │
+                      └──────────────────┬───────────────────┘
+                                         │
+                    ┌────────────────────┴────────────────────┐
+                    ▼                                         ▼
+   ┌─────────────────────────────────┐       ┌─────────────────────────────────┐
+   │      Student Timetable View     │       │      Faculty Timetable View     │
+   │  GET /api/student-timetable     │       │  GET /api/timetable/faculty     │
+   │  Filtered to enrolled courses   │       │  Filtered to assigned sections  │
+   └─────────────────────────────────┘       └─────────────────────────────────┘
 ```
 
-### 2. Environment Configuration
-Create `back-end/.env` (defaults are pre-configured in `.env.example`):
-```env
-PORT=5001
-JWT_SECRET=super_secret_jwt_key_for_dev_must_be_long_and_secure_123
-JWT_EXPIRES_IN=7d
-CORS_ORIGIN=http://localhost:3000,http://127.0.0.1:3000
-AUTH_RATE_LIMIT_MAX=10
-AUTH_RATE_LIMIT_WINDOW_MS=900000
-ONBOARDING_RATE_LIMIT_MAX=30
-ONBOARDING_RATE_LIMIT_WINDOW_MS=900000
-LOG_LEVEL=debug
-LOG_TO_FILE=true
-```
+### 1. Timetable Endpoints Matrix
 
-### 3. Launch Backend Server
-```bash
-cd back-end
-npm run start:dev
-```
-*Backend runs on `http://localhost:5001` (or configured port). Swagger API Documentation is accessible at `http://localhost:5001/api/docs`.*
+| HTTP Method | Route | Authorization Roles | Purpose & Filter Semantics |
+|---|---|---|---|
+| `GET` | `/api/student-timetable` | `student` | Returns personalized weekly matrix filtered **only to courses the authenticated student is actively enrolled in** within their section. |
+| `GET` | `/api/timetable/faculty` | `faculty` | Returns the weekly matrix of slots matching the faculty member's assigned `(course_id, section)` pairs in `course_sections`. |
+| `GET` | `/api/timetable` | `student`, `faculty`, `admin`, `head`, `superadmin` | Section-level schedule grid and raw slot array (`?section=A` or `?section=B`), scoped to tenant college. |
+| `POST` | `/api/timetable` | `student`, `faculty`, `admin`, `head`, `superadmin` | Dynamic slot creation with automated **Section Clash** and **Room Double-Booking** prevention. |
+| `DELETE` | `/api/timetable/:id` | `student`, `faculty`, `admin`, `head`, `superadmin` | Deletes a scheduled class slot with college-scoping security validation. |
 
-### 4. Launch Frontend Web Server
-In a separate terminal:
-```bash
-cd front-end
-npx serve -l 3000
-```
-*Open `http://localhost:3000` in your web browser.*
+### 2. Dual-Layer Conflict Detection Engine
+Before committing any class slot to persistence, `common.controller.ts` validates two strict academic constraints:
+1. **Section Time Conflict**:
+   - Ensures students in Section `A` or `B` are not expected in two classes simultaneously.
+   - Rejects overlapping requests with `409 Conflict`:
+     `"Section A already has CS201 (Data Structures) scheduled on MON at 09:00."`
+2. **Room / Facility Double-Booking**:
+   - Ensures physical lecture halls (`101`, `102`, `201`, `202`) and specialized labs (`Lab 1`, `Lab 2`) are occupied by at most one cohort at any given day and time slot.
+   - Rejects overlapping room requests with `409 Conflict`:
+     `"Room '101' is already booked on MON at 09:00 for CS201 (Section A)."`
+
+### 3. Modern React `<Timetable />` Component (`front-end-react/src/components/shared/Timetable.jsx`)
+- **Interactive Calendar Grid**: Visual weekly schedule spanning Monday to Friday across 7 standard time blocks (`09:00` to `15:00`).
+- **Color-Coded Modality Badges**: Distinct themes and icons for **Lectures** (📖 Blue), **Labs** (🔬 Amber), and **Tutorials** (✏️ Green).
+- **Integrated `ScheduleClassModal`**:
+  - Course selection from institutional catalog.
+  - Section toggle (`Section A` / `Section B`).
+  - Day & time slot picker.
+  - Room input with instant presets (`101`, `102`, `Lab 1`, `Lab 2`).
+  - Real-time conflict feedback banners showing the exact conflict reason returned by the backend.
+- **One-Click Slot Deletion**: Interactive removal button (`×`) on class cards with confirmation.
+- **Metrics Footer**: Live computation of weekly class count, lecture hours, lab hours, and tutorial sessions.
 
 ---
 
 ## 🧪 Automated Test Suite & Verification
 
-The test suite validates middleware behavior, rate limiters, guards, error envelopes, and business services:
+The backend test suite validates middleware behavior, rate limiters, guards, error envelopes, and business services:
 
 ```bash
 cd back-end
@@ -400,4 +420,4 @@ npm test
 
 ---
 
-© 2026 BarelyPassing Platform. Built with NestJS, TypeScript, and modern web architecture.
+© 2026 BarelyPassing Platform. Built with NestJS, TypeScript, and React 18.
