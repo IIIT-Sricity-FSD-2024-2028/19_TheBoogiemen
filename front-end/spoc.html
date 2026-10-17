@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPOC Dashboard - BarelyPassing</title>
+<link rel="stylesheet" href="style.css">
+<style>
+    /* Same sidebar + top-header-bar + content-body shell every other
+       dashboard uses (student/faculty/super-user/super-admin) — this page
+       previously had its own custom header band instead, which was the
+       inconsistency this rewrite fixes. Everything below is scoped to the
+       three panels this page hosts inside that shared shell, not the shell
+       itself. */
+    .status-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .status-pill.active         { background: #dcfce7; color: #166534; }
+    .status-pill.expiring_soon  { background: #fef9c3; color: #854d0e; }
+    .status-pill.expired        { background: #fef2f2; color: #991b1b; }
+    .status-pill.none           { background: #f1f5f9; color: #64748b; }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+    /* A dedicated class rather than an inline 3-column override on the
+       shared .metrics-grid: an inline style beats the class's own mobile
+       breakpoints (style.css:545-553) by specificity, so overriding inline
+       would quietly stop this row from collapsing on small screens while
+       every other .metrics-grid on the site still does. */
+    .spoc-metrics { grid-template-columns: repeat(3, 1fr); }
+    @media (max-width: 768px) { .spoc-metrics { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 480px) { .spoc-metrics { grid-template-columns: 1fr; } }
+
+    .roster-row { display: flex; align-items: center; gap: 12px; padding: 12px 4px; border-bottom: 1px solid #f1f5f9; }
+    .roster-row:last-child { border-bottom: none; }
+    .roster-avatar {
+        width: 34px; height: 34px; border-radius: 50%; background: var(--accent-primary);
+        color: white; display: flex; align-items: center; justify-content: center;
+        font-size: 13px; font-weight: 700; flex-shrink: 0;
+    }
+    .roster-name { font-size: 13.5px; font-weight: 600; color: var(--text-primary); }
+    .roster-email { font-size: 12px; color: var(--text-muted); }
+
+    .chat-panel { display: flex; flex-direction: column; height: 480px; }
+    .msg-list { flex: 1; overflow-y: auto; padding: 18px 22px; display: flex; flex-direction: column; gap: 4px; }
+    .msg-row { display: flex; gap: 8px; align-items: flex-end; margin: 6px 0; }
+    .msg-row.mine { flex-direction: row-reverse; }
+    .msg-avatar {
+        width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 10.5px; font-weight: 700; color: white;
+    }
+    .msg-row.mine .msg-avatar { background: var(--accent-primary); }
+    .msg-row.theirs .msg-avatar { background: #64748b; }
+    .msg-bubble { max-width: 72%; padding: 10px 14px; border-radius: 14px; font-size: 13.5px; line-height: 1.5; }
+    .msg-row.mine .msg-bubble { background: var(--accent-primary); color: white; border-bottom-right-radius: 4px; }
+    .msg-row.theirs .msg-bubble { background: #f1f5f9; color: var(--text-primary); border-bottom-left-radius: 4px; }
+    .msg-time { display: block; font-size: 10.5px; opacity: .7; margin-top: 4px; }
+    .chat-composer { display: flex; gap: 8px; padding: 14px 18px; border-top: 1px solid var(--border); background: #fbfcfe; }
+    .chat-composer input { flex: 1; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 13.5px; }
+    .chat-composer input:focus { outline: none; border-color: var(--accent-primary); }
+
+    .empty-note { color: var(--text-muted); font-size: 13px; text-align: center; padding: 24px 12px; }
+</style>
+</head>
+<body class="dashboard-body">
+
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <h2>BarelyPassing</h2>
+        <p>Institution Partner Platform</p>
+    </div>
+    <div class="sidebar-user">
+        <div class="user-avatar" id="sidebar-avatar" style="background:var(--accent-primary);">?</div>
+        <div class="user-info">
+            <h3 id="sidebar-user-name">SPOC</h3>
+            <p id="sidebar-college-name">Loading…</p>
+        </div>
+    </div>
+    <nav class="sidebar-nav">
+        <a href="#" class="nav-item active" onclick="switchView('subscription-view',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            <span>Subscription</span>
+        </a>
+        <a href="#" class="nav-item" onclick="switchView('team-view',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>Team</span>
+        </a>
+        <a href="#" class="nav-item" onclick="switchView('support-view',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            <span>Support</span>
+        </a>
+    </nav>
+    <div class="sidebar-footer">
+        <a href="#" class="nav-item" onclick="switchView('settings-view',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+            <span>Settings</span>
+        </a>
+        <button class="nav-item" style="color:#ef4444;" onclick="window.Auth.logout()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+            <span>Logout</span>
+        </button>
+    </div>
+</aside>
+
+<div class="main-content">
+    <div class="top-header-bar">
+        <h1 id="page-title">Subscription</h1>
+        <div class="header-badges"><span class="badge-term">Spring 2026</span></div>
+    </div>
+
+    <div class="content-body">
+
+        <!-- ── Subscription ─────────────────────────────────────────────── -->
+        <div id="subscription-view" class="view-section active">
+            <div class="metrics-grid spoc-metrics" id="spoc-metrics-grid">
+                <div class="metric-card"><div class="label">Plan Status</div><div class="value" style="font-size:16px;margin-top:10px;" id="spoc-status-pill-slot"><span class="status-pill none"><span class="status-dot"></span>Loading…</span></div><div class="sub" id="spoc-price-value"></div></div>
+                <div class="metric-card"><div class="label">Student Seats</div><div class="value" id="spoc-student-seats-value">—</div><div class="sub">enrolled / purchased</div></div>
+                <div class="metric-card"><div class="label">Faculty Seats</div><div class="value" id="spoc-faculty-seats-value">—</div><div class="sub">enrolled / purchased</div></div>
+                <div class="metric-card"><div class="label">Renewal</div><div class="value" id="spoc-renewal-value" style="font-size:16px;margin-top:10px;">—</div></div>
+            </div>
+            <div class="stats-card" style="margin-top:20px;">
+                <div class="stats-card-header"><div><h3>About your plan</h3></div></div>
+                <div class="stats-card-body" style="padding:20px 24px;" id="spoc-subscription-note">Loading…</div>
+            </div>
+        </div>
+
+        <!-- ── Team ──────────────────────────────────────────────────────── -->
+        <div id="team-view" class="view-section" style="display:none;">
+            <div class="stats-card">
+                <div class="stats-card-header">
+                    <div><h3>Admins</h3><p>Accounts you've provisioned — they in turn manage faculty and students</p></div>
+                    <button class="page-action-btn" onclick="openModal('hireAdminModal')">+ Hire Admin</button>
+                </div>
+                <div class="stats-card-body" id="spoc-admin-list" style="padding:6px 20px;">Loading…</div>
+            </div>
+        </div>
+
+        <!-- ── Support ───────────────────────────────────────────────────── -->
+        <div id="support-view" class="view-section" style="display:none;">
+            <div class="stats-card chat-panel">
+                <div class="stats-card-header">
+                    <div><h3>Support</h3><p>Message our team directly — replies land right here</p></div>
+                    <button onclick="loadSupportThread()" title="Refresh" style="background:none;border:1px solid var(--border);border-radius:8px;padding:7px 11px;cursor:pointer;color:var(--text-muted);">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                    </button>
+                </div>
+                <div class="msg-list" id="spoc-msg-list">Loading…</div>
+                <form class="chat-composer" onsubmit="submitSupportMessage(event)">
+                    <input type="text" id="spocMsgInput" placeholder="Write a message…" required>
+                    <button type="submit" class="submit-btn" style="width:auto;padding:9px 18px;font-size:13px;">Send</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- ── Settings View ── -->
+        <div id="settings-view" class="view-section" style="display:none;"></div>
+
+    </div><!-- /content-body -->
+</div><!-- /main-content -->
+
+<!-- ── Hire Admin Modal ─────────────────────────────────────────────────── -->
+<div id="hireAdminModal" class="modal-backdrop">
+    <div class="modal-window">
+        <div class="modal-header"><h2>Hire an Admin</h2><button class="close-modal" onclick="closeModal('hireAdminModal')">&times;</button></div>
+        <form onsubmit="submitHireAdmin(event)">
+            <div class="modal-body">
+                <p style="font-size:12.5px;color:var(--text-muted);margin-bottom:16px;">
+                    They'll be able to manage faculty and students for your college —
+                    the same role that runs day-to-day academic operations today.
+                </p>
+                <div class="form-row">
+                    <div class="form-group"><label>First Name</label><input type="text" id="hireFirstName"></div>
+                    <div class="form-group"><label>Last Name</label><input type="text" id="hireLastName"></div>
+                </div>
+                <div class="form-group"><label>Email <span style="color:#ef4444">*</span></label><input type="email" id="hireEmail" placeholder="admin@yourcollege.edu" required></div>
+                <div class="form-group"><label>Initial Password <span style="color:#ef4444">*</span></label><input type="password" id="hirePassword" placeholder="Minimum 8 characters" required minlength="8"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="submit-btn" style="flex:1;">+ Add Admin</button>
+                <button type="button" class="btn-cancel" onclick="closeModal('hireAdminModal')">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="state.js"></script>
+<script>
+// ── View switching ─────────────────────────────────────────────────────────
+//
+// A local copy of fixes.js's window.switchView (same behaviour: hide every
+// .view-section, show the target, mark the clicked nav-item active, update
+// the page title) rather than loading fixes.js itself. That file is 3000+
+// lines built around the five academic roles' render functions — pulling it
+// in for three toggled panels would be a large, unrelated dependency for a
+// ten-line function. VIEW_TITLES is the same idea, scoped to this page.
+const VIEW_TITLES = {
+    'subscription-view': 'Subscription',
+    'team-view': 'Team',
+    'support-view': 'Support',
+    'settings-view': 'Settings',
+};
+
+window.switchView = function(viewId, clickedEl) {
+    document.querySelectorAll('.view-section').forEach(el => {
+        el.classList.remove('active');
+        el.style.display = 'none';
+    });
+    const target = document.getElementById(viewId);
+    if (target) { target.classList.add('active'); target.style.display = 'block'; }
+    if (clickedEl) {
+        document.querySelectorAll('.sidebar-nav .nav-item').forEach(el => el.classList.remove('active'));
+        clickedEl.classList.add('active');
+    }
+    const titleEl = document.getElementById('page-title');
+    if (titleEl && VIEW_TITLES[viewId]) titleEl.textContent = VIEW_TITLES[viewId];
+};
+
+function openModal(id) { const m = document.getElementById(id); if (m) m.style.display = 'flex'; }
+function closeModal(id) { const m = document.getElementById(id); if (m) m.style.display = 'none'; }
+
+let spocPollTimer = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    const user = window.Auth.requireAuth(['spoc']);
+    if (!user) return;
+    const name = (user.first_name || '') + ' ' + (user.last_name || user.username || '');
+    const trimmed = name.trim();
+    const sn = document.getElementById('sidebar-user-name');
+    if (sn) sn.textContent = trimmed || 'SPOC';
+    const av = document.getElementById('sidebar-avatar');
+    if (av) av.textContent = (trimmed.charAt(0) || 'S').toUpperCase();
+
+    loadSubscriptionAndAdmins();
+    loadSupportThread();
+    // Lightweight polling, not a socket — matches the rest of the app, which
+    // has no realtime infrastructure today. 20s is frequent enough for a
+    // support conversation without hammering the API.
+    spocPollTimer = setInterval(loadSupportThread, 20000);
+});
+window.addEventListener('beforeunload', () => { if (spocPollTimer) clearInterval(spocPollTimer); });
+
+const PLAN_STATUS_LABEL = { active: 'Active', expiring_soon: 'Expiring soon', expired: 'Expired' };
+const MODULE_LABEL = { research: 'Research', fees: 'Fees', forum: 'Discussion Forum', analytics: 'Analytics' };
+function formatRupees(paise) {
+    return '₹' + (paise / 100).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+}
+
+async function loadSubscriptionAndAdmins() {
+    try {
+        const res = await window.Auth.apiFetch('/billing/colleges/me');
+        if (!res) return;
+        const college = res.data;
+        const collegeNameEl = document.getElementById('sidebar-college-name');
+        if (collegeNameEl) collegeNameEl.textContent = college.name || 'Institution Partner';
+
+        const plan = college.plan;
+        const statusSlot = document.getElementById('spoc-status-pill-slot');
+        const note = document.getElementById('spoc-subscription-note');
+
+        if (!plan) {
+            // A college provisioned outside the self-service pipeline (the
+            // superadmin's manual path) has no subscription row — an honest
+            // empty state, not a fabricated one.
+            statusSlot.innerHTML = '<span class="status-pill none"><span class="status-dot"></span>No active plan</span>';
+            document.getElementById('spoc-price-value').textContent = '';
+            document.getElementById('spoc-student-seats-value').textContent = String(college.student_count || 0);
+            document.getElementById('spoc-faculty-seats-value').textContent = String(college.faculty_count || 0);
+            document.getElementById('spoc-renewal-value').innerHTML = '<span style="color:var(--text-muted);font-weight:500;">—</span>';
+            note.textContent = 'No subscription is on record for your institution. Contact support if this looks wrong.';
+        } else {
+            statusSlot.innerHTML = `<span class="status-pill ${plan.status}"><span class="status-dot"></span>${PLAN_STATUS_LABEL[plan.status]}</span>`;
+            document.getElementById('spoc-price-value').textContent =
+                plan.payable_paise != null ? `${formatRupees(plan.payable_paise)}/yr` : '';
+            document.getElementById('spoc-student-seats-value').textContent = `${college.student_count || 0} / ${plan.student_seats}`;
+            document.getElementById('spoc-faculty-seats-value').textContent = `${college.faculty_count || 0} / ${plan.faculty_seats}`;
+            const endsOn = new Date(plan.ends_on).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+            document.getElementById('spoc-renewal-value').textContent = plan.status === 'expired' ? `Expired ${endsOn}` : endsOn;
+            const moduleNames = plan.modules.length
+                ? plan.modules.map(m => MODULE_LABEL[m] || m).join(', ')
+                : 'none beyond the core dashboard';
+            const expiryNote = plan.status === 'expired'
+                ? ' Your plan has expired — hiring new staff/students and the modules below are on hold until you renew.'
+                : plan.status === 'expiring_soon' ? ' Your plan renews soon — contact support to keep it active.' : '';
+            note.textContent = `Seats: ${plan.student_seats} students, ${plan.faculty_seats} faculty. Modules included: ${moduleNames}.${expiryNote}`;
+        }
+
+        renderAdminList(college.admins || []);
+    } catch (e) {
+        showErr('spoc-admin-list', e);
+    }
+}
+
+function renderAdminList(admins) {
+    const list = document.getElementById('spoc-admin-list');
+    if (!admins.length) {
+        list.innerHTML = '<p class="empty-note">No admins hired yet. Click "+ Hire Admin" to add your first one.</p>';
+        return;
+    }
+    list.innerHTML = admins.map(a => {
+        const name = ((a.first_name || '') + ' ' + (a.last_name || '')).trim() || a.username || 'Admin';
+        const initial = name.charAt(0).toUpperCase() || 'A';
+        return `<div class="roster-row">
+            <div class="roster-avatar">${escapeHtml(initial)}</div>
+            <div style="flex:1;">
+                <div class="roster-name">${escapeHtml(name)}</div>
+                <div class="roster-email">${escapeHtml(a.email)}</div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+async function submitHireAdmin(event) {
+    event.preventDefault();
+    const first_name = document.getElementById('hireFirstName').value.trim();
+    const last_name  = document.getElementById('hireLastName').value.trim();
+    const email       = document.getElementById('hireEmail').value.trim();
+    const password    = document.getElementById('hirePassword').value;
+    try {
+        // role is NEVER sent — the server stamps 'admin' and this account's
+        // own college_id itself (ROLE_GRANTS in common/dto/user.dto.ts). A
+        // form field here would be decoration; the ceiling is enforced
+        // server-side regardless of what the client sends.
+        const res = await window.Auth.apiFetch('/users', {
+            method: 'POST',
+            body: JSON.stringify({ role: 'admin', first_name, last_name, email, password }),
+        });
+        if (!res) return; // apiFetch already handled an expired/rejected session
+        event.target.reset();
+        closeModal('hireAdminModal');
+        await loadSubscriptionAndAdmins();
+    } catch (e) {
+        alert('Could not add admin: ' + e.message);
+    }
+}
+
+async function loadSupportThread() {
+    try {
+        const res = await window.Auth.apiFetch('/billing/support/thread');
+        if (!res) return;
+        renderMessages(res.data ? res.data.messages : []);
+    } catch (e) {
+        showErr('spoc-msg-list', e);
+    }
+}
+
+async function submitSupportMessage(event) {
+    event.preventDefault();
+    const input = document.getElementById('spocMsgInput');
+    const content = input.value.trim();
+    if (!content) return;
+    try {
+        const res = await window.Auth.apiFetch('/billing/support/messages', {
+            method: 'POST',
+            body: JSON.stringify({ content }),
+        });
+        if (!res) return;
+        input.value = '';
+        renderMessages(res.data.messages);
+    } catch (e) {
+        alert('Could not send message: ' + e.message);
+    }
+}
+
+function renderMessages(messages) {
+    const el = document.getElementById('spoc-msg-list');
+    if (!messages || !messages.length) {
+        el.innerHTML = '<p class="empty-note">No messages yet. Say hello — our team will reply here.</p>';
+        return;
+    }
+    el.innerHTML = messages.map(m => {
+        const mine = m.sender_role === 'spoc';
+        const when = m.created_at ? new Date(m.created_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+        const who = mine ? 'You' : (m.sender_name || 'BarelyPassing Team');
+        const initial = who.charAt(0).toUpperCase();
+        return `<div class="msg-row ${mine ? 'mine' : 'theirs'}">
+            <div class="msg-avatar">${escapeHtml(initial)}</div>
+            <div class="msg-bubble">
+                ${escapeHtml(m.content)}
+                <span class="msg-time">${who} · ${when}</span>
+            </div>
+        </div>`;
+    }).join('');
+    el.scrollTop = el.scrollHeight;
+}
+
+// Every message here is rendered as text, not innerHTML-of-user-content —
+// the one place in this page that touches unescaped user input, escaped
+// deliberately rather than joining the app's existing 136 unescaped sites.
+function escapeHtml(s) {
+    const div = document.createElement('div');
+    div.textContent = s ?? '';
+    return div.innerHTML;
+}
+
+function showErr(elId, e) {
+    const el = document.getElementById(elId);
+    if (el) el.innerHTML = `<p style="color:#ef4444;font-size:13px;padding:12px 0;">Failed to load: ${e.message}</p>`;
+}
+</script>
+</body>
+</html>

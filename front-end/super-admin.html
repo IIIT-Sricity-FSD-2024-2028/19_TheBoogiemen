@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin Dashboard - BarelyPassing</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dashboard-body">
+
+<!--
+  Superadmin is the vendor operator, not a second admin for this deployment's
+  own college — that job belongs to super-user.html (admin/head), which
+  already carries every panel this page used to duplicate (Institutional
+  Reports, Event Scheduler, Resource Management, Fee Compliance, User
+  Management, Attendance Override — confirmed present there before removing
+  them here, so nothing is stranded). This page is now exactly what
+  superadmin is for: every *other* college, as a customer.
+-->
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <h2>BarelyPassing</h2>
+        <p>Institution Partner Platform</p>
+    </div>
+    <div class="sidebar-user">
+        <div class="user-avatar avatar-admin" style="background:#475569; color:#fff;">S</div>
+        <div class="user-info">
+            <h3 id="sidebar-user-name">Super Admin</h3>
+            <p>Platform Operator</p>
+        </div>
+    </div>
+    <nav class="sidebar-nav">
+        <a href="#" class="nav-item active" onclick="switchView('institutions-view',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/></svg>
+            <span>Institutions</span>
+        </a>
+    </nav>
+    <div class="sidebar-footer">
+        <a href="#" class="nav-item" onclick="switchView('settings-view',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+            <span>Settings</span>
+        </a>
+        <button class="nav-item" style="color:#ef4444;" onclick="window.Auth.logout()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+            <span>Logout</span>
+        </button>
+    </div>
+</aside>
+
+<!-- ── Main Area ────────────────────────────── -->
+<div class="main-content">
+    <div class="top-header-bar" id="top-header-bar">
+        <h1 id="page-title">Institutions</h1>
+        <div class="header-badges"><span class="badge-term">Spring 2026</span></div>
+    </div>
+
+    <div class="content-body">
+
+        <!-- ── Institutions View — the vendor cockpit, and now the only view ── -->
+        <div id="institutions-view" class="view-section active">
+            <div class="stats-card">
+                <div class="stats-card-header">
+                    <div>
+                        <h3>Registered Institutions</h3>
+                        <p>Every college with a SPOC account on this platform. Colleges are onboarded once they purchase a subscription — there is no manual "add college" action here by design.</p>
+                    </div>
+                </div>
+                <div class="stats-card-body" id="institutions-table-body" style="padding:24px;">Loading…</div>
+            </div>
+
+            <div class="stats-card">
+                <div class="stats-card-header">
+                    <div><h3>Support Inbox</h3><p>Messages from every SPOC, newest activity first.</p></div>
+                </div>
+                <div class="stats-card-body" id="support-inbox-body" style="padding:0;">Loading…</div>
+            </div>
+        </div>
+
+        <!-- ── Settings View ── -->
+        <div id="settings-view" class="view-section" style="display:none;"></div>
+
+    </div><!-- /content-body -->
+</div><!-- /main-content -->
+
+<!-- ── Support Thread Detail Modal ───────────────────────────────────────── -->
+<div id="supportThreadModal" class="modal-backdrop">
+    <div class="modal-window">
+        <div class="modal-header"><h2 id="supportThreadTitle">Support Thread</h2><button class="close-modal" onclick="closeModal('supportThreadModal')">&times;</button></div>
+        <div class="modal-body">
+            <input type="hidden" id="supportThreadId">
+            <div id="supportThreadMessages" style="max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;margin-bottom:14px;"></div>
+            <div class="form-group"><label>Reply</label><textarea id="supportReplyContent" rows="3" placeholder="Write a reply…" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;box-sizing:border-box;"></textarea></div>
+        </div>
+        <div class="modal-footer">
+            <button class="submit-btn" style="flex:1;" onclick="submitSuperadminReply()">Send Reply</button>
+            <button class="btn-cancel" onclick="closeModal('supportThreadModal')">Close</button>
+        </div>
+    </div>
+</div>
+
+<script src="state.js"></script>
+<script src="script.js"></script>
+<script src="fixes.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Tightened from ['superadmin','admin','head'] — admin/head now have
+    // nothing left on this page (every panel they need lives on
+    // super-user.html), so letting them land here would show an Institutions
+    // list the backend 403s them on. Direct navigation to this URL by an
+    // admin/head account now redirects them to login rather than showing a
+    // page with nothing usable on it.
+    const user = window.Auth.requireAuth(['superadmin']);
+    if (!user) return;
+    const name = (user.first_name || '') + ' ' + (user.last_name || user.username || '');
+    const sn = document.getElementById('sidebar-user-name');
+    if (sn) sn.textContent = name.trim();
+    // Institutions is the default active view, so its data loads eagerly —
+    // same pattern every other dashboard uses for its own default view.
+    window.renderInstitutions && window.renderInstitutions();
+    window.renderSupportInbox && window.renderSupportInbox();
+});
+</script>
+</body>
+</html>

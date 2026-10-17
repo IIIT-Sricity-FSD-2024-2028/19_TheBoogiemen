@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Institution Onboarding - BarelyPassing</title>
+<link rel="stylesheet" href="style.css">
+<style>
+    /* Light, dashboard-adjacent visual language — same family as
+       login.html/signup.html, not index.html's dark marketing page. This is
+       a form flow to be completed carefully, not a pitch to be scanned. */
+    body.onboard-body {
+        background: radial-gradient(circle at top right, #e2e8f0, #f8fafc);
+        min-height: 100vh; padding: 32px 20px 60px; display: flex; flex-direction: column; align-items: center;
+    }
+    .onboard-shell { width: 100%; max-width: 720px; }
+    .onboard-steps {
+        display: flex; justify-content: space-between; margin: 28px 0 32px; padding: 0 4px;
+    }
+    .onboard-step-dot {
+        display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; position: relative;
+    }
+    .onboard-step-dot .circle {
+        width: 28px; height: 28px; border-radius: 50%; background: white; border: 2px solid var(--border);
+        display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--text-muted);
+        z-index: 1;
+    }
+    .onboard-step-dot .label { font-size: 11px; color: var(--text-muted); font-weight: 600; text-align: center; }
+    .onboard-step-dot::after {
+        content: ''; position: absolute; top: 13px; left: 50%; width: 100%; height: 2px; background: var(--border); z-index: 0;
+    }
+    .onboard-step-dot:last-child::after { display: none; }
+    .onboard-step-dot.done .circle { background: var(--accent-primary); border-color: var(--accent-primary); color: white; }
+    .onboard-step-dot.done::after { background: var(--accent-primary); }
+    .onboard-step-dot.active .circle { border-color: var(--accent-primary); color: var(--accent-primary); }
+
+    .onboard-card {
+        background: white; border-radius: 20px; border: 1px solid var(--border); box-shadow: var(--shadow-premium);
+        padding: 36px 40px;
+    }
+    .onboard-card h2 { font-size: 20px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
+    .onboard-card > p.sub { font-size: 13.5px; color: var(--text-muted); margin-bottom: 26px; }
+    .onboard-panel { display: none; }
+    .onboard-panel.active { display: block; }
+
+    .module-row {
+        display: flex; align-items: center; justify-content: space-between; padding: 12px 14px;
+        border: 1.5px solid var(--border); border-radius: 10px; margin-bottom: 10px; cursor: pointer; transition: border-color .15s;
+    }
+    .module-row:has(input:checked) { border-color: var(--accent-primary); background: #f5f3ff; }
+    .module-row .name { font-size: 13.5px; font-weight: 600; color: var(--text-primary); }
+    .module-row .desc { font-size: 11.5px; color: var(--text-muted); }
+    .module-row .weight { font-size: 12px; font-weight: 700; color: var(--accent-primary); }
+
+    .price-live {
+        margin-top: 20px; padding: 18px 20px; border-radius: 12px; background: #0f172a; color: white;
+        display: flex; justify-content: space-between; align-items: baseline;
+    }
+    .price-live .amount { font-size: 26px; font-weight: 800; }
+    .price-live .caption { font-size: 11.5px; color: #94a3b8; }
+
+    .breakdown-line { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid #f1f5f9; font-size: 13.5px; }
+    .breakdown-line:last-of-type { border-bottom: none; }
+    .breakdown-line.negative .amt { color: #16a34a; }
+    .breakdown-line.total { border-top: 2px solid var(--border); margin-top: 8px; padding-top: 14px; font-size: 16px; font-weight: 700; }
+
+    .mock-checkout {
+        border: 2px dashed #f59e0b; background: #fffbeb; border-radius: 14px; padding: 24px; text-align: center;
+    }
+    .mock-checkout .badge {
+        display: inline-block; background: #f59e0b; color: white; font-size: 11px; font-weight: 700;
+        padding: 3px 10px; border-radius: 20px; margin-bottom: 14px; text-transform: uppercase; letter-spacing: .5px;
+    }
+    .mock-checkout .amount { font-size: 32px; font-weight: 800; color: var(--text-primary); margin: 6px 0 4px; }
+    .mock-checkout .order-id { font-size: 11.5px; color: var(--text-muted); font-family: ui-monospace, monospace; margin-bottom: 20px; }
+
+    .field-hint { color: var(--text-muted); font-size: 11.5px; margin-top: 4px; }
+</style>
+</head>
+<body class="onboard-body">
+
+<div class="onboard-shell">
+    <div class="brand-header" style="justify-content:center;">
+        <div class="logo"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg></div>
+        <h1 style="font-size:22px;">BarelyPassing</h1>
+    </div>
+
+    <div class="onboard-steps" id="stepIndicator"></div>
+
+    <div class="onboard-card">
+
+        <!-- ── Step 1: Details ─────────────────────────────────────────── -->
+        <div class="onboard-panel active" id="panel-1">
+            <h2>Your details</h2>
+            <p class="sub">Tell us about you and your institution — nothing is charged yet.</p>
+            <form id="detailsForm" onsubmit="submitDetails(event)">
+                <div class="form-row">
+                    <div class="form-group"><label>First Name</label><input type="text" id="d_first_name"></div>
+                    <div class="form-group"><label>Last Name</label><input type="text" id="d_last_name"></div>
+                </div>
+                <div class="form-group"><label>Email <span style="color:#ef4444">*</span></label><input type="email" id="d_email" required></div>
+                <div class="form-group">
+                    <label>Password <span style="color:#ef4444">*</span></label>
+                    <input type="password" id="d_password" required minlength="8">
+                    <span class="field-hint">8+ characters with uppercase, lowercase, a number and a special character (@$!%*?&amp;).</span>
+                </div>
+                <div class="form-group"><label>Phone</label><input type="text" id="d_phone"></div>
+                <hr style="margin:18px 0;border:none;border-top:1px solid #e2e8f0;">
+                <div class="form-group"><label>College Name <span style="color:#ef4444">*</span></label><input type="text" id="d_college_name" placeholder="e.g. St. Xavier College of Engineering" required></div>
+                <div class="form-row">
+                    <div class="form-group"><label>City</label><input type="text" id="d_city"></div>
+                    <div class="form-group"><label>State</label><input type="text" id="d_state"></div>
+                </div>
+                <div class="form-group">
+                    <label>Type</label>
+                    <select id="d_type"><option value="">-- Select --</option><option value="government">Government</option><option value="private">Private</option><option value="deemed">Deemed</option></select>
+                </div>
+                <button type="submit" class="submit-btn" id="detailsBtn">Continue</button>
+            </form>
+        </div>
+
+        <!-- ── Step 2: Metrics ─────────────────────────────────────────── -->
+        <div class="onboard-panel" id="panel-2">
+            <h2>Your metrics</h2>
+            <p class="sub">The price updates as you go — this is an algorithm, not a fixed plan.</p>
+            <div class="form-row">
+                <div class="form-group"><label>Students</label><input type="number" id="m_students" min="1" max="100000" value="500"></div>
+                <div class="form-group"><label>Faculty</label><input type="number" id="m_faculty" min="0" max="10000" value="30"></div>
+            </div>
+            <label style="font-size:13px;font-weight:500;color:var(--text-primary);display:block;margin:14px 0 8px;">Modules</label>
+            <label class="module-row"><input type="checkbox" value="research" class="m_module" style="margin-right:10px;"><span class="name">Research</span><span class="desc">Projects, milestones, supervisor review</span><span class="weight">+15%</span></label>
+            <label class="module-row"><input type="checkbox" value="fees" class="m_module" style="margin-right:10px;"><span class="name">Fees</span><span class="desc">Fee records and compliance</span><span class="weight">+10%</span></label>
+            <label class="module-row"><input type="checkbox" value="forum" class="m_module" style="margin-right:10px;"><span class="name">Forum</span><span class="desc">Discussion boards</span><span class="weight">+5%</span></label>
+            <label class="module-row"><input type="checkbox" value="analytics" class="m_module" style="margin-right:10px;"><span class="name">Analytics</span><span class="desc">Institutional reports, at-risk detection</span><span class="weight">+20%</span></label>
+            <div class="form-group" style="margin-top:14px;">
+                <label>Term Length</label>
+                <select id="m_term">
+                    <option value="1">1 year</option>
+                    <option value="2">2 years — 5% off</option>
+                    <option value="3">3 years — 10% off</option>
+                </select>
+            </div>
+            <div class="price-live">
+                <div>
+                    <div class="amount" id="livePrice">—</div>
+                    <div class="caption">estimated, per year + GST</div>
+                </div>
+                <div class="caption" id="liveCaption">Updates as you change the fields above</div>
+            </div>
+            <button type="button" class="submit-btn" id="quoteBtn" style="margin-top:20px;" onclick="submitMetrics()">Get Quote</button>
+        </div>
+
+        <!-- ── Step 3: Review ──────────────────────────────────────────── -->
+        <div class="onboard-panel" id="panel-3">
+            <h2>Review your quote</h2>
+            <p class="sub">Every line the algorithm priced — nothing hidden.</p>
+            <div id="breakdownBody"></div>
+            <button type="button" class="submit-btn" style="margin-top:22px;" onclick="submitAccept()" id="acceptBtn">Accept &amp; Continue to Payment</button>
+            <button type="button" class="btn-cancel" style="width:100%;margin-top:10px;" onclick="goToPanel(2)">Back to metrics</button>
+        </div>
+
+        <!-- ── Step 4: Mock Payment ────────────────────────────────────── -->
+        <div class="onboard-panel" id="panel-4">
+            <h2>Payment</h2>
+            <p class="sub">This is a sandbox — no real payment method is used.</p>
+            <div class="mock-checkout">
+                <span class="badge">BarelyPassing Checkout · Test Mode</span>
+                <div id="mockCollegeName" style="font-size:13px;color:var(--text-muted);"></div>
+                <div class="amount" id="mockAmount">—</div>
+                <div class="order-id" id="mockOrderId"></div>
+                <div id="mockFailNotice" style="display:none;color:#991b1b;background:#fef2f2;border-radius:8px;padding:10px 14px;font-size:12.5px;margin-bottom:16px;">
+                    Payment failed. Your quote is still valid — try again below.
+                </div>
+                <button type="button" class="submit-btn" style="width:100%;margin-bottom:10px;" onclick="submitConfirm()">✓ Simulate Successful Payment</button>
+                <button type="button" class="btn-cancel" style="width:100%;background:white;" onclick="submitFail()">Simulate Failure</button>
+            </div>
+        </div>
+
+        <!-- ── Step 5: Success ─────────────────────────────────────────── -->
+        <div class="onboard-panel" id="panel-5">
+            <h2>You're all set</h2>
+            <p class="sub">Your college and SPOC account are live. Taking you to your dashboard…</p>
+            <div style="text-align:center;padding:20px 0;">
+                <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+        </div>
+
+    </div>
+
+    <p class="terms" style="text-align:center;margin-top:20px;">Already onboarded? <a href="login.html">Sign in</a></p>
+</div>
+
+<script src="state.js"></script>
+<script>
+const STEPS = [
+    { id: 1, label: 'Details' },
+    { id: 2, label: 'Metrics' },
+    { id: 3, label: 'Review' },
+    { id: 4, label: 'Payment' },
+    { id: 5, label: 'Done' },
+];
+let currentStep = 1;
+let estimateTimer = null;
+
+function renderStepIndicator() {
+    document.getElementById('stepIndicator').innerHTML = STEPS.map(s => {
+        const cls = s.id < currentStep ? 'done' : s.id === currentStep ? 'active' : '';
+        return `<div class="onboard-step-dot ${cls}"><div class="circle">${s.id < currentStep ? '✓' : s.id}</div><div class="label">${s.label}</div></div>`;
+    }).join('');
+}
+
+function goToPanel(n) {
+    currentStep = n;
+    document.querySelectorAll('.onboard-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + n).classList.add('active');
+    renderStepIndicator();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function formatRupees(paise) {
+    return '₹' + (paise / 100).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+}
+
+function currentMetrics() {
+    return {
+        student_count: parseInt(document.getElementById('m_students').value, 10) || 0,
+        faculty_count: parseInt(document.getElementById('m_faculty').value, 10) || 0,
+        modules: [...document.querySelectorAll('.m_module:checked')].map(el => el.value),
+        term_years: parseInt(document.getElementById('m_term').value, 10),
+    };
+}
+
+async function apiCall(path, options = {}) {
+    const res = await fetch('/api' + path, {
+        ...options,
+        headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+        credentials: 'same-origin',
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+        const msg = (Array.isArray(data.message) ? data.message.join(', ') : data.message) || 'Request failed';
+        throw new Error(msg);
+    }
+    return data;
+}
+
+// ── Step 1 ──────────────────────────────────────────────────────────────────
+async function submitDetails(event) {
+    event.preventDefault();
+    const btn = document.getElementById('detailsBtn');
+    const body = {
+        email: document.getElementById('d_email').value.trim(),
+        password: document.getElementById('d_password').value,
+        first_name: document.getElementById('d_first_name').value.trim() || undefined,
+        last_name: document.getElementById('d_last_name').value.trim() || undefined,
+        phone: document.getElementById('d_phone').value.trim() || undefined,
+        college: {
+            name: document.getElementById('d_college_name').value.trim(),
+            city: document.getElementById('d_city').value.trim() || undefined,
+            state: document.getElementById('d_state').value.trim() || undefined,
+            type: document.getElementById('d_type').value || undefined,
+        },
+    };
+    btn.disabled = true; btn.textContent = 'Continuing…';
+    try {
+        await apiCall('/billing/onboarding/start', { method: 'POST', body: JSON.stringify(body) });
+        goToPanel(2);
+        scheduleEstimate();
+    } catch (e) {
+        alert(e.message);
+    } finally {
+        btn.disabled = false; btn.textContent = 'Continue';
+    }
+}
+
+// ── Step 2 ──────────────────────────────────────────────────────────────────
+function scheduleEstimate() {
+    clearTimeout(estimateTimer);
+    estimateTimer = setTimeout(updateLiveEstimate, 300);
+}
+document.addEventListener('input', (e) => {
+    if (e.target.closest('#panel-2')) scheduleEstimate();
+});
+
+async function updateLiveEstimate() {
+    try {
+        const res = await apiCall('/billing/estimate', { method: 'POST', body: JSON.stringify(currentMetrics()) });
+        document.getElementById('livePrice').textContent = formatRupees(res.data.payable_paise) + '/yr';
+    } catch {
+        document.getElementById('livePrice').textContent = '—';
+    }
+}
+
+async function submitMetrics() {
+    const btn = document.getElementById('quoteBtn');
+    btn.disabled = true; btn.textContent = 'Pricing…';
+    try {
+        const res = await apiCall('/billing/onboarding/quote', { method: 'POST', body: JSON.stringify(currentMetrics()) });
+        renderBreakdown(res.data);
+        goToPanel(3);
+    } catch (e) {
+        alert(e.message);
+    } finally {
+        btn.disabled = false; btn.textContent = 'Get Quote';
+    }
+}
+
+// ── Step 3 ──────────────────────────────────────────────────────────────────
+function renderBreakdown(quote) {
+    const el = document.getElementById('breakdownBody');
+    const lines = quote.lines.map(l => {
+        const neg = l.amount_paise < 0;
+        return `<div class="breakdown-line ${neg ? 'negative' : ''}"><span>${l.label}</span><span class="amt">${neg ? '−' : ''}${formatRupees(Math.abs(l.amount_paise))}</span></div>`;
+    }).join('');
+    el.innerHTML = lines + `<div class="breakdown-line total"><span>Payable</span><span>${formatRupees(quote.payable_paise)}</span></div>`;
+}
+
+async function submitAccept() {
+    const btn = document.getElementById('acceptBtn');
+    btn.disabled = true; btn.textContent = 'Opening checkout…';
+    try {
+        await openMockCheckout();
+        goToPanel(4);
+    } catch (e) {
+        alert(e.message);
+    } finally {
+        btn.disabled = false; btn.textContent = 'Accept & Continue to Payment';
+    }
+}
+
+// ── Step 4 ──────────────────────────────────────────────────────────────────
+async function openMockCheckout() {
+    const res = await apiCall('/billing/onboarding/quote/accept', { method: 'POST' });
+    document.getElementById('mockCollegeName').textContent = document.getElementById('d_college_name').value.trim();
+    document.getElementById('mockAmount').textContent = formatRupees(res.data.amount_paise);
+    document.getElementById('mockOrderId').textContent = 'Order: ' + res.data.order_id;
+}
+
+async function submitFail() {
+    try {
+        await apiCall('/billing/onboarding/payments/fail', { method: 'POST' });
+        document.getElementById('mockFailNotice').style.display = 'block';
+        // A fresh order on the SAME quote — the price never changes on a
+        // simulated failure, only the order id does.
+        await openMockCheckout();
+    } catch (e) {
+        alert(e.message);
+    }
+}
+
+async function submitConfirm() {
+    try {
+        const res = await apiCall('/billing/onboarding/payments/confirm', { method: 'POST' });
+        // The httpOnly bp_session cookie is already set by this response —
+        // that's the real credential. But requireAuth() on every dashboard
+        // page (state.js) reads the cached profile from localStorage, not
+        // the cookie it cannot see, exactly like a normal login() populates
+        // it. Skipping this would land an already-authenticated SPOC back on
+        // login.html, bounced by their own dashboard's own guard.
+        localStorage.setItem('bp_user', JSON.stringify(res.user));
+        if (res.expires_at) localStorage.setItem('bp_expires_at', String(res.expires_at));
+        goToPanel(5);
+        setTimeout(() => { window.location.href = 'spoc.html'; }, 1600);
+    } catch (e) {
+        alert(e.message);
+    }
+}
+
+// ── Refresh resilience ────────────────────────────────────────────────────
+// The onboarding cookie is httpOnly — this page cannot read it directly, so
+// it asks the server what it already knows instead of tracking step state
+// client-side. A 401 here just means "no draft in progress", which is the
+// normal case for a first visit, not an error worth surfacing.
+(async function resumeIfMidFlow() {
+    try {
+        const res = await apiCall('/billing/onboarding/quote');
+        if (res.data) {
+            const m = res.data.metrics;
+            document.getElementById('m_students').value = m.student_count;
+            document.getElementById('m_faculty').value = m.faculty_count;
+            document.getElementById('m_term').value = m.term_years;
+            document.querySelectorAll('.m_module').forEach(el => { el.checked = m.modules.includes(el.value); });
+            renderBreakdown(res.data);
+            if (res.data.status === 'accepted') {
+                // They had already accepted and moved to payment before the
+                // refresh — acceptQuote() is safe to call again: it reuses
+                // the still-open order rather than minting a new one.
+                await openMockCheckout();
+                goToPanel(4);
+            } else {
+                goToPanel(3);
+            }
+        }
+    } catch {
+        // No active draft — start at step 1, the default.
+    }
+    renderStepIndicator();
+})();
+</script>
+</body>
+</html>

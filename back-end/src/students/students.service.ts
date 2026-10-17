@@ -1,0 +1,202 @@
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
+import { InMemoryDbService } from '../database/in-memory-db.service';
+import {
+  ATTENDANCE_STATUS,
+  normalizeAttendanceStatus,
+  summariseAttendance,
+} from '../common/academic-rules';
+import { ErrorCode, errorBody } from '../common/errors/error-codes';
+import { isSameCollege, scopeToCollege } from '../common/tenancy/scope-to-college';
+import { sectionsOfCourse } from '../common/course-sections';
+
+@Injectable()
+export class StudentsService {
+  constructor(private db: InMemoryDbService) {}
+
+  async getProfile(userId: string) {
+    const student = this.db.students.find((s) => s.user_id === userId);
+    if (!student)
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Student not found'),
+      );
+    return student;
+  }
+
+  async getAttendance(userId: string) {
+    const records = this.db.attendance_log.filter(
+      (a) => a.student_id === userId,
+    );
+
+    // Group by course to create summary.
+    // M-02: a session excused by approved leave counts as attended, so a student
+    // is no longer penalised for absence the institution itself authorised.
+    const byCourse: Record<string, any[]> = {};
+    records.forEach((r) => {
+      (byCourse[r.course_id] ||= []).push(r);
+    });
+
+    const summary = Object.entries(byCourse).map(([course_id, rows]) => {
+      const c = this.db.courses.find(
+        (course) => course.course_id === course_id,
+      );
+      const stats = summariseAttendance(rows);
+      return {
+        course_id,
+        course_code: c?.course_code || course_id,
+        course_name: c?.course_name || 'Unknown',
+        present: stats.present,
+        absent: stats.absent,
+        excused: stats.excused,
+        total: stats.total,
+        percentage: stats.percentage,
+      };
+    });
+
+    const overall = summariseAttendance(records);
+
+    return {
+      summary,
+      records,
+      totalPresent: overall.present,
+      totalAbsent: overall.absent,
+      totalExcused: overall.excused,
+      overallPct: overall.percentage,
+    };
+  }
+
+  async getCourses(userId: string) {
+    const enrollment = this.db.enrollment.filter(
+      (e) => e.student_id === userId,
+    );
+    return enrollment
+      .map((e) => {
+        const course = this.db.courses.find((c) => c.course_id === e.course_id);
+        if (!course) return null;
+        // Courses no longer carry one faculty — resolve the faculty teaching
+        // THIS student's own section (a different section of the same
+        // course may have a different faculty).
+        const mySection = sectionsOfCourse(this.db, e.course_id).find(
+          (cs) => cs.section === e.section,
+        );
+        return {
+          ...course,
+          enrollment_status: e.status,
+          section: e.section,
+          faculty_id: mySection?.faculty_id ?? null,
+          faculty_name: mySection?.faculty_name ?? null,
+        };
+      })
+      .filter(Boolean);
+  }
+
+  async getMarks(userId: string) {
+    return this.db.marks_entry
+      .filter((m) => m.student_id === userId)
+      .map((m) => {
+        const assessment = this.db.assessments.find(
+          (a) => a.assessment_id === m.assessment_id,
+        );
+        const course = assessment
+          ? this.db.courses.find((c) => c.course_id === assessment.course_id)
+          : null;
+        return {
+          ...m,
+          assessment_name: assessment?.name,
+          course_name: course?.course_name,
+          course_code: m.course_code,
+        };
+      });
+  }
+
+  async getFees(userId: string) {
+    return this.db.fees.filter((f) => f.student_id === userId);
+  }
+
+  async getTimetable(userId: string, collegeId: string | null) {
+    const student = this.db.students.find((s) => s.user_id === userId);
+    const section = (student?.section || 'A').toUpperCase();
+    const enrolledCourseIds = this.db.enrollment
+      .filter((e) => e.student_id === userId && e.status === 'active')
+      .map((e) => e.course_id);
+    const slots = scopeToCollege(this.db.timetable, collegeId).filter(
+      (t) =>
+        (t.section || 'A').toUpperCase() === section &&
+        enrolledCourseIds.includes(t.course_id),
+    );
+    const grid = slots.reduce((acc: any, curr) => {
+      if (!acc[curr.day]) acc[curr.day] = {};
+      if (!acc[curr.day][curr.time]) acc[curr.day][curr.time] = curr;
+      else {
+        if (!Array.isArray(acc[curr.day][curr.time]))
+          acc[curr.day][curr.time] = [acc[curr.day][curr.time]];
+        acc[curr.day][curr.time].push(curr);
+      }
+      return acc;
+    }, {});
+    return {
+      grid,
+      slots,
+      section,
+      days: ['MON', 'TUE', 'WED', 'THU', 'FRI'],
+      times: ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00'],
+    };
+  }
+
+  async enroll(studentId: string, courseId: string, collegeId: string | null) {
+    // Check if already enrolled
+    const existing = this.db.enrollment.find(
+      (e) => e.student_id === studentId && e.course_id === courseId,
+    );
+    if (existing) {
+      throw new BadRequestException(
+        errorBody(
+          ErrorCode.DUPLICATE_RESOURCE,
+          'Already enrolled in this course',
+        ),
+      );
+    }
+
+    // course_id is client-supplied — without this, a student could enroll in
+    // another college's course simply by knowing or guessing its id. Same
+    // NOT_FOUND for "no such course" and "not your college's course": a
+    // student must not be able to tell the two apart by response shape.
+    const course = this.db.courses.find((c) => c.course_id === courseId);
+    if (!isSameCollege(course, collegeId))
+      throw new NotFoundException(
+        errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Course not found'),
+      );
+
+    const student = this.db.students.find((s) => s.user_id === studentId);
+    const section = student?.section || 'A';
+    // A course may exist with zero sections assigned yet (staffed later by a
+    // head) — self-enrolling into a section nobody teaches would create an
+    // enrollment record attendance/marks can never attach a faculty to.
+    const hasFaculty = sectionsOfCourse(this.db, courseId).some(
+      (cs) => cs.section === section,
+    );
+    if (!hasFaculty)
+      throw new BadRequestException(
+        errorBody(
+          ErrorCode.BUSINESS_RULE_VIOLATION,
+          `No faculty is assigned to Section ${section} of this course yet. Contact your academic head.`,
+        ),
+      );
+
+    const id = `e${Date.now()}`;
+    const newEnrollment = {
+      enrollment_id: id,
+      student_id: studentId,
+      course_id: courseId,
+      year_id: '2025',
+      status: 'active',
+      section: student?.section || 'A',
+      college_id: collegeId ?? course!.college_id,
+    };
+    this.db.enrollment.push(newEnrollment);
+    return { success: true, enrollment: newEnrollment, course };
+  }
+}

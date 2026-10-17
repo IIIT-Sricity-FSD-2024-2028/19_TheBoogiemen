@@ -1,0 +1,74 @@
+/*
+ * Ported verbatim from legacy front-end/onboarding.html's inline <style>
+ * block. Already class-scoped in the original (no bare element selectors
+ * besides `body.onboard-body`, handled by useBodyClass), so no rewriting
+ * needed beyond moving it into its own file.
+ */
+
+body.onboard-body {
+    background: radial-gradient(circle at top right, #e2e8f0, #f8fafc);
+    min-height: 100vh; padding: 32px 20px 60px; display: flex; flex-direction: column; align-items: center;
+}
+
+.onboard-shell { width: 100%; max-width: 720px; }
+.onboard-steps {
+    display: flex; justify-content: space-between; margin: 28px 0 32px; padding: 0 4px;
+}
+.onboard-step-dot {
+    display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; position: relative;
+}
+.onboard-step-dot .circle {
+    width: 28px; height: 28px; border-radius: 50%; background: white; border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--text-muted);
+    z-index: 1;
+}
+.onboard-step-dot .label { font-size: 11px; color: var(--text-muted); font-weight: 600; text-align: center; }
+.onboard-step-dot::after {
+    content: ''; position: absolute; top: 13px; left: 50%; width: 100%; height: 2px; background: var(--border); z-index: 0;
+}
+.onboard-step-dot:last-child::after { display: none; }
+.onboard-step-dot.done .circle { background: var(--accent-primary); border-color: var(--accent-primary); color: white; }
+.onboard-step-dot.done::after { background: var(--accent-primary); }
+.onboard-step-dot.active .circle { border-color: var(--accent-primary); color: var(--accent-primary); }
+
+.onboard-card {
+    background: white; border-radius: 20px; border: 1px solid var(--border); box-shadow: var(--shadow-premium);
+    padding: 36px 40px;
+}
+.onboard-card h2 { font-size: 20px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
+.onboard-card > p.sub { font-size: 13.5px; color: var(--text-muted); margin-bottom: 26px; }
+.onboard-panel { display: none; }
+.onboard-panel.active { display: block; }
+
+.module-row {
+    display: flex; align-items: center; justify-content: space-between; padding: 12px 14px;
+    border: 1.5px solid var(--border); border-radius: 10px; margin-bottom: 10px; cursor: pointer; transition: border-color .15s;
+}
+.module-row:has(input:checked) { border-color: var(--accent-primary); background: #f5f3ff; }
+.module-row .name { font-size: 13.5px; font-weight: 600; color: var(--text-primary); }
+.module-row .desc { font-size: 11.5px; color: var(--text-muted); }
+.module-row .weight { font-size: 12px; font-weight: 700; color: var(--accent-primary); }
+
+.price-live {
+    margin-top: 20px; padding: 18px 20px; border-radius: 12px; background: #0f172a; color: white;
+    display: flex; justify-content: space-between; align-items: baseline;
+}
+.price-live .amount { font-size: 26px; font-weight: 800; }
+.price-live .caption { font-size: 11.5px; color: #94a3b8; }
+
+.breakdown-line { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid #f1f5f9; font-size: 13.5px; }
+.breakdown-line:last-of-type { border-bottom: none; }
+.breakdown-line.negative .amt { color: #16a34a; }
+.breakdown-line.total { border-top: 2px solid var(--border); margin-top: 8px; padding-top: 14px; font-size: 16px; font-weight: 700; }
+
+.mock-checkout {
+    border: 2px dashed #f59e0b; background: #fffbeb; border-radius: 14px; padding: 24px; text-align: center;
+}
+.mock-checkout .badge {
+    display: inline-block; background: #f59e0b; color: white; font-size: 11px; font-weight: 700;
+    padding: 3px 10px; border-radius: 20px; margin-bottom: 14px; text-transform: uppercase; letter-spacing: .5px;
+}
+.mock-checkout .amount { font-size: 32px; font-weight: 800; color: var(--text-primary); margin: 6px 0 4px; }
+.mock-checkout .order-id { font-size: 11.5px; color: var(--text-muted); font-family: ui-monospace, monospace; margin-bottom: 20px; }
+
+.field-hint { color: var(--text-muted); font-size: 11.5px; margin-top: 4px; }

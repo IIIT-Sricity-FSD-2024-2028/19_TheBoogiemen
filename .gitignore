@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+back-end/node_modules/
+
+# Build output
+back-end/dist/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Env
+.env
+.env.local
+
+# Uploaded documents (bytes live on disk, metadata in the store)
+back-end/uploads/
+
+# Log files (dated, one per day; permanent record)
+back-end/logs/
+
+# Archives & Submissions
+*.zip

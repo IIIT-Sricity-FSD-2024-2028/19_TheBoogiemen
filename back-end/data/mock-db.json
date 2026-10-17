@@ -1,0 +1,2418 @@
+{
+  "departments": [
+    {
+      "department_id": "dept1",
+      "department_name": "Computer Science",
+      "department_code": "CS",
+      "college_id": "c-default"
+    },
+    {
+      "department_id": "dept2",
+      "department_name": "Electronics",
+      "department_code": "ECE",
+      "college_id": "c-default"
+    }
+  ],
+  "users": [
+    {
+      "user_id": "u1",
+      "username": "student",
+      "email": "student@example.com",
+      "role": "student",
+      "password_hash": "$2b$12$JIMrssEhBipbIk6g/yiUM.TE2egkr203VXUXZZiIf4RVbl.qPRn46",
+      "college_id": "c-default"
+    },
+    {
+      "user_id": "u2",
+      "username": "faculty",
+      "email": "faculty@example.com",
+      "role": "faculty",
+      "password_hash": "$2b$12$81Elh/Ru5pDpKKp6EdmpGObgWsPAT8tbJ1E6PNYB9AuB7OaWmI85G",
+      "college_id": "c-default"
+    },
+    {
+      "user_id": "u3",
+      "username": "admin",
+      "email": "admin@example.com",
+      "role": "admin",
+      "password_hash": "$2b$12$obffwRD1a29Ho5PvugE/kuhARblGZugK7PO5scvegUXv0KQxuO2v.",
+      "college_id": "c-default"
+    },
+    {
+      "user_id": "u4",
+      "username": "head",
+      "email": "head@example.com",
+      "role": "head",
+      "password_hash": "$2b$12$CZx5Sy33X1haBNV..57Ws.hKe3oBcOZl/ZMvF8cRrv4FYrZAPll9m",
+      "college_id": "c-default"
+    },
+    {
+      "user_id": "u5",
+      "username": "superadmin",
+      "email": "super@example.com",
+      "role": "superadmin",
+      "password_hash": "$2b$12$/I4TCcbZl227InQ7VwXukOIMCEJgGOnj.OrJ5QIuvDdMvzxXrVur6"
+    },
+    {
+      "user_id": "u6",
+      "username": "student2",
+      "email": "student2@example.com",
+      "role": "student",
+      "password_hash": "$2b$12$8MaKKerJ8bB0uoFGz3mU.efNWSNH5ynuhJLYVt9MH0eBinWqdswqO",
+      "college_id": "c-default"
+    },
+    {
+      "user_id": "u7",
+      "username": "faculty2",
+      "email": "faculty2@example.com",
+      "role": "faculty",
+      "password_hash": "$2b$12$qFLRiGff4WC2LAVfOPT5e./z1FSKW0ob.Ls8CfDLApYtYDyKEwZaO",
+      "college_id": "c-default"
+    },
+    {
+      "user_id": "u-spoc-demo",
+      "username": "spoc",
+      "first_name": "Priya",
+      "last_name": "Menon",
+      "email": "spoc@example.com",
+      "phone": "",
+      "role": "spoc",
+      "college_id": "c-default",
+      "password_hash": "$2b$12$OEx78MW2kJr8d2E0CYnN7O1BghW2JiIYqBuW/n3.oQ41DqtPMzf8u"
+    },
+    {
+      "user_id": "u1791187823671s",
+      "username": "Test",
+      "first_name": "Test",
+      "last_name": "Onboard",
+      "email": "test.onboard@example.com",
+      "phone": "",
+      "role": "spoc",
+      "college_id": "col1791187823669",
+      "password_hash": "$2b$12$1Qz9ro9NvATbNnI9v7zRd.5SWa8NPk07L2WJEmX8ODniEcUiJMqBm"
+    },
+    {
+      "user_id": "u1792145915270",
+      "username": "Harshini",
+      "first_name": "Harshini",
+      "last_name": "",
+      "email": "harshini@example.com",
+      "phone": "",
+      "role": "student",
+      "college_id": "c-default",
+      "password_hash": "$2b$12$KmsMjBo8Yw6fveIBQBNbPOkPvfWmEX4MR7qN8yRIjsopKqaSMoMLC"
+    }
+  ],
+  "students": [
+    {
+      "user_id": "u1",
+      "first_name": "John",
+      "last_name": "Doe",
+      "branch": "CS",
+      "batch": "2022-2026",
+      "cgpa": 8.5,
+      "section": "A",
+      "dob": "2004-05-15",
+      "phone": "9876543210",
+      "join_date": "2022-08-01",
+      "email": "student@example.com",
+      "college_id": "c-default"
+    },
+    {
+      "user_id": "u6",
+      "first_name": "Alice",
+      "last_name": "Vance",
+      "branch": "CS",
+      "batch": "2022-2026",
+      "cgpa": 5.8,
+      "section": "B",
+      "dob": "2004-06-20",
+      "phone": "9876543211",
+      "join_date": "2022-08-01",
+      "email": "student2@example.com",
+      "college_id": "c-default"
+    },
+    {
+      "user_id": "u1792145915270",
+      "first_name": "Harshini",
+      "last_name": "",
+      "branch": "CSE",
+      "batch": "2024-2028",
+      "cgpa": 7,
+      "section": "A",
+      "email": "harshini@example.com",
+      "join_date": "2026-10-16",
+      "dob": "2005-01-01",
+      "phone": "",
+      "college_id": "c-default"
+    }
+  ],
+  "faculty": [
+    {
+      "user_id": "u2",
+      "first_name": "Jane",
+      "last_name": "Smith",
+      "designation": "Assistant Professor",
+      "department_id": "dept1",
+      "email": "faculty@example.com",
+      "phone": "9000000001",
+      "college_id": "c-default"
+    },
+    {
+      "user_id": "u7",
+      "first_name": "Robert",
+      "last_name": "Wilson",
+      "designation": "Associate Professor",
+      "department_id": "dept1",
+      "email": "faculty2@example.com",
+      "phone": "9000000002",
+      "college_id": "c-default"
+    }
+  ],
+  "courses": [
+    {
+      "course_id": "c1",
+      "course_name": "Data Structures",
+      "course_code": "CS201",
+      "credits": 4,
+      "semester": 3,
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c2",
+      "course_name": "Database Systems",
+      "course_code": "CS202",
+      "credits": 4,
+      "semester": 3,
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c3",
+      "course_name": "Algorithms (DSA)",
+      "course_code": "CS301",
+      "credits": 4,
+      "semester": 4,
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c4",
+      "course_name": "Theory of Computation (TOC)",
+      "course_code": "CS302",
+      "credits": 3,
+      "semester": 4,
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c5",
+      "course_name": "Computer Networks (CCN)",
+      "course_code": "CS401",
+      "credits": 4,
+      "semester": 5,
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c6",
+      "course_name": "Operating Systems (OS)",
+      "course_code": "CS402",
+      "credits": 4,
+      "semester": 5,
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c7",
+      "course_name": "Advanced DSA (ADSA)",
+      "course_code": "CS403",
+      "credits": 4,
+      "semester": 5,
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c8",
+      "course_name": "Artificial Intelligence (AI)",
+      "course_code": "CS404",
+      "credits": 4,
+      "semester": 6,
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c1791306173831",
+      "course_name": "Smoke Test Course",
+      "course_code": "A",
+      "credits": 4,
+      "semester": 1,
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c1791306246075",
+      "course_name": "Verify Course Two",
+      "course_code": "VC202",
+      "credits": 4,
+      "semester": 1,
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c1791355567387",
+      "course_name": "Bugfix Verify Course",
+      "course_code": "BFV101",
+      "credits": 4,
+      "semester": 1,
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c1791660079788",
+      "course_code": "AUDIT101",
+      "course_name": "Audit Test Course",
+      "credits": 3,
+      "college_id": "c-default"
+    }
+  ],
+  "course_sections": [
+    {
+      "course_section_id": "cs-c1",
+      "course_id": "c1",
+      "section": "A",
+      "faculty_id": "u2",
+      "faculty_name": "Jane Smith",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "cs-c2",
+      "course_id": "c2",
+      "section": "A",
+      "faculty_id": "u2",
+      "faculty_name": "Jane Smith",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "cs-c3",
+      "course_id": "c3",
+      "section": "A",
+      "faculty_id": "u7",
+      "faculty_name": "Robert Wilson",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "cs-c4",
+      "course_id": "c4",
+      "section": "A",
+      "faculty_id": "u7",
+      "faculty_name": "Robert Wilson",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "cs-c5",
+      "course_id": "c5",
+      "section": "A",
+      "faculty_id": "u2",
+      "faculty_name": "Jane Smith",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "cs-c6",
+      "course_id": "c6",
+      "section": "A",
+      "faculty_id": "u7",
+      "faculty_name": "Robert Wilson",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "cs-c7",
+      "course_id": "c7",
+      "section": "A",
+      "faculty_id": "u2",
+      "faculty_name": "Jane Smith",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "cs-c8",
+      "course_id": "c8",
+      "section": "A",
+      "faculty_id": "u7",
+      "faculty_name": "Robert Wilson",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "cs-c1-b",
+      "course_id": "c1",
+      "section": "B",
+      "faculty_id": "u7",
+      "faculty_name": "Robert Wilson",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "cs-c2-b",
+      "course_id": "c2",
+      "section": "B",
+      "faculty_id": "u7",
+      "faculty_name": "Robert Wilson",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "cs-c3-b",
+      "course_id": "c3",
+      "section": "B",
+      "faculty_id": "u2",
+      "faculty_name": "Jane Smith",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "cs-c4-b",
+      "course_id": "c4",
+      "section": "B",
+      "faculty_id": "u2",
+      "faculty_name": "Jane Smith",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "cs-c5-b",
+      "course_id": "c5",
+      "section": "B",
+      "faculty_id": "u7",
+      "faculty_name": "Robert Wilson",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "cs-c6-b",
+      "course_id": "c6",
+      "section": "B",
+      "faculty_id": "u2",
+      "faculty_name": "Jane Smith",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "cs-c7-b",
+      "course_id": "c7",
+      "section": "B",
+      "faculty_id": "u7",
+      "faculty_name": "Robert Wilson",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "cs-c8-b",
+      "course_id": "c8",
+      "section": "B",
+      "faculty_id": "u2",
+      "faculty_name": "Jane Smith",
+      "college_id": "c-default"
+    }
+  ],
+  "enrollment": [
+    {
+      "enrollment_id": "e1",
+      "student_id": "u1",
+      "course_id": "c1",
+      "year_id": "2024",
+      "status": "active",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "enrollment_id": "e2",
+      "student_id": "u1",
+      "course_id": "c2",
+      "year_id": "2024",
+      "status": "active",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "enrollment_id": "e5",
+      "student_id": "u1",
+      "course_id": "c5",
+      "year_id": "2024",
+      "status": "active",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "enrollment_id": "e6",
+      "student_id": "u1",
+      "course_id": "c7",
+      "year_id": "2024",
+      "status": "active",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "enrollment_id": "e3",
+      "student_id": "u6",
+      "course_id": "c1",
+      "year_id": "2024",
+      "status": "active",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "enrollment_id": "e4",
+      "student_id": "u6",
+      "course_id": "c3",
+      "year_id": "2025",
+      "status": "active",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "enrollment_id": "e1792159230726",
+      "student_id": "u1792145915270",
+      "course_id": "c1",
+      "year_id": "2026",
+      "status": "active",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "enrollment_id": "e1792159243111",
+      "student_id": "u1792145915270",
+      "course_id": "c4",
+      "year_id": "2026",
+      "status": "active",
+      "section": "A",
+      "college_id": "c-default"
+    }
+  ],
+  "attendance_log": [
+    {
+      "log_id": "al1",
+      "student_id": "u1",
+      "course_id": "c1",
+      "date": "2026-04-10",
+      "status": "present",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "al2",
+      "student_id": "u1",
+      "course_id": "c1",
+      "date": "2026-04-12",
+      "status": "present",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "al3",
+      "student_id": "u1",
+      "course_id": "c1",
+      "date": "2026-04-14",
+      "status": "absent",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "al4",
+      "student_id": "u6",
+      "course_id": "c1",
+      "date": "2026-04-10",
+      "status": "absent",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "al5",
+      "student_id": "u6",
+      "course_id": "c1",
+      "date": "2026-04-12",
+      "status": "absent",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "74102416-72e7-4f4d-9cec-74a8203d3fa9",
+      "student_id": "u1",
+      "course_id": "c1",
+      "date": "2026-08-27",
+      "status": "absent",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "393fb55c-cd87-4eb5-9b3a-6837802e30b4",
+      "student_id": "u6",
+      "course_id": "c1",
+      "date": "2026-08-27",
+      "status": "present",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "b1b860dc-7d38-420b-ad59-50e24f4cff03",
+      "student_id": "u6",
+      "course_id": "c1",
+      "date": "2026-05-10",
+      "status": "excused",
+      "source": "leave:l2",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "84b15521-2ae3-4398-b788-de27d88a1482",
+      "student_id": "u6",
+      "course_id": "c3",
+      "date": "2026-05-10",
+      "status": "excused",
+      "source": "leave:l2",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "e67c11b9-7e6a-42d9-93fd-9f7c8914d258",
+      "student_id": "u6",
+      "course_id": "c1",
+      "date": "2026-05-11",
+      "status": "excused",
+      "source": "leave:l2",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "f9a8a832-ce91-4b37-acf8-32ff6c7d4754",
+      "student_id": "u6",
+      "course_id": "c3",
+      "date": "2026-05-11",
+      "status": "excused",
+      "source": "leave:l2",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "31a8a690-f37b-4c34-96ad-fe416531c846",
+      "student_id": "u6",
+      "course_id": "c1",
+      "date": "2026-05-12",
+      "status": "excused",
+      "source": "leave:l2",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "3b2bcac0-8a98-45a2-b35d-dc5d33bfa96b",
+      "student_id": "u6",
+      "course_id": "c3",
+      "date": "2026-05-12",
+      "status": "excused",
+      "source": "leave:l2",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "8bafa1da-ec3a-4a04-a6c0-b64d3f61e25c",
+      "student_id": "u1",
+      "course_id": "c1",
+      "date": "2026-06-01",
+      "status": "excused",
+      "source": "leave:l3",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "0eace3bb-0d27-4d3e-844c-eda4d39ab858",
+      "student_id": "u1",
+      "course_id": "c2",
+      "date": "2026-06-01",
+      "status": "excused",
+      "source": "leave:l3",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "f69d7328-1f36-49c2-affd-a4083257410a",
+      "student_id": "u1",
+      "course_id": "c5",
+      "date": "2026-06-01",
+      "status": "excused",
+      "source": "leave:l3",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "b113a45e-cebb-4da0-9163-167688c43ee7",
+      "student_id": "u1",
+      "course_id": "c7",
+      "date": "2026-06-01",
+      "status": "excused",
+      "source": "leave:l3",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "4dd7a0f6-1657-4c9c-a07e-25fc4a7d0ae9",
+      "student_id": "u1",
+      "course_id": "c1",
+      "date": "2026-06-02",
+      "status": "excused",
+      "source": "leave:l3",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "c8928d88-fc18-47ff-9766-a44bee840be2",
+      "student_id": "u1",
+      "course_id": "c2",
+      "date": "2026-06-02",
+      "status": "excused",
+      "source": "leave:l3",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "8981212b-789d-418b-8310-389fb0c4309a",
+      "student_id": "u1",
+      "course_id": "c5",
+      "date": "2026-06-02",
+      "status": "excused",
+      "source": "leave:l3",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "2544ee42-e24d-4ba6-9261-4bc0f285c991",
+      "student_id": "u1",
+      "course_id": "c7",
+      "date": "2026-06-02",
+      "status": "excused",
+      "source": "leave:l3",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "acf06e38-b189-4ea9-acf0-79ecb2f6182b",
+      "student_id": "u1",
+      "course_id": "c1",
+      "date": "2026-10-06",
+      "status": "present",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "d927b70f-a9b4-49e0-a5cc-3ae776f7ec9e",
+      "student_id": "u1",
+      "course_id": "c1",
+      "date": "2026-11-01",
+      "status": "excused",
+      "source": "leave:l1791189782361"
+    },
+    {
+      "log_id": "5eff4323-2c39-4cde-bf23-bbc721611197",
+      "student_id": "u1",
+      "course_id": "c2",
+      "date": "2026-11-01",
+      "status": "excused",
+      "source": "leave:l1791189782361"
+    },
+    {
+      "log_id": "5670689d-e686-4c58-b96b-5946000247f2",
+      "student_id": "u1",
+      "course_id": "c5",
+      "date": "2026-11-01",
+      "status": "excused",
+      "source": "leave:l1791189782361"
+    },
+    {
+      "log_id": "dffefade-33f5-4c33-a131-4ab110ac62c2",
+      "student_id": "u1",
+      "course_id": "c7",
+      "date": "2026-11-01",
+      "status": "excused",
+      "source": "leave:l1791189782361"
+    },
+    {
+      "log_id": "ee1d25c4-f641-470b-ad99-7632a49b19a3",
+      "student_id": "u1",
+      "course_id": "c3",
+      "date": "2026-11-01",
+      "status": "excused",
+      "source": "leave:l1791189782361"
+    },
+    {
+      "log_id": "1ee534ad-97a0-40dc-8280-1979aa749db9",
+      "student_id": "u1",
+      "course_id": "c1791306246075",
+      "date": "2026-11-01",
+      "status": "excused",
+      "source": "leave:l1791189782361"
+    },
+    {
+      "log_id": "a05c2de6-a055-4815-92ae-f951a9c20f89",
+      "student_id": "u1",
+      "course_id": "c1",
+      "date": "2026-11-02",
+      "status": "excused",
+      "source": "leave:l1791189782361"
+    },
+    {
+      "log_id": "923b6206-2a51-4541-a22e-ad724f2455f2",
+      "student_id": "u1",
+      "course_id": "c2",
+      "date": "2026-11-02",
+      "status": "excused",
+      "source": "leave:l1791189782361"
+    },
+    {
+      "log_id": "4310ffb5-fbf8-4b90-896e-fce306d21f3a",
+      "student_id": "u1",
+      "course_id": "c5",
+      "date": "2026-11-02",
+      "status": "excused",
+      "source": "leave:l1791189782361"
+    },
+    {
+      "log_id": "accf4821-2d20-45dc-aab7-f78ed0fed28a",
+      "student_id": "u1",
+      "course_id": "c7",
+      "date": "2026-11-02",
+      "status": "excused",
+      "source": "leave:l1791189782361"
+    },
+    {
+      "log_id": "191e6277-e460-4239-b673-95a212227647",
+      "student_id": "u1",
+      "course_id": "c3",
+      "date": "2026-11-02",
+      "status": "excused",
+      "source": "leave:l1791189782361"
+    },
+    {
+      "log_id": "55b4ed02-a110-44a0-87bf-62e9db8dad52",
+      "student_id": "u1",
+      "course_id": "c1791306246075",
+      "date": "2026-11-02",
+      "status": "excused",
+      "source": "leave:l1791189782361"
+    },
+    {
+      "log_id": "6a78fa5f-210a-4dd3-a1ff-e23bccb82885",
+      "student_id": "u1",
+      "course_id": "c1",
+      "date": "2026-11-03",
+      "status": "excused",
+      "source": "leave:l1791189782361"
+    },
+    {
+      "log_id": "fdb4d23f-eaa0-4ba8-9a96-18656f6f8b21",
+      "student_id": "u1",
+      "course_id": "c2",
+      "date": "2026-11-03",
+      "status": "excused",
+      "source": "leave:l1791189782361"
+    },
+    {
+      "log_id": "8a070de8-e13d-4c77-8784-ca5ccc5e81a2",
+      "student_id": "u1",
+      "course_id": "c5",
+      "date": "2026-11-03",
+      "status": "excused",
+      "source": "leave:l1791189782361"
+    },
+    {
+      "log_id": "6b3327f1-ab55-4130-a105-3aa9c817587d",
+      "student_id": "u1",
+      "course_id": "c7",
+      "date": "2026-11-03",
+      "status": "excused",
+      "source": "leave:l1791189782361"
+    },
+    {
+      "log_id": "a97efe70-b221-4ce1-ba74-52e638d49d61",
+      "student_id": "u1",
+      "course_id": "c3",
+      "date": "2026-11-03",
+      "status": "excused",
+      "source": "leave:l1791189782361"
+    },
+    {
+      "log_id": "69df2785-acae-4aad-93b3-1e9aaf78b4df",
+      "student_id": "u1",
+      "course_id": "c1791306246075",
+      "date": "2026-11-03",
+      "status": "excused",
+      "source": "leave:l1791189782361"
+    }
+  ],
+  "assessments": [
+    {
+      "assessment_id": "a1",
+      "course_id": "c1",
+      "name": "Internal 1",
+      "type": "theory",
+      "max_marks": 50,
+      "weightage": 20,
+      "faculty_id": "u2",
+      "date": "2026-03-15",
+      "college_id": "c-default"
+    },
+    {
+      "assessment_id": "a2",
+      "course_id": "c1",
+      "name": "Quiz 1",
+      "type": "quiz",
+      "max_marks": 20,
+      "weightage": 10,
+      "faculty_id": "u2",
+      "date": "2026-03-20",
+      "college_id": "c-default"
+    },
+    {
+      "assessment_id": "a1791305106472",
+      "faculty_id": "u2",
+      "weightage": 10,
+      "name": "Smoke Test Quiz",
+      "type": "assignment",
+      "date": "2026-11-10",
+      "max_marks": 50,
+      "course_id": "c1",
+      "section": "A",
+      "exam_mode": "offline",
+      "college_id": "c-default"
+    }
+  ],
+  "marks_entry": [
+    {
+      "entry_id": "m1",
+      "student_id": "u1",
+      "assessment_id": "a1",
+      "course_code": "CS201",
+      "marks_obtained": 42,
+      "max_marks": 50,
+      "grade": "S",
+      "feedback_text": "Excellent",
+      "college_id": "c-default"
+    },
+    {
+      "entry_id": "m2",
+      "student_id": "u6",
+      "assessment_id": "a1",
+      "course_code": "CS201",
+      "marks_obtained": 22,
+      "max_marks": 50,
+      "grade": "C",
+      "feedback_text": "Needs improvement",
+      "college_id": "c-default"
+    },
+    {
+      "entry_id": "m3",
+      "student_id": "u1",
+      "assessment_id": "a2",
+      "course_code": "CS201",
+      "marks_obtained": 18,
+      "max_marks": 20,
+      "grade": "A",
+      "feedback_text": "Good work",
+      "college_id": "c-default"
+    },
+    {
+      "entry_id": "m4",
+      "student_id": "u6",
+      "assessment_id": "a2",
+      "course_code": "CS201",
+      "marks_obtained": 10,
+      "max_marks": 20,
+      "grade": "C",
+      "feedback_text": "Needs effort",
+      "college_id": "c-default"
+    },
+    {
+      "entry_id": "m1791305120818",
+      "student_id": "u1",
+      "assessment_id": "a1791305106472",
+      "marks_obtained": 42,
+      "max_marks": 50,
+      "college_id": "c-default"
+    }
+  ],
+  "leave_applications": [
+    {
+      "leave_id": "l1",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "leave_type": "Medical",
+      "start_date": "2026-05-01",
+      "end_date": "2026-05-03",
+      "reason": "Fever",
+      "status": "approved",
+      "applied_on": "2026-04-15",
+      "college_id": "c-default"
+    },
+    {
+      "leave_id": "l2",
+      "student_id": "u6",
+      "student_name": "Alice Vance",
+      "leave_type": "Family Event",
+      "start_date": "2026-05-10",
+      "end_date": "2026-05-12",
+      "reason": "Sister wedding",
+      "status": "approved",
+      "applied_on": "2026-04-17",
+      "college_id": "c-default"
+    },
+    {
+      "leave_id": "l3",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "leave_type": "Personal",
+      "start_date": "2026-06-01",
+      "end_date": "2026-06-02",
+      "reason": "Family function",
+      "status": "approved",
+      "applied_on": "2026-05-20",
+      "college_id": "c-default"
+    },
+    {
+      "leave_id": "l1791189782361",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "status": "approved",
+      "applied_on": "2026-10-05",
+      "leave_type": "Medical",
+      "start_date": "2026-11-01",
+      "end_date": "2026-11-03",
+      "reason": "Scheduled medical procedure, doctor advised rest for three days.",
+      "file_id": null,
+      "college_id": "c-default"
+    },
+    {
+      "leave_id": "l1791305228834",
+      "student_id": "u2",
+      "student_name": "faculty",
+      "status": "rejected",
+      "applied_on": "2026-10-06",
+      "leave_type": "Event",
+      "start_date": "2026-12-10",
+      "end_date": "2026-12-12",
+      "reason": "Attending an academic conference out of state.",
+      "file_id": null,
+      "college_id": "c-default"
+    }
+  ],
+  "research_projects": [
+    {
+      "project_id": "rp1",
+      "title": "Blockchain for Academic Records",
+      "supervisor_id": "u2",
+      "supervisor_name": "Jane Smith",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "status": "active",
+      "abstract": "Implementing a decentralized ledger for securing university diplomas.",
+      "progress": 50,
+      "students": [
+        {
+          "user_id": "u1",
+          "first_name": "John",
+          "last_name": "Doe"
+        }
+      ],
+      "uploads": [
+        {
+          "file_id": "46f0b2f6-7275-4195-82b2-7530770d32c8",
+          "original_name": "SRS.pdf",
+          "uploaded_at": "2026-10-15T07:24:37.950Z"
+        }
+      ],
+      "milestones": [
+        {
+          "title": "Inception",
+          "date": "2026-01-01",
+          "status": "completed"
+        },
+        {
+          "title": "Smart Contract Dev",
+          "date": "2026-04-15",
+          "status": "in-progress"
+        }
+      ],
+      "college_id": "c-default",
+      "submission_notes": "completed the attack mitigation",
+      "faculty_feedback": "Good progress!"
+    },
+    {
+      "project_id": "rp2",
+      "title": "AI-Based Attendance System",
+      "supervisor_id": "u2",
+      "supervisor_name": "Jane Smith",
+      "student_id": "u6",
+      "student_name": "Alice Vance",
+      "status": "pending",
+      "abstract": "Using facial recognition and machine learning to automate student attendance tracking.",
+      "progress": 20,
+      "students": [
+        {
+          "user_id": "u6",
+          "first_name": "Alice",
+          "last_name": "Vance"
+        }
+      ],
+      "uploads": [],
+      "milestones": [],
+      "college_id": "c-default"
+    },
+    {
+      "project_id": "rp1791305193830",
+      "title": "Smoke Test BTP Project",
+      "abstract": "Automated verification of the assign-BTP flow.",
+      "supervisor_id": "u2",
+      "supervisor_name": "Jane Smith",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "status": "active",
+      "progress": 0,
+      "students": [
+        {
+          "user_id": "u1",
+          "first_name": "John"
+        }
+      ],
+      "uploads": [],
+      "milestones": [],
+      "college_id": "c-default"
+    }
+  ],
+  "discussion_posts": [
+    {
+      "post_id": "p1",
+      "author_id": "u1",
+      "author_name": "John Doe",
+      "author_role": "student",
+      "course_id": "CS201",
+      "title": "Clarification on Heap Sort",
+      "content": "Can someone explain the complexity of build-heap?",
+      "tag": "help",
+      "reply_count": 1,
+      "created_at": "2026-04-16T10:00:00Z",
+      "college_id": "c-default"
+    },
+    {
+      "post_id": "p2",
+      "author_id": "u2",
+      "author_name": "Jane Smith",
+      "author_role": "faculty",
+      "course_id": "CS202",
+      "title": "Exam Guidelines",
+      "content": "Please review the SQL standard document attached.",
+      "tag": "general",
+      "reply_count": 0,
+      "created_at": "2026-04-17T09:00:00Z",
+      "college_id": "c-default"
+    },
+    {
+      "post_id": "p3",
+      "author_id": "u2",
+      "author_name": "Jane Smith",
+      "author_role": "faculty",
+      "course_id": "CS201",
+      "title": "Project Deadline Extended",
+      "content": "The mini-project submission deadline has been extended to May 30th.",
+      "tag": "announcement",
+      "reply_count": 0,
+      "created_at": "2026-04-20T08:00:00Z",
+      "college_id": "c-default"
+    },
+    {
+      "post_id": "p1778508033996",
+      "title": "Quantum Post Processing",
+      "content": "what are the best strategies for it?",
+      "author_id": "u1",
+      "author_name": "John Doe",
+      "author_role": "student",
+      "tag": "help",
+      "course_id": "CS301",
+      "created_at": "2026-05-11T14:00:33.996Z",
+      "reply_count": 0,
+      "college_id": "c-default"
+    },
+    {
+      "post_id": "p1787053076227",
+      "title": "HPC",
+      "content": "how do massively parallel computations work?",
+      "author_id": "u1",
+      "author_name": "John Doe",
+      "author_role": "student",
+      "tag": "help",
+      "course_id": "CS101",
+      "created_at": "2026-08-18T11:37:56.227Z",
+      "reply_count": 0,
+      "college_id": "c-default"
+    },
+    {
+      "post_id": "p1791189831944",
+      "title": "React migration smoke test thread",
+      "content": "Verifying the discussion forum write path works end to end after the Phase 1 port.",
+      "author_id": "u1",
+      "author_name": "John Doe",
+      "author_role": "student",
+      "tag": "general",
+      "course_id": "",
+      "created_at": "2026-10-05T08:43:51.944Z",
+      "reply_count": 0,
+      "college_id": "c-default"
+    }
+  ],
+  "discussion_replies": [
+    {
+      "reply_id": "r1",
+      "post_id": "p1",
+      "author_id": "u2",
+      "author_name": "Jane Smith",
+      "author_role": "faculty",
+      "content": "It is O(n) because of the summation of the geometric series.",
+      "created_at": "2026-04-16T14:00:00Z",
+      "college_id": "c-default"
+    },
+    {
+      "reply_id": "r1778508061365",
+      "post_id": "p1778508033996",
+      "author_id": "u1",
+      "author_name": "John Doe",
+      "author_role": "student",
+      "content": "idk man tbh",
+      "created_at": "2026-05-11T14:01:01.365Z",
+      "college_id": "c-default"
+    },
+    {
+      "reply_id": "r1787053099530",
+      "post_id": "p1787053076227",
+      "author_id": "u1",
+      "author_name": "John Doe",
+      "author_role": "student",
+      "content": "wassup",
+      "created_at": "2026-08-18T11:38:19.530Z",
+      "college_id": "c-default"
+    },
+    {
+      "reply_id": "r1791189839934",
+      "post_id": "p1791189831944",
+      "author_id": "u1",
+      "author_name": "John Doe",
+      "author_role": "student",
+      "content": "Replying to confirm the reply path works too.",
+      "created_at": "2026-10-05T08:43:59.934Z",
+      "college_id": "c-default"
+    }
+  ],
+  "events": [
+    {
+      "event_id": "ev1",
+      "event_name": "Placement Drive: Google",
+      "date": "2026-06-15",
+      "venue": "Block C Auditorium",
+      "description": "Mandatory for final year students.",
+      "college_id": "c-default"
+    },
+    {
+      "event_id": "ev2",
+      "event_name": "Cricket Finals",
+      "date": "2026-05-20",
+      "venue": "University Ground",
+      "description": "CS vs ECE.",
+      "college_id": "c-default"
+    },
+    {
+      "event_id": "ev3",
+      "event_name": "Hackathon 2026",
+      "date": "2026-05-25",
+      "venue": "Block A Lab",
+      "description": "24-hour coding competition with prizes.",
+      "college_id": "c-default"
+    },
+    {
+      "event_id": "ev4",
+      "event_name": "Faculty Development Workshop",
+      "date": "2026-04-25",
+      "venue": "Conference Room A",
+      "description": "Advanced teaching methodologies training.",
+      "college_id": "c-default"
+    },
+    {
+      "event_id": "ev5",
+      "event_name": "Student Orientation",
+      "date": "2026-05-10",
+      "venue": "Main Hall",
+      "description": "Welcome session for new students.",
+      "college_id": "c-default"
+    },
+    {
+      "event_id": "ev1791306414881",
+      "event_name": "Smoke Test Fest (Edited)",
+      "date": "2026-12-15",
+      "venue": "Main Lawn",
+      "description": "",
+      "college_id": "c-default"
+    }
+  ],
+  "resources": [
+    {
+      "resource_id": "res1",
+      "name": "Computing Lab 1",
+      "type": "Lab",
+      "capacity": 50,
+      "location": "Block A, 1st Floor",
+      "status": "in_use",
+      "college_id": "c-default"
+    },
+    {
+      "resource_id": "res2",
+      "name": "Computing Lab 2",
+      "type": "Lab",
+      "capacity": 50,
+      "location": "Block A, 1st Floor",
+      "status": "booked",
+      "college_id": "c-default"
+    },
+    {
+      "resource_id": "res3",
+      "name": "Conference Room A",
+      "type": "Hall",
+      "capacity": 20,
+      "location": "Admin Block",
+      "status": "available",
+      "college_id": "c-default"
+    },
+    {
+      "resource_id": "res4",
+      "name": "Seminar Hall",
+      "type": "Hall",
+      "capacity": 100,
+      "location": "Block B Ground Floor",
+      "status": "available",
+      "college_id": "c-default"
+    },
+    {
+      "resource_id": "res5",
+      "name": "Projector Set 1",
+      "type": "Equipment",
+      "capacity": 1,
+      "location": "Admin Store",
+      "status": "available",
+      "college_id": "c-default"
+    },
+    {
+      "resource_id": "res6",
+      "name": "Whiteboard A",
+      "type": "Equipment",
+      "capacity": 1,
+      "location": "Block A",
+      "status": "maintenance",
+      "college_id": "c-default"
+    },
+    {
+      "resource_id": "res1791306357236",
+      "status": "in_use",
+      "name": "Smoke Test Room",
+      "type": "Room",
+      "capacity": 30,
+      "location": "Block Z",
+      "college_id": "c-default"
+    }
+  ],
+  "fees": [
+    {
+      "fee_id": "f1",
+      "student_id": "u1",
+      "first_name": "John",
+      "last_name": "Doe",
+      "type": "Semester Fee",
+      "amount": 150000,
+      "due_date": "2026-06-01",
+      "status": "paid",
+      "college_id": "c-default",
+      "paid_date": "6/10/2026"
+    },
+    {
+      "fee_id": "f2",
+      "student_id": "u6",
+      "first_name": "Alice",
+      "last_name": "Vance",
+      "type": "Semester Fee",
+      "amount": 150000,
+      "due_date": "2026-06-01",
+      "status": "overdue",
+      "college_id": "c-default"
+    },
+    {
+      "fee_id": "f3",
+      "student_id": "u1",
+      "first_name": "John",
+      "last_name": "Doe",
+      "type": "Library Fee",
+      "amount": 5000,
+      "due_date": "2026-05-15",
+      "status": "paid",
+      "college_id": "c-default"
+    },
+    {
+      "fee_id": "f4",
+      "student_id": "u6",
+      "first_name": "Alice",
+      "last_name": "Vance",
+      "type": "Lab Fee",
+      "amount": 8000,
+      "due_date": "2026-05-20",
+      "status": "pending",
+      "college_id": "c-default"
+    },
+    {
+      "fee_id": "f1791306379849",
+      "status": "pending",
+      "student_id": "u1",
+      "semester": "3",
+      "fee_type": "Lab Fee",
+      "amount": 2500,
+      "due_date": "2026-12-31",
+      "college_id": "c-default"
+    }
+  ],
+  "submissions": [],
+  "timetable": [
+    {
+      "slot_id": "t1",
+      "day": "MON",
+      "time": "09:00",
+      "course_id": "c1",
+      "course_code": "CS201",
+      "course_name": "Data Structures",
+      "room": "101",
+      "type": "lecture",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t2",
+      "day": "TUE",
+      "time": "09:00",
+      "course_id": "c1",
+      "course_code": "CS201",
+      "course_name": "Data Structures",
+      "room": "101",
+      "type": "lecture",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t3",
+      "day": "THU",
+      "time": "09:00",
+      "course_id": "c1",
+      "course_code": "CS201",
+      "course_name": "Data Structures",
+      "room": "101",
+      "type": "lecture",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t4",
+      "day": "FRI",
+      "time": "09:00",
+      "course_id": "c1",
+      "course_code": "CS201",
+      "course_name": "Data Structures",
+      "room": "Lab 1",
+      "type": "lab",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t5",
+      "day": "MON",
+      "time": "10:00",
+      "course_id": "c2",
+      "course_code": "CS202",
+      "course_name": "Database Systems",
+      "room": "102",
+      "type": "lecture",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t6",
+      "day": "WED",
+      "time": "09:00",
+      "course_id": "c2",
+      "course_code": "CS202",
+      "course_name": "Database Systems",
+      "room": "102",
+      "type": "lecture",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t7",
+      "day": "THU",
+      "time": "10:00",
+      "course_id": "c2",
+      "course_code": "CS202",
+      "course_name": "Database Systems",
+      "room": "102",
+      "type": "lecture",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t8",
+      "day": "FRI",
+      "time": "10:00",
+      "course_id": "c2",
+      "course_code": "CS202",
+      "course_name": "Database Systems",
+      "room": "Lab 1",
+      "type": "lab",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t25",
+      "day": "MON",
+      "time": "12:00",
+      "course_id": "c3",
+      "course_code": "CS301",
+      "course_name": "Algorithms",
+      "room": "101",
+      "type": "lecture",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t26",
+      "day": "WED",
+      "time": "12:00",
+      "course_id": "c3",
+      "course_code": "CS301",
+      "course_name": "Algorithms",
+      "room": "101",
+      "type": "lecture",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t27",
+      "day": "THU",
+      "time": "12:00",
+      "course_id": "c3",
+      "course_code": "CS301",
+      "course_name": "Algorithms",
+      "room": "101",
+      "type": "lecture",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t28",
+      "day": "FRI",
+      "time": "12:00",
+      "course_id": "c3",
+      "course_code": "CS301",
+      "course_name": "Algorithms",
+      "room": "Lab 1",
+      "type": "lab",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t29",
+      "day": "MON",
+      "time": "14:00",
+      "course_id": "c4",
+      "course_code": "CS302",
+      "course_name": "Theory of Computation",
+      "room": "102",
+      "type": "lecture",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t30",
+      "day": "TUE",
+      "time": "14:00",
+      "course_id": "c4",
+      "course_code": "CS302",
+      "course_name": "Theory of Computation",
+      "room": "102",
+      "type": "lecture",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t31",
+      "day": "WED",
+      "time": "14:00",
+      "course_id": "c4",
+      "course_code": "CS302",
+      "course_name": "Theory of Computation",
+      "room": "102",
+      "type": "lecture",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t32",
+      "day": "THU",
+      "time": "14:00",
+      "course_id": "c4",
+      "course_code": "CS302",
+      "course_name": "Theory of Computation",
+      "room": "102",
+      "type": "tutorial",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t9",
+      "day": "MON",
+      "time": "11:00",
+      "course_id": "c5",
+      "course_code": "CS401",
+      "course_name": "Computer Networks",
+      "room": "103",
+      "type": "lecture",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t10",
+      "day": "TUE",
+      "time": "11:00",
+      "course_id": "c5",
+      "course_code": "CS401",
+      "course_name": "Computer Networks",
+      "room": "103",
+      "type": "lecture",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t11",
+      "day": "WED",
+      "time": "11:00",
+      "course_id": "c5",
+      "course_code": "CS401",
+      "course_name": "Computer Networks",
+      "room": "103",
+      "type": "lecture",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t12",
+      "day": "FRI",
+      "time": "11:00",
+      "course_id": "c5",
+      "course_code": "CS401",
+      "course_name": "Computer Networks",
+      "room": "Lab 2",
+      "type": "lab",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t33",
+      "day": "MON",
+      "time": "15:00",
+      "course_id": "c6",
+      "course_code": "CS402",
+      "course_name": "Operating Systems",
+      "room": "103",
+      "type": "lecture",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t34",
+      "day": "TUE",
+      "time": "15:00",
+      "course_id": "c6",
+      "course_code": "CS402",
+      "course_name": "Operating Systems",
+      "room": "103",
+      "type": "lecture",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t35",
+      "day": "WED",
+      "time": "15:00",
+      "course_id": "c6",
+      "course_code": "CS402",
+      "course_name": "Operating Systems",
+      "room": "Lab 2",
+      "type": "lab",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t36",
+      "day": "FRI",
+      "time": "15:00",
+      "course_id": "c6",
+      "course_code": "CS402",
+      "course_name": "Operating Systems",
+      "room": "103",
+      "type": "lecture",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t13",
+      "day": "TUE",
+      "time": "10:00",
+      "course_id": "c7",
+      "course_code": "CS403",
+      "course_name": "Advanced DSA",
+      "room": "104",
+      "type": "lecture",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t14",
+      "day": "WED",
+      "time": "10:00",
+      "course_id": "c7",
+      "course_code": "CS403",
+      "course_name": "Advanced DSA",
+      "room": "104",
+      "type": "lecture",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t15",
+      "day": "THU",
+      "time": "11:00",
+      "course_id": "c7",
+      "course_code": "CS403",
+      "course_name": "Advanced DSA",
+      "room": "104",
+      "type": "lecture",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t16",
+      "day": "FRI",
+      "time": "14:00",
+      "course_id": "c7",
+      "course_code": "CS403",
+      "course_name": "Advanced DSA",
+      "room": "Lab 2",
+      "type": "lab",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t37",
+      "day": "TUE",
+      "time": "12:00",
+      "course_id": "c8",
+      "course_code": "CS404",
+      "course_name": "Artificial Intelligence",
+      "room": "104",
+      "type": "lecture",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t38",
+      "day": "WED",
+      "time": "13:00",
+      "course_id": "c8",
+      "course_code": "CS404",
+      "course_name": "Artificial Intelligence",
+      "room": "104",
+      "type": "lecture",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t39",
+      "day": "THU",
+      "time": "15:00",
+      "course_id": "c8",
+      "course_code": "CS404",
+      "course_name": "Artificial Intelligence",
+      "room": "Lab 2",
+      "type": "lab",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t17",
+      "day": "MON",
+      "time": "11:00",
+      "course_id": "c1",
+      "course_code": "CS201",
+      "course_name": "Data Structures",
+      "room": "201",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t18",
+      "day": "TUE",
+      "time": "11:00",
+      "course_id": "c1",
+      "course_code": "CS201",
+      "course_name": "Data Structures",
+      "room": "201",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t19",
+      "day": "WED",
+      "time": "14:00",
+      "course_id": "c1",
+      "course_code": "CS201",
+      "course_name": "Data Structures",
+      "room": "201",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t20",
+      "day": "FRI",
+      "time": "14:00",
+      "course_id": "c1",
+      "course_code": "CS201",
+      "course_name": "Data Structures",
+      "room": "Lab 1",
+      "type": "lab",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t40",
+      "day": "MON",
+      "time": "10:00",
+      "course_id": "c2",
+      "course_code": "CS202",
+      "course_name": "Database Systems",
+      "room": "201",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t41",
+      "day": "WED",
+      "time": "10:00",
+      "course_id": "c2",
+      "course_code": "CS202",
+      "course_name": "Database Systems",
+      "room": "201",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t42",
+      "day": "THU",
+      "time": "10:00",
+      "course_id": "c2",
+      "course_code": "CS202",
+      "course_name": "Database Systems",
+      "room": "201",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t43",
+      "day": "FRI",
+      "time": "10:00",
+      "course_id": "c2",
+      "course_code": "CS202",
+      "course_name": "Database Systems",
+      "room": "Lab 2",
+      "type": "lab",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t21",
+      "day": "MON",
+      "time": "14:00",
+      "course_id": "c3",
+      "course_code": "CS301",
+      "course_name": "Algorithms",
+      "room": "202",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t22",
+      "day": "TUE",
+      "time": "14:00",
+      "course_id": "c3",
+      "course_code": "CS301",
+      "course_name": "Algorithms",
+      "room": "202",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t23",
+      "day": "THU",
+      "time": "14:00",
+      "course_id": "c3",
+      "course_code": "CS301",
+      "course_name": "Algorithms",
+      "room": "202",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t24",
+      "day": "FRI",
+      "time": "15:00",
+      "course_id": "c3",
+      "course_code": "CS301",
+      "course_name": "Algorithms",
+      "room": "Lab 2",
+      "type": "lab",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t44",
+      "day": "MON",
+      "time": "09:00",
+      "course_id": "c4",
+      "course_code": "CS302",
+      "course_name": "Theory of Computation",
+      "room": "202",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t45",
+      "day": "WED",
+      "time": "09:00",
+      "course_id": "c4",
+      "course_code": "CS302",
+      "course_name": "Theory of Computation",
+      "room": "202",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t46",
+      "day": "THU",
+      "time": "09:00",
+      "course_id": "c4",
+      "course_code": "CS302",
+      "course_name": "Theory of Computation",
+      "room": "202",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t47",
+      "day": "FRI",
+      "time": "09:00",
+      "course_id": "c4",
+      "course_code": "CS302",
+      "course_name": "Theory of Computation",
+      "room": "202",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t48",
+      "day": "TUE",
+      "time": "09:00",
+      "course_id": "c5",
+      "course_code": "CS401",
+      "course_name": "Computer Networks",
+      "room": "201",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t49",
+      "day": "WED",
+      "time": "11:00",
+      "course_id": "c5",
+      "course_code": "CS401",
+      "course_name": "Computer Networks",
+      "room": "201",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t50",
+      "day": "THU",
+      "time": "11:00",
+      "course_id": "c5",
+      "course_code": "CS401",
+      "course_name": "Computer Networks",
+      "room": "201",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t51",
+      "day": "FRI",
+      "time": "11:00",
+      "course_id": "c5",
+      "course_code": "CS401",
+      "course_name": "Computer Networks",
+      "room": "201",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t52",
+      "day": "TUE",
+      "time": "10:00",
+      "course_id": "c6",
+      "course_code": "CS402",
+      "course_name": "Operating Systems",
+      "room": "202",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t53",
+      "day": "WED",
+      "time": "12:00",
+      "course_id": "c6",
+      "course_code": "CS402",
+      "course_name": "Operating Systems",
+      "room": "202",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t54",
+      "day": "THU",
+      "time": "12:00",
+      "course_id": "c6",
+      "course_code": "CS402",
+      "course_name": "Operating Systems",
+      "room": "202",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t55",
+      "day": "FRI",
+      "time": "12:00",
+      "course_id": "c6",
+      "course_code": "CS402",
+      "course_name": "Operating Systems",
+      "room": "Lab 2",
+      "type": "lab",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t56",
+      "day": "MON",
+      "time": "12:00",
+      "course_id": "c7",
+      "course_code": "CS403",
+      "course_name": "Advanced DSA",
+      "room": "201",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t57",
+      "day": "TUE",
+      "time": "12:00",
+      "course_id": "c7",
+      "course_code": "CS403",
+      "course_name": "Advanced DSA",
+      "room": "201",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t58",
+      "day": "WED",
+      "time": "15:00",
+      "course_id": "c7",
+      "course_code": "CS403",
+      "course_name": "Advanced DSA",
+      "room": "201",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t59",
+      "day": "THU",
+      "time": "15:00",
+      "course_id": "c7",
+      "course_code": "CS403",
+      "course_name": "Advanced DSA",
+      "room": "Lab 1",
+      "type": "lab",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t60",
+      "day": "MON",
+      "time": "15:00",
+      "course_id": "c8",
+      "course_code": "CS404",
+      "course_name": "Artificial Intelligence",
+      "room": "202",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t61",
+      "day": "TUE",
+      "time": "15:00",
+      "course_id": "c8",
+      "course_code": "CS404",
+      "course_name": "Artificial Intelligence",
+      "room": "202",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t62",
+      "day": "FRI",
+      "time": "10:00",
+      "course_id": "c8",
+      "course_code": "CS404",
+      "course_name": "Artificial Intelligence",
+      "room": "202",
+      "type": "lecture",
+      "section": "B",
+      "college_id": "c-default"
+    }
+  ],
+  "syllabus_progress": [
+    {
+      "course_id": "c1",
+      "section": "A",
+      "progress": 72,
+      "updated_by": "u2",
+      "updated_at": "2026-08-27",
+      "modules": [
+        {
+          "name": "Module 1 – Arrays & Linked Lists",
+          "progress": 100
+        },
+        {
+          "name": "Module 2 – Stacks & Queues",
+          "progress": 90
+        },
+        {
+          "name": "Module 3 – Trees & BST",
+          "progress": 75
+        },
+        {
+          "name": "Module 4 – Graphs",
+          "progress": 50
+        },
+        {
+          "name": "Module 5 – Hashing",
+          "progress": 45
+        }
+      ],
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c1",
+      "section": "B",
+      "progress": 65,
+      "updated_by": "u2",
+      "updated_at": "2026-08-27",
+      "modules": [
+        {
+          "name": "Module 1 – Arrays & Linked Lists",
+          "progress": 100
+        },
+        {
+          "name": "Module 2 – Stacks & Queues",
+          "progress": 85
+        },
+        {
+          "name": "Module 3 – Trees & BST",
+          "progress": 60
+        },
+        {
+          "name": "Module 4 – Graphs",
+          "progress": 40
+        },
+        {
+          "name": "Module 5 – Hashing",
+          "progress": 30
+        }
+      ],
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c2",
+      "section": "A",
+      "progress": 80,
+      "updated_by": "u2",
+      "updated_at": "2026-04-20",
+      "modules": [
+        {
+          "name": "Module 1 – ER Modeling",
+          "progress": 100
+        },
+        {
+          "name": "Module 2 – SQL Queries",
+          "progress": 95
+        },
+        {
+          "name": "Module 3 – Normalization",
+          "progress": 80
+        },
+        {
+          "name": "Module 4 – Transactions",
+          "progress": 55
+        },
+        {
+          "name": "Module 5 – NoSQL",
+          "progress": 50
+        }
+      ],
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c5",
+      "section": "A",
+      "progress": 55,
+      "updated_by": "u2",
+      "updated_at": "2026-04-22",
+      "modules": [
+        {
+          "name": "Module 1 – OSI Model",
+          "progress": 100
+        },
+        {
+          "name": "Module 2 – TCP/IP",
+          "progress": 70
+        },
+        {
+          "name": "Module 3 – Routing",
+          "progress": 45
+        },
+        {
+          "name": "Module 4 – Security",
+          "progress": 20
+        }
+      ],
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c7",
+      "section": "A",
+      "progress": 40,
+      "updated_by": "u2",
+      "updated_at": "2026-04-18",
+      "modules": [
+        {
+          "name": "Module 1 – Divide & Conquer",
+          "progress": 100
+        },
+        {
+          "name": "Module 2 – DP",
+          "progress": 50
+        },
+        {
+          "name": "Module 3 – Greedy",
+          "progress": 20
+        },
+        {
+          "name": "Module 4 – Backtracking",
+          "progress": 0
+        }
+      ],
+      "college_id": "c-default"
+    }
+  ],
+  "attendance_requests": [
+    {
+      "request_id": "ar1787053048185",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "course_id": "c2",
+      "course_code": "CS202",
+      "date": "2026-08-18",
+      "reason": "43f343434g5g [Document: Class_Zero (1) (1).pdf]",
+      "admin_status": "approved",
+      "faculty_status": "pending",
+      "created_at": "2026-08-18T11:37:28.185Z",
+      "college_id": "c-default",
+      "admin_reason": ""
+    }
+  ],
+  "resource_bookings": [
+    {
+      "booking_id": "rb1791305213814",
+      "resource_id": "res1",
+      "resource_name": "Computing Lab 1",
+      "requested_by": "u2",
+      "requester_name": "Jane Smith",
+      "date": "2026-12-05",
+      "time_slot": "Full Day",
+      "purpose": "Workshop session.",
+      "status": "approved",
+      "created_at": "2026-10-06T16:46:53.814Z",
+      "college_id": "c-default"
+    }
+  ],
+  "colleges": [
+    {
+      "college_id": "c-default",
+      "name": "BarelyPassing Institute",
+      "city": null,
+      "state": null,
+      "type": null,
+      "status": "active",
+      "created_at": "2026-08-29T16:42:07.441Z"
+    },
+    {
+      "college_id": "col1791187823669",
+      "name": "Test Institute of Technology",
+      "city": "Testville",
+      "state": "Teststate",
+      "type": null,
+      "status": "active",
+      "created_at": "2026-10-05T08:10:23.669Z"
+    }
+  ],
+  "support_threads": [
+    {
+      "thread_id": "st1791547318114",
+      "college_id": "c-default",
+      "subject": "Support",
+      "created_at": "2026-10-09T12:01:58.114Z"
+    }
+  ],
+  "support_messages": [
+    {
+      "message_id": "sm179154731811792e4",
+      "thread_id": "st1791547318114",
+      "sender_id": "u-spoc-demo",
+      "sender_name": "Priya Menon",
+      "sender_role": "spoc",
+      "content": "Hello, test message from SPOC",
+      "created_at": "2026-10-09T12:01:58.117Z"
+    },
+    {
+      "message_id": "sm1791551182535ajy1",
+      "thread_id": "st1791547318114",
+      "sender_id": "u5",
+      "sender_name": "superadmin",
+      "sender_role": "superadmin",
+      "content": "Thanks for reaching out, we are looking into it.",
+      "created_at": "2026-10-09T13:06:22.535Z"
+    }
+  ],
+  "onboarding_sessions": [
+    {
+      "session_id": "os1791187766077",
+      "email": "test.onboard@example.com",
+      "password_hash": null,
+      "first_name": "Test",
+      "last_name": "Onboard",
+      "phone": null,
+      "college_name": "Test Institute of Technology",
+      "city": "Testville",
+      "state": "Teststate",
+      "type": null,
+      "status": "completed",
+      "created_at": "2026-10-05T08:09:26.077Z",
+      "expires_at": "2026-10-05T09:09:26.077Z"
+    }
+  ],
+  "quotes": [
+    {
+      "quote_id": "q1791187809931",
+      "session_id": "os1791187766077",
+      "college_id": null,
+      "metrics": {
+        "student_count": 500,
+        "faculty_count": 30,
+        "modules": [
+          "research",
+          "fees"
+        ],
+        "term_years": 1
+      },
+      "breakdown": {
+        "pricing_version": "v1",
+        "metrics": {
+          "student_count": 500,
+          "faculty_count": 30,
+          "modules": [
+            "research",
+            "fees"
+          ],
+          "term_years": 1
+        },
+        "lines": [
+          {
+            "label": "Students (500)",
+            "amount_paise": 6000000
+          },
+          {
+            "label": "Faculty (30)",
+            "amount_paise": 600000
+          },
+          {
+            "label": "Module: research",
+            "amount_paise": 990000
+          },
+          {
+            "label": "Module: fees",
+            "amount_paise": 660000
+          },
+          {
+            "label": "GST (18%)",
+            "amount_paise": 1485000
+          }
+        ],
+        "subtotal_paise": 8250000,
+        "discount_rate": 0,
+        "discount_paise": 0,
+        "after_discount_paise": 8250000,
+        "contract_paise": 8250000,
+        "gst_paise": 1485000,
+        "payable_paise": 9735000
+      },
+      "pricing_version": "v1",
+      "status": "accepted",
+      "expires_at": "2026-10-05T09:09:26.077Z",
+      "created_at": "2026-10-05T08:10:09.931Z"
+    }
+  ],
+  "payments": [
+    {
+      "payment_id": "pay1791187816322",
+      "quote_id": "q1791187809931",
+      "subscription_id": "sub1791187823695",
+      "gateway": "mock",
+      "gateway_order_id": "mock_fd2283de-0452-489c-bfb7-72a7c364aec8",
+      "amount_paise": 9735000,
+      "status": "captured",
+      "created_at": "2026-10-05T08:10:16.322Z"
+    }
+  ],
+  "subscriptions": [
+    {
+      "subscription_id": "sub1791187823695",
+      "college_id": "col1791187823669",
+      "quote_id": "q1791187809931",
+      "student_seats": 500,
+      "faculty_seats": 30,
+      "modules": [
+        "research",
+        "fees"
+      ],
+      "status": "active",
+      "starts_on": "2026-10-05",
+      "ends_on": "2027-10-05",
+      "created_at": "2026-10-05T08:10:23.696Z"
+    }
+  ]
+}
