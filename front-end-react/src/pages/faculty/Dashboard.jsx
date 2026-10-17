@@ -9,6 +9,7 @@
 import { useEffect, useState } from 'react';
 import { apiFetch } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
+import { useNotifications } from '../../context/NotificationsContext';
 import SendAlertModal from '../../components/shared/SendAlertModal';
 import MeetingModal from '../../components/shared/MeetingModal';
 
@@ -155,6 +156,7 @@ function ActionRequired({ onNavigate }) {
 
 function SyllabusManager() {
   const { user } = useAuth();
+  const { showToast } = useNotifications();
   const [courses, setCourses] = useState(undefined);
   const [values, setValues] = useState({}); // `${courseId}_${section}` -> slider value
 
@@ -190,9 +192,9 @@ function SyllabusManager() {
     const val = values[`${courseId}_${section}`];
     try {
       await apiFetch('/syllabus-progress', { method: 'PATCH', body: JSON.stringify({ course_id: courseId, section, progress: Number(val) }) });
-    } catch {
-      // No toast in legacy on this specific save either — the slider's own
-      // value is the only feedback.
+      showToast(`Syllabus updated: Section ${section} → ${val}%`, 'success');
+    } catch (e) {
+      showToast('Failed to update syllabus: ' + e.message, 'error');
     }
   };
 

@@ -217,13 +217,40 @@ function SyllabusTracker() {
   const [openCourse, setOpenCourse] = useState(null);
 
   useEffect(() => {
-    apiFetch('/students/me')
-      .then((student) => {
-        const sec = student?.section || 'A';
-        setSection(sec);
-        return apiFetch(`/syllabus-progress?section=${sec}`);
+    Promise.all([
+      apiFetch('/students/me/courses').catch(() => []),
+      apiFetch('/syllabus-progress').catch(() => []),
+      apiFetch('/students/me').catch(() => null),
+    ])
+      .then(([myCourses, allProgress, student]) => {
+        const defaultSec = student?.section || 'A';
+        setSection(defaultSec);
+
+        if (Array.isArray(myCourses) && myCourses.length > 0) {
+          // Map each enrolled course to its syllabus progress for the student's assigned section
+          const combined = myCourses.map((c) => {
+            const courseSec = c.section || defaultSec;
+            const sp = (allProgress || []).find(
+              (p) => p.course_id === c.course_id && p.section === courseSec,
+            );
+            return {
+              course_id: c.course_id,
+              course_code: c.course_code || '',
+              course_name: c.course_name || '',
+              section: courseSec,
+              faculty_name: c.faculty_name,
+              progress: sp ? sp.progress : 0,
+              modules: sp?.modules || [],
+              updated_at: sp?.updated_at,
+            };
+          });
+          setProgress(combined);
+        } else {
+          // Fallback: section-filtered courses from college progress
+          const fallback = (allProgress || []).filter((p) => p.section === defaultSec);
+          setProgress(fallback);
+        }
       })
-      .then(setProgress)
       .catch((e) => setError(e.message));
   }, []);
 
@@ -238,7 +265,7 @@ function SyllabusTracker() {
         ) : progress === undefined ? (
           <div style={{ textAlign: 'center', color: '#64748b', padding: 16 }}>Loading syllabus data...</div>
         ) : progress.length === 0 ? (
-          <p style={{ color: '#64748b', textAlign: 'center' }}>No syllabus data for your section.</p>
+          <p style={{ color: '#64748b', textAlign: 'center' }}>No syllabus data for your enrolled courses.</p>
         ) : (
           <SyllabusBody progress={progress} section={section} openCourse={openCourse} setOpenCourse={setOpenCourse} />
         )}
@@ -248,7 +275,7 @@ function SyllabusTracker() {
 }
 
 function SyllabusBody({ progress, section, openCourse, setOpenCourse }) {
-  const overall = Math.round(progress.reduce((s, p) => s + (p.progress || 0), 0) / progress.length);
+  const overall = progress.length > 0 ? Math.round(progress.reduce((s, p) => s + (p.progress || 0), 0) / progress.length) : 0;
   const overallColor = overall >= 75 ? '#16a34a' : overall >= 50 ? '#d97706' : '#ef4444';
 
   return (
@@ -261,7 +288,9 @@ function SyllabusBody({ progress, section, openCourse, setOpenCourse }) {
         <div style={{ height: 12, background: '#e2e8f0', borderRadius: 6, overflow: 'hidden' }}>
           <div style={{ height: '100%', background: overallColor, width: `${overall}%`, borderRadius: 6 }} />
         </div>
-        <div style={{ fontSize: 12, color: '#64748b', marginTop: 6 }}>Based on {progress.length} course(s) in Section {section}</div>
+        <div style={{ fontSize: 12, color: '#64748b', marginTop: 6 }}>
+          Based on {progress.length} course(s){section ? ` · Section ${section}` : ''}
+        </div>
       </div>
       <div style={{ fontSize: 12, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
         Click a course to see module breakdown
@@ -279,6 +308,11 @@ function SyllabusBody({ progress, section, openCourse, setOpenCourse }) {
               <div>
                 <span style={{ fontWeight: 700, fontSize: 13 }}>{p.course_code || ''}</span>
                 <span style={{ fontSize: 12, color: '#64748b', marginLeft: 6 }}>{p.course_name || ''}</span>
+                {p.section && (
+                  <span style={{ fontSize: 11, color: '#6366f1', background: '#eef2ff', padding: '2px 6px', borderRadius: 4, marginLeft: 8, fontWeight: 600 }}>
+                    Sec {p.section}
+                  </span>
+                )}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span style={{ fontWeight: 700, color }}>{pct}%</span>
