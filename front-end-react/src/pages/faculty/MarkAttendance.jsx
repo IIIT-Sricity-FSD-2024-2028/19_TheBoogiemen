@@ -35,6 +35,7 @@ function AttendanceForm() {
   const { showToast } = useNotifications();
   const [courses, setCourses] = useState(null);
   const [courseId, setCourseId] = useState('');
+  const [section, setSection] = useState('');
   const [date, setDate] = useState('');
   const [students, setStudents] = useState(null); // null = nothing loaded, [] = loaded empty
   const [statuses, setStatuses] = useState({}); // user_id -> 'present' | 'absent'
@@ -47,13 +48,29 @@ function AttendanceForm() {
       .catch(() => setCourses([]));
   }, []);
 
+  const selectedCourse = courses?.find((c) => c.course_id === courseId);
+  const mySections = selectedCourse?.sections || (selectedCourse?.section ? [selectedCourse.section] : []);
+
+  useEffect(() => {
+    if (!courseId) {
+      setSection('');
+      return;
+    }
+    if (mySections.length === 1) {
+      setSection(mySections[0]);
+    } else if (mySections.length > 1 && !mySections.includes(section)) {
+      setSection(mySections[0]);
+    }
+  }, [courseId, selectedCourse]);
+
   useEffect(() => {
     if (!courseId) {
       setStudents(null);
       return;
     }
     setStudents(null);
-    apiFetch(`/faculty/attendance/today/${courseId}`)
+    const query = section ? `?section=${encodeURIComponent(section)}` : '';
+    apiFetch(`/faculty/attendance/today/${courseId}${query}`)
       .then((data) => {
         setStudents(data.students || []);
         const init = {};
@@ -63,7 +80,7 @@ function AttendanceForm() {
         setStatuses(init);
       })
       .catch(() => setStudents([]));
-  }, [courseId]);
+  }, [courseId, section]);
 
   const markAll = (status) => {
     if (!students || students.length === 0) return showToast('Load students first by selecting a course', 'warning');
@@ -88,8 +105,17 @@ function AttendanceForm() {
 
     setSubmitting(true);
     try {
-      await apiFetch('/faculty/attendance', { method: 'POST', body: JSON.stringify({ course_id: courseId, date: today, records }) });
-      showToast(`Attendance saved for ${records.length} students! (Date: ${today})`, 'success');
+      await apiFetch('/faculty/attendance', {
+        method: 'POST',
+        body: JSON.stringify({
+          course_id: courseId,
+          ...(section ? { section } : {}),
+          date: today,
+          records,
+        }),
+      });
+      const secLabel = section ? ` (Section ${section})` : '';
+      showToast(`Attendance saved for ${records.length} students!${secLabel} (Date: ${today})`, 'success');
     } catch (e) {
       showToast('Failed: ' + e.message, 'error');
     } finally {
@@ -99,14 +125,40 @@ function AttendanceForm() {
 
   return (
     <>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto auto', gap: 16, marginBottom: 24, alignItems: 'end' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(180px, 1.2fr) minmax(130px, 0.8fr) minmax(140px, 1fr) auto auto', gap: 16, marginBottom: 24, alignItems: 'end' }}>
         <div>
           <label style={{ fontSize: 12, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 6 }}>Course</label>
           <select value={courseId} onChange={(e) => setCourseId(e.target.value)} style={{ width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14 }}>
             <option value="">{courses === null ? 'Loading…' : '— Select Course —'}</option>
             {courses?.map((c) => (
-              <option key={c.course_id} value={c.course_id}>{c.course_code} - {c.course_name}</option>
+              <option key={c.course_id} value={c.course_id}>
+                {c.course_code} - {c.course_name}{c.sections && c.sections.length > 1 ? ` (${c.sections.length} sections)` : ''}
+              </option>
             ))}
+          </select>
+        </div>
+        <div>
+          <label style={{ fontSize: 12, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 6 }}>Section</label>
+          <select
+            value={section}
+            onChange={(e) => setSection(e.target.value)}
+            disabled={!courseId || mySections.length <= 1}
+            style={{ width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, background: (!courseId || mySections.length <= 1) ? '#f8fafc' : '#fff' }}
+          >
+            {!courseId ? (
+              <option value="">— Course first —</option>
+            ) : mySections.length === 0 ? (
+              <option value="">— None —</option>
+            ) : mySections.length === 1 ? (
+              <option value={mySections[0]}>Section {mySections[0]}</option>
+            ) : (
+              <>
+                {mySections.map((s) => (
+                  <option key={s} value={s}>Section {s}</option>
+                ))}
+                <option value="">All Assigned Sections</option>
+              </>
+            )}
           </select>
         </div>
         <div>
@@ -140,16 +192,17 @@ function AttendanceForm() {
               <th style={{ width: 40 }}>#</th>
               <th>Student Name</th>
               <th>ID</th>
+              <th>Section</th>
               <th style={{ textAlign: 'center' }}>Attendance</th>
             </tr>
           </thead>
           <tbody>
             {!courseId ? (
-              <tr><td colSpan={4} style={{ textAlign: 'center', color: '#64748b', padding: 24 }}>Select a course above to load students</td></tr>
+              <tr><td colSpan={5} style={{ textAlign: 'center', color: '#64748b', padding: 24 }}>Select a course above to load students</td></tr>
             ) : students === null ? (
-              <tr><td colSpan={4} style={{ textAlign: 'center', color: '#64748b', padding: 24 }}>Loading students...</td></tr>
+              <tr><td colSpan={5} style={{ textAlign: 'center', color: '#64748b', padding: 24 }}>Loading students...</td></tr>
             ) : students.length === 0 ? (
-              <tr><td colSpan={4} style={{ textAlign: 'center', color: '#64748b', padding: 24 }}>No students enrolled in this course</td></tr>
+              <tr><td colSpan={5} style={{ textAlign: 'center', color: '#64748b', padding: 24 }}>No students enrolled in {section ? `Section ${section} of ` : ''}this course</td></tr>
             ) : (
               students.map((s, i) => {
                 const status = statuses[s.user_id];
@@ -158,6 +211,11 @@ function AttendanceForm() {
                     <td style={{ color: '#94a3b8', fontSize: 13, fontWeight: 600 }}>{i + 1}</td>
                     <td><div style={{ fontWeight: 600, fontSize: 14 }}>{s.first_name} {s.last_name || ''}</div></td>
                     <td style={{ fontSize: 12, color: '#64748b' }}>{s.user_id}</td>
+                    <td>
+                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 8px', background: '#e0e7ff', color: '#4338ca', borderRadius: 6 }}>
+                        Sec {s.section || section || '—'}
+                      </span>
+                    </td>
                     <td style={{ textAlign: 'center' }}>
                       <div style={{ display: 'inline-flex', borderRadius: 10, overflow: 'hidden', border: '2px solid #e2e8f0' }}>
                         <button
