@@ -39,6 +39,17 @@ export function courseIdsTaughtBy(
   return [...new Set(sectionsTaughtBy(db, facultyId).map((cs) => cs.course_id))];
 }
 
+/** All section names this faculty member teaches for a course. */
+export function sectionsTaughtIn(
+  db: InMemoryDbService,
+  facultyId: string,
+  courseId: string,
+): string[] {
+  return sectionsTaughtBy(db, facultyId)
+    .filter((cs) => cs.course_id === courseId)
+    .map((cs) => cs.section);
+}
+
 /** This faculty's own section for one course, or undefined if they don't teach it. */
 export function sectionTaughtIn(
   db: InMemoryDbService,
