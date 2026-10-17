@@ -52,7 +52,7 @@ export default function Settings() {
       <div className="stats-card-body" style={{ padding: 24 }}>
         <div style={{ marginBottom: 24, padding: 20, background: '#f8fafc', borderRadius: 8 }}>
           <h4 style={{ margin: '0 0 12px', fontSize: 14, color: '#64748b', textTransform: 'uppercase', letterSpacing: 1 }}>Profile</h4>
-          <p style={{ margin: '4px 0' }}><strong>Name:</strong> {user.first_name || ''} {user.last_name || user.username}</p>
+          <p style={{ margin: '4px 0' }}><strong>Name:</strong> {[user?.first_name, user?.last_name].filter(Boolean).join(' ').trim() || user?.username || '—'}</p>
           <p style={{ margin: '4px 0' }}><strong>Email:</strong> {user.email}</p>
           <p style={{ margin: '4px 0' }}><strong>Role:</strong> {user.role}</p>
           <p style={{ margin: '4px 0' }}><strong>ID:</strong> {user.user_id}</p>

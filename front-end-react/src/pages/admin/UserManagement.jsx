@@ -9,6 +9,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 function AddUserModal({ open, onClose, onCreated }) {
 const { showToast, send } = useNotifications();
 const [firstName, setFirstName] = useState('');
+const [lastName, setLastName] = useState('');
 const [email, setEmail] = useState('');
 const [password, setPassword] = useState('');
 const [role, setRole] = useState('');
@@ -17,6 +18,7 @@ const [submitting, setSubmitting] = useState(false);
 useEffect(() => {
 if (!open) return;
 setFirstName('');
+setLastName('');
 setEmail('');
 setPassword('');
 setRole('');
@@ -30,7 +32,16 @@ if (!password || password.length < 8) return showToast('Password must be at leas
 if (!role) return showToast('Please select a role', 'warning');
 setSubmitting(true);
 try {
-await apiFetch('/users', { method: 'POST', body: JSON.stringify({ first_name: firstName.trim(), email: email.trim(), password, role }) });
+await apiFetch('/users', {
+  method: 'POST',
+  body: JSON.stringify({
+    first_name: firstName.trim(),
+    last_name: lastName.trim() || undefined,
+    email: email.trim(),
+    password,
+    role,
+  }),
+});
 showToast('User created! They can now log in.', 'success');
 onClose();
 onCreated();
@@ -55,9 +66,15 @@ return (
 <Modal open={open} onClose={onClose} title="Add New User">
 <form onSubmit={submit}>
 <div className="modal-body">
+<div className="form-row">
 <div className="form-group">
-<label>First Name</label>
+<label>First Name <span style={{ color: '#ef4444' }}>*</span></label>
 <input type="text" required value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="First name" />
+</div>
+<div className="form-group">
+<label>Last Name</label>
+<input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Last name" />
+</div>
 </div>
 <div className="form-group">
 <label>Email</label>
