@@ -184,9 +184,8 @@ function SyllabusManager() {
       setCourses([]);
     }
   };
-  useEffect(() => {
     load();
-  }, []);
+ 
 
   const save = async (courseId, section) => {
     const val = values[`${courseId}_${section}`];

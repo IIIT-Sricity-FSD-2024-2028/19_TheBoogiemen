@@ -15,6 +15,7 @@ import {
   writeCollegeId,
 } from '../common/tenancy/scope-to-college';
 import { sectionsTaughtBy, sectionTaughtIn } from '../common/course-sections';
+import { excludeHolidays } from '../common/academic-calendar';
 
 @Injectable()
 export class FacultyService {
@@ -78,7 +79,7 @@ export class FacultyService {
     };
   }
 
-  async getMyStudents(facultyId: string) {
+  async getMyStudents(facultyId: string, collegeId: string | null) {
     // Section-scoped: enrollment must match this faculty's own section of
     // the course, not any section of it — a colleague teaching Section B of
     // the same course is not "my" roster.
@@ -96,8 +97,10 @@ export class FacultyService {
     return this.db.students
       .filter((s) => uniqueStudentIds.includes(s.user_id))
       .map((s) => {
-        const records = this.db.attendance_log.filter(
-          (a) => a.student_id === s.user_id,
+        const records = excludeHolidays(
+          this.db,
+          this.db.attendance_log.filter((a) => a.student_id === s.user_id),
+          collegeId,
         );
         // M-02: EXCUSED sessions from approved leave count as attended.
         const attendance = summariseAttendance(records);
@@ -150,6 +153,16 @@ export class FacultyService {
       throw new NotFoundException(
         errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Course not found'),
       );
+
+    // No class is held system-wide on a holiday — this route is always
+    // scoped to "today" (see recordAttendance's own date handling), so a
+    // holiday today means there is nothing to mark, not an empty roster.
+    const todayDate = new Date().toISOString().split('T')[0];
+    const holiday = this.db.holidays.find(
+      (h: any) =>
+        h.date === todayDate && (h.college_id == null || h.college_id === collegeId),
+    );
+    if (holiday) return { holiday: true, label: holiday.label, date: todayDate };
 
     // Section-scoped: a faculty may only mark attendance for the section(s) of
     // this course they were actually assigned — see
@@ -353,8 +366,10 @@ export class FacultyService {
 
     return pool
       .map((s) => {
-        const records = this.db.attendance_log.filter(
-          (a) => a.student_id === s.user_id,
+        const records = excludeHolidays(
+          this.db,
+          this.db.attendance_log.filter((a) => a.student_id === s.user_id),
+          collegeId,
         );
         const attendance = summariseAttendance(records);
         const attendance_pct =

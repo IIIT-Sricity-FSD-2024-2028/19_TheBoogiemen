@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Body,
+  Query,
   BadRequestException,
 } from '@nestjs/common';
 import { StudentsService } from './students.service';
@@ -38,8 +39,25 @@ export class StudentsController {
     status: 200,
     description: 'Attendance records and per-course summary',
   })
-  async getAttendance(@CurrentUserId() userId: string) {
-    return this.studentsService.getAttendance(userId);
+  async getAttendance(
+    @CurrentUserId() userId: string,
+    @CurrentUserCollegeId() collegeId: string | null,
+  ) {
+    return this.studentsService.getAttendance(userId, collegeId);
+  }
+
+  @Get('me/attendance-calendar')
+  @Roles('student')
+  @ApiOperation({
+    summary: 'Get a day-by-day attendance calendar for one month, for the heatmap view',
+  })
+  @ApiResponse({ status: 200, description: 'One cell per day in the requested month' })
+  async getAttendanceCalendar(
+    @CurrentUserId() userId: string,
+    @Query('month') month: string,
+    @CurrentUserCollegeId() collegeId: string | null,
+  ) {
+    return this.studentsService.getAttendanceCalendar(userId, month, collegeId);
   }
 
   @Get('me/courses')

@@ -10,7 +10,6 @@ import { useState } from 'react';
 import DashboardShell from '../../components/layout/DashboardShell';
 import Settings from '../../components/shared/Settings';
 import Timetable from '../../components/shared/Timetable';
-import LeavePanel from '../../components/shared/LeavePanel';
 import ResearchPanel from '../../components/shared/ResearchPanel';
 import DiscussionForum from '../../components/shared/DiscussionForum';
 import Dashboard from './Dashboard';
@@ -67,15 +66,6 @@ const NAV_ITEMS = [
     ),
   },
   {
-    id: 'leave',
-    label: 'Leave Management',
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" />
-      </svg>
-    ),
-  },
-  {
     id: 'discussion',
     label: 'Discussion Forum',
     module: 'forum',
@@ -103,7 +93,6 @@ const TITLES = {
   timetable: 'My Timetable',
   courses: 'My Courses',
   attendance: 'Attendance',
-  leave: 'Leave Management',
   discussion: 'Discussion Forum',
   research: 'Research Projects',
   settings: 'Settings',
@@ -115,7 +104,6 @@ const VIEWS = {
   timetable: <Timetable role="student" />,
   courses: <Courses />,
   attendance: <Attendance />,
-  leave: <LeavePanel role="student" />,
   discussion: <DiscussionForum />,
   research: <ResearchPanel role="student" />,
   settings: <Settings />,

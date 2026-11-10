@@ -12,6 +12,7 @@ import {
 import { ErrorCode, errorBody } from '../common/errors/error-codes';
 import { isSameCollege, scopeToCollege } from '../common/tenancy/scope-to-college';
 import { sectionsOfCourse } from '../common/course-sections';
+import { buildAttendanceCalendar, excludeHolidays } from '../common/academic-calendar';
 
 @Injectable()
 export class StudentsService {
@@ -26,9 +27,11 @@ export class StudentsService {
     return student;
   }
 
-  async getAttendance(userId: string) {
-    const records = this.db.attendance_log.filter(
-      (a) => a.student_id === userId,
+  async getAttendance(userId: string, collegeId: string | null) {
+    const records = excludeHolidays(
+      this.db,
+      this.db.attendance_log.filter((a) => a.student_id === userId),
+      collegeId,
     );
 
     // Group by course to create summary.
@@ -66,6 +69,18 @@ export class StudentsService {
       totalExcused: overall.excused,
       overallPct: overall.percentage,
     };
+  }
+
+  async getAttendanceCalendar(
+    userId: string,
+    month: string,
+    collegeId: string | null,
+  ) {
+    if (!/^\d{4}-\d{2}$/.test(month))
+      throw new BadRequestException(
+        errorBody(ErrorCode.MALFORMED_REQUEST, 'month must be YYYY-MM'),
+      );
+    return buildAttendanceCalendar(this.db, userId, month, collegeId);
   }
 
   async getCourses(userId: string) {

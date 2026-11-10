@@ -24,6 +24,7 @@ import { FacultyModule } from './faculty/faculty.module';
 import { AdminModule } from './admin/admin.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { BillingModule } from './billing/billing.module';
+import { HolidaysModule } from './holidays/holidays.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { BillingModule } from './billing/billing.module';
     AdminModule,
     UploadsModule,
     BillingModule,
+    HolidaysModule,
   ],
   controllers: [AppController],
   providers: [
