@@ -40,6 +40,7 @@ export class InMemoryDbService implements OnModuleInit {
   public syllabus_progress = this.createProxyArray([]);
   public attendance_requests = this.createProxyArray([]);
   public resource_bookings = this.createProxyArray([]);
+  public holidays = this.createProxyArray([]);
   // SPOC / multi-college platform. New collections MUST also be added to the
   // dataToSave object in persist() below — a collection declared only here
   // updates in memory but is silently dropped on every write, which is
@@ -158,6 +159,7 @@ export class InMemoryDbService implements OnModuleInit {
         syllabus_progress: this.syllabus_progress,
         attendance_requests: this.attendance_requests,
         resource_bookings: this.resource_bookings,
+        holidays: this.holidays,
         colleges: this.colleges,
         support_threads: this.support_threads,
         support_messages: this.support_messages,

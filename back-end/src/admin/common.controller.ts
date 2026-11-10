@@ -42,6 +42,7 @@ import { RequiresModule } from '../common/guards/requires-module.guard';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import {
 ATTENDANCE_STATUS,
+eachDateInRange,
 isAtRisk,
 normalizeAttendanceStatus,
 normalizeLeaveType,
@@ -49,6 +50,7 @@ riskReasons,
 summariseAttendance,
 } from '../common/academic-rules';
 import { syncLeaveAttendance } from '../common/leave-attendance.sync';
+import { excludeHolidays, expandClassDates } from '../common/academic-calendar';
 import {
 CreateUserDto,
 ResetUserPasswordDto,
@@ -1003,9 +1005,9 @@ return { success: true, message: 'Event deleted' };
 
 // â”€â”€ Leave â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 @Get('leave')
-@Roles('student', 'faculty', 'admin', 'head', 'superadmin')
+@Roles('faculty', 'admin', 'head', 'superadmin')
 @ApiOperation({
-summary: 'Get leave applications â€” own for student, all for admin/faculty',
+summary: 'Get faculty leave applications â€” own for faculty, all for admin/head/superadmin. Student absence excusal now goes through /attendance-request instead (see ATTENDANCE_WORKFLOW_REVAMP notes).',
 })
 async getLeaves(
 @CurrentUserId() userId: string,
@@ -1013,34 +1015,14 @@ async getLeaves(
 @CurrentUserCollegeId() collegeId: string | null,
 ) {
 const scoped = scopeToCollege(this.db.leave_applications, collegeId);
-if (role === 'student') return scoped.filter((l) => l.student_id === userId);
-
-// Faculty see only (a) their own leave applications and (b) leave
-// applications from students they teach — i.e. students enrolled in
-// sections the faculty is assigned to.  This mirrors the section-scoped
-// ownership model used by getMyStudents, attendance, marks, etc.
-if (role === 'faculty') {
-  const mySections = sectionsTaughtBy(this.db, userId);
-  const myStudentIds = new Set(
-    this.db.enrollment
-      .filter((e) =>
-        mySections.some(
-          (cs) => cs.course_id === e.course_id && cs.section === e.section,
-        ),
-      )
-      .map((e) => e.student_id),
-  );
-  return scoped.filter(
-    (l) => l.student_id === userId || myStudentIds.has(l.student_id),
-  );
-}
+if (role === 'faculty') return scoped.filter((l) => l.student_id === userId);
 
 // Admin/head/superadmin see all of THEIR college's leaves (for approval).
 return scoped;
 }
 
 @Post('leave')
-@Roles('student', 'faculty')
+@Roles('faculty')
 @ApiOperation({ summary: 'Submit a new leave application' })
 @ApiBody({ schema: { type: 'object', additionalProperties: true } })
 async applyLeave(
@@ -1481,8 +1463,10 @@ pool = pool.filter((s) => myStudentIds.has(s.user_id));
 }
 return pool
 .map((s) => {
-const records = this.db.attendance_log.filter(
-(a) => a.student_id === s.user_id,
+const records = excludeHolidays(
+this.db,
+this.db.attendance_log.filter((a) => a.student_id === s.user_id),
+collegeId,
 );
 const attendance = summariseAttendance(records);
 // No attendance data means unknown, not a fabricated 65%.
@@ -1797,54 +1781,99 @@ return { success: true, data: newEntry };
 }
 
 // â”€â”€ Attendance Requests (Student â†’ Admin â†’ Faculty) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Merged with what used to be the student side of /leave: one submission,
+// a date range (a single day is a range of one) plus a scope of either one
+// course or every enrolled course. It expands into one grantable row PER
+// (course, date) pair that actually has a scheduled class in that range â€”
+// never a flat "every calendar day" excusal â€” skipping holidays and days
+// that course doesn't meet at all (ATTENDANCE_WORKFLOW_REVAMP notes).
+// Faculty leave (personal time off, no attendance side-effects) stays on
+// /leave, unaffected â€” see that route's own comment.
 @Post('attendance-request')
 @Roles('student')
-@ApiOperation({ summary: 'Student requests attendance correction' })
+@ApiOperation({ summary: 'Student requests attendance be excused for a date range, one course or all of them' })
 @ApiBody({ schema: { type: 'object', additionalProperties: true } })
 async createAttendanceRequest(
 @Body() body: any,
 @CurrentUserId() userId: string,
 @CurrentUserCollegeId() actorCollegeId: string | null,
 ) {
-if (!body.course_id || !body.date || !body.reason)
+const scope = body.scope === 'course' ? 'course' : 'all_courses';
+if (!body.start_date || !body.end_date || !body.reason)
 throw new BadRequestException(
 errorBody(
 ErrorCode.BUSINESS_RULE_VIOLATION,
-'course_id, date, and reason required',
+'start_date, end_date, and reason required',
 ),
 );
-// Allow past and today dates (student requests attendance for a day they were absent)
-const today = new Date().toISOString().split('T')[0];
-if (body.date > today)
+if (body.end_date < body.start_date)
 throw new BadRequestException(
 errorBody(
 ErrorCode.BUSINESS_RULE_VIOLATION,
-'Attendance requests cannot be made for future dates',
+'end_date cannot be before start_date',
 ),
 );
-const course = this.db.courses.find((c) => c.course_id === body.course_id);
-if (!isSameCollege(course, actorCollegeId)) notFoundInMyCollege('Course');
+if (scope === 'course' && !body.course_id)
+throw new BadRequestException(
+errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'course_id is required for a single-course request'),
+);
+
+const myEnrollment = this.db.enrollment.filter(
+(e) => e.student_id === userId && e.status === 'active',
+);
+let courseSections: { course_id: string; section: string }[];
+if (scope === 'course') {
+const enrolled = myEnrollment.find((e) => e.course_id === body.course_id);
+if (!enrolled)
+throw new BadRequestException(
+errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'You are not enrolled in this course'),
+);
+courseSections = [{ course_id: enrolled.course_id, section: enrolled.section }];
+} else {
+courseSections = myEnrollment.map((e) => ({ course_id: e.course_id, section: e.section }));
+}
+
+const dates = eachDateInRange(body.start_date, body.end_date);
+const pairs = expandClassDates(this.db, dates, courseSections, actorCollegeId);
+if (!pairs.length)
+throw new BadRequestException(
+errorBody(
+ErrorCode.BUSINESS_RULE_VIOLATION,
+'No scheduled classes fall in that date range (holidays and non-class days need no request).',
+),
+);
+
 const student = this.db.students.find((s) => s.user_id === userId);
-const id = `ar${Date.now()}`;
-const request = {
-request_id: id,
-student_id: userId,
-student_name: student
+const studentName = student
 ? `${student.first_name} ${student.last_name || ''}`.trim()
-: userId,
-course_id: body.course_id,
-course_code: course?.course_code || body.course_id,
-date: body.date,
+: userId;
+const group_id = `arg${Date.now()}`;
+const collegeId = writeCollegeId(actorCollegeId);
+const created = pairs.map(({ course_id, date }, i) => {
+const course = this.db.courses.find((c) => c.course_id === course_id);
+return {
+request_id: `ar${Date.now()}_${i}`,
+group_id,
+student_id: userId,
+student_name: studentName,
+course_id,
+course_code: course?.course_code || course_id,
+date,
+start_date: body.start_date,
+end_date: body.end_date,
+scope,
+leave_type: body.leave_type ? normalizeLeaveType(body.leave_type) : null,
 reason: body.reason,
 // The supporting document (medical certificate etc.) this request rests on.
 file_id: body.file_id ?? null,
 admin_status: 'pending',
 faculty_status: 'pending',
 created_at: new Date().toISOString(),
-college_id: writeCollegeId(actorCollegeId),
+college_id: collegeId,
 };
-this.db.attendance_requests.push(request);
-return { success: true, data: request };
+});
+created.forEach((r) => this.db.attendance_requests.push(r));
+return { success: true, data: { group_id, requests: created } };
 }
 
 @Get('attendance-requests')
@@ -1952,6 +1981,9 @@ ErrorCode.BUSINESS_RULE_VIOLATION,
 req.faculty_status = 'granted';
 // H-07: UUID instead of `al${length + 1}`, which minted ids that already existed.
 // M-01: correcting an existing record rather than appending a second one.
+// Writes EXCUSED, not PRESENT: this request is justified absence (merged
+// with what used to be /leave's auto-excusal), not a claim the student was
+// physically in class.
 const existing = this.db.attendance_log.find(
 (a) =>
 a.student_id === req.student_id &&
@@ -1959,14 +1991,14 @@ a.course_id === req.course_id &&
 a.date === req.date,
 );
 if (existing) {
-existing.status = ATTENDANCE_STATUS.PRESENT;
+existing.status = ATTENDANCE_STATUS.EXCUSED;
 } else {
 this.db.attendance_log.push({
 log_id: uuidv4(),
 student_id: req.student_id,
 course_id: req.course_id,
 date: req.date,
-status: ATTENDANCE_STATUS.PRESENT,
+status: ATTENDANCE_STATUS.EXCUSED,
 college_id: writeCollegeId(actorCollegeId),
 } as any);
 }

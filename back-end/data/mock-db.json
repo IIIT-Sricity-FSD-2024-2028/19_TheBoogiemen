@@ -279,22 +279,6 @@
   ],
   "course_sections": [
     {
-      "course_section_id": "cs-c1",
-      "course_id": "c1",
-      "section": "A",
-      "faculty_id": "u2",
-      "faculty_name": "Jane Smith",
-      "college_id": "c-default"
-    },
-    {
-      "course_section_id": "cs-c2",
-      "course_id": "c2",
-      "section": "A",
-      "faculty_id": "u2",
-      "faculty_name": "Jane Smith",
-      "college_id": "c-default"
-    },
-    {
       "course_section_id": "cs-c3",
       "course_id": "c3",
       "section": "A",
@@ -372,6 +356,30 @@
       "section": "A",
       "faculty_id": "u2",
       "faculty_name": "Jane Smith",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "4b1e01f8-4675-4b62-8199-72b25ee22435",
+      "course_id": "c1",
+      "section": "A",
+      "faculty_id": "u2",
+      "faculty_name": "Jane Smith",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "290980f6-7b3d-4dd1-9284-6dc34f161f7b",
+      "course_id": "c2",
+      "section": "A",
+      "faculty_id": "u2",
+      "faculty_name": "Jane Smith",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "abe59698-86cf-46c9-ac57-95e4bdffe487",
+      "course_id": "c2",
+      "section": "B",
+      "faculty_id": "u7",
+      "faculty_name": "Robert Wilson",
       "college_id": "c-default"
     }
   ],
@@ -741,7 +749,7 @@
       "student_id": "u1",
       "course_id": "c1",
       "date": "2026-11-03",
-      "status": "excused",
+      "status": "present",
       "source": "leave:l1791189782361"
     },
     {
@@ -783,6 +791,398 @@
       "date": "2026-11-03",
       "status": "excused",
       "source": "leave:l1791189782361"
+    },
+    {
+      "log_id": "aab3ea2c-3a09-4d54-8f61-0e48cce8fcbb",
+      "student_id": "u1",
+      "course_id": "c1",
+      "date": "2026-11-05",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "03c2102a-c083-404a-a4be-94323fc4bc5a",
+      "student_id": "u1",
+      "course_id": "c2",
+      "date": "2026-11-05",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "c404bf31-fa04-4c41-8325-483545157e2a",
+      "student_id": "u1",
+      "course_id": "c5",
+      "date": "2026-11-05",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "d462ddc4-fc17-4de4-99c1-e2fd894bcc3b",
+      "student_id": "u1",
+      "course_id": "c7",
+      "date": "2026-11-05",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "ac4bb7e5-3400-4d2b-bd1e-aeccf64dc8db",
+      "student_id": "u1",
+      "course_id": "c3",
+      "date": "2026-11-05",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "eb51b313-70a7-4cc6-a5a5-25a07094a44b",
+      "student_id": "u1",
+      "course_id": "c1791306246075",
+      "date": "2026-11-05",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "a8c252fa-c4f9-431a-870c-4799657455ff",
+      "student_id": "u1",
+      "course_id": "c1",
+      "date": "2026-11-06",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "64973c1c-24ba-4af1-ae7d-bc8186e5786e",
+      "student_id": "u1",
+      "course_id": "c2",
+      "date": "2026-11-06",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "dcbdf0b1-6cfe-4ce4-8dee-585637f67278",
+      "student_id": "u1",
+      "course_id": "c5",
+      "date": "2026-11-06",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "c587d67b-c87d-4ece-8ad2-5484b499d50a",
+      "student_id": "u1",
+      "course_id": "c7",
+      "date": "2026-11-06",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "d22f3223-af66-46f1-a878-a7c6d627fd10",
+      "student_id": "u1",
+      "course_id": "c3",
+      "date": "2026-11-06",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "2719a3a3-4a16-4dad-8128-7a8b3505c312",
+      "student_id": "u1",
+      "course_id": "c1791306246075",
+      "date": "2026-11-06",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "c24c6418-b0cf-4342-b87a-39f22913e71e",
+      "student_id": "u1",
+      "course_id": "c1",
+      "date": "2026-11-07",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "9488bf76-2514-4639-9062-f9f52adcb3c1",
+      "student_id": "u1",
+      "course_id": "c2",
+      "date": "2026-11-07",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "5bf9e87f-ee2f-43c0-8f93-9bf407fd150c",
+      "student_id": "u1",
+      "course_id": "c5",
+      "date": "2026-11-07",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "1a304c26-db57-4194-b82f-9bb06979da84",
+      "student_id": "u1",
+      "course_id": "c7",
+      "date": "2026-11-07",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "4fd90b12-d5c2-434a-8956-859c993080db",
+      "student_id": "u1",
+      "course_id": "c3",
+      "date": "2026-11-07",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "ab409e39-0eba-4c0a-9edc-f5c1012ab4ec",
+      "student_id": "u1",
+      "course_id": "c1791306246075",
+      "date": "2026-11-07",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "a6b259d6-162f-4372-aad8-34328653c76a",
+      "student_id": "u1",
+      "course_id": "c1",
+      "date": "2026-11-08",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "ee082a4b-a31e-4c0d-ac9b-5d3959c4afd9",
+      "student_id": "u1",
+      "course_id": "c2",
+      "date": "2026-11-08",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "d340ec3c-59d9-4825-b6ac-52f3805b5555",
+      "student_id": "u1",
+      "course_id": "c5",
+      "date": "2026-11-08",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "5920a621-3d56-4234-a4df-407ed2d4e2d7",
+      "student_id": "u1",
+      "course_id": "c7",
+      "date": "2026-11-08",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "e14e9781-0a2e-47f9-84cb-e8061a2489c8",
+      "student_id": "u1",
+      "course_id": "c3",
+      "date": "2026-11-08",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "2c1ed6bd-3b7a-4137-8e1d-f4a5e3efde9c",
+      "student_id": "u1",
+      "course_id": "c1791306246075",
+      "date": "2026-11-08",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "444c81b7-3721-4456-8e4c-c056fad03c21",
+      "student_id": "u1",
+      "course_id": "c1",
+      "date": "2026-11-09",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "f4049097-70e5-4dfc-9ad2-5684beff8ee1",
+      "student_id": "u1",
+      "course_id": "c2",
+      "date": "2026-11-09",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "6845106e-f5f9-4ae3-a489-f9caf51c71c4",
+      "student_id": "u1",
+      "course_id": "c5",
+      "date": "2026-11-09",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "1f4c4d89-2113-440f-8dd4-5f0e0af91646",
+      "student_id": "u1",
+      "course_id": "c7",
+      "date": "2026-11-09",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "a24fbc16-32c2-4457-98f9-8a67f53984ef",
+      "student_id": "u1",
+      "course_id": "c3",
+      "date": "2026-11-09",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "1f1b8489-cf77-416f-9f7b-724dc2925983",
+      "student_id": "u1",
+      "course_id": "c1791306246075",
+      "date": "2026-11-09",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "5a64798a-ef10-492a-bb92-d9409bfe9cde",
+      "student_id": "u1",
+      "course_id": "c1",
+      "date": "2026-11-10",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "5146b16d-5747-42d8-94dd-6a033e9259b5",
+      "student_id": "u1",
+      "course_id": "c2",
+      "date": "2026-11-10",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "509bc51f-5ec2-499a-be7a-8c743eac5392",
+      "student_id": "u1",
+      "course_id": "c5",
+      "date": "2026-11-10",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "79ddc543-b6d6-47c4-bafa-dd50d54ca902",
+      "student_id": "u1",
+      "course_id": "c7",
+      "date": "2026-11-10",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "31a5d01a-6868-4034-9d6b-3668149061c8",
+      "student_id": "u1",
+      "course_id": "c3",
+      "date": "2026-11-10",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "31854946-da13-4f62-91ba-9d5294564409",
+      "student_id": "u1",
+      "course_id": "c1791306246075",
+      "date": "2026-11-10",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "ce3d6aea-222e-4c5d-8d43-e9eaf40bddc7",
+      "student_id": "u1",
+      "course_id": "c1",
+      "date": "2026-11-11",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "1b01e242-9357-4434-9bdd-d01bad58e7e6",
+      "student_id": "u1",
+      "course_id": "c2",
+      "date": "2026-11-11",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "18d0b0ad-590d-4056-92b3-20c8f31fed87",
+      "student_id": "u1",
+      "course_id": "c5",
+      "date": "2026-11-11",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "ef27609f-2ac2-41de-93c3-de59e6df56b1",
+      "student_id": "u1",
+      "course_id": "c7",
+      "date": "2026-11-11",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "db6a66a8-d610-48f0-b2ad-97d800eb2a44",
+      "student_id": "u1",
+      "course_id": "c3",
+      "date": "2026-11-11",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "10d59980-4a1e-4483-9c3a-2e5a439ec1a2",
+      "student_id": "u1",
+      "course_id": "c1791306246075",
+      "date": "2026-11-11",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "257aca0a-06b8-4154-b87a-669a598dc4c3",
+      "student_id": "u1",
+      "course_id": "c1",
+      "date": "2026-11-12",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "561f9065-3548-4305-9bb8-a7b8557004ac",
+      "student_id": "u1",
+      "course_id": "c2",
+      "date": "2026-11-12",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "4c1e1c8d-43f2-4fa7-a365-821543a9affb",
+      "student_id": "u1",
+      "course_id": "c5",
+      "date": "2026-11-12",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "5ea80194-eb50-4507-8364-b754652a010f",
+      "student_id": "u1",
+      "course_id": "c7",
+      "date": "2026-11-12",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "365dfe6d-bdf0-4684-b172-8bda2f41900e",
+      "student_id": "u1",
+      "course_id": "c3",
+      "date": "2026-11-12",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "364f2ac3-c7c4-49ab-93fc-ed074ba09b8f",
+      "student_id": "u1",
+      "course_id": "c1791306246075",
+      "date": "2026-11-12",
+      "status": "excused",
+      "source": "leave:l1793873673605"
+    },
+    {
+      "log_id": "c788dc86-36b0-4b7f-9e16-356a649dad89",
+      "student_id": "u1",
+      "course_id": "c1",
+      "date": "2026-11-13",
+      "status": "excused",
+      "college_id": "c-default"
     }
   ],
   "assessments": [
@@ -936,6 +1336,19 @@
       "start_date": "2026-12-10",
       "end_date": "2026-12-12",
       "reason": "Attending an academic conference out of state.",
+      "file_id": null,
+      "college_id": "c-default"
+    },
+    {
+      "leave_id": "l1793873673605",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "status": "approved",
+      "applied_on": "2026-11-05",
+      "leave_type": "Medical",
+      "start_date": "2026-11-05",
+      "end_date": "2026-11-12",
+      "reason": "I got a fracture",
       "file_id": null,
       "college_id": "c-default"
     }
@@ -1099,6 +1512,19 @@
       "tag": "general",
       "course_id": "",
       "created_at": "2026-10-05T08:43:51.944Z",
+      "reply_count": 0,
+      "college_id": "c-default"
+    },
+    {
+      "post_id": "p1793873868045",
+      "title": "Explain me FDFED",
+      "content": "I am stuck i need help",
+      "author_id": "u1",
+      "author_name": "John Doe",
+      "author_role": "student",
+      "tag": "help",
+      "course_id": "FDFED01",
+      "created_at": "2026-11-05T10:17:48.045Z",
       "reply_count": 0,
       "college_id": "c-default"
     }
@@ -1766,6 +2192,272 @@
       "created_at": "2026-08-18T11:37:28.185Z",
       "college_id": "c-default",
       "admin_reason": ""
+    },
+    {
+      "request_id": "ar1793873316605",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "course_id": "c1",
+      "course_code": "CS201",
+      "date": "2026-11-03",
+      "reason": "I awa preent",
+      "file_id": "f02a9343-e523-4bf8-8938-1a1a0a6162ef",
+      "admin_status": "approved",
+      "faculty_status": "granted",
+      "created_at": "2026-11-05T10:08:36.605Z",
+      "college_id": "c-default",
+      "admin_reason": ""
+    },
+    {
+      "request_id": "ar1794317216764_0",
+      "group_id": "arg1794317216764",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "course_id": "c1",
+      "course_code": "CS201",
+      "date": "2026-11-09",
+      "start_date": "2026-11-09",
+      "end_date": "2026-11-13",
+      "scope": "all_courses",
+      "leave_type": "Family Event",
+      "reason": "Family function out of town for a few days",
+      "file_id": null,
+      "admin_status": "approved",
+      "faculty_status": "granted",
+      "created_at": "2026-11-10T13:26:56.764Z",
+      "college_id": "c-default",
+      "admin_reason": ""
+    },
+    {
+      "request_id": "ar1794317216764_1",
+      "group_id": "arg1794317216764",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "course_id": "c2",
+      "course_code": "CS202",
+      "date": "2026-11-09",
+      "start_date": "2026-11-09",
+      "end_date": "2026-11-13",
+      "scope": "all_courses",
+      "leave_type": "Family Event",
+      "reason": "Family function out of town for a few days",
+      "file_id": null,
+      "admin_status": "approved",
+      "faculty_status": "granted",
+      "created_at": "2026-11-10T13:26:56.764Z",
+      "college_id": "c-default",
+      "admin_reason": ""
+    },
+    {
+      "request_id": "ar1794317216764_2",
+      "group_id": "arg1794317216764",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "course_id": "c5",
+      "course_code": "CS401",
+      "date": "2026-11-09",
+      "start_date": "2026-11-09",
+      "end_date": "2026-11-13",
+      "scope": "all_courses",
+      "leave_type": "Family Event",
+      "reason": "Family function out of town for a few days",
+      "file_id": null,
+      "admin_status": "approved",
+      "faculty_status": "granted",
+      "created_at": "2026-11-10T13:26:56.764Z",
+      "college_id": "c-default",
+      "admin_reason": ""
+    },
+    {
+      "request_id": "ar1794317216764_3",
+      "group_id": "arg1794317216764",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "course_id": "c1",
+      "course_code": "CS201",
+      "date": "2026-11-10",
+      "start_date": "2026-11-09",
+      "end_date": "2026-11-13",
+      "scope": "all_courses",
+      "leave_type": "Family Event",
+      "reason": "Family function out of town for a few days",
+      "file_id": null,
+      "admin_status": "pending",
+      "faculty_status": "pending",
+      "created_at": "2026-11-10T13:26:56.764Z",
+      "college_id": "c-default"
+    },
+    {
+      "request_id": "ar1794317216764_4",
+      "group_id": "arg1794317216764",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "course_id": "c5",
+      "course_code": "CS401",
+      "date": "2026-11-10",
+      "start_date": "2026-11-09",
+      "end_date": "2026-11-13",
+      "scope": "all_courses",
+      "leave_type": "Family Event",
+      "reason": "Family function out of town for a few days",
+      "file_id": null,
+      "admin_status": "pending",
+      "faculty_status": "pending",
+      "created_at": "2026-11-10T13:26:56.764Z",
+      "college_id": "c-default"
+    },
+    {
+      "request_id": "ar1794317216764_5",
+      "group_id": "arg1794317216764",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "course_id": "c7",
+      "course_code": "CS403",
+      "date": "2026-11-10",
+      "start_date": "2026-11-09",
+      "end_date": "2026-11-13",
+      "scope": "all_courses",
+      "leave_type": "Family Event",
+      "reason": "Family function out of town for a few days",
+      "file_id": null,
+      "admin_status": "pending",
+      "faculty_status": "pending",
+      "created_at": "2026-11-10T13:26:56.764Z",
+      "college_id": "c-default"
+    },
+    {
+      "request_id": "ar1794317216764_6",
+      "group_id": "arg1794317216764",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "course_id": "c2",
+      "course_code": "CS202",
+      "date": "2026-11-11",
+      "start_date": "2026-11-09",
+      "end_date": "2026-11-13",
+      "scope": "all_courses",
+      "leave_type": "Family Event",
+      "reason": "Family function out of town for a few days",
+      "file_id": null,
+      "admin_status": "pending",
+      "faculty_status": "pending",
+      "created_at": "2026-11-10T13:26:56.764Z",
+      "college_id": "c-default"
+    },
+    {
+      "request_id": "ar1794317216764_7",
+      "group_id": "arg1794317216764",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "course_id": "c5",
+      "course_code": "CS401",
+      "date": "2026-11-11",
+      "start_date": "2026-11-09",
+      "end_date": "2026-11-13",
+      "scope": "all_courses",
+      "leave_type": "Family Event",
+      "reason": "Family function out of town for a few days",
+      "file_id": null,
+      "admin_status": "pending",
+      "faculty_status": "pending",
+      "created_at": "2026-11-10T13:26:56.764Z",
+      "college_id": "c-default"
+    },
+    {
+      "request_id": "ar1794317216765_8",
+      "group_id": "arg1794317216764",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "course_id": "c7",
+      "course_code": "CS403",
+      "date": "2026-11-11",
+      "start_date": "2026-11-09",
+      "end_date": "2026-11-13",
+      "scope": "all_courses",
+      "leave_type": "Family Event",
+      "reason": "Family function out of town for a few days",
+      "file_id": null,
+      "admin_status": "pending",
+      "faculty_status": "pending",
+      "created_at": "2026-11-10T13:26:56.765Z",
+      "college_id": "c-default"
+    },
+    {
+      "request_id": "ar1794317216765_9",
+      "group_id": "arg1794317216764",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "course_id": "c1",
+      "course_code": "CS201",
+      "date": "2026-11-13",
+      "start_date": "2026-11-09",
+      "end_date": "2026-11-13",
+      "scope": "all_courses",
+      "leave_type": "Family Event",
+      "reason": "Family function out of town for a few days",
+      "file_id": null,
+      "admin_status": "approved",
+      "faculty_status": "granted",
+      "created_at": "2026-11-10T13:26:56.765Z",
+      "college_id": "c-default",
+      "admin_reason": ""
+    },
+    {
+      "request_id": "ar1794317216765_10",
+      "group_id": "arg1794317216764",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "course_id": "c2",
+      "course_code": "CS202",
+      "date": "2026-11-13",
+      "start_date": "2026-11-09",
+      "end_date": "2026-11-13",
+      "scope": "all_courses",
+      "leave_type": "Family Event",
+      "reason": "Family function out of town for a few days",
+      "file_id": null,
+      "admin_status": "pending",
+      "faculty_status": "pending",
+      "created_at": "2026-11-10T13:26:56.765Z",
+      "college_id": "c-default"
+    },
+    {
+      "request_id": "ar1794317216765_11",
+      "group_id": "arg1794317216764",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "course_id": "c5",
+      "course_code": "CS401",
+      "date": "2026-11-13",
+      "start_date": "2026-11-09",
+      "end_date": "2026-11-13",
+      "scope": "all_courses",
+      "leave_type": "Family Event",
+      "reason": "Family function out of town for a few days",
+      "file_id": null,
+      "admin_status": "pending",
+      "faculty_status": "pending",
+      "created_at": "2026-11-10T13:26:56.765Z",
+      "college_id": "c-default"
+    },
+    {
+      "request_id": "ar1794317216765_12",
+      "group_id": "arg1794317216764",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "course_id": "c7",
+      "course_code": "CS403",
+      "date": "2026-11-13",
+      "start_date": "2026-11-09",
+      "end_date": "2026-11-13",
+      "scope": "all_courses",
+      "leave_type": "Family Event",
+      "reason": "Family function out of town for a few days",
+      "file_id": null,
+      "admin_status": "pending",
+      "faculty_status": "pending",
+      "created_at": "2026-11-10T13:26:56.765Z",
+      "college_id": "c-default"
     }
   ],
   "resource_bookings": [
@@ -1780,6 +2472,26 @@
       "purpose": "Workshop session.",
       "status": "approved",
       "created_at": "2026-10-06T16:46:53.814Z",
+      "college_id": "c-default"
+    }
+  ],
+  "holidays": [
+    {
+      "holiday_id": "h1",
+      "date": "2026-11-12",
+      "label": "Diwali",
+      "college_id": "c-default"
+    },
+    {
+      "holiday_id": "h2",
+      "date": "2026-12-25",
+      "label": "Christmas",
+      "college_id": "c-default"
+    },
+    {
+      "holiday_id": "h3",
+      "date": "2027-01-01",
+      "label": "New Year",
       "college_id": "c-default"
     }
   ],

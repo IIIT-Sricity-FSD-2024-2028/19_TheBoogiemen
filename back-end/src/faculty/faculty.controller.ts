@@ -65,8 +65,11 @@ export class FacultyController {
     status: 200,
     description: 'List of students with attendance % and risk flags',
   })
-  async getMyStudents(@CurrentUserId() userId: string) {
-    return this.facultyService.getMyStudents(userId);
+  async getMyStudents(
+    @CurrentUserId() userId: string,
+    @CurrentUserCollegeId() collegeId: string | null,
+  ) {
+    return this.facultyService.getMyStudents(userId, collegeId);
   }
 
   @Get('me/at-risk')

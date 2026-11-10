@@ -1,12 +1,16 @@
 /**
- * LeavePanel — ported from legacy fixes.js renderStudentLeave() +
- * submitLeaveApplication() (student.html's leaveModal),
- * renderFacultyLeaveList() + submitFacultyLeave() (faculty.html's
- * fLeaveModal), and renderLeaveManagement() + updateLeave() (admin/head's
- * approval view, super-user.html). Three different audiences for the same
- * underlying `/leave` resource, each with genuinely different markup —
- * admin/head's view has no metrics grid and no apply button at all (they
- * only approve/reject), unlike student/faculty's apply-and-track views.
+ * LeavePanel — ported from legacy fixes.js renderFacultyLeaveList() +
+ * submitFacultyLeave() (faculty.html's fLeaveModal) and
+ * renderLeaveManagement() + updateLeave() (admin/head's approval view,
+ * super-user.html).
+ *
+ * ATTENDANCE_WORKFLOW_REVAMP: this used to be a third audience too —
+ * students applying for leave via renderStudentLeave()/submitLeaveApplication()
+ * — but that's now merged into the attendance-request flow on
+ * student/Attendance.jsx, since student leave always existed to excuse
+ * specific class sessions anyway. Faculty's own leave here is genuinely
+ * different: personal time off with no attendance side-effects at all (a
+ * faculty member isn't enrolled in anything /leave's approval could excuse).
  */
 
 import { useEffect, useState } from 'react';
@@ -21,32 +25,6 @@ const STATUS_COLORS = {
   pending: ['#fef9c3', '#713f12'],
   rejected: ['#fef2f2', '#991b1b'],
 };
-
-function LeaveRow({ leave }) {
-  const { showToast } = useNotifications();
-  const [bg, fg] = STATUS_COLORS[leave.status] || ['#f1f5f9', '#475569'];
-  return (
-    <div style={{ padding: '14px 16px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <div>
-        <div style={{ fontWeight: 600, fontSize: 14 }}>{leave.leave_type || leave.type || 'Leave'}</div>
-        <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
-          {leave.start_date || leave.from_date || ''} → {leave.end_date || leave.to_date || ''}
-        </div>
-        <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>{leave.reason || ''}</div>
-        {leave.file_id && (
-          <button
-            type="button"
-            onClick={() => downloadDocument(leave.file_id).catch((e) => showToast('Failed to download: ' + e.message, 'error'))}
-            style={{ marginTop: 6, padding: '4px 10px', fontSize: 11, fontWeight: 700, background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 6, cursor: 'pointer' }}
-          >
-            📎 View document
-          </button>
-        )}
-      </div>
-      <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: bg, color: fg }}>{leave.status}</span>
-    </div>
-  );
-}
 
 function LeaveTable({ leaves }) {
   return (
@@ -76,7 +54,7 @@ function LeaveTable({ leaves }) {
   );
 }
 
-function LeaveApplyModal({ role, open, onClose, onSubmitted }) {
+function LeaveApplyModal({ open, onClose, onSubmitted }) {
   const { showToast } = useNotifications();
   const [leaveType, setLeaveType] = useState('');
   const [start, setStart] = useState('');
@@ -108,7 +86,7 @@ function LeaveApplyModal({ role, open, onClose, onSubmitted }) {
     if (!end) return showToast('End date is required', 'warning');
     if (end < start) return showToast('End date cannot be before start date', 'warning');
     if (!reason || reason.trim().length < 10) {
-      return showToast(role === 'faculty' ? 'Reason must be at least 10 characters' : 'Please provide a reason (at least 10 characters)', 'warning');
+      return showToast('Reason must be at least 10 characters', 'warning');
     }
 
     setSubmitting(true);
@@ -118,8 +96,7 @@ function LeaveApplyModal({ role, open, onClose, onSubmitted }) {
         method: 'POST',
         body: JSON.stringify({ leave_type: leaveType, start_date: start, end_date: end, reason: reason.trim(), file_id: uploaded?.file_id ?? null }),
       });
-      const verb = role === 'faculty' ? 'Leave applied' : 'Leave application submitted';
-      showToast(uploaded ? `${verb} with ${uploaded.original_name}! ✅` : `${verb}!`, 'success');
+      showToast(uploaded ? `Leave applied with ${uploaded.original_name}! ✅` : 'Leave applied!', 'success');
       handleClose();
       onSubmitted();
     } catch (e2) {
@@ -139,7 +116,7 @@ function LeaveApplyModal({ role, open, onClose, onSubmitted }) {
               <option value="">Select leave type</option>
               <option value="medical">Medical Leave</option>
               <option value="personal">Personal Leave</option>
-              <option value="event">{role === 'faculty' ? 'Event/Conference' : 'Event Participation'}</option>
+              <option value="event">Event/Conference</option>
             </select>
           </div>
           <div className="form-row">
@@ -295,15 +272,7 @@ function AdminLeaveManagement() {
   );
 }
 
-// A thin dispatcher, no hooks of its own — avoids a wasted /leave fetch on
-// the admin/head path, which renders an entirely different component.
-export default function LeavePanel({ role }) {
-  if (role === 'admin' || role === 'head') return <AdminLeaveManagement />;
-  if (role === 'student' || role === 'faculty') return <PersonalLeavePanel role={role} />;
-  return null;
-}
-
-function PersonalLeavePanel({ role }) {
+function FacultyLeavePanel() {
   const [leaves, setLeaves] = useState(undefined);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -330,25 +299,26 @@ function PersonalLeavePanel({ role }) {
       </div>
       <div className="stats-card">
         <div className="stats-card-header">
-          <div>
-            <h3>Leave Applications</h3>
-            {role === 'student' && <p style={{ fontSize: 13, color: '#64748b' }}>Your submitted leave requests and their status</p>}
-          </div>
+          <div><h3>Leave Applications</h3></div>
           <button className="page-action-btn" onClick={() => setModalOpen(true)}>+ Apply for Leave</button>
         </div>
         <div className="stats-card-body">
           {leaves === undefined ? (
             <div style={{ textAlign: 'center', color: '#64748b', padding: 20 }}>Loading...</div>
-          ) : role === 'faculty' ? (
-            <LeaveTable leaves={leaves} />
-          ) : leaves.length === 0 ? (
-            <div style={{ padding: 20, textAlign: 'center', color: '#64748b' }}>No leave applications yet.</div>
           ) : (
-            leaves.map((l) => <LeaveRow key={l.leave_id} leave={l} />)
+            <LeaveTable leaves={leaves} />
           )}
         </div>
       </div>
-      <LeaveApplyModal role={role} open={modalOpen} onClose={() => setModalOpen(false)} onSubmitted={load} />
+      <LeaveApplyModal open={modalOpen} onClose={() => setModalOpen(false)} onSubmitted={load} />
     </>
   );
+}
+
+// A thin dispatcher, no hooks of its own — avoids a wasted /leave fetch on
+// the admin/head path, which renders an entirely different component.
+export default function LeavePanel({ role }) {
+  if (role === 'admin' || role === 'head') return <AdminLeaveManagement />;
+  if (role === 'faculty') return <FacultyLeavePanel />;
+  return null;
 }
