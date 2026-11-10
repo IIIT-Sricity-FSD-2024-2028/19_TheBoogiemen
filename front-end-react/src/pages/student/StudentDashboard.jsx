@@ -16,6 +16,7 @@ import Dashboard from './Dashboard';
 import Profile from './Profile';
 import Courses from './Courses';
 import Attendance from './Attendance';
+import Outcomes from './Outcomes';
 
 const NAV_ITEMS = [
   {
@@ -66,6 +67,17 @@ const NAV_ITEMS = [
     ),
   },
   {
+    id: 'outcomes',
+    label: 'Outcomes',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
+        <rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+        <path d="M7 6.5h0M18 6.5h0M18 17.5h0M7 17.5h0" />
+      </svg>
+    ),
+  },
+  {
     id: 'discussion',
     label: 'Discussion Forum',
     module: 'forum',
@@ -93,6 +105,7 @@ const TITLES = {
   timetable: 'My Timetable',
   courses: 'My Courses',
   attendance: 'Attendance',
+  outcomes: 'Outcomes',
   discussion: 'Discussion Forum',
   research: 'Research Projects',
   settings: 'Settings',
@@ -104,6 +117,7 @@ const VIEWS = {
   timetable: <Timetable role="student" />,
   courses: <Courses />,
   attendance: <Attendance />,
+  outcomes: <Outcomes />,
   discussion: <DiscussionForum />,
   research: <ResearchPanel role="student" />,
   settings: <Settings />,

@@ -19,7 +19,7 @@ const DAY_STATUS_COLOR = {
   present: { bg: '#16a34a', fg: '#fff' },
   absent: { bg: '#ef4444', fg: '#fff' },
   excused: { bg: '#f59e0b', fg: '#fff' },
-  holiday: { bg: '#e2e8f0', fg: '#94a3b8' },
+  holiday: { bg: '#e0e7ff', fg: '#4338ca' },
   'no-class': { bg: '#f8fafc', fg: '#cbd5e1' },
 };
 

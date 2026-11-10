@@ -218,39 +218,33 @@ function SyllabusTracker() {
   const [openCourse, setOpenCourse] = useState(null);
 
   useEffect(() => {
-    Promise.all([
-      apiFetch('/students/me/courses').catch(() => []),
-      apiFetch('/syllabus-progress').catch(() => []),
-      apiFetch('/students/me').catch(() => null),
-    ])
-      .then(([myCourses, allProgress, student]) => {
+    apiFetch('/students/me/courses')
+      .then(async (myCourses) => {
+        const student = await apiFetch('/students/me').catch(() => null);
         const defaultSec = student?.section || 'A';
         setSection(defaultSec);
 
-        if (Array.isArray(myCourses) && myCourses.length > 0) {
-          // Map each enrolled course to its syllabus progress for the student's assigned section
-          const combined = myCourses.map((c) => {
+        // OUTCOMES_TRACKING_PLAN.md: /topic-completions already returns a
+        // course+section's topics merged with their real completion % —
+        // the exact shape the old, inert `modules[]` field only pretended
+        // to provide. One fetch per enrolled course.
+        const combined = await Promise.all(
+          (myCourses || []).map(async (c) => {
             const courseSec = c.section || defaultSec;
-            const sp = (allProgress || []).find(
-              (p) => p.course_id === c.course_id && p.section === courseSec,
-            );
+            const topics = await apiFetch(`/topic-completions?course_id=${c.course_id}&section=${courseSec}`).catch(() => []);
+            const overall = topics.length ? Math.round(topics.reduce((s, t) => s + (t.progress || 0), 0) / topics.length) : 0;
             return {
               course_id: c.course_id,
               course_code: c.course_code || '',
               course_name: c.course_name || '',
               section: courseSec,
               faculty_name: c.faculty_name,
-              progress: sp ? sp.progress : 0,
-              modules: sp?.modules || [],
-              updated_at: sp?.updated_at,
+              progress: overall,
+              modules: topics.map((t) => ({ name: t.title, progress: t.progress })),
             };
-          });
-          setProgress(combined);
-        } else {
-          // Fallback: section-filtered courses from college progress
-          const fallback = (allProgress || []).filter((p) => p.section === defaultSec);
-          setProgress(fallback);
-        }
+          }),
+        );
+        setProgress(combined);
       })
       .catch((e) => setError(e.message));
   }, []);

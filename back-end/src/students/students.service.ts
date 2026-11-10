@@ -13,6 +13,7 @@ import { ErrorCode, errorBody } from '../common/errors/error-codes';
 import { isSameCollege, scopeToCollege } from '../common/tenancy/scope-to-college';
 import { sectionsOfCourse } from '../common/course-sections';
 import { buildAttendanceCalendar, excludeHolidays } from '../common/academic-calendar';
+import { studentOutcomeReport } from '../common/outcome-mastery';
 
 @Injectable()
 export class StudentsService {
@@ -81,6 +82,10 @@ export class StudentsService {
         errorBody(ErrorCode.MALFORMED_REQUEST, 'month must be YYYY-MM'),
       );
     return buildAttendanceCalendar(this.db, userId, month, collegeId);
+  }
+
+  async getOutcomes(userId: string) {
+    return studentOutcomeReport(this.db, userId);
   }
 
   async getCourses(userId: string) {
