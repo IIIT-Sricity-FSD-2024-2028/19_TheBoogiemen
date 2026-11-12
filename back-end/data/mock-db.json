@@ -1195,7 +1195,10 @@
       "weightage": 20,
       "faculty_id": "u2",
       "date": "2026-03-15",
-      "college_id": "c-default"
+      "college_id": "c-default",
+      "lo_ids": [
+        "46b6474a-e148-4657-b636-c8ed629a11c4"
+      ]
     },
     {
       "assessment_id": "a2",
@@ -2034,150 +2037,6 @@
       "college_id": "c-default"
     }
   ],
-  "syllabus_progress": [
-    {
-      "course_id": "c1",
-      "section": "A",
-      "progress": 72,
-      "updated_by": "u2",
-      "updated_at": "2026-08-27",
-      "modules": [
-        {
-          "name": "Module 1 – Arrays & Linked Lists",
-          "progress": 100
-        },
-        {
-          "name": "Module 2 – Stacks & Queues",
-          "progress": 90
-        },
-        {
-          "name": "Module 3 – Trees & BST",
-          "progress": 75
-        },
-        {
-          "name": "Module 4 – Graphs",
-          "progress": 50
-        },
-        {
-          "name": "Module 5 – Hashing",
-          "progress": 45
-        }
-      ],
-      "college_id": "c-default"
-    },
-    {
-      "course_id": "c1",
-      "section": "B",
-      "progress": 65,
-      "updated_by": "u2",
-      "updated_at": "2026-08-27",
-      "modules": [
-        {
-          "name": "Module 1 – Arrays & Linked Lists",
-          "progress": 100
-        },
-        {
-          "name": "Module 2 – Stacks & Queues",
-          "progress": 85
-        },
-        {
-          "name": "Module 3 – Trees & BST",
-          "progress": 60
-        },
-        {
-          "name": "Module 4 – Graphs",
-          "progress": 40
-        },
-        {
-          "name": "Module 5 – Hashing",
-          "progress": 30
-        }
-      ],
-      "college_id": "c-default"
-    },
-    {
-      "course_id": "c2",
-      "section": "A",
-      "progress": 80,
-      "updated_by": "u2",
-      "updated_at": "2026-04-20",
-      "modules": [
-        {
-          "name": "Module 1 – ER Modeling",
-          "progress": 100
-        },
-        {
-          "name": "Module 2 – SQL Queries",
-          "progress": 95
-        },
-        {
-          "name": "Module 3 – Normalization",
-          "progress": 80
-        },
-        {
-          "name": "Module 4 – Transactions",
-          "progress": 55
-        },
-        {
-          "name": "Module 5 – NoSQL",
-          "progress": 50
-        }
-      ],
-      "college_id": "c-default"
-    },
-    {
-      "course_id": "c5",
-      "section": "A",
-      "progress": 55,
-      "updated_by": "u2",
-      "updated_at": "2026-04-22",
-      "modules": [
-        {
-          "name": "Module 1 – OSI Model",
-          "progress": 100
-        },
-        {
-          "name": "Module 2 – TCP/IP",
-          "progress": 70
-        },
-        {
-          "name": "Module 3 – Routing",
-          "progress": 45
-        },
-        {
-          "name": "Module 4 – Security",
-          "progress": 20
-        }
-      ],
-      "college_id": "c-default"
-    },
-    {
-      "course_id": "c7",
-      "section": "A",
-      "progress": 40,
-      "updated_by": "u2",
-      "updated_at": "2026-04-18",
-      "modules": [
-        {
-          "name": "Module 1 – Divide & Conquer",
-          "progress": 100
-        },
-        {
-          "name": "Module 2 – DP",
-          "progress": 50
-        },
-        {
-          "name": "Module 3 – Greedy",
-          "progress": 20
-        },
-        {
-          "name": "Module 4 – Backtracking",
-          "progress": 0
-        }
-      ],
-      "college_id": "c-default"
-    }
-  ],
   "attendance_requests": [
     {
       "request_id": "ar1787053048185",
@@ -2492,6 +2351,433 @@
       "holiday_id": "h3",
       "date": "2027-01-01",
       "label": "New Year",
+      "college_id": "c-default"
+    }
+  ],
+  "program_outcomes": [
+    {
+      "po_id": "po1",
+      "code": "PO1",
+      "description": "Engineering knowledge",
+      "college_id": "c-default"
+    },
+    {
+      "po_id": "po2",
+      "code": "PO2",
+      "description": "Problem analysis",
+      "college_id": "c-default"
+    },
+    {
+      "po_id": "po3",
+      "code": "PO3",
+      "description": "Design/development of solutions",
+      "college_id": "c-default"
+    },
+    {
+      "po_id": "po4",
+      "code": "PO4",
+      "description": "Conduct investigations of complex problems",
+      "college_id": "c-default"
+    },
+    {
+      "po_id": "po5",
+      "code": "PO5",
+      "description": "Modern tool usage",
+      "college_id": "c-default"
+    }
+  ],
+  "learning_outcomes": [
+    {
+      "lo_id": "46b6474a-e148-4657-b636-c8ed629a11c4",
+      "course_id": "c1",
+      "code": "CO1",
+      "description": "Implement tree data structures",
+      "po_mapping": [
+        {
+          "po_id": "po1",
+          "strength": 3
+        }
+      ],
+      "college_id": "c-default"
+    },
+    {
+      "lo_id": "bf0df893-462c-4846-a296-9a68a487f345",
+      "course_id": "c1",
+      "code": "CO2",
+      "description": "Analyze algorithmic complexity",
+      "po_mapping": [],
+      "college_id": "c-default"
+    }
+  ],
+  "topics": [
+    {
+      "topic_id": "c66e6fb4-7405-4a1b-a46f-e3437393ae7a",
+      "course_id": "c1",
+      "title": "Module 1 – Arrays & Linked Lists",
+      "order": 0,
+      "lo_ids": [],
+      "college_id": "c-default"
+    },
+    {
+      "topic_id": "dc16a238-5b01-4c79-bc18-0553e00ac397",
+      "course_id": "c1",
+      "title": "Module 2 – Stacks & Queues",
+      "order": 1,
+      "lo_ids": [],
+      "college_id": "c-default"
+    },
+    {
+      "topic_id": "594a97b7-88c5-426a-9017-b6f386000f27",
+      "course_id": "c1",
+      "title": "Module 3 – Trees & BST",
+      "order": 2,
+      "lo_ids": [],
+      "college_id": "c-default"
+    },
+    {
+      "topic_id": "ca035b72-3307-4ad2-a80f-c0af7a323129",
+      "course_id": "c1",
+      "title": "Module 4 – Graphs",
+      "order": 3,
+      "lo_ids": [],
+      "college_id": "c-default"
+    },
+    {
+      "topic_id": "907b9cde-96e6-436b-b32d-e7a0f5688172",
+      "course_id": "c1",
+      "title": "Module 5 – Hashing",
+      "order": 4,
+      "lo_ids": [],
+      "college_id": "c-default"
+    },
+    {
+      "topic_id": "8f2da0eb-339d-4aa9-8438-18c3ac1676bc",
+      "course_id": "c2",
+      "title": "Module 1 – ER Modeling",
+      "order": 0,
+      "lo_ids": [],
+      "college_id": "c-default"
+    },
+    {
+      "topic_id": "1ff18cae-98cb-4415-a94a-c14048af7586",
+      "course_id": "c2",
+      "title": "Module 2 – SQL Queries",
+      "order": 1,
+      "lo_ids": [],
+      "college_id": "c-default"
+    },
+    {
+      "topic_id": "d571d748-c906-4a48-9f0a-1648b3aa5e79",
+      "course_id": "c2",
+      "title": "Module 3 – Normalization",
+      "order": 2,
+      "lo_ids": [],
+      "college_id": "c-default"
+    },
+    {
+      "topic_id": "242de87a-4995-4cc2-8112-94db3d70296c",
+      "course_id": "c2",
+      "title": "Module 4 – Transactions",
+      "order": 3,
+      "lo_ids": [],
+      "college_id": "c-default"
+    },
+    {
+      "topic_id": "73364f57-1a28-47a3-8b79-b860ce627b0f",
+      "course_id": "c2",
+      "title": "Module 5 – NoSQL",
+      "order": 4,
+      "lo_ids": [],
+      "college_id": "c-default"
+    },
+    {
+      "topic_id": "f2ceee2a-e451-4d1c-8b64-37fc778d80a5",
+      "course_id": "c5",
+      "title": "Module 1 – OSI Model",
+      "order": 0,
+      "lo_ids": [],
+      "college_id": "c-default"
+    },
+    {
+      "topic_id": "b08080f1-da8c-4e2b-a55e-5027942f6a9b",
+      "course_id": "c5",
+      "title": "Module 2 – TCP/IP",
+      "order": 1,
+      "lo_ids": [],
+      "college_id": "c-default"
+    },
+    {
+      "topic_id": "e2059231-b5e8-4ee3-b698-4930c8832c76",
+      "course_id": "c5",
+      "title": "Module 3 – Routing",
+      "order": 2,
+      "lo_ids": [],
+      "college_id": "c-default"
+    },
+    {
+      "topic_id": "172a27a3-c618-4044-8c53-a615e092346e",
+      "course_id": "c5",
+      "title": "Module 4 – Security",
+      "order": 3,
+      "lo_ids": [],
+      "college_id": "c-default"
+    },
+    {
+      "topic_id": "78d976a8-74af-4278-9832-5e62eda692b9",
+      "course_id": "c7",
+      "title": "Module 1 – Divide & Conquer",
+      "order": 0,
+      "lo_ids": [],
+      "college_id": "c-default"
+    },
+    {
+      "topic_id": "275d4d1e-88dd-4316-8b3a-5fcff7832dcd",
+      "course_id": "c7",
+      "title": "Module 2 – DP",
+      "order": 1,
+      "lo_ids": [],
+      "college_id": "c-default"
+    },
+    {
+      "topic_id": "67fa0b84-a59c-4596-ad16-d1d7b75d1774",
+      "course_id": "c7",
+      "title": "Module 3 – Greedy",
+      "order": 2,
+      "lo_ids": [],
+      "college_id": "c-default"
+    },
+    {
+      "topic_id": "9b874eeb-1062-4e17-90fa-fe2f8b084719",
+      "course_id": "c7",
+      "title": "Module 4 – Backtracking",
+      "order": 3,
+      "lo_ids": [],
+      "college_id": "c-default"
+    },
+    {
+      "topic_id": "ab705563-096a-43d9-9a74-1ddde6869667",
+      "course_id": "c1",
+      "title": "Module 6 - Hashing",
+      "order": 5,
+      "lo_ids": [],
+      "college_id": "c-default"
+    }
+  ],
+  "topic_completions": [
+    {
+      "course_id": "c1",
+      "section": "A",
+      "topic_id": "c66e6fb4-7405-4a1b-a46f-e3437393ae7a",
+      "progress": 100,
+      "updated_by": "u2",
+      "updated_at": "2026-08-27",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c1",
+      "section": "A",
+      "topic_id": "dc16a238-5b01-4c79-bc18-0553e00ac397",
+      "progress": 90,
+      "updated_by": "u2",
+      "updated_at": "2026-08-27",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c1",
+      "section": "A",
+      "topic_id": "594a97b7-88c5-426a-9017-b6f386000f27",
+      "progress": 75,
+      "updated_by": "u2",
+      "updated_at": "2026-08-27",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c1",
+      "section": "A",
+      "topic_id": "ca035b72-3307-4ad2-a80f-c0af7a323129",
+      "progress": 50,
+      "updated_by": "u2",
+      "updated_at": "2026-08-27",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c1",
+      "section": "A",
+      "topic_id": "907b9cde-96e6-436b-b32d-e7a0f5688172",
+      "progress": 45,
+      "updated_by": "u2",
+      "updated_at": "2026-08-27",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c1",
+      "section": "B",
+      "topic_id": "c66e6fb4-7405-4a1b-a46f-e3437393ae7a",
+      "progress": 100,
+      "updated_by": "u2",
+      "updated_at": "2026-08-27",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c1",
+      "section": "B",
+      "topic_id": "dc16a238-5b01-4c79-bc18-0553e00ac397",
+      "progress": 85,
+      "updated_by": "u2",
+      "updated_at": "2026-08-27",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c1",
+      "section": "B",
+      "topic_id": "594a97b7-88c5-426a-9017-b6f386000f27",
+      "progress": 60,
+      "updated_by": "u2",
+      "updated_at": "2026-08-27",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c1",
+      "section": "B",
+      "topic_id": "ca035b72-3307-4ad2-a80f-c0af7a323129",
+      "progress": 40,
+      "updated_by": "u2",
+      "updated_at": "2026-08-27",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c1",
+      "section": "B",
+      "topic_id": "907b9cde-96e6-436b-b32d-e7a0f5688172",
+      "progress": 30,
+      "updated_by": "u2",
+      "updated_at": "2026-08-27",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c2",
+      "section": "A",
+      "topic_id": "8f2da0eb-339d-4aa9-8438-18c3ac1676bc",
+      "progress": 100,
+      "updated_by": "u2",
+      "updated_at": "2026-04-20",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c2",
+      "section": "A",
+      "topic_id": "1ff18cae-98cb-4415-a94a-c14048af7586",
+      "progress": 95,
+      "updated_by": "u2",
+      "updated_at": "2026-04-20",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c2",
+      "section": "A",
+      "topic_id": "d571d748-c906-4a48-9f0a-1648b3aa5e79",
+      "progress": 80,
+      "updated_by": "u2",
+      "updated_at": "2026-04-20",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c2",
+      "section": "A",
+      "topic_id": "242de87a-4995-4cc2-8112-94db3d70296c",
+      "progress": 55,
+      "updated_by": "u2",
+      "updated_at": "2026-04-20",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c2",
+      "section": "A",
+      "topic_id": "73364f57-1a28-47a3-8b79-b860ce627b0f",
+      "progress": 50,
+      "updated_by": "u2",
+      "updated_at": "2026-04-20",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c5",
+      "section": "A",
+      "topic_id": "f2ceee2a-e451-4d1c-8b64-37fc778d80a5",
+      "progress": 100,
+      "updated_by": "u2",
+      "updated_at": "2026-04-22",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c5",
+      "section": "A",
+      "topic_id": "b08080f1-da8c-4e2b-a55e-5027942f6a9b",
+      "progress": 70,
+      "updated_by": "u2",
+      "updated_at": "2026-04-22",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c5",
+      "section": "A",
+      "topic_id": "e2059231-b5e8-4ee3-b698-4930c8832c76",
+      "progress": 45,
+      "updated_by": "u2",
+      "updated_at": "2026-04-22",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c5",
+      "section": "A",
+      "topic_id": "172a27a3-c618-4044-8c53-a615e092346e",
+      "progress": 20,
+      "updated_by": "u2",
+      "updated_at": "2026-04-22",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c7",
+      "section": "A",
+      "topic_id": "78d976a8-74af-4278-9832-5e62eda692b9",
+      "progress": 100,
+      "updated_by": "u2",
+      "updated_at": "2026-04-18",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c7",
+      "section": "A",
+      "topic_id": "275d4d1e-88dd-4316-8b3a-5fcff7832dcd",
+      "progress": 50,
+      "updated_by": "u2",
+      "updated_at": "2026-04-18",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c7",
+      "section": "A",
+      "topic_id": "67fa0b84-a59c-4596-ad16-d1d7b75d1774",
+      "progress": 20,
+      "updated_by": "u2",
+      "updated_at": "2026-04-18",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c7",
+      "section": "A",
+      "topic_id": "9b874eeb-1062-4e17-90fa-fe2f8b084719",
+      "progress": 0,
+      "updated_by": "u2",
+      "updated_at": "2026-04-18",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c1",
+      "section": "A",
+      "topic_id": "ab705563-096a-43d9-9a74-1ddde6869667",
+      "progress": 55,
+      "updated_by": "u2",
+      "updated_at": "2026-11-10",
       "college_id": "c-default"
     }
   ],

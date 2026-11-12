@@ -51,6 +51,7 @@ summariseAttendance,
 } from '../common/academic-rules';
 import { syncLeaveAttendance } from '../common/leave-attendance.sync';
 import { excludeHolidays, expandClassDates } from '../common/academic-calendar';
+import { collegeAverageCoMastery } from '../common/outcome-mastery';
 import {
 CreateUserDto,
 ResetUserPasswordDto,
@@ -449,6 +450,39 @@ college_id: writeCollegeId(actorCollegeId),
 };
 this.db.assessments.push(newAssessment);
 return { success: true, data: newAssessment };
+}
+
+// OUTCOMES_TRACKING_PLAN.md: which Course Outcomes this assessment
+// measures â€” whole-assessment granularity, not per-question. A mark
+// entered against this assessment (see Marks below) now feeds every CO
+// listed here when computing a student's mastery (common/outcome-mastery.ts).
+@Put('assessments/:id/outcomes')
+@Roles('faculty')
+@ApiOperation({ summary: 'Replace which Course Outcomes this assessment measures' })
+@ApiBody({ schema: { type: 'object', additionalProperties: true } })
+async setAssessmentOutcomes(
+@Param('id') id: string,
+@Body() body: { lo_ids: string[] },
+@CurrentUserId() userId: string,
+@CurrentUserCollegeId() actorCollegeId: string | null,
+) {
+const assessment = this.db.assessments.find((a) => a.assessment_id === id);
+if (!isSameCollege(assessment, actorCollegeId)) notFoundInMyCollege('Assessment');
+// Same ownership rule recordMarks() already enforces: only the faculty
+// who created this assessment may change it.
+if (assessment.faculty_id !== userId) notFoundInMyCollege('Assessment');
+if (!Array.isArray(body?.lo_ids))
+throw new BadRequestException(
+errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'lo_ids must be an array'),
+);
+const validLoIds = new Set(
+this.db.learning_outcomes
+.filter((lo) => lo.course_id === assessment.course_id)
+.map((lo) => lo.lo_id),
+);
+assessment.lo_ids = body.lo_ids.filter((id2) => validLoIds.has(id2));
+this.db.persist();
+return { success: true, data: assessment };
 }
 
 // â”€â”€ Marks â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -1416,6 +1450,12 @@ const totalFees = fees.reduce((s, f) => s + f.amount, 0);
 const paidFees = fees
 .filter((f) => f.status === 'paid')
 .reduce((s, f) => s + f.amount, 0);
+// OUTCOMES_TRACKING_PLAN.md: real now â€” the average, across every student
+// with at least one gradeable Course Outcome, of their own CO mastery
+// (common/outcome-mastery.ts). Was a hardcoded '3.4/4.0' before this.
+// overall_attendance/placement_rate/student_satisfaction remain
+// placeholders â€” out of scope for this pass, tracked separately.
+const coAttainment = collegeAverageCoMastery(this.db, collegeId);
 return {
 summary: {
 total_students: students.length,
@@ -1425,7 +1465,7 @@ active_research: research.filter((p) => p.status === 'active').length,
 overall_attendance: '82%',
 fee_compliance:
 totalFees > 0 ? `${Math.round((paidFees / totalFees) * 100)}%` : '0%',
-avg_co_attainment: '3.4/4.0',
+avg_co_attainment: coAttainment === null ? 'No data yet' : `${coAttainment}%`,
 },
 kpis: { placement_rate: '94%', student_satisfaction: '4.2/5' },
 };
@@ -1701,84 +1741,11 @@ created_at: new Date().toISOString(),
 }
 
 // â”€â”€ Syllabus Progress â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-@Get('syllabus-progress')
-@Roles('student', 'faculty', 'admin', 'head', 'superadmin')
-@ApiOperation({
-summary: 'Get syllabus completion progress, optionally filtered by section',
-})
-async getSyllabusProgress(
-@Query('section') section: string | undefined,
-@CurrentUserCollegeId() collegeId: string | null,
-) {
-const scoped = scopeToCollege(this.db.syllabus_progress, collegeId);
-const list = section ? scoped.filter((s) => s.section === section) : scoped;
-return list.map((sp) => {
-const course = this.db.courses.find((c) => c.course_id === sp.course_id);
-return {
-...sp,
-course_name: course?.course_name,
-course_code: course?.course_code,
-};
-});
-}
-
-@Patch('syllabus-progress')
-@Roles('faculty', 'admin', 'head', 'superadmin')
-@ApiOperation({ summary: 'Update syllabus completion for a course+section' })
-@ApiBody({ schema: { type: 'object', additionalProperties: true } })
-async updateSyllabusProgress(
-@Body() body: any,
-@CurrentUserId() userId: string,
-@CurrentUserRole() actorRole: string,
-@CurrentUserCollegeId() actorCollegeId: string | null,
-) {
-if (!body.course_id || !body.section || body.progress === undefined)
-throw new BadRequestException(
-errorBody(
-ErrorCode.BUSINESS_RULE_VIOLATION,
-'course_id, section, and progress required',
-),
-);
-const course = this.db.courses.find((c) => c.course_id === body.course_id);
-if (!isSameCollege(course, actorCollegeId)) notFoundInMyCollege('Course');
-// A course can have several sections, each with a different faculty â€”
-// without this a faculty could update completion for a section they
-// don't teach at all, which is exactly what the frontend slider let
-// happen (it offered every section of every course, not just theirs).
-// Admin/head/superadmin aren't teaching a section, so they aren't held
-// to this â€” same exemption createAssessment() already makes.
-if (
-actorRole === 'faculty' &&
-!sectionsTaughtBy(this.db, userId).some(
-(cs) => cs.course_id === body.course_id && cs.section === body.section,
-)
-)
-throw new ForbiddenException(
-errorBody(
-ErrorCode.PRIVILEGE_CEILING,
-`You are not assigned to Section ${body.section} of this course.`,
-),
-);
-const existing = this.db.syllabus_progress.find(
-(s) => s.course_id === body.course_id && s.section === body.section,
-);
-if (existing) {
-existing.progress = Math.min(100, Math.max(0, Number(body.progress)));
-existing.updated_by = userId;
-existing.updated_at = new Date().toISOString().split('T')[0];
-return { success: true, data: existing };
-}
-const newEntry = {
-course_id: body.course_id,
-section: body.section,
-progress: Number(body.progress),
-updated_by: userId,
-updated_at: new Date().toISOString().split('T')[0],
-college_id: writeCollegeId(actorCollegeId),
-};
-this.db.syllabus_progress.push(newEntry as any);
-return { success: true, data: newEntry };
-}
+// OUTCOMES_TRACKING_PLAN.md: retired in favour of real topics with their
+// own identity (outcomes/outcomes.controller.ts's /topics +
+// /topic-completions) â€” this used to be one hand-set percentage per
+// course+section, plus an inert, never-written `modules[]` array nobody
+// could actually edit.
 
 // â”€â”€ Attendance Requests (Student â†’ Admin â†’ Faculty) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Merged with what used to be the student side of /leave: one submission,

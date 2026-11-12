@@ -60,6 +60,16 @@ export class StudentsController {
     return this.studentsService.getAttendanceCalendar(userId, month, collegeId);
   }
 
+  @Get('me/outcomes')
+  @Roles('student')
+  @ApiOperation({
+    summary: 'Get Course Outcome and Program Outcome mastery for the current student',
+  })
+  @ApiResponse({ status: 200, description: 'Mastery % per CO and per PO, for the heatmap' })
+  async getOutcomes(@CurrentUserId() userId: string) {
+    return this.studentsService.getOutcomes(userId);
+  }
+
   @Get('me/courses')
   @Roles('student')
   @ApiOperation({ summary: 'Get enrolled courses for current student' })

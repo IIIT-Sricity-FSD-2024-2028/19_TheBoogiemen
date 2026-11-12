@@ -21,6 +21,7 @@ import FeeCompliance from './FeeCompliance';
 import UserManagement from './UserManagement';
 import AttendanceOverride from './AttendanceOverride';
 import Holidays from './Holidays';
+import ProgramOutcomes from './ProgramOutcomes';
 
 const NAV_ITEMS = [
   {
@@ -117,6 +118,17 @@ const NAV_ITEMS = [
       </svg>
     ),
   },
+  {
+    id: 'program-outcomes',
+    label: 'Program Outcomes',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
+        <rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+        <path d="M7 6.5h0M18 6.5h0M18 17.5h0M7 17.5h0" />
+      </svg>
+    ),
+  },
 ];
 
 const TITLES = {
@@ -130,6 +142,7 @@ const TITLES = {
   'attendance-override': 'Overrides',
   'leave': 'Leave Requests',
   holidays: 'Holidays',
+  'program-outcomes': 'Program Outcomes',
   settings: 'Settings',
 };
 
@@ -148,6 +161,7 @@ export default function AdminHeadDashboard() {
     'attendance-override': <AttendanceOverride />,
     'leave': <LeavePanel role={user?.role} />,
     holidays: <Holidays />,
+    'program-outcomes': <ProgramOutcomes />,
     settings: <Settings />,
   };
 

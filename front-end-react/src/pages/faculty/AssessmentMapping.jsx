@@ -344,8 +344,69 @@ function MarksEntryModal({ assessment, onClose, onSaved }) {
     );
 }
 
-function AssessmentCard({ assessment, onEnterMarks }) {
+/**
+ * OUTCOMES_TRACKING_PLAN.md: which Course Outcomes this assessment
+ * measures — whole-assessment granularity (the whole mark counts toward
+ * every CO checked here), not per-question.
+ */
+function OutcomesModal({ assessment, onClose, onSaved }) {
+    const { showToast } = useNotifications();
+    const [courseOutcomes, setCourseOutcomes] = useState(null);
+    const [selected, setSelected] = useState([]);
+
+    useEffect(() => {
+        if (!assessment) return;
+        setSelected(assessment.lo_ids || []);
+        apiFetch(`/learning-outcomes?course_id=${assessment.course_id}`)
+            .then(setCourseOutcomes)
+            .catch(() => setCourseOutcomes([]));
+    }, [assessment]);
+
+    const toggle = (loId) => {
+        setSelected((s) => (s.includes(loId) ? s.filter((x) => x !== loId) : [...s, loId]));
+    };
+
+    const save = async () => {
+        try {
+            await apiFetch(`/assessments/${assessment.assessment_id}/outcomes`, {
+                method: 'PUT',
+                body: JSON.stringify({ lo_ids: selected }),
+            });
+            showToast('Outcomes updated', 'success');
+            onClose();
+            onSaved();
+        } catch (e) {
+            showToast('Failed: ' + e.message, 'error');
+        }
+    };
+
+    return (
+        <Modal open={!!assessment} onClose={onClose} title={`Outcomes — ${assessment?.name || ''}`} maxWidth={420}>
+            <div className="modal-body">
+                {courseOutcomes === null ? (
+                    <div style={{ textAlign: 'center', color: '#64748b', padding: 12 }}>Loading...</div>
+                ) : courseOutcomes.length === 0 ? (
+                    <p style={{ color: '#64748b', fontSize: 13 }}>This course has no Course Outcomes defined yet — add some from the Dashboard's Syllabus panel first.</p>
+                ) : (
+                    courseOutcomes.map((lo) => (
+                        <label key={lo.lo_id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 8, cursor: 'pointer' }}>
+                            <input type="checkbox" checked={selected.includes(lo.lo_id)} onChange={() => toggle(lo.lo_id)} style={{ marginTop: 3 }} />
+                            <span style={{ fontSize: 13 }}><strong>{lo.code}</strong> — {lo.description}</span>
+                        </label>
+                    ))
+                )}
+            </div>
+            <div className="modal-footer">
+                <button onClick={save} className="submit-btn" style={{ flex: 1 }}>Save</button>
+                <button className="btn-cancel" onClick={onClose}>Cancel</button>
+            </div>
+        </Modal>
+    );
+}
+
+function AssessmentCard({ assessment, onEnterMarks, onManageOutcomes }) {
     const a = assessment;
+    const outcomeCount = (a.lo_ids || []).length;
     return (
         <div style={{ padding: 20, border: '1px solid #e2e8f0', borderRadius: 12, marginBottom: 12, background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.04)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
@@ -364,9 +425,14 @@ function AssessmentCard({ assessment, onEnterMarks }) {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ fontSize: 13, color: '#64748b' }}>Max Marks: <strong>{a.max_marks || 100}</strong></div>
-                <button onClick={onEnterMarks} style={{ padding: '8px 16px', background: '#6366f1', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600, letterSpacing: 0.2 }}>
-                    ✎ Enter Marks
-                </button>
+                <div style={{ display: 'flex', gap: 8 }}>
+                    <button onClick={onManageOutcomes} style={{ padding: '8px 14px', background: outcomeCount ? '#eef2ff' : '#f1f5f9', color: outcomeCount ? '#4338ca' : '#64748b', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+                        🎯 Outcomes{outcomeCount ? ` (${outcomeCount})` : ''}
+                    </button>
+                    <button onClick={onEnterMarks} style={{ padding: '8px 16px', background: '#6366f1', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600, letterSpacing: 0.2 }}>
+                        ✎ Enter Marks
+                    </button>
+                </div>
             </div>
         </div>
     );
@@ -377,6 +443,7 @@ export default function AssessmentMapping() {
     const [assessments, setAssessments] = useState(undefined);
     const [createOpen, setCreateOpen] = useState(false);
     const [marksTarget, setMarksTarget] = useState(null);
+    const [outcomesTarget, setOutcomesTarget] = useState(null);
 
     const load = () => apiFetch(`/assessments?faculty_id=${user?.user_id}`).then(setAssessments).catch(() => setAssessments([]));
 
@@ -397,11 +464,19 @@ export default function AssessmentMapping() {
                         <div style={{ fontSize: 13, marginTop: 4 }}>Click "+ Create Assessment" to add one</div>
                     </div>
                 ) : (
-                    assessments.map((a) => <AssessmentCard key={a.assessment_id} assessment={a} onEnterMarks={() => setMarksTarget(a)} />)
+                    assessments.map((a) => (
+                        <AssessmentCard
+                            key={a.assessment_id}
+                            assessment={a}
+                            onEnterMarks={() => setMarksTarget(a)}
+                            onManageOutcomes={() => setOutcomesTarget(a)}
+                        />
+                    ))
                 )}
             </div>
             <CreateAssessmentModal open={createOpen} onClose={() => setCreateOpen(false)} onCreated={load} />
             <MarksEntryModal assessment={marksTarget} onClose={() => setMarksTarget(null)} onSaved={load} />
+            <OutcomesModal assessment={outcomesTarget} onClose={() => setOutcomesTarget(null)} onSaved={load} />
         </>
     );
 }

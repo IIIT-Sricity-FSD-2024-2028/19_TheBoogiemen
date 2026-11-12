@@ -87,6 +87,20 @@ export class FacultyController {
     return this.facultyService.getAtRiskStudents(collegeId, userId, role);
   }
 
+  @Get('me/outcomes')
+  @Roles('faculty')
+  @ApiOperation({ summary: "Get class-level Course Outcome mastery for a course you teach" })
+  async getCourseOutcomeMastery(
+    @CurrentUserId() userId: string,
+    @Query('course_id') courseId: string,
+  ) {
+    if (!courseId)
+      throw new BadRequestException(
+        errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'course_id is required'),
+      );
+    return this.facultyService.getCourseOutcomeMastery(userId, courseId);
+  }
+
   @Get('me/assessments')
   @Roles('faculty')
   @ApiOperation({ summary: 'Get assessments created by this faculty' })

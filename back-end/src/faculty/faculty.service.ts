@@ -16,6 +16,7 @@ import {
 } from '../common/tenancy/scope-to-college';
 import { sectionsTaughtBy, sectionTaughtIn } from '../common/course-sections';
 import { excludeHolidays } from '../common/academic-calendar';
+import { computeCoMastery } from '../common/outcome-mastery';
 
 @Injectable()
 export class FacultyService {
@@ -137,6 +138,49 @@ export class FacultyService {
           }),
         };
       });
+  }
+
+  async getCourseOutcomeMastery(userId: string, courseId: string) {
+    // Same "do you teach this course at all" gate every other faculty-owned
+    // course resource uses (assessments, syllabus topics, etc.).
+    const mySections = sectionsTaughtBy(this.db, userId).filter(
+      (cs) => cs.course_id === courseId,
+    );
+    if (!mySections.length)
+      throw new ForbiddenException(
+        errorBody(
+          ErrorCode.PRIVILEGE_CEILING,
+          'You are not assigned to any section of this course.',
+        ),
+      );
+
+    const studentIds = [
+      ...new Set(
+        this.db.enrollment
+          .filter((e) =>
+            mySections.some(
+              (cs) => cs.course_id === e.course_id && cs.section === e.section,
+            ),
+          )
+          .map((e) => e.student_id),
+      ),
+    ];
+    const cos = this.db.learning_outcomes.filter((lo: any) => lo.course_id === courseId);
+
+    const rows = studentIds.map((sid) => {
+      const student = this.db.students.find((s) => s.user_id === sid);
+      return {
+        student_id: sid,
+        student_name: student ? `${student.first_name} ${student.last_name || ''}`.trim() : sid,
+        mastery: cos.map((lo: any) => ({
+          lo_id: lo.lo_id,
+          code: lo.code,
+          value: computeCoMastery(this.db, sid, lo.lo_id),
+        })),
+      };
+    });
+
+    return { outcomes: cos.map((lo: any) => ({ lo_id: lo.lo_id, code: lo.code, description: lo.description })), students: rows };
   }
 
   async getTodayAttendance(
