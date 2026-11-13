@@ -31,7 +31,9 @@ function MedicalOverrides() {
       })
       .catch(() => setOverrides([]));
   };
-  useEffect(load, []);
+  // Wrapped, not passed directly — see Team.jsx's fix note: load() returns a
+  // Promise, which React would otherwise try to call as an unmount cleanup.
+  useEffect(() => { load(); }, []);
 
   const approve = async (l) => {
     try {

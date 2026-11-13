@@ -293,30 +293,37 @@ export default function Attendance() {
 }
 
 function AttendanceBody({ data }) {
-  const { totalPresent = 0, totalAbsent = 0, totalExcused = 0, overallPct = 0, summary = [] } = data;
+  const { overallPct = 0, summary = [] } = data;
   return (
     <>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 24 }}>
-        <Stat label="PRESENT" value={totalPresent} bg="#f0fdf4" color="#16a34a" />
-        <Stat label="ABSENT" value={totalAbsent} bg="#fef2f2" color="#ef4444" />
-        {/* Excused sessions (approved leave/attendance requests) count towards the overall percentage, not against it. */}
-        <Stat label="ON LEAVE" value={totalExcused} bg="#fefce8" color="#ca8a04" title="Sessions covered by an approved attendance request — these do not count against you." />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <div style={{ fontSize: 13, color: '#64748b' }}>
+          Day counts below are per subject — a day present/absent in one course doesn't count toward another.
+        </div>
         <Stat label="OVERALL %" value={`${overallPct}%`} bg="#eff6ff" color="#2563eb" />
       </div>
       {summary.length > 0 && (
         <>
-          <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: '#64748b' }}>PER COURSE</h4>
+          <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: '#64748b' }}>PER SUBJECT</h4>
           {summary.map((s, i) => {
             const pct = s.percentage || 0;
             const color = pct >= 75 ? '#16a34a' : '#ef4444';
             return (
-              <div key={i} style={{ marginBottom: 12 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4 }}>
-                  <span>{s.course_code} – {s.course_name}</span>
+              <div key={i} style={{ marginBottom: 16, paddingBottom: 16, borderBottom: i < summary.length - 1 ? '1px solid #f1f5f9' : 'none' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 6 }}>
+                  <span style={{ fontWeight: 600 }}>{s.course_code} – {s.course_name}</span>
                   <span style={{ fontWeight: 700, color }}>{pct}%</span>
                 </div>
-                <div style={{ height: 6, background: '#e2e8f0', borderRadius: 3, overflow: 'hidden' }}>
+                <div style={{ height: 6, background: '#e2e8f0', borderRadius: 3, overflow: 'hidden', marginBottom: 8 }}>
                   <div style={{ height: '100%', background: color, width: `${pct}%` }} />
+                </div>
+                <div style={{ display: 'flex', gap: 16, fontSize: 12, color: '#64748b' }}>
+                  <span><strong style={{ color: '#16a34a' }}>{s.present || 0}</strong> present</span>
+                  <span><strong style={{ color: '#ef4444' }}>{s.absent || 0}</strong> absent</span>
+                  <span title="Sessions covered by an approved attendance request — these count toward attendance, not against it.">
+                    <strong style={{ color: '#ca8a04' }}>{s.excused || 0}</strong> on leave
+                  </span>
+                  <span style={{ marginLeft: 'auto' }}>{s.total || 0} total sessions</span>
                 </div>
               </div>
             );

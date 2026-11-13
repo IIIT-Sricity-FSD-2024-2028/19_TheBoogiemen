@@ -365,7 +365,9 @@ export default function FeeCompliance() {
       setFees(data.fees || []);
     }).catch(() => setFees([]));
   };
-  useEffect(load, []);
+  // Wrapped, not passed directly — see Team.jsx's fix note: load() returns a
+  // Promise, which React would otherwise try to call as an unmount cleanup.
+  useEffect(() => { load(); }, []);
 
   const pay = async (fee, studentId) => {
     try {

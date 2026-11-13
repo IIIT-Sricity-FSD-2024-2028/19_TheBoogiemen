@@ -182,9 +182,11 @@ export class CollegesService {
             starts_on: sub.starts_on,
             ends_on: sub.ends_on,
             status: planStatus(sub),
-            // Annual, the same figure computeQuote() priced and payment
-            // captured — null only if the quote row itself is ever missing.
+            // The one-time total for the whole committed term, the same
+            // figure computeQuote() priced and payment captured — null only
+            // if the quote row itself is ever missing.
             payable_paise: quote?.breakdown?.payable_paise ?? null,
+            term_years: quote?.metrics?.term_years ?? null,
           }
         : null,
     };

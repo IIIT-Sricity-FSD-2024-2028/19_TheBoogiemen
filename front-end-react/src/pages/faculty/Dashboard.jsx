@@ -176,7 +176,9 @@ function CourseOutcomesModal({ course, programOutcomes, onClose, onChanged }) {
       .then(setOutcomes)
       .catch(() => setOutcomes([]));
   };
-  useEffect(load, [course]);
+  // Wrapped, not passed directly — see Team.jsx's fix note: load() returns a
+  // Promise, which React would otherwise try to call as an unmount cleanup.
+  useEffect(() => { load(); }, [course]);
 
   const addOutcome = async (e) => {
     e.preventDefault();

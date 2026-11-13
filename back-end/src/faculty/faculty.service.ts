@@ -334,13 +334,17 @@ export class FacultyService {
       );
 
       if (existing) {
-        // Approved leave outranks a plain absent mark for the same session.
+        // Approved leave outranks a plain absent mark for the same session —
+        // but this must never look like a silent no-op to the faculty
+        // marking it: `protected: true` tells the caller exactly which
+        // student's mark was kept as Excused instead of being downgraded to
+        // Absent, so the UI can say so instead of just claiming "saved".
         if (
           normalizeAttendanceStatus(existing.status) ===
             ATTENDANCE_STATUS.EXCUSED &&
           status === ATTENDANCE_STATUS.ABSENT
         ) {
-          saved.push(existing);
+          saved.push({ ...existing, protected: true });
           continue;
         }
         existing.status = status;

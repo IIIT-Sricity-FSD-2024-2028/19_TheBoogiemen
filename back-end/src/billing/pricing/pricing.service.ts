@@ -102,8 +102,16 @@ export function computeQuote(
 ): QuoteBreakdown {
   const card = getRateCard(pricingVersion);
 
-  const studentPaise = bandedStudentCost(metrics.student_count, card);
-  const facultyPaise = metrics.faculty_count * card.paisePerFaculty;
+  // Rate-card figures are per student/faculty PER YEAR (see rate-card.ts) —
+  // this is a one-time charge covering the whole committed term (there is no
+  // recurring annual billing anywhere in this codebase), so the annual rate
+  // must be scaled by term_years before anything else touches it. Losing
+  // this multiplication is exactly how a 2- or 3-year signup would get
+  // charged — and provisioned a subscription — for one year's money.
+  const studentAnnualPaise = bandedStudentCost(metrics.student_count, card);
+  const facultyAnnualPaise = metrics.faculty_count * card.paisePerFaculty;
+  const studentPaise = studentAnnualPaise * metrics.term_years;
+  const facultyPaise = facultyAnnualPaise * metrics.term_years;
   const base = studentPaise + facultyPaise;
 
   const factor = moduleFactor(metrics.modules, card);
@@ -113,14 +121,17 @@ export function computeQuote(
   const discountPaise = Math.round(subtotal * rate);
   const afterDiscount = subtotal - discountPaise;
 
-  const floored = Math.max(afterDiscount, card.floorPaise);
+  // floorPaise is also a per-year figure — a multi-year contract's floor
+  // scales with the term the same way its subtotal does.
+  const floored = Math.max(afterDiscount, card.floorPaise * metrics.term_years);
   const contract = roundUpTo(floored, card.roundToPaise);
   const gst = Math.round(contract * card.gstRate);
   const payable = contract + gst;
 
+  const termSuffix = metrics.term_years > 1 ? ` × ${metrics.term_years} yr` : '';
   const lines: QuoteLine[] = [
-    { label: `Students (${metrics.student_count})`, amount_paise: studentPaise },
-    { label: `Faculty (${metrics.faculty_count})`, amount_paise: facultyPaise },
+    { label: `Students (${metrics.student_count})${termSuffix}`, amount_paise: studentPaise },
+    { label: `Faculty (${metrics.faculty_count})${termSuffix}`, amount_paise: facultyPaise },
   ];
   for (const m of metrics.modules) {
     lines.push({

@@ -1453,16 +1453,25 @@ const paidFees = fees
 // OUTCOMES_TRACKING_PLAN.md: real now â€” the average, across every student
 // with at least one gradeable Course Outcome, of their own CO mastery
 // (common/outcome-mastery.ts). Was a hardcoded '3.4/4.0' before this.
-// overall_attendance/placement_rate/student_satisfaction remain
-// placeholders â€” out of scope for this pass, tracked separately.
+// placement_rate/student_satisfaction remain placeholders â€” nothing in this
+// schema tracks placements or a satisfaction survey, so there is no real
+// number to compute here; out of scope for this pass, tracked separately.
 const coAttainment = collegeAverageCoMastery(this.db, collegeId);
+const studentIds = new Set(students.map((s: any) => s.user_id));
+const attendanceRecords = excludeHolidays(
+this.db,
+this.db.attendance_log.filter((a: any) => studentIds.has(a.student_id)),
+collegeId,
+);
+const overallAttendance = summariseAttendance(attendanceRecords);
 return {
 summary: {
 total_students: students.length,
 total_faculty: faculty.length,
 total_courses: courses.length,
 active_research: research.filter((p) => p.status === 'active').length,
-overall_attendance: '82%',
+overall_attendance:
+attendanceRecords.length > 0 ? `${overallAttendance.percentage}%` : 'No data yet',
 fee_compliance:
 totalFees > 0 ? `${Math.round((paidFees / totalFees) * 100)}%` : '0%',
 avg_co_attainment: coAttainment === null ? 'No data yet' : `${coAttainment}%`,
