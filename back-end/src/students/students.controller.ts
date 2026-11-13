@@ -70,6 +70,16 @@ export class StudentsController {
     return this.studentsService.getOutcomes(userId);
   }
 
+  @Get('me/grades')
+  @Roles('student')
+  @ApiOperation({
+    summary: 'Get CGPA, predicted final grade, and per-course grades for the current student',
+  })
+  @ApiResponse({ status: 200, description: 'CGPA, predicted letter grade, and per-course percentage/grade breakdown' })
+  async getGrades(@CurrentUserId() userId: string) {
+    return this.studentsService.getGrades(userId);
+  }
+
   @Get('me/courses')
   @Roles('student')
   @ApiOperation({ summary: 'Get enrolled courses for current student' })

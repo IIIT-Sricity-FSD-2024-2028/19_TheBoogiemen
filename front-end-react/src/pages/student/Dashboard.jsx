@@ -1,8 +1,9 @@
 /**
  * Dashboard — ported from legacy fixes.js renderStudentMeetings() +
  * renderPendingSubmissions() + renderSyllabusTracker() (the student
- * dashboard-view widgets; the predicted-grade box is static demo content
- * in the legacy markup too, not computed).
+ * dashboard-view widgets). The predicted-grade box used to be static demo
+ * content, same as the legacy markup it came from — it's now real, computed
+ * by grading.ts's relative curve via GET /students/me/grades.
  */
 
 import { useEffect, useState } from 'react';
@@ -24,21 +25,37 @@ export default function Dashboard() {
         <p style={{ fontSize: 14, color: '#64748b' }}>Here's your academic progress overview</p>
       </div>
 
-      <div className="predicted-grade-box">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2">
-          <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
-          <polyline points="16 7 22 7 22 13" />
-        </svg>
-        <div>
-          <div className="box-title">Predicted Final Grade</div>
-          <div className="box-subtitle">Based on current performance: <strong>A+</strong></div>
-        </div>
-      </div>
+      <PredictedGradeBox />
 
       <UpcomingMeetings />
       <PendingSubmissions />
       <SyllabusTracker />
     </>
+  );
+}
+
+function PredictedGradeBox() {
+  const [grades, setGrades] = useState(null);
+
+  useEffect(() => {
+    apiFetch('/students/me/grades')
+      .then(setGrades)
+      .catch(() => setGrades(null));
+  }, []);
+
+  const label = grades?.predictedGrade || 'No data yet';
+
+  return (
+    <div className="predicted-grade-box">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2">
+        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+        <polyline points="16 7 22 7 22 13" />
+      </svg>
+      <div>
+        <div className="box-title">Predicted Final Grade</div>
+        <div className="box-subtitle">Based on current performance: <strong>{label}</strong></div>
+      </div>
+    </div>
   );
 }
 

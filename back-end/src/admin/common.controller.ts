@@ -52,6 +52,7 @@ summariseAttendance,
 import { syncLeaveAttendance } from '../common/leave-attendance.sync';
 import { excludeHolidays, expandClassDates } from '../common/academic-calendar';
 import { collegeAverageCoMastery } from '../common/outcome-mastery';
+import { computeCGPA } from '../common/grading';
 import {
 CreateUserDto,
 ResetUserPasswordDto,
@@ -1521,13 +1522,17 @@ const attendance = summariseAttendance(records);
 // No attendance data means unknown, not a fabricated 65%.
 const attendance_pct =
 attendance.total > 0 ? attendance.percentage : null;
+// Real, computed from marks_entry via the relative curve (grading.ts) —
+// students[].cgpa itself is a static seed value nothing updates.
+const { cgpa } = computeCGPA(this.db, s.user_id);
 return {
 ...s,
+cgpa,
 attendance_pct,
 excused_sessions: attendance.excused,
-is_at_risk: isAtRisk({ cgpa: s.cgpa, attendancePct: attendance_pct }),
+is_at_risk: isAtRisk({ cgpa, attendancePct: attendance_pct }),
 risk_reasons: riskReasons({
-cgpa: s.cgpa,
+cgpa,
 attendancePct: attendance_pct,
 }),
 };

@@ -17,6 +17,7 @@ import {
 import { sectionsTaughtBy, sectionTaughtIn } from '../common/course-sections';
 import { excludeHolidays } from '../common/academic-calendar';
 import { computeCoMastery } from '../common/outcome-mastery';
+import { computeCGPA } from '../common/grading';
 
 @Injectable()
 export class FacultyService {
@@ -124,16 +125,21 @@ export class FacultyService {
               )
             : null;
 
+        // Real, computed from marks_entry via the relative curve (grading.ts)
+        // — students[].cgpa itself is a static seed value nothing updates.
+        const { cgpa } = computeCGPA(this.db, s.user_id);
+
         return {
           ...s,
+          cgpa,
           attendance_pct,
           excused_sessions: attendance.excused,
           avg_score: avgScore,
           // M-04: shared predicate — this used the same rule expressed inline,
           // which had already drifted from the admin report's `cgpa < 6.5`.
-          is_at_risk: isAtRisk({ cgpa: s.cgpa, attendancePct: attendance_pct }),
+          is_at_risk: isAtRisk({ cgpa, attendancePct: attendance_pct }),
           risk_reasons: riskReasons({
-            cgpa: s.cgpa,
+            cgpa,
             attendancePct: attendance_pct,
           }),
         };
@@ -422,13 +428,15 @@ export class FacultyService {
         const attendance = summariseAttendance(records);
         const attendance_pct =
           attendance.total > 0 ? attendance.percentage : null;
+        const { cgpa } = computeCGPA(this.db, s.user_id);
         return {
           ...s,
+          cgpa,
           attendance_pct,
           excused_sessions: attendance.excused,
-          is_at_risk: isAtRisk({ cgpa: s.cgpa, attendancePct: attendance_pct }),
+          is_at_risk: isAtRisk({ cgpa, attendancePct: attendance_pct }),
           risk_reasons: riskReasons({
-            cgpa: s.cgpa,
+            cgpa,
             attendancePct: attendance_pct,
           }),
         };
