@@ -16,6 +16,7 @@ import { ErrorCode, errorBody } from '../common/errors/error-codes';
 import { CreateCollegeDto } from './dto/create-college.dto';
 import { PRICED_MODULES, PricedModule } from './dto/estimate.dto';
 import { getActiveSubscription, isExpired, planStatus } from '../common/billing/subscription';
+import { normalizeEmail } from '../common/normalize-email';
 
 export function sanitizeUser<T extends Record<string, any>>(user: T): Partial<T> {
   const { password, password_hash, ...safe } = user ?? {};
@@ -58,7 +59,10 @@ export class CollegesService {
    * because there is only one implementation to fix.
    */
   async createCollegeAndSpoc(params: CreateCollegeAndSpocParams) {
-    if (this.db.users.find((u) => u.email === params.spocEmail)) {
+    // Case-insensitive, same as every other account-creation path: email is
+    // a login identifier, not a case-sensitive string.
+    const spocEmail = normalizeEmail(params.spocEmail);
+    if (this.db.users.find((u) => normalizeEmail(u.email) === spocEmail)) {
       throw new BadRequestException(
         errorBody(ErrorCode.DUPLICATE_RESOURCE, 'Email already exists'),
       );
@@ -77,13 +81,13 @@ export class CollegesService {
     this.db.colleges.push(college);
 
     const userId = `u${Date.now()}s`;
-    const firstName = params.spocFirstName || params.spocEmail.split('@')[0];
+    const firstName = params.spocFirstName || spocEmail.split('@')[0];
     const spocUser = {
       user_id: userId,
       username: firstName,
       first_name: firstName,
       last_name: params.spocLastName || '',
-      email: params.spocEmail,
+      email: spocEmail,
       phone: params.spocPhone || '',
       role: 'spoc' as const,
       college_id: collegeId,

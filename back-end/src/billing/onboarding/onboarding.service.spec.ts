@@ -125,6 +125,18 @@ describe('OnboardingService — the full pipeline', () => {
     await expect(onboarding.start(START_DTO)).rejects.toThrow();
   });
 
+  it('treats email as case-insensitive for both the real-account and in-progress-draft checks', async () => {
+    const { onboarding, db } = await buildHarness();
+    const shouted = { ...START_DTO, email: START_DTO.email.toUpperCase() };
+
+    db.users.push({ user_id: 'u1', email: START_DTO.email, role: 'student' });
+    await expect(onboarding.start(shouted)).rejects.toThrow();
+
+    const { onboarding: onboarding2 } = await buildHarness();
+    await onboarding2.start(START_DTO);
+    await expect(onboarding2.start(shouted)).rejects.toThrow();
+  });
+
   describe('the committed quote', () => {
     it('matches computeQuote() exactly — no second implementation drifting from the first', async () => {
       const { onboarding } = await buildHarness();

@@ -53,6 +53,7 @@ import { syncLeaveAttendance } from '../common/leave-attendance.sync';
 import { excludeHolidays, expandClassDates } from '../common/academic-calendar';
 import { collegeAverageCoMastery } from '../common/outcome-mastery';
 import { computeCGPA } from '../common/grading';
+import { normalizeEmail } from '../common/normalize-email';
 import {
 CreateUserDto,
 ResetUserPasswordDto,
@@ -1177,8 +1178,10 @@ ErrorCode.PRIVILEGE_CEILING,
 );
 }
 // Email stays a GLOBAL uniqueness check, not scoped â€” it is the login
-// identifier across the whole app, not a per-college one.
-if (this.db.users.find((u) => u.email === body.email))
+// identifier across the whole app, not a per-college one. Case-insensitive:
+// "Name@Example.com" and "name@example.com" are the same account.
+const newEmail = normalizeEmail(body.email);
+if (this.db.users.find((u) => normalizeEmail(u.email) === newEmail))
 throw new BadRequestException(
 errorBody(ErrorCode.DUPLICATE_RESOURCE, 'Email already exists'),
 );
@@ -1223,10 +1226,10 @@ const id = `u${Date.now()}`;
 const firstName = body.first_name || body.username || 'New';
 const newUser = {
 user_id: id,
-username: body.username || body.first_name || body.email.split('@')[0],
+username: body.username || body.first_name || newEmail.split('@')[0],
 first_name: firstName,
 last_name: body.last_name || '',
-email: body.email,
+email: newEmail,
 phone: body.phone || '',
 role: body.role,
 college_id: collegeId,
@@ -1245,7 +1248,7 @@ branch: 'CSE',
 batch: '2024-2028',
 cgpa: 7.0,
 section: 'A',
-email: body.email,
+email: newEmail,
 join_date: new Date().toISOString().split('T')[0],
 dob: '2005-01-01',
 phone: body.phone || '',
@@ -1258,7 +1261,7 @@ first_name: firstName,
 last_name: body.last_name || '',
 designation: 'Assistant Professor',
 department_id: 'dept1',
-email: body.email,
+email: newEmail,
 phone: body.phone || '',
 college_id: collegeId,
 });
@@ -1285,10 +1288,14 @@ async updateUser(
 rejectProtectedFields(req?.body);
 const user = this.db.users.find((u) => u.user_id === id);
 if (!isSameCollege(user, collegeId)) notFoundInMyCollege('User');
+// Case-insensitive, same as creation: compare and store the normalized
+// form so "Name@Example.com" doesn't collide with (or fail to collide
+// with) "name@example.com" depending on which case was typed.
+const newEmail = body.email ? normalizeEmail(body.email) : undefined;
 if (
-body.email &&
-body.email !== user.email &&
-this.db.users.find((u) => u.email === body.email && u.user_id !== id)
+newEmail &&
+newEmail !== normalizeEmail(user.email) &&
+this.db.users.find((u) => normalizeEmail(u.email) === newEmail && u.user_id !== id)
 ) {
 throw new BadRequestException(
 errorBody(
@@ -1298,6 +1305,7 @@ ErrorCode.DUPLICATE_RESOURCE,
 );
 }
 const changes = pickDefined(body);
+if (newEmail) changes.email = newEmail;
 Object.assign(user, changes);
 this.db.persist();
 this.syncProfileRecords(id, changes);
