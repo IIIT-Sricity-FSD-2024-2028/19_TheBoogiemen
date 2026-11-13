@@ -171,6 +171,112 @@ function CreateAssessmentModal({ open, onClose, onCreated }) {
     );
 }
 
+function EditAssessmentModal({ assessment, onClose, onSaved }) {
+    const { showToast } = useNotifications();
+    const [name, setName] = useState('');
+    const [type, setType] = useState('');
+    const [date, setDate] = useState('');
+    const [marks, setMarks] = useState('');
+    const [weightage, setWeightage] = useState('');
+    const [mode, setMode] = useState('offline');
+    const [submitting, setSubmitting] = useState(false);
+    const today = new Date().toISOString().split('T')[0];
+
+    useEffect(() => {
+        if (!assessment) return;
+        setName(assessment.name || '');
+        setType(assessment.type || '');
+        setDate(assessment.date || '');
+        setMarks(assessment.max_marks ?? '');
+        setWeightage(assessment.weightage ?? '');
+        setMode(assessment.exam_mode || 'offline');
+    }, [assessment]);
+
+    const submit = async (e) => {
+        e.preventDefault();
+        if (!name || name.trim().length < 3) return showToast('Assessment name must be at least 3 characters', 'warning');
+        if (!type) return showToast('Please select assessment type', 'warning');
+        if (!date) return showToast('Date is required', 'warning');
+        if (date < today) return showToast('Assessment date cannot be in the past', 'warning');
+        if (!marks || Number(marks) < 1) return showToast('Enter valid max marks (min 1)', 'warning');
+        if (Number(marks) > 1000) return showToast('Max marks cannot exceed 1000', 'warning');
+        if (!weightage || Number(weightage) < 1 || Number(weightage) > 100) return showToast('Weightage must be between 1 and 100', 'warning');
+
+        setSubmitting(true);
+        try {
+            await apiFetch(`/assessments/${assessment.assessment_id}`, {
+                method: 'PATCH',
+                body: JSON.stringify({ name: name.trim(), type, date, max_marks: Number(marks), weightage: Number(weightage), exam_mode: mode }),
+            });
+            showToast('Assessment updated!', 'success');
+            onClose();
+            onSaved();
+        } catch (e2) {
+            showToast('Failed: ' + e2.message, 'error');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    if (!assessment) return null;
+
+    return (
+        <Modal open={!!assessment} onClose={onClose} title="Edit Assessment">
+            <form onSubmit={submit}>
+                <div className="modal-body">
+                    <div className="form-group">
+                        <label>Assessment Name</label>
+                        <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., Mid-term Exam" />
+                    </div>
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label>Type</label>
+                            <select value={type} onChange={(e) => setType(e.target.value)}>
+                                <option value="">Select type</option>
+                                <option value="theory">Theory Exam</option>
+                                <option value="practical">Practical / Lab</option>
+                                <option value="assignment">Assignment</option>
+                                <option value="project">Project</option>
+                            </select>
+                        </div>
+                        <div className="form-group">
+                            <label>Date</label>
+                            <input type="date" min={today} value={date} onChange={(e) => setDate(e.target.value)} />
+                        </div>
+                    </div>
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label>Total Marks</label>
+                            <input type="number" min={1} max={1000} value={marks} onChange={(e) => setMarks(e.target.value)} placeholder="100" />
+                        </div>
+                        <div className="form-group">
+                            <label>Weightage (%)</label>
+                            <input type="number" min={1} max={100} value={weightage} onChange={(e) => setWeightage(e.target.value)} placeholder="20" />
+                        </div>
+                    </div>
+                    <div className="form-group">
+                        <label>Exam Mode</label>
+                        <select value={mode} onChange={(e) => setMode(e.target.value)}>
+                            <option value="offline">Offline (Direct entry)</option>
+                            <option value="online">Online (Students submit first)</option>
+                        </select>
+                    </div>
+                    <div className="form-group">
+                        <label>Course</label>
+                        <input type="text" disabled value={`${assessment.course_code || assessment.course_id || ''}${assessment.section ? ' · Sec ' + assessment.section : ''}`} style={{ background: '#f8fafc', color: '#94a3b8' }} />
+                    </div>
+                </div>
+                <div className="modal-footer">
+                    <button type="submit" className="submit-btn" style={{ flex: 1 }} disabled={submitting}>
+                        {submitting ? 'Saving…' : 'Save Changes'}
+                    </button>
+                    <button type="button" className="btn-cancel" onClick={onClose}>Cancel</button>
+                </div>
+            </form>
+        </Modal>
+    );
+}
+
 function MarksEntryModal({ assessment, onClose, onSaved }) {
     const { user } = useAuth();
     const { showToast, send } = useNotifications();
@@ -404,7 +510,7 @@ function OutcomesModal({ assessment, onClose, onSaved }) {
     );
 }
 
-function AssessmentCard({ assessment, onEnterMarks, onManageOutcomes }) {
+function AssessmentCard({ assessment, onEnterMarks, onManageOutcomes, onEdit, onDelete }) {
     const a = assessment;
     const outcomeCount = (a.lo_ids || []).length;
     return (
@@ -424,8 +530,20 @@ function AssessmentCard({ assessment, onEnterMarks, onManageOutcomes }) {
                 </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ fontSize: 13, color: '#64748b' }}>Max Marks: <strong>{a.max_marks || 100}</strong></div>
-                <div style={{ display: 'flex', gap: 8 }}>
+                <div style={{ fontSize: 13, color: '#64748b' }}>Max Marks: <strong>{a.max_marks || 100}</strong> &nbsp;·&nbsp; Weightage: <strong>{a.weightage ?? 10}%</strong></div>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    {a.has_marks ? (
+                        <span style={{ fontSize: 12, color: '#94a3b8', fontStyle: 'italic' }}>🔒 Locked — marks recorded</span>
+                    ) : (
+                        <>
+                            <button onClick={onEdit} style={{ padding: '8px 14px', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+                                ✎ Edit
+                            </button>
+                            <button onClick={onDelete} style={{ padding: '8px 14px', background: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+                                🗑 Delete
+                            </button>
+                        </>
+                    )}
                     <button onClick={onManageOutcomes} style={{ padding: '8px 14px', background: outcomeCount ? '#eef2ff' : '#f1f5f9', color: outcomeCount ? '#4338ca' : '#64748b', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
                         🎯 Outcomes{outcomeCount ? ` (${outcomeCount})` : ''}
                     </button>
@@ -440,16 +558,28 @@ function AssessmentCard({ assessment, onEnterMarks, onManageOutcomes }) {
 
 export default function AssessmentMapping() {
     const { user } = useAuth();
+    const { showToast } = useNotifications();
     const [assessments, setAssessments] = useState(undefined);
     const [createOpen, setCreateOpen] = useState(false);
     const [marksTarget, setMarksTarget] = useState(null);
     const [outcomesTarget, setOutcomesTarget] = useState(null);
+    const [editTarget, setEditTarget] = useState(null);
 
     const load = () => apiFetch(`/assessments?faculty_id=${user?.user_id}`).then(setAssessments).catch(() => setAssessments([]));
 
     useEffect(() => {
         load();
     }, []);
+
+    const deleteAssessment = async (a) => {
+        try {
+            await apiFetch(`/assessments/${a.assessment_id}`, { method: 'DELETE' });
+            showToast('Assessment deleted.', 'success');
+            load();
+        } catch (e) {
+            showToast('Failed: ' + e.message, 'error');
+        }
+    };
 
     return (
         <>
@@ -470,6 +600,8 @@ export default function AssessmentMapping() {
                             assessment={a}
                             onEnterMarks={() => setMarksTarget(a)}
                             onManageOutcomes={() => setOutcomesTarget(a)}
+                            onEdit={() => setEditTarget(a)}
+                            onDelete={() => deleteAssessment(a)}
                         />
                     ))
                 )}
@@ -477,6 +609,7 @@ export default function AssessmentMapping() {
             <CreateAssessmentModal open={createOpen} onClose={() => setCreateOpen(false)} onCreated={load} />
             <MarksEntryModal assessment={marksTarget} onClose={() => setMarksTarget(null)} onSaved={load} />
             <OutcomesModal assessment={outcomesTarget} onClose={() => setOutcomesTarget(null)} onSaved={load} />
+            <EditAssessmentModal assessment={editTarget} onClose={() => setEditTarget(null)} onSaved={load} />
         </>
     );
 }

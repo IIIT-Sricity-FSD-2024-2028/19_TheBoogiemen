@@ -1245,6 +1245,28 @@
       "max_marks": 100,
       "section": "B",
       "college_id": "c-default"
+    },
+    {
+      "assessment_id": "a1794587485796",
+      "faculty_id": "u2",
+      "weightage": 25,
+      "course_id": "c1",
+      "name": "Edit Test Quiz (Renamed)",
+      "type": "quiz",
+      "max_marks": 50,
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "assessment_id": "a1794587547875",
+      "faculty_id": "u2",
+      "weightage": 5,
+      "course_id": "c1",
+      "name": "UI Unlocked Test",
+      "type": "quiz",
+      "max_marks": 30,
+      "section": "A",
+      "college_id": "c-default"
     }
   ],
   "marks_entry": [
@@ -1314,6 +1336,14 @@
       "assessment_id": "a1794586156800",
       "marks_obtained": 2,
       "max_marks": 100,
+      "college_id": "c-default"
+    },
+    {
+      "entry_id": "m1794587495298",
+      "student_id": "u1",
+      "assessment_id": "a1794587485796",
+      "marks_obtained": 40,
+      "max_marks": 50,
       "college_id": "c-default"
     }
   ],

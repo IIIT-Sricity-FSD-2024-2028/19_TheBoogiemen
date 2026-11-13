@@ -378,6 +378,9 @@ return {
 ...a,
 course_name: course?.course_name,
 course_code: course?.course_code,
+// Lets the UI gate Edit/Delete without an extra request per card —
+// see assertCanModifyAssessment's own "locked once marked" policy.
+has_marks: this.db.marks_entry.some((m) => m.assessment_id === a.assessment_id),
 };
 });
 }
@@ -452,6 +455,78 @@ college_id: writeCollegeId(actorCollegeId),
 };
 this.db.assessments.push(newAssessment);
 return { success: true, data: newAssessment };
+}
+
+/**
+ * Shared gate for PATCH/DELETE: only the owning faculty (admin/head/
+ * superadmin may act on any assessment, matching createAssessment's own
+ * "set one up on a faculty member's behalf" allowance), and only before
+ * the first mark is entered. marks_entry doesn't snapshot weightage, so
+ * editing it after grading started would retroactively reshuffle every
+ * already-graded student's percentage — same reasoning recordMarks()
+ * already applies to locking a mark itself once entered.
+ */
+private assertCanModifyAssessment(assessment: any, userId: string, role: string) {
+if (role === 'faculty' && assessment.faculty_id !== userId) notFoundInMyCollege('Assessment');
+const hasMarks = this.db.marks_entry.some(
+(m: any) => m.assessment_id === assessment.assessment_id,
+);
+if (hasMarks)
+throw new BadRequestException(
+errorBody(
+ErrorCode.BUSINESS_RULE_VIOLATION,
+'This assessment already has marks recorded — it can no longer be edited or deleted.',
+),
+);
+}
+
+@Patch('assessments/:id')
+@Roles('faculty', 'admin', 'head', 'superadmin')
+@ApiOperation({ summary: 'Edit an assessment that has no marks recorded yet' })
+@ApiBody({ schema: { type: 'object', additionalProperties: true } })
+async updateAssessment(
+@Param('id') id: string,
+@Body() body: any,
+@CurrentUserId() userId: string,
+@CurrentUserRole() actorRole: string,
+@CurrentUserCollegeId() actorCollegeId: string | null,
+) {
+const assessment = this.db.assessments.find((a) => a.assessment_id === id);
+if (!isSameCollege(assessment, actorCollegeId)) notFoundInMyCollege('Assessment');
+this.assertCanModifyAssessment(assessment, userId, actorRole);
+
+// course_id/section/faculty_id/college_id/assessment_id are structural —
+// moving an assessment to a different course/section/owner is out of
+// scope here, same as updateUser's own protected-fields exclusion.
+const editable = pickDefined({
+name: body.name,
+type: body.type,
+date: body.date,
+max_marks: body.max_marks,
+weightage: body.weightage,
+exam_mode: body.exam_mode,
+});
+Object.assign(assessment, editable);
+this.db.persist();
+return { success: true, data: assessment };
+}
+
+@Delete('assessments/:id')
+@Roles('faculty', 'admin', 'head', 'superadmin')
+@ApiOperation({ summary: 'Delete an assessment that has no marks recorded yet' })
+async deleteAssessment(
+@Param('id') id: string,
+@CurrentUserId() userId: string,
+@CurrentUserRole() actorRole: string,
+@CurrentUserCollegeId() actorCollegeId: string | null,
+) {
+const assessment = this.db.assessments.find((a) => a.assessment_id === id);
+if (!isSameCollege(assessment, actorCollegeId)) notFoundInMyCollege('Assessment');
+this.assertCanModifyAssessment(assessment, userId, actorRole);
+
+const index = this.db.assessments.indexOf(assessment);
+this.db.assessments.splice(index, 1);
+return { success: true };
 }
 
 // OUTCOMES_TRACKING_PLAN.md: which Course Outcomes this assessment
