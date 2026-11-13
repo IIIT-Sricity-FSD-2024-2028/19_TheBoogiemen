@@ -1234,6 +1234,17 @@
       "max_marks": 100,
       "section": "A",
       "college_id": "c-default"
+    },
+    {
+      "assessment_id": "a1794586156800",
+      "faculty_id": "u4",
+      "weightage": 100,
+      "course_id": "c1",
+      "name": "Chart Verify Test",
+      "type": "theory",
+      "max_marks": 100,
+      "section": "B",
+      "college_id": "c-default"
     }
   ],
   "marks_entry": [
@@ -1294,6 +1305,14 @@
       "student_id": "u1",
       "assessment_id": "a1794551839997",
       "marks_obtained": 95,
+      "max_marks": 100,
+      "college_id": "c-default"
+    },
+    {
+      "entry_id": "m1794586160440",
+      "student_id": "u6",
+      "assessment_id": "a1794586156800",
+      "marks_obtained": 2,
       "max_marks": 100,
       "college_id": "c-default"
     }

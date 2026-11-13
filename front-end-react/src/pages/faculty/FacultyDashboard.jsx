@@ -18,6 +18,7 @@ import Dashboard from './Dashboard';
 import AssessmentMapping from './AssessmentMapping';
 import MarkAttendance from './MarkAttendance';
 import StudentOverview from './StudentOverview';
+import ClassPerformance from './ClassPerformance';
 import EventScheduler from './EventScheduler';
 
 // Two nav items below (Leave Management, Event Scheduler) don't exist in
@@ -93,6 +94,15 @@ export default function FacultyDashboard() {
       ),
     },
     {
+      id: 'class-performance',
+      label: 'Class Performance',
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
+        </svg>
+      ),
+    },
+    {
       id: 'event-scheduler',
       label: 'Event Scheduler',
       icon: (
@@ -141,6 +151,7 @@ export default function FacultyDashboard() {
     'assessment-mapping': 'Assessment Mapping',
     'mark-attendance': 'Mark Attendance',
     'student-overview': 'Student Overview',
+    'class-performance': 'Class Performance',
     'event-scheduler': 'Event Scheduler',
     discussion: 'Discussion Forum',
     research: 'Research Projects',
@@ -154,6 +165,7 @@ export default function FacultyDashboard() {
     'assessment-mapping': <AssessmentMapping />,
     'mark-attendance': <MarkAttendance />,
     'student-overview': <StudentOverview />,
+    'class-performance': <ClassPerformance />,
     'event-scheduler': <EventScheduler />,
     discussion: <DiscussionForum />,
     research: <ResearchPanel role="faculty" />,

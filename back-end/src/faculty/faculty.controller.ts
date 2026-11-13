@@ -101,6 +101,21 @@ export class FacultyController {
     return this.facultyService.getCourseOutcomeMastery(userId, courseId);
   }
 
+  @Get('me/class-performance')
+  @Roles('faculty')
+  @ApiOperation({ summary: 'Get class-wide performance report for a course you teach' })
+  async getClassPerformance(
+    @CurrentUserId() userId: string,
+    @Query('course_id') courseId: string,
+    @CurrentUserCollegeId() collegeId: string | null,
+  ) {
+    if (!courseId)
+      throw new BadRequestException(
+        errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'course_id is required'),
+      );
+    return this.facultyService.getClassPerformance(userId, courseId, collegeId);
+  }
+
   @Get('me/assessments')
   @Roles('faculty')
   @ApiOperation({ summary: 'Get assessments created by this faculty' })
