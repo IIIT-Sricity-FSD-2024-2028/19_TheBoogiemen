@@ -17,7 +17,12 @@ import {
 import { sectionsTaughtBy, sectionTaughtIn } from '../common/course-sections';
 import { excludeHolidays } from '../common/academic-calendar';
 import { computeCoMastery } from '../common/outcome-mastery';
-import { computeCGPA } from '../common/grading';
+import {
+  computeAssessmentClassAverages,
+  computeCGPA,
+  computeCourseGradesForCourse,
+  GRADE_BANDS,
+} from '../common/grading';
 
 @Injectable()
 export class FacultyService {
@@ -187,6 +192,101 @@ export class FacultyService {
     });
 
     return { outcomes: cos.map((lo: any) => ({ lo_id: lo.lo_id, code: lo.code, description: lo.description })), students: rows };
+  }
+
+  /**
+   * Class-wide performance for one course: grade distribution, class
+   * average, per-assessment class average, attendance, and at-risk count —
+   * nothing before this let a faculty member see a course as a whole,
+   * only one student at a time (getMyStudents/getAtRiskStudents).
+   *
+   * Scoped to this faculty's own section(s) of the course throughout — a
+   * colleague's other section of the same course is never counted. The
+   * grade distribution is the one exception worth calling out: it's built
+   * from computeCourseGradesForCourse's WHOLE-COHORT curve (every section
+   * together, by design — see grading.ts), then filtered down to just this
+   * faculty's own students for reporting. That gives each grade here real
+   * meaning (correctly curved against the full class), rather than a second,
+   * statistically-meaningless mini-curve of just this section's 2-3 people.
+   */
+  async getClassPerformance(
+    userId: string,
+    courseId: string,
+    collegeId: string | null,
+  ) {
+    const mySections = sectionsTaughtBy(this.db, userId).filter(
+      (cs) => cs.course_id === courseId,
+    );
+    if (!mySections.length)
+      throw new ForbiddenException(
+        errorBody(
+          ErrorCode.PRIVILEGE_CEILING,
+          'You are not assigned to any section of this course.',
+        ),
+      );
+    const mySectionNames = mySections.map((cs) => cs.section);
+
+    const enrollment = this.db.enrollment.filter(
+      (e) =>
+        e.course_id === courseId &&
+        e.status === 'active' &&
+        mySectionNames.includes(e.section),
+    );
+    const studentIds = [...new Set(enrollment.map((e) => e.student_id))];
+    const totalEnrolled = studentIds.length;
+
+    const allGrades = computeCourseGradesForCourse(this.db, courseId);
+    const myGrades = allGrades.filter((r) => studentIds.includes(r.student_id));
+
+    const gradeDistribution: Record<string, number> = {};
+    for (const band of GRADE_BANDS) gradeDistribution[band.letter] = 0;
+    for (const row of myGrades) gradeDistribution[row.letter]++;
+
+    const classAveragePercentage =
+      myGrades.length > 0
+        ? Math.round(
+            (myGrades.reduce((sum, r) => sum + r.percentage, 0) / myGrades.length) * 100,
+          ) / 100
+        : null;
+
+    const assessments = computeAssessmentClassAverages(this.db, courseId, studentIds);
+
+    const attendancePerStudent = studentIds.map((sid) => {
+      const records = excludeHolidays(
+        this.db,
+        this.db.attendance_log.filter((a) => a.student_id === sid),
+        collegeId,
+      );
+      const summary = summariseAttendance(records);
+      return summary.total > 0 ? summary.percentage : null;
+    });
+    const gradedAttendance = attendancePerStudent.filter(
+      (p): p is number => p !== null,
+    );
+    const classAverageAttendance =
+      gradedAttendance.length > 0
+        ? Math.round(gradedAttendance.reduce((s, p) => s + p, 0) / gradedAttendance.length)
+        : null;
+
+    const atRiskCount = studentIds.filter((sid, i) => {
+      const { cgpa } = computeCGPA(this.db, sid);
+      return isAtRisk({ cgpa, attendancePct: attendancePerStudent[i] });
+    }).length;
+
+    const course = this.db.courses.find((c) => c.course_id === courseId);
+
+    return {
+      course_id: courseId,
+      course_code: course?.course_code || courseId,
+      course_name: course?.course_name || 'Unknown',
+      total_enrolled: totalEnrolled,
+      ungraded_count: totalEnrolled - myGrades.length,
+      grade_distribution: gradeDistribution,
+      class_average_percentage: classAveragePercentage,
+      attendance: { class_average_pct: classAverageAttendance },
+      at_risk_count: atRiskCount,
+      assessments,
+    };
   }
 
   async getTodayAttendance(

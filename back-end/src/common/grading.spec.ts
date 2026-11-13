@@ -6,6 +6,7 @@
  */
 
 import {
+  computeAssessmentClassAverages,
   computeCGPA,
   computeCoursePercentage,
   computeCourseGradesForCourse,
@@ -44,6 +45,56 @@ describe('computeCoursePercentage', () => {
   it('returns null when nothing is graded yet, not zero', () => {
     const db = dbWith({ assessments: [{ assessment_id: 'a1', course_id: 'c1', weightage: 20 }] });
     expect(computeCoursePercentage(db, 's1', 'c1')).toBeNull();
+  });
+});
+
+describe('computeAssessmentClassAverages', () => {
+  it('averages only the graded students for one assessment, and reports a wholly-ungraded one as null', () => {
+    const db = dbWith({
+      assessments: [
+        { assessment_id: 'a1', course_id: 'c1', name: 'Internal 1', type: 'theory', max_marks: 50, weightage: 20 },
+        { assessment_id: 'a2', course_id: 'c1', name: 'Quiz 1', type: 'quiz', max_marks: 20, weightage: 10 },
+      ],
+      marks_entry: [
+        { student_id: 's1', assessment_id: 'a1', marks_obtained: 40, max_marks: 50 }, // 80%
+        { student_id: 's2', assessment_id: 'a1', marks_obtained: 30, max_marks: 50 }, // 60%
+        { student_id: 's3', assessment_id: 'a1', marks_obtained: 50, max_marks: 50 }, // 100%, student not enrolled below — still counts unscoped
+      ],
+    });
+    const rows = computeAssessmentClassAverages(db, 'c1');
+    const byId = Object.fromEntries(rows.map((r) => [r.assessment_id, r]));
+    expect(byId.a1.average).toBeCloseTo(80, 1); // avg(80, 60, 100)
+    expect(byId.a1.gradedCount).toBe(3);
+    expect(byId.a2.average).toBeNull();
+    expect(byId.a2.gradedCount).toBe(0);
+  });
+
+  it('scopes to only the given studentIds when provided', () => {
+    const db = dbWith({
+      assessments: [{ assessment_id: 'a1', course_id: 'c1', name: 'Internal 1', type: 'theory', max_marks: 100, weightage: 100 }],
+      marks_entry: [
+        { student_id: 's1', assessment_id: 'a1', marks_obtained: 90, max_marks: 100 },
+        { student_id: 's2', assessment_id: 'a1', marks_obtained: 10, max_marks: 100 }, // outside the scope below
+      ],
+    });
+    const rows = computeAssessmentClassAverages(db, 'c1', ['s1']);
+    expect(rows[0].average).toBe(90); // s2's 10% must not drag this down
+    expect(rows[0].gradedCount).toBe(1);
+  });
+
+  it('reports null for an assessment nobody has been graded on, even when a sibling assessment in the same course does', () => {
+    const db = dbWith({
+      assessments: [
+        { assessment_id: 'a1', course_id: 'c1', name: 'Graded One', type: 'theory', max_marks: 100, weightage: 50 },
+        { assessment_id: 'a2', course_id: 'c1', name: 'Not Graded Yet', type: 'theory', max_marks: 100, weightage: 50 },
+      ],
+      marks_entry: [{ student_id: 's1', assessment_id: 'a1', marks_obtained: 70, max_marks: 100 }],
+    });
+    const rows = computeAssessmentClassAverages(db, 'c1');
+    const byId = Object.fromEntries(rows.map((r) => [r.assessment_id, r]));
+    expect(byId.a1.average).toBe(70);
+    expect(byId.a2.average).toBeNull();
+    expect(byId.a2.gradedCount).toBe(0);
   });
 });
 

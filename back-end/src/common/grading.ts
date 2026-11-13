@@ -81,6 +81,57 @@ export function computeCoursePercentage(
   return Math.round((weightedSum / totalWeight) * 100) / 100;
 }
 
+export interface AssessmentClassAverage {
+  assessment_id: string;
+  name: string;
+  type: string;
+  max_marks: number;
+  weightage: number;
+  /** Mean of marks_obtained/max_marks*100 across every student (optionally
+   *  restricted to studentIds) who has a mark for this assessment. null —
+   *  not 0 — when nobody has been graded on it yet. */
+  average: number | null;
+  gradedCount: number;
+}
+
+/**
+ * Per-assessment class average for one course. If studentIds is given, only
+ * marks belonging to those students count (e.g. one faculty's own section) —
+ * otherwise every mark for the assessment counts.
+ */
+export function computeAssessmentClassAverages(
+  db: InMemoryDbService,
+  courseId: string,
+  studentIds?: string[],
+): AssessmentClassAverage[] {
+  const assessments = db.assessments.filter((a: any) => a.course_id === courseId);
+  return assessments.map((a: any) => {
+    const marks = db.marks_entry.filter(
+      (m: any) =>
+        m.assessment_id === a.assessment_id &&
+        Number(m.max_marks) > 0 &&
+        (!studentIds || studentIds.includes(m.student_id)),
+    );
+    const average =
+      marks.length === 0
+        ? null
+        : Math.round(
+            (marks.reduce((sum: number, m: any) => sum + (Number(m.marks_obtained) / Number(m.max_marks)) * 100, 0) /
+              marks.length) *
+              100,
+          ) / 100;
+    return {
+      assessment_id: a.assessment_id,
+      name: a.name,
+      type: a.type,
+      max_marks: Number(a.max_marks) || 0,
+      weightage: Number(a.weightage) || 0,
+      average,
+      gradedCount: marks.length,
+    };
+  });
+}
+
 export interface CourseGradeRow {
   student_id: string;
   percentage: number;
