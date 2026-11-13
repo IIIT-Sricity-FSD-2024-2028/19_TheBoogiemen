@@ -151,4 +151,25 @@ describe('buildAttendanceCalendar', () => {
       if (cell2) expect(cell2.dayStatus).toBe('no-class');
     }
   });
+
+  it('shows a real recorded day even when the timetable has no slot for it (a makeup/extra session)', () => {
+    // 2026-11-10 is a Tuesday; this course's only timetable slot is Monday,
+    // so the regular schedule says "no class" — but faculty actually marked
+    // attendance that Tuesday anyway, and that must not be hidden.
+    const db = dbWith({
+      enrollment: [{ student_id: 's1', course_id: 'c1', section: 'A', status: 'active' }],
+      timetable: [{ course_id: 'c1', section: 'A', day: 'MON' }],
+      attendance_log: [{ student_id: 's1', course_id: 'c1', date: '2026-11-10', status: 'absent' }],
+      courses: [{ course_id: 'c1', course_code: 'CS101' }],
+    });
+
+    const days = buildAttendanceCalendar(db, 's1', '2026-11', 'c1');
+    const tuesday = days.find((d) => d.date === '2026-11-10')!;
+    expect(tuesday.dayStatus).toBe('absent');
+    expect(tuesday.courses).toEqual([{ course_id: 'c1', course_code: 'CS101', status: 'absent' }]);
+
+    // A genuinely different, unrecorded Tuesday still correctly shows no-class.
+    const otherTuesday = days.find((d) => d.date === '2026-11-17')!;
+    expect(otherTuesday.dayStatus).toBe('no-class');
+  });
 });
