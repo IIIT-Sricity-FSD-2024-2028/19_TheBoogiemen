@@ -112,7 +112,7 @@ function AttendanceForm() {
 
     setSubmitting(true);
     try {
-      await apiFetch('/faculty/attendance', {
+      const res = await apiFetch('/faculty/attendance', {
         method: 'POST',
         body: JSON.stringify({
           course_id: courseId,
@@ -122,7 +122,25 @@ function AttendanceForm() {
         }),
       });
       const secLabel = section ? ` (Section ${section})` : '';
-      showToast(`Attendance saved for ${records.length} students!${secLabel} (Date: ${today})`, 'success');
+      // A student already on approved leave for this session can't be
+      // downgraded to Absent (faculty.service.ts's recordAttendance) — say so
+      // explicitly instead of a blanket "saved" that implies every mark was
+      // applied exactly as selected. showToast only ever holds one message at
+      // a time, so this must be a single call, not two in a row — the second
+      // would overwrite the first before it ever rendered.
+      const protectedNames = (res?.records || [])
+        .filter((r) => r.protected)
+        .map((r) => students?.find((s) => s.user_id === r.student_id))
+        .filter(Boolean)
+        .map((s) => `${s.first_name} ${s.last_name || ''}`.trim());
+      if (protectedNames.length) {
+        showToast(
+          `Saved. ${protectedNames.join(', ')} ${protectedNames.length === 1 ? 'has' : 'have'} approved leave for this session — kept as Excused, not marked Absent.`,
+          'warning',
+        );
+      } else {
+        showToast(`Attendance saved for ${records.length} students!${secLabel} (Date: ${today})`, 'success');
+      }
     } catch (e) {
       showToast('Failed: ' + e.message, 'error');
     } finally {

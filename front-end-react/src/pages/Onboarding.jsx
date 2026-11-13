@@ -96,7 +96,7 @@ export default function Onboarding() {
     estimateTimer.current = setTimeout(async () => {
       try {
         const res = await apiCall('/billing/estimate', { method: 'POST', body: JSON.stringify(currentMetrics()) });
-        setLivePrice(formatRupees(res.data.payable_paise) + '/yr');
+        setLivePrice(formatRupees(res.data.payable_paise));
       } catch {
         setLivePrice('—');
       }
@@ -340,7 +340,7 @@ export default function Onboarding() {
             <div className="price-live">
               <div>
                 <div className="amount">{livePrice}</div>
-                <div className="caption">estimated, per year + GST</div>
+                <div className="caption">estimated total for {termYears} year{Number(termYears) > 1 ? 's' : ''} + GST</div>
               </div>
               <div className="caption">Updates as you change the fields above</div>
             </div>

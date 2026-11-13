@@ -18,7 +18,9 @@ export default function ProgramOutcomes() {
   const [submitting, setSubmitting] = useState(false);
 
   const load = () => apiFetch('/program-outcomes').then(setOutcomes).catch(() => setOutcomes([]));
-  useEffect(load, []);
+  // Wrapped, not passed directly — see Team.jsx's fix note: load() returns a
+  // Promise, which React would otherwise try to call as an unmount cleanup.
+  useEffect(() => { load(); }, []);
 
   const add = async (e) => {
     e.preventDefault();
