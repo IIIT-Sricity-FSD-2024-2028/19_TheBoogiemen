@@ -1223,6 +1223,17 @@
       "section": "A",
       "exam_mode": "offline",
       "college_id": "c-default"
+    },
+    {
+      "assessment_id": "a1794551839997",
+      "faculty_id": "u2",
+      "weightage": 100,
+      "course_id": "c1",
+      "name": "Live Grading Smoke Test",
+      "type": "theory",
+      "max_marks": 100,
+      "section": "A",
+      "college_id": "c-default"
     }
   ],
   "marks_entry": [
@@ -1276,6 +1287,14 @@
       "assessment_id": "a1791305106472",
       "marks_obtained": 42,
       "max_marks": 50,
+      "college_id": "c-default"
+    },
+    {
+      "entry_id": "m1794551851689",
+      "student_id": "u1",
+      "assessment_id": "a1794551839997",
+      "marks_obtained": 95,
+      "max_marks": 100,
       "college_id": "c-default"
     }
   ],

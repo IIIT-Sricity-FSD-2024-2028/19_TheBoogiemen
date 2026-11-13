@@ -8,6 +8,7 @@ import { InMemoryDbService } from '../database/in-memory-db.service';
 import { PasswordService } from './password.service';
 import { JwtPayload, Role, isRole } from './jwt-payload';
 import { ErrorCode, errorBody } from '../common/errors/error-codes';
+import { normalizeEmail } from '../common/normalize-email';
 
 @Injectable()
 export class AuthService {
@@ -25,7 +26,10 @@ export class AuthService {
    * returned here is signed with JWT_SECRET and checked on every later request.
    */
   async login(email: string, password: string) {
-    const user = this.db.users.find((u) => u.email === email);
+    // Email is case-insensitive: "Name@Example.com" must log in identically
+    // to "name@example.com", regardless of how either side was cased.
+    const target = normalizeEmail(email);
+    const user = this.db.users.find((u) => normalizeEmail(u.email) === target);
 
     // Verify even when the user is unknown, against a dummy digest, so that a
     // wrong email and a wrong password take the same time to answer. Without

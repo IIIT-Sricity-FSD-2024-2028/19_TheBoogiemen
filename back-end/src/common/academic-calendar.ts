@@ -163,16 +163,28 @@ export function buildAttendanceCalendar(
       ),
     );
     const dayRecords = recordsByDate.get(date) || [];
+    // A real attendance record must never be hidden behind "no class today"
+    // just because the seeded timetable has no slot for that course on this
+    // weekday — faculty can (and do) mark attendance for a date that doesn't
+    // match the regular timetable (a makeup/extra session, or any drift
+    // between the timetable and what was actually taught). Build the day's
+    // course list from the union of "regularly scheduled this weekday" and
+    // "has an actual record today", not from the timetable alone.
+    const scheduledCourseIds = new Set(scheduled.map((e: any) => e.course_id));
+    const recordedCourseIds = new Set(dayRecords.map((r: any) => r.course_id));
+    const relevantSections = mySections.filter(
+      (e: any) => scheduledCourseIds.has(e.course_id) || recordedCourseIds.has(e.course_id),
+    );
     // A future day with nothing recorded yet is genuinely undecided — but a
     // future day already carrying a record (an advance-approved excusal,
     // e.g. leave requested for next week) has actually been resolved, and
     // must show that, not a misleading neutral "no-class".
-    if (!scheduled.length || (date > today && !dayRecords.length)) {
+    if (!relevantSections.length || (date > today && !dayRecords.length)) {
       days.push({ date, dayStatus: 'no-class', courses: [] });
       continue;
     }
 
-    const courses: CalendarDayCourse[] = scheduled.map((e: any) => {
+    const courses: CalendarDayCourse[] = relevantSections.map((e: any) => {
       const log = dayRecords.find((r) => r.course_id === e.course_id);
       const course = db.courses.find((c: any) => c.course_id === e.course_id);
       // Matches faculty.service.ts's own "not yet marked" default — present

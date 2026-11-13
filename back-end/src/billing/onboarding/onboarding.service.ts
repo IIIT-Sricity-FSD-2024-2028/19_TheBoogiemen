@@ -21,6 +21,7 @@ import { computeQuote, QuoteBreakdown, QuoteMetrics } from '../pricing/pricing.s
 import { PAYMENT_GATEWAY } from '../payments/payment-gateway.interface';
 import type { PaymentGateway } from '../payments/payment-gateway.interface';
 import { OnboardingStartDto } from '../dto/onboarding-start.dto';
+import { normalizeEmail } from '../../common/normalize-email';
 
 /** Confirmed with the user: 60 minutes — long enough for a careful signup,
  *  short enough that an abandoned draft doesn't linger meaningfully even
@@ -42,12 +43,15 @@ export class OnboardingService {
   // ── Stage 1 ──────────────────────────────────────────────────────────────
 
   async start(dto: OnboardingStartDto): Promise<{ token: string; ttlMs: number }> {
-    if (this.db.users.find((u) => u.email === dto.email)) {
+    // Case-insensitive, same as every other account-creation path: email is
+    // a login identifier, not a case-sensitive string.
+    const email = normalizeEmail(dto.email);
+    if (this.db.users.find((u) => normalizeEmail(u.email) === email)) {
       throw new BadRequestException(
         errorBody(ErrorCode.DUPLICATE_RESOURCE, 'An account with this email already exists'),
       );
     }
-    if (this.activeDraftByEmail(dto.email)) {
+    if (this.activeDraftByEmail(email)) {
       throw new BadRequestException(
         errorBody(
           ErrorCode.DUPLICATE_RESOURCE,
@@ -60,7 +64,7 @@ export class OnboardingService {
     const sessionId = `os${now}`;
     this.db.onboarding_sessions.push({
       session_id: sessionId,
-      email: dto.email,
+      email,
       password_hash: await this.passwordService.hash(dto.password),
       first_name: dto.first_name ?? null,
       last_name: dto.last_name ?? null,
@@ -270,9 +274,10 @@ export class OnboardingService {
 
   private activeDraftByEmail(email: string) {
     const now = Date.now();
+    const target = normalizeEmail(email);
     return this.db.onboarding_sessions.find(
       (s: any) =>
-        s.email === email &&
+        normalizeEmail(s.email) === target &&
         s.status !== 'completed' &&
         s.status !== 'expired' &&
         new Date(s.expires_at).getTime() > now,
