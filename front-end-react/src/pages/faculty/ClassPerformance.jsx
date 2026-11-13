@@ -12,6 +12,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { Bar, BarChart, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { apiFetch } from '../../api/client';
 
 const GRADE_COLOR = {
@@ -97,10 +98,10 @@ export default function ClassPerformance() {
       .catch((e) => setError(e.message));
   }, [courseId]);
 
-  const maxBand = performance
-    ? Math.max(1, ...GRADE_ORDER.map((g) => performance.grade_distribution[g] || 0))
-    : 1;
   const totalGraded = performance ? performance.total_enrolled - performance.ungraded_count : 0;
+  const distributionData = performance
+    ? GRADE_ORDER.map((g) => ({ grade: g, count: performance.grade_distribution[g] || 0 }))
+    : [];
 
   return (
     <div className="stats-card">
@@ -132,22 +133,18 @@ export default function ClassPerformance() {
             </div>
 
             <h4 style={{ fontSize: 13, fontWeight: 700, marginBottom: 12, color: '#475569' }}>GRADE DISTRIBUTION</h4>
-            <div style={{ marginBottom: 10 }}>
-              {GRADE_ORDER.map((g) => {
-                const count = performance.grade_distribution[g] || 0;
-                const { bg, fg } = GRADE_COLOR[g];
-                return (
-                  <div key={g} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                    <span style={{ background: bg, color: fg, borderRadius: 6, padding: '2px 10px', fontSize: 13, fontWeight: 800, minWidth: 24, textAlign: 'center' }}>{g}</span>
-                    <div style={{ flex: 1, height: 16, background: '#f1f5f9', borderRadius: 4, overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${(count / maxBand) * 100}%`, background: bg }} />
-                    </div>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: '#475569', minWidth: 20, textAlign: 'right' }}>{count}</span>
-                  </div>
-                );
-              })}
-            </div>
-            <p style={{ fontSize: 12, color: '#94a3b8', marginBottom: 28 }}>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={distributionData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                <XAxis dataKey="grade" tick={{ fontSize: 13, fontWeight: 700, fill: '#475569' }} axisLine={false} tickLine={false} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} width={28} />
+                <Tooltip formatter={(v) => [`${v} student${v === 1 ? '' : 's'}`, 'Count']} cursor={{ fill: '#f8fafc' }} />
+                <Bar dataKey="count" radius={[4, 4, 0, 0]} maxBarSize={48}>
+                  {distributionData.map((d) => <Cell key={d.grade} fill={GRADE_COLOR[d.grade].bg} />)}
+                  <LabelList dataKey="count" position="top" style={{ fontSize: 12, fontWeight: 700, fill: '#475569' }} />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+            <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 4, marginBottom: 28 }}>
               {totalGraded} of {performance.total_enrolled} student(s) graded{performance.ungraded_count > 0 ? ` — ${performance.ungraded_count} not yet graded` : ''}.
             </p>
 
