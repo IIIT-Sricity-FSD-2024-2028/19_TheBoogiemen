@@ -1207,7 +1207,7 @@ this.db.persist();
 // M-02: approved leave now writes EXCUSED sessions across the leave window so
 // the student is not marked absent for time the institution authorised.
 // Reverting the approval removes exactly what it added.
-const attendance = syncLeaveAttendance(this.db, leave, status);
+const attendance = syncLeaveAttendance(this.db, leave, status, collegeId);
 return { success: true, data: leave, attendance };
 }
 
@@ -1621,6 +1621,66 @@ attendancePct: attendance_pct,
 };
 })
 .filter((s) => s.is_at_risk);
+}
+
+/**
+ * SRS 6.2 #3 / 6.3 #10: "Manage User Roles and oversee Master Attendance" —
+ * nothing before this let admin/head browse the raw attendance register at
+ * all, only approve requests (AttendanceOverride.jsx) or read one aggregate
+ * percentage (reports/overview). Unfiltered by default — "master" means
+ * the whole college's register, not a report pre-narrowed by the server;
+ * the frontend picks a sane default view, not this endpoint.
+ */
+@Get('attendance-register')
+@Roles('admin', 'head', 'superadmin')
+@ApiOperation({ summary: 'Browse/filter the institution-wide attendance register' })
+async getAttendanceRegister(
+@Query('course_id') courseId: string | undefined,
+@Query('section') section: string | undefined,
+@Query('date_from') dateFrom: string | undefined,
+@Query('date_to') dateTo: string | undefined,
+@Query('status') status: string | undefined,
+@Query('student_id') studentId: string | undefined,
+@CurrentUserCollegeId() collegeId: string | null,
+) {
+let records = excludeHolidays(
+this.db,
+scopeToCollege(this.db.attendance_log, collegeId),
+collegeId,
+);
+if (courseId) records = records.filter((r: any) => r.course_id === courseId);
+if (studentId) records = records.filter((r: any) => r.student_id === studentId);
+if (dateFrom) records = records.filter((r: any) => r.date >= dateFrom);
+if (dateTo) records = records.filter((r: any) => r.date <= dateTo);
+if (status)
+records = records.filter(
+(r: any) => normalizeAttendanceStatus(r.status) === normalizeAttendanceStatus(status),
+);
+
+const enriched = records.map((r: any) => {
+const student = this.db.students.find((s) => s.user_id === r.student_id);
+const course = this.db.courses.find((c) => c.course_id === r.course_id);
+const enrollment = this.db.enrollment.find(
+(e) => e.student_id === r.student_id && e.course_id === r.course_id,
+);
+return {
+log_id: r.log_id,
+student_id: r.student_id,
+student_name: student ? `${student.first_name} ${student.last_name || ''}`.trim() : r.student_id,
+course_id: r.course_id,
+course_code: course?.course_code || r.course_id,
+course_name: course?.course_name || 'Unknown',
+section: enrollment?.section ?? null,
+date: r.date,
+status: normalizeAttendanceStatus(r.status),
+};
+});
+
+// section filters on the joined field, so it has to happen after the join.
+const filtered = section ? enriched.filter((r) => r.section === section) : enriched;
+filtered.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+
+return { records: filtered, summary: summariseAttendance(filtered) };
 }
 
 // â”€â”€ Resources â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

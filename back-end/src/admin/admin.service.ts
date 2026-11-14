@@ -52,7 +52,7 @@ export class AdminService {
     // M-02: this is the second leave-approval path (PUT /api/admin/leave/:id).
     // It must keep attendance in step exactly as PATCH /api/leave/:id does,
     // otherwise approving here would still leave the student marked absent.
-    syncLeaveAttendance(this.db, leave, normalized);
+    syncLeaveAttendance(this.db, leave, normalized, collegeId);
     return leave;
   }
 

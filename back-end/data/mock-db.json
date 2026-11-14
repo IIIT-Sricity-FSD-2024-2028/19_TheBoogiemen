@@ -654,7 +654,8 @@
       "course_id": "c1",
       "date": "2026-11-01",
       "status": "excused",
-      "source": "leave:l1791189782361"
+      "source": "leave:l1791189782361",
+      "college_id": "c-default"
     },
     {
       "log_id": "5eff4323-2c39-4cde-bf23-bbc721611197",
@@ -662,7 +663,8 @@
       "course_id": "c2",
       "date": "2026-11-01",
       "status": "excused",
-      "source": "leave:l1791189782361"
+      "source": "leave:l1791189782361",
+      "college_id": "c-default"
     },
     {
       "log_id": "5670689d-e686-4c58-b96b-5946000247f2",
@@ -670,7 +672,8 @@
       "course_id": "c5",
       "date": "2026-11-01",
       "status": "excused",
-      "source": "leave:l1791189782361"
+      "source": "leave:l1791189782361",
+      "college_id": "c-default"
     },
     {
       "log_id": "dffefade-33f5-4c33-a131-4ab110ac62c2",
@@ -678,7 +681,8 @@
       "course_id": "c7",
       "date": "2026-11-01",
       "status": "excused",
-      "source": "leave:l1791189782361"
+      "source": "leave:l1791189782361",
+      "college_id": "c-default"
     },
     {
       "log_id": "ee1d25c4-f641-470b-ad99-7632a49b19a3",
@@ -686,7 +690,8 @@
       "course_id": "c3",
       "date": "2026-11-01",
       "status": "excused",
-      "source": "leave:l1791189782361"
+      "source": "leave:l1791189782361",
+      "college_id": "c-default"
     },
     {
       "log_id": "1ee534ad-97a0-40dc-8280-1979aa749db9",
@@ -694,7 +699,8 @@
       "course_id": "c1791306246075",
       "date": "2026-11-01",
       "status": "excused",
-      "source": "leave:l1791189782361"
+      "source": "leave:l1791189782361",
+      "college_id": "c-default"
     },
     {
       "log_id": "a05c2de6-a055-4815-92ae-f951a9c20f89",
@@ -702,7 +708,8 @@
       "course_id": "c1",
       "date": "2026-11-02",
       "status": "excused",
-      "source": "leave:l1791189782361"
+      "source": "leave:l1791189782361",
+      "college_id": "c-default"
     },
     {
       "log_id": "923b6206-2a51-4541-a22e-ad724f2455f2",
@@ -710,7 +717,8 @@
       "course_id": "c2",
       "date": "2026-11-02",
       "status": "excused",
-      "source": "leave:l1791189782361"
+      "source": "leave:l1791189782361",
+      "college_id": "c-default"
     },
     {
       "log_id": "4310ffb5-fbf8-4b90-896e-fce306d21f3a",
@@ -718,7 +726,8 @@
       "course_id": "c5",
       "date": "2026-11-02",
       "status": "excused",
-      "source": "leave:l1791189782361"
+      "source": "leave:l1791189782361",
+      "college_id": "c-default"
     },
     {
       "log_id": "accf4821-2d20-45dc-aab7-f78ed0fed28a",
@@ -726,7 +735,8 @@
       "course_id": "c7",
       "date": "2026-11-02",
       "status": "excused",
-      "source": "leave:l1791189782361"
+      "source": "leave:l1791189782361",
+      "college_id": "c-default"
     },
     {
       "log_id": "191e6277-e460-4239-b673-95a212227647",
@@ -734,7 +744,8 @@
       "course_id": "c3",
       "date": "2026-11-02",
       "status": "excused",
-      "source": "leave:l1791189782361"
+      "source": "leave:l1791189782361",
+      "college_id": "c-default"
     },
     {
       "log_id": "55b4ed02-a110-44a0-87bf-62e9db8dad52",
@@ -742,7 +753,8 @@
       "course_id": "c1791306246075",
       "date": "2026-11-02",
       "status": "excused",
-      "source": "leave:l1791189782361"
+      "source": "leave:l1791189782361",
+      "college_id": "c-default"
     },
     {
       "log_id": "6a78fa5f-210a-4dd3-a1ff-e23bccb82885",
@@ -750,7 +762,8 @@
       "course_id": "c1",
       "date": "2026-11-03",
       "status": "present",
-      "source": "leave:l1791189782361"
+      "source": "leave:l1791189782361",
+      "college_id": "c-default"
     },
     {
       "log_id": "fdb4d23f-eaa0-4ba8-9a96-18656f6f8b21",
@@ -758,7 +771,8 @@
       "course_id": "c2",
       "date": "2026-11-03",
       "status": "excused",
-      "source": "leave:l1791189782361"
+      "source": "leave:l1791189782361",
+      "college_id": "c-default"
     },
     {
       "log_id": "8a070de8-e13d-4c77-8784-ca5ccc5e81a2",
@@ -766,7 +780,8 @@
       "course_id": "c5",
       "date": "2026-11-03",
       "status": "excused",
-      "source": "leave:l1791189782361"
+      "source": "leave:l1791189782361",
+      "college_id": "c-default"
     },
     {
       "log_id": "6b3327f1-ab55-4130-a105-3aa9c817587d",
@@ -774,7 +789,8 @@
       "course_id": "c7",
       "date": "2026-11-03",
       "status": "excused",
-      "source": "leave:l1791189782361"
+      "source": "leave:l1791189782361",
+      "college_id": "c-default"
     },
     {
       "log_id": "a97efe70-b221-4ce1-ba74-52e638d49d61",
@@ -782,7 +798,8 @@
       "course_id": "c3",
       "date": "2026-11-03",
       "status": "excused",
-      "source": "leave:l1791189782361"
+      "source": "leave:l1791189782361",
+      "college_id": "c-default"
     },
     {
       "log_id": "69df2785-acae-4aad-93b3-1e9aaf78b4df",
@@ -790,7 +807,8 @@
       "course_id": "c1791306246075",
       "date": "2026-11-03",
       "status": "excused",
-      "source": "leave:l1791189782361"
+      "source": "leave:l1791189782361",
+      "college_id": "c-default"
     },
     {
       "log_id": "aab3ea2c-3a09-4d54-8f61-0e48cce8fcbb",
@@ -798,7 +816,8 @@
       "course_id": "c1",
       "date": "2026-11-05",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "03c2102a-c083-404a-a4be-94323fc4bc5a",
@@ -806,7 +825,8 @@
       "course_id": "c2",
       "date": "2026-11-05",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "c404bf31-fa04-4c41-8325-483545157e2a",
@@ -814,7 +834,8 @@
       "course_id": "c5",
       "date": "2026-11-05",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "d462ddc4-fc17-4de4-99c1-e2fd894bcc3b",
@@ -822,7 +843,8 @@
       "course_id": "c7",
       "date": "2026-11-05",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "ac4bb7e5-3400-4d2b-bd1e-aeccf64dc8db",
@@ -830,7 +852,8 @@
       "course_id": "c3",
       "date": "2026-11-05",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "eb51b313-70a7-4cc6-a5a5-25a07094a44b",
@@ -838,7 +861,8 @@
       "course_id": "c1791306246075",
       "date": "2026-11-05",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "a8c252fa-c4f9-431a-870c-4799657455ff",
@@ -846,7 +870,8 @@
       "course_id": "c1",
       "date": "2026-11-06",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "64973c1c-24ba-4af1-ae7d-bc8186e5786e",
@@ -854,7 +879,8 @@
       "course_id": "c2",
       "date": "2026-11-06",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "dcbdf0b1-6cfe-4ce4-8dee-585637f67278",
@@ -862,7 +888,8 @@
       "course_id": "c5",
       "date": "2026-11-06",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "c587d67b-c87d-4ece-8ad2-5484b499d50a",
@@ -870,7 +897,8 @@
       "course_id": "c7",
       "date": "2026-11-06",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "d22f3223-af66-46f1-a878-a7c6d627fd10",
@@ -878,7 +906,8 @@
       "course_id": "c3",
       "date": "2026-11-06",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "2719a3a3-4a16-4dad-8128-7a8b3505c312",
@@ -886,7 +915,8 @@
       "course_id": "c1791306246075",
       "date": "2026-11-06",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "c24c6418-b0cf-4342-b87a-39f22913e71e",
@@ -894,7 +924,8 @@
       "course_id": "c1",
       "date": "2026-11-07",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "9488bf76-2514-4639-9062-f9f52adcb3c1",
@@ -902,7 +933,8 @@
       "course_id": "c2",
       "date": "2026-11-07",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "5bf9e87f-ee2f-43c0-8f93-9bf407fd150c",
@@ -910,7 +942,8 @@
       "course_id": "c5",
       "date": "2026-11-07",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "1a304c26-db57-4194-b82f-9bb06979da84",
@@ -918,7 +951,8 @@
       "course_id": "c7",
       "date": "2026-11-07",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "4fd90b12-d5c2-434a-8956-859c993080db",
@@ -926,7 +960,8 @@
       "course_id": "c3",
       "date": "2026-11-07",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "ab409e39-0eba-4c0a-9edc-f5c1012ab4ec",
@@ -934,7 +969,8 @@
       "course_id": "c1791306246075",
       "date": "2026-11-07",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "a6b259d6-162f-4372-aad8-34328653c76a",
@@ -942,7 +978,8 @@
       "course_id": "c1",
       "date": "2026-11-08",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "ee082a4b-a31e-4c0d-ac9b-5d3959c4afd9",
@@ -950,7 +987,8 @@
       "course_id": "c2",
       "date": "2026-11-08",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "d340ec3c-59d9-4825-b6ac-52f3805b5555",
@@ -958,7 +996,8 @@
       "course_id": "c5",
       "date": "2026-11-08",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "5920a621-3d56-4234-a4df-407ed2d4e2d7",
@@ -966,7 +1005,8 @@
       "course_id": "c7",
       "date": "2026-11-08",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "e14e9781-0a2e-47f9-84cb-e8061a2489c8",
@@ -974,7 +1014,8 @@
       "course_id": "c3",
       "date": "2026-11-08",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "2c1ed6bd-3b7a-4137-8e1d-f4a5e3efde9c",
@@ -982,7 +1023,8 @@
       "course_id": "c1791306246075",
       "date": "2026-11-08",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "444c81b7-3721-4456-8e4c-c056fad03c21",
@@ -990,7 +1032,8 @@
       "course_id": "c1",
       "date": "2026-11-09",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "f4049097-70e5-4dfc-9ad2-5684beff8ee1",
@@ -998,7 +1041,8 @@
       "course_id": "c2",
       "date": "2026-11-09",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "6845106e-f5f9-4ae3-a489-f9caf51c71c4",
@@ -1006,7 +1050,8 @@
       "course_id": "c5",
       "date": "2026-11-09",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "1f4c4d89-2113-440f-8dd4-5f0e0af91646",
@@ -1014,7 +1059,8 @@
       "course_id": "c7",
       "date": "2026-11-09",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "a24fbc16-32c2-4457-98f9-8a67f53984ef",
@@ -1022,7 +1068,8 @@
       "course_id": "c3",
       "date": "2026-11-09",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "1f1b8489-cf77-416f-9f7b-724dc2925983",
@@ -1030,7 +1077,8 @@
       "course_id": "c1791306246075",
       "date": "2026-11-09",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "5a64798a-ef10-492a-bb92-d9409bfe9cde",
@@ -1038,7 +1086,8 @@
       "course_id": "c1",
       "date": "2026-11-10",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "5146b16d-5747-42d8-94dd-6a033e9259b5",
@@ -1046,7 +1095,8 @@
       "course_id": "c2",
       "date": "2026-11-10",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "509bc51f-5ec2-499a-be7a-8c743eac5392",
@@ -1054,7 +1104,8 @@
       "course_id": "c5",
       "date": "2026-11-10",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "79ddc543-b6d6-47c4-bafa-dd50d54ca902",
@@ -1062,7 +1113,8 @@
       "course_id": "c7",
       "date": "2026-11-10",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "31a5d01a-6868-4034-9d6b-3668149061c8",
@@ -1070,7 +1122,8 @@
       "course_id": "c3",
       "date": "2026-11-10",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "31854946-da13-4f62-91ba-9d5294564409",
@@ -1078,7 +1131,8 @@
       "course_id": "c1791306246075",
       "date": "2026-11-10",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "ce3d6aea-222e-4c5d-8d43-e9eaf40bddc7",
@@ -1086,7 +1140,8 @@
       "course_id": "c1",
       "date": "2026-11-11",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "1b01e242-9357-4434-9bdd-d01bad58e7e6",
@@ -1094,7 +1149,8 @@
       "course_id": "c2",
       "date": "2026-11-11",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "18d0b0ad-590d-4056-92b3-20c8f31fed87",
@@ -1102,7 +1158,8 @@
       "course_id": "c5",
       "date": "2026-11-11",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "ef27609f-2ac2-41de-93c3-de59e6df56b1",
@@ -1110,7 +1167,8 @@
       "course_id": "c7",
       "date": "2026-11-11",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "db6a66a8-d610-48f0-b2ad-97d800eb2a44",
@@ -1118,7 +1176,8 @@
       "course_id": "c3",
       "date": "2026-11-11",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "10d59980-4a1e-4483-9c3a-2e5a439ec1a2",
@@ -1126,7 +1185,8 @@
       "course_id": "c1791306246075",
       "date": "2026-11-11",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "257aca0a-06b8-4154-b87a-669a598dc4c3",
@@ -1134,7 +1194,8 @@
       "course_id": "c1",
       "date": "2026-11-12",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "561f9065-3548-4305-9bb8-a7b8557004ac",
@@ -1142,7 +1203,8 @@
       "course_id": "c2",
       "date": "2026-11-12",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "4c1e1c8d-43f2-4fa7-a365-821543a9affb",
@@ -1150,7 +1212,8 @@
       "course_id": "c5",
       "date": "2026-11-12",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "5ea80194-eb50-4507-8364-b754652a010f",
@@ -1158,7 +1221,8 @@
       "course_id": "c7",
       "date": "2026-11-12",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "365dfe6d-bdf0-4684-b172-8bda2f41900e",
@@ -1166,7 +1230,8 @@
       "course_id": "c3",
       "date": "2026-11-12",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "364f2ac3-c7c4-49ab-93fc-ed074ba09b8f",
@@ -1174,7 +1239,8 @@
       "course_id": "c1791306246075",
       "date": "2026-11-12",
       "status": "excused",
-      "source": "leave:l1793873673605"
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
     },
     {
       "log_id": "c788dc86-36b0-4b7f-9e16-356a649dad89",

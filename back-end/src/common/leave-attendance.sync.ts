@@ -17,6 +17,7 @@ import {
   eachDateInRange,
   normalizeAttendanceStatus,
 } from './academic-rules';
+import { writeCollegeId } from './tenancy/scope-to-college';
 
 export interface LeaveSyncResult {
   created: number;
@@ -40,7 +41,11 @@ const sourceTag = (leaveId: string) => `leave:${leaveId}`;
  * Mark every session in the leave window as EXCUSED for the student's active courses.
  * An existing PRESENT record is never overwritten — being in class beats being on leave.
  */
-export function applyLeaveToAttendance(db: any, leave: any): LeaveSyncResult {
+export function applyLeaveToAttendance(
+  db: any,
+  leave: any,
+  collegeId: string | null = null,
+): LeaveSyncResult {
   const result = emptyResult();
   if (!leave?.student_id || !leave?.start_date || !leave?.end_date)
     return result;
@@ -74,6 +79,11 @@ export function applyLeaveToAttendance(db: any, leave: any): LeaveSyncResult {
           date,
           status: ATTENDANCE_STATUS.EXCUSED,
           source: tag,
+          // Was missing entirely before this fix — a row with no college_id
+          // is invisible to every scopeToCollege()-gated read (silently
+          // dropped from any admin/head attendance view), even though the
+          // student's own unscoped attendance read still counted it.
+          college_id: writeCollegeId(collegeId),
         } as any);
         result.created++;
         continue;
@@ -131,11 +141,12 @@ export function syncLeaveAttendance(
   db: any,
   leave: any,
   newStatus: string,
+  collegeId: string | null = null,
 ): LeaveSyncResult {
   const status = String(newStatus ?? '')
     .trim()
     .toLowerCase();
   return status === 'approved'
-    ? applyLeaveToAttendance(db, leave)
+    ? applyLeaveToAttendance(db, leave, collegeId)
     : revokeLeaveAttendance(db, leave);
 }
