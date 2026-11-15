@@ -64,9 +64,16 @@ function UpcomingMeetings() {
 
   useEffect(() => {
     apiFetch('/meetings')
-      .then((all) => {
+      .then((res) => {
+        const list = Array.isArray(res) ? res : res?.data || [];
         const today = new Date().toISOString().split('T')[0];
-        setMeetings((all || []).filter((m) => m.date >= today));
+        setMeetings(
+          list.filter(
+            (m) =>
+              (m.status === 'SCHEDULED' || !m.status) &&
+              (m.scheduled_date || m.date || m.requested_date) >= today,
+          ),
+        );
       })
       .catch(() => setMeetings([]));
   }, []);
@@ -84,22 +91,38 @@ function UpcomingMeetings() {
         </div>
         <div className="stats-card-body" style={{ padding: 16 }}>
           {meetings.map((m, i) => {
-            const online = m.mode === 'online';
+            const isOnline = (m.meeting_type || m.mode || '').toUpperCase() === 'ONLINE';
+            const mDate = m.scheduled_date || m.date || m.requested_date;
+            const mTime = m.scheduled_start_time || m.time || m.requested_start_time || 'TBD';
+            const mAgenda = m.purpose || m.agenda || m.description;
             return (
               <div key={i} style={{ padding: 14, border: '1px solid #e2e8f0', borderRadius: 10, marginBottom: 10, background: '#fff' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
                   <div>
                     <div style={{ fontWeight: 700, fontSize: 14, color: '#0f172a' }}>Meeting with {m.faculty_name || 'Faculty'}</div>
-                    <div style={{ fontSize: 13, color: '#64748b', marginTop: 3 }}>🗓 {m.date} &nbsp;·&nbsp; ⏰ {m.time || 'TBD'}</div>
-                    <div style={{ marginTop: 5, fontSize: 12, padding: '3px 8px', background: online ? '#eff6ff' : '#f0fdf4', color: online ? '#1e40af' : '#065f46', borderRadius: 6, display: 'inline-block', fontWeight: 600 }}>
-                      {online ? '🌐 Online (Google Meet)' : '🏢 In-Person (Faculty Cabin)'}
+                    <div style={{ fontSize: 13, color: '#64748b', marginTop: 3 }}>🗓 {mDate} &nbsp;·&nbsp; ⏰ {mTime}</div>
+                    <div style={{ marginTop: 5, fontSize: 12, padding: '3px 8px', background: isOnline ? '#eff6ff' : '#f0fdf4', color: isOnline ? '#1e40af' : '#065f46', borderRadius: 6, display: 'inline-block', fontWeight: 600 }}>
+                      {isOnline ? '🌐 Online (Virtual)' : `🏢 In-Person ${m.location ? `(${m.location})` : ''}`}
                     </div>
                   </div>
-                  <span style={{ padding: '4px 10px', background: '#eff6ff', color: '#3730a3', borderRadius: 20, fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap' }}>UPCOMING</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {isOnline && m.meeting_link && (
+                      <a
+                        href={m.meeting_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-primary"
+                        style={{ padding: '4px 10px', fontSize: 12, textDecoration: 'none' }}
+                      >
+                        Join ↗
+                      </a>
+                    )}
+                    <span style={{ padding: '4px 10px', background: '#eff6ff', color: '#3730a3', borderRadius: 20, fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap' }}>UPCOMING</span>
+                  </div>
                 </div>
-                {m.agenda && (
+                {mAgenda && (
                   <div style={{ marginTop: 10, padding: 10, background: '#f8fafc', borderRadius: 6, fontSize: 13, color: '#374151' }}>
-                    <strong>Agenda:</strong> {m.agenda}
+                    <strong>Agenda:</strong> {mAgenda}
                   </div>
                 )}
               </div>

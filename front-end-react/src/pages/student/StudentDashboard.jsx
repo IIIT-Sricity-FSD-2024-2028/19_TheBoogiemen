@@ -18,6 +18,7 @@ import Courses from './Courses';
 import Attendance from './Attendance';
 import Grades from './Grades';
 import Outcomes from './Outcomes';
+import StudentMeetingsSection from './StudentMeetingsSection';
 
 const NAV_ITEMS = [
   {
@@ -107,6 +108,18 @@ const NAV_ITEMS = [
       </svg>
     ),
   },
+  {
+    id: 'meetings',
+    label: 'Meetings & Advising',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </svg>
+    ),
+  },
 ];
 
 const TITLES = {
@@ -119,6 +132,7 @@ const TITLES = {
   outcomes: 'Outcomes',
   discussion: 'Discussion Forum',
   research: 'Research Projects',
+  meetings: 'Faculty Advising & Meetings',
   settings: 'Settings',
 };
 
@@ -132,6 +146,7 @@ const VIEWS = {
   outcomes: <Outcomes />,
   discussion: <DiscussionForum />,
   research: <ResearchPanel role="student" />,
+  meetings: <StudentMeetingsSection />,
   settings: <Settings />,
 };
 

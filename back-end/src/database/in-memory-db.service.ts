@@ -63,6 +63,7 @@ export class InMemoryDbService implements OnModuleInit {
   public quotes = this.createProxyArray([]);
   public payments = this.createProxyArray([]);
   public subscriptions = this.createProxyArray([]);
+  public meetings = this.createProxyArray([]);
 
   constructor(
     @InjectPinoLogger(InMemoryDbService.name)
@@ -178,6 +179,7 @@ export class InMemoryDbService implements OnModuleInit {
         quotes: this.quotes,
         payments: this.payments,
         subscriptions: this.subscriptions,
+        meetings: this.meetings,
       };
 
       fs.writeFileSync(
