@@ -284,6 +284,7 @@ function MarksEntryModal({ assessment, onClose, onSaved }) {
     const [submissions, setSubmissions] = useState([]);
     const [existingMarks, setExistingMarks] = useState([]);
     const [values, setValues] = useState({});
+    const [feedbacks, setFeedbacks] = useState({});
     const [errors, setErrors] = useState({});
     const [submitting, setSubmitting] = useState(false);
     const isOnline = assessment?.exam_mode === 'online';
@@ -292,6 +293,7 @@ function MarksEntryModal({ assessment, onClose, onSaved }) {
         if (!assessment) return;
         setStudents(null);
         setValues({});
+        setFeedbacks({});
         setErrors({});
         Promise.all([
             apiFetch('/faculty/me/students'),
@@ -302,22 +304,25 @@ function MarksEntryModal({ assessment, onClose, onSaved }) {
             setSubmissions(subs);
             setExistingMarks(marks || []);
             const init = {};
+            const initFeedback = {};
             (marks || []).forEach((m) => {
                 init[m.student_id] = m.marks_obtained;
+                if (m.feedback_text) initFeedback[m.student_id] = m.feedback_text;
             });
             setValues(init);
+            setFeedbacks(initFeedback);
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [assessment]);
 
     const submit = async () => {
         const maxMarks = assessment.max_marks || 100;
-        const records = [];
+        const creates = [];
+        const corrections = [];
         const nextErrors = {};
         let hasError = false;
 
         for (const [student_id, raw] of Object.entries(values)) {
-            if (existingMarks.some((m) => m.student_id === student_id)) continue; // locked, read-only
             if (raw === '' || raw === undefined || raw === null) continue;
             const val = Number(raw);
             if (isNaN(val) || val < 0 || val > maxMarks) {
@@ -325,31 +330,45 @@ function MarksEntryModal({ assessment, onClose, onSaved }) {
                 hasError = true;
                 continue;
             }
-            records.push({ student_id, assessment_id: assessment.assessment_id, marks_obtained: val, max_marks: maxMarks });
+            const feedback_text = (feedbacks[student_id] || '').trim();
+            const existing = existingMarks.find((m) => m.student_id === student_id);
+            if (!existing) {
+                creates.push({ student_id, assessment_id: assessment.assessment_id, marks_obtained: val, max_marks: maxMarks, feedback_text: feedback_text || undefined });
+            } else {
+                const marksChanged = Number(existing.marks_obtained) !== val;
+                const feedbackChanged = feedback_text !== (existing.feedback_text || '');
+                if (marksChanged || feedbackChanged) {
+                    corrections.push({ entry_id: existing.entry_id, student_id, marks_obtained: val, previous: existing.marks_obtained, feedback_text, marksChanged });
+                } // else fully unchanged — skip, no pointless network call
+            }
         }
 
         setErrors(nextErrors);
         if (hasError) return showToast(`Marks must be between 0 and ${maxMarks}`, 'warning');
-        if (!records.length) return showToast('Enter at least one student mark', 'warning');
+        if (!creates.length && !corrections.length) return showToast('Enter at least one student mark', 'warning');
 
         setSubmitting(true);
         let saved = 0;
-        let locked = 0;
+        let corrected = 0;
         const from = user?.first_name || 'Faculty';
         try {
-            for (const r of records) {
-                try {
-                    await apiFetch('/marks', { method: 'POST', body: JSON.stringify(r) });
-                    saved++;
-                    send(r.student_id, from, `📊 Your marks for "${assessment.name}" have been posted: ${r.marks_obtained}/${maxMarks}. These marks are now locked and final.`, 'marks');
-                } catch (err) {
-                    if (err.message?.includes('locked')) locked++;
-                    else throw err;
-                }
+            for (const r of creates) {
+                await apiFetch('/marks', { method: 'POST', body: JSON.stringify(r) });
+                saved++;
+                send(r.student_id, from, `📊 Your marks for "${assessment.name}" have been posted: ${r.marks_obtained}/${maxMarks}.`, 'marks');
             }
-            let msg = `Marks saved for ${saved} student(s)!`;
-            if (locked > 0) msg += ` (${locked} already locked — skipped)`;
-            showToast(msg + ' Students notified. ✅', 'success');
+            for (const r of corrections) {
+                await apiFetch(`/marks/${r.entry_id}`, { method: 'PATCH', body: JSON.stringify({ marks_obtained: r.marks_obtained, feedback_text: r.feedback_text }) });
+                corrected++;
+                const msg = r.marksChanged
+                    ? `📊 Your marks for "${assessment.name}" were corrected: ${r.previous}/${maxMarks} → ${r.marks_obtained}/${maxMarks}.`
+                    : `📊 Feedback was added to your marks for "${assessment.name}".`;
+                send(r.student_id, from, msg, 'marks');
+            }
+            let msg = [];
+            if (saved) msg.push(`${saved} entered`);
+            if (corrected) msg.push(`${corrected} corrected`);
+            showToast(`Marks saved — ${msg.join(', ')}! Students notified. ✅`, 'success');
             onClose();
             onSaved();
         } catch (e) {
@@ -368,7 +387,7 @@ function MarksEntryModal({ assessment, onClose, onSaved }) {
         >
             <div className="modal-body">
                 <p style={{ fontSize: 12, color: '#64748b', marginBottom: 12 }}>
-                    Enter marks for each student (out of <strong>{assessment?.max_marks || 100}</strong>)
+                    Enter marks for each student (out of <strong>{assessment?.max_marks || 100}</strong>). Already-entered marks can be edited to correct them.
                 </p>
                 <div style={{ maxHeight: 320, overflowY: 'auto' }}>
                     {students === null ? (
@@ -385,7 +404,8 @@ function MarksEntryModal({ assessment, onClose, onSaved }) {
                                 const submitted = isOnline ? !!sub : true;
                                 const locked = existingMarks.find((m) => m.student_id === s.user_id);
                                 return (
-                                    <div key={s.user_id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f1f5f9' }}>
+                                    <div key={s.user_id} style={{ padding: '10px 0', borderBottom: '1px solid #f1f5f9' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                         <div>
                                             <div style={{ fontWeight: 600, fontSize: 14 }}>{s.first_name} {s.last_name || ''}</div>
                                             <div style={{ fontSize: isOnline ? 11 : 12, color: '#64748b', marginTop: 2, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
@@ -420,7 +440,7 @@ function MarksEntryModal({ assessment, onClose, onSaved }) {
                                             max={assessment?.max_marks || 100}
                                             placeholder={`/ ${assessment?.max_marks || 100}`}
                                             value={values[s.user_id] ?? ''}
-                                            disabled={!!locked || (isOnline && !submitted)}
+                                            disabled={isOnline && !submitted}
                                             onChange={(e) => setValues((v) => ({ ...v, [s.user_id]: e.target.value }))}
                                             style={{
                                                 width: 90,
@@ -433,6 +453,17 @@ function MarksEntryModal({ assessment, onClose, onSaved }) {
                                                 color: locked ? '#166534' : undefined,
                                             }}
                                         />
+                                    </div>
+                                    {(values[s.user_id] ?? '') !== '' && (
+                                        <input
+                                            type="text"
+                                            placeholder="Feedback for this student (optional)"
+                                            value={feedbacks[s.user_id] ?? ''}
+                                            disabled={isOnline && !submitted}
+                                            onChange={(e) => setFeedbacks((f) => ({ ...f, [s.user_id]: e.target.value }))}
+                                            style={{ width: '100%', marginTop: 8, padding: 7, border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 12, boxSizing: 'border-box' }}
+                                        />
+                                    )}
                                     </div>
                                 );
                             })}

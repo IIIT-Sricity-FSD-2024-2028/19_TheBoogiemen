@@ -102,6 +102,14 @@ export class StudentsController {
     return this.studentsService.getMarks(userId);
   }
 
+  @Get('me/grade-trend')
+  @Roles('student')
+  @ApiOperation({ summary: 'FR29: CGPA over time, as of each graded assessment date' })
+  @ApiResponse({ status: 200, description: 'Chronological CGPA snapshots' })
+  async getGradeTrend(@CurrentUserId() userId: string) {
+    return this.studentsService.getGradeTrend(userId);
+  }
+
   @Get('me/fees')
   @Roles('student')
   @RequiresModule('fees')

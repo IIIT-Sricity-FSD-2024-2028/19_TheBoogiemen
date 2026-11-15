@@ -641,12 +641,63 @@ if (existing)
 throw new BadRequestException(
 errorBody(
 ErrorCode.DUPLICATE_RESOURCE,
-'Marks already entered and locked for this student. Cannot update.',
+'Marks already entered for this student. Use the edit option to correct them.',
 ),
 );
 const id = `m${Date.now()}`;
 const entry = { entry_id: id, ...body, college_id: collegeId };
 this.db.marks_entry.push(entry);
+return { success: true, data: entry };
+}
+
+/**
+ * FR15: faculty must be able to "enter and update" marks — this was the
+ * missing half. A correction, not a silent overwrite: previous_marks_obtained/
+ * corrected_by/corrected_at are kept alongside the new value, the same
+ * one-level "what it was before this change" trail
+ * common/leave-attendance.sync.ts already keeps for its own correction case
+ * (previous_status/source). CGPA, course grades, and class-performance never
+ * need a code change to reflect this — grading.ts computes all of them fresh
+ * on every read, so a corrected mark is simply true from here on. In a small
+ * cohort this can shift OTHER students' relative-curve letter grade too —
+ * that is the curve working correctly on true data, not a side effect.
+ */
+@Patch('marks/:id')
+@Roles('faculty', 'admin', 'head', 'superadmin')
+@ApiOperation({ summary: 'Correct an already-entered mark' })
+@ApiBody({ schema: { type: 'object', additionalProperties: true } })
+async updateMarks(
+@Param('id') id: string,
+@Body() body: { marks_obtained: number; feedback_text?: string },
+@CurrentUserId() userId: string,
+@CurrentUserRole() actorRole: string,
+@CurrentUserCollegeId() actorCollegeId: string | null,
+) {
+const entry = this.db.marks_entry.find((m) => m.entry_id === id);
+if (!isSameCollege(entry, actorCollegeId)) notFoundInMyCollege('Marks entry');
+
+const assessment = this.db.assessments.find(
+(a) => a.assessment_id === entry.assessment_id,
+);
+if (actorRole === 'faculty' && assessment?.faculty_id !== userId)
+notFoundInMyCollege('Marks entry');
+
+const val = Number(body?.marks_obtained);
+if (Number.isNaN(val) || val < 0 || val > Number(entry.max_marks)) {
+throw new BadRequestException(
+errorBody(
+ErrorCode.BUSINESS_RULE_VIOLATION,
+`marks_obtained must be between 0 and ${entry.max_marks}`,
+),
+);
+}
+
+entry.previous_marks_obtained = entry.marks_obtained;
+entry.marks_obtained = val;
+entry.corrected_by = userId;
+entry.corrected_at = new Date().toISOString();
+if (body?.feedback_text !== undefined) entry.feedback_text = body.feedback_text;
+this.db.persist();
 return { success: true, data: entry };
 }
 

@@ -12,14 +12,7 @@ import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 
 import { apiFetch } from '../../api/client';
 import { useNotifications } from '../../context/NotificationsContext';
 import Meter from '../../components/shared/Meter';
-
-function downloadCsv(filename, lines) {
-  const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  a.click();
-}
+import { downloadCsv } from '../../utils/csv';
 
 /** Backend formats these as "82%" / "No data yet" (reports/overview) —
  *  pull the leading number back out, or null when there isn't one. */

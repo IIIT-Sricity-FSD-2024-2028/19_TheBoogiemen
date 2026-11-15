@@ -14,6 +14,7 @@
 import { useEffect, useState } from 'react';
 import { Bar, BarChart, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { apiFetch } from '../../api/client';
+import { downloadCsv } from '../../utils/csv';
 
 const GRADE_COLOR = {
   O: { bg: '#86efac', fg: '#14532d' },
@@ -103,6 +104,25 @@ export default function ClassPerformance() {
     ? GRADE_ORDER.map((g) => ({ grade: g, count: performance.grade_distribution[g] || 0 }))
     : [];
 
+  const exportCsv = () => {
+    const lines = [
+      `Course,${performance.course_code} - ${performance.course_name}`,
+      `Class Average,${performance.class_average_percentage === null ? 'N/A' : performance.class_average_percentage + '%'}`,
+      `Attendance,${performance.attendance.class_average_pct === null ? 'N/A' : performance.attendance.class_average_pct + '%'}`,
+      `At Risk,${performance.at_risk_count}`,
+      `Total Students,${performance.total_enrolled}`,
+      '',
+      'Grade Distribution',
+      'Grade,Count',
+      ...GRADE_ORDER.map((g) => `${g},${performance.grade_distribution[g] || 0}`),
+      '',
+      'Per-Assessment Class Average',
+      'Assessment,Type,Class Average',
+      ...performance.assessments.map((a) => `"${a.name}",${a.type},${a.average === null ? 'Not graded yet' : a.average + '%'}`),
+    ];
+    downloadCsv(`BarelyPassing_ClassPerformance_${performance.course_code}_${new Date().toISOString().split('T')[0]}.csv`, lines);
+  };
+
   return (
     <div className="stats-card">
       <div className="stats-card-header"><h3>Class Performance</h3></div>
@@ -125,6 +145,11 @@ export default function ClassPerformance() {
           <p style={{ color: '#64748b', textAlign: 'center', padding: 20 }}>Select a course above to see its class performance.</p>
         ) : !performance ? null : (
           <>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
+              <button className="btn-cancel" onClick={exportCsv} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                ⬇ Export Report (CSV)
+              </button>
+            </div>
             <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap', marginBottom: 28, padding: 16, background: '#f8fafc', borderRadius: 10 }}>
               <Stat label="Class Average" value={performance.class_average_percentage === null ? '—' : `${performance.class_average_percentage}%`} color="#6366f1" />
               <Stat label="Attendance" value={performance.attendance.class_average_pct === null ? '—' : `${performance.attendance.class_average_pct}%`} color="#2563eb" />

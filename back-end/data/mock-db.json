@@ -1341,11 +1341,14 @@
       "student_id": "u1",
       "assessment_id": "a1",
       "course_code": "CS201",
-      "marks_obtained": 42,
+      "marks_obtained": 38,
       "max_marks": 50,
       "grade": "S",
-      "feedback_text": "Excellent",
-      "college_id": "c-default"
+      "feedback_text": "Excellent work — keep focusing on edge cases.",
+      "college_id": "c-default",
+      "previous_marks_obtained": 38,
+      "corrected_by": "u2",
+      "corrected_at": "2026-11-15T05:19:30.207Z"
     },
     {
       "entry_id": "m2",
@@ -1355,8 +1358,11 @@
       "marks_obtained": 22,
       "max_marks": 50,
       "grade": "C",
-      "feedback_text": "Needs improvement",
-      "college_id": "c-default"
+      "feedback_text": "Good improvement from last term, keep it up.",
+      "college_id": "c-default",
+      "previous_marks_obtained": 22,
+      "corrected_by": "u2",
+      "corrected_at": "2026-11-15T05:06:09.775Z"
     },
     {
       "entry_id": "m3",

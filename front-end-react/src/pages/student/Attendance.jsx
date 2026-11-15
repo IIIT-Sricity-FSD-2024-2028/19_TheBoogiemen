@@ -10,10 +10,15 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
+import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { apiFetch } from '../../api/client';
 import { uploadFile } from '../../api/uploads';
+import { downloadCsv } from '../../utils/csv';
 import { useNotifications } from '../../context/NotificationsContext';
 import Modal from '../../components/shared/Modal';
+
+// Same 75% convention admin/AttendanceRegister.jsx's PerCourseChart already uses.
+const MIN_ATTENDANCE_PCT = 75;
 
 const DAY_STATUS_COLOR = {
   present: { bg: '#16a34a', fg: '#fff' },
@@ -266,12 +271,27 @@ export default function Attendance() {
       .catch((e) => setError(e.message));
   }, []);
 
+  const exportCsv = () => {
+    const lines = [
+      `Overall %,${data.overallPct || 0}%`,
+      '',
+      'Course,Percentage,Present,Absent,Excused,Total Sessions',
+      ...(data.summary || []).map((s) => `"${s.course_code} - ${s.course_name}",${s.percentage || 0}%,${s.present || 0},${s.absent || 0},${s.excused || 0},${s.total || 0}`),
+    ];
+    downloadCsv(`BarelyPassing_MyAttendance_${new Date().toISOString().split('T')[0]}.csv`, lines);
+  };
+
   return (
     <>
       <AttendanceHeatmap />
       <div className="stats-card">
         <div className="stats-card-header">
           <h3>Attendance Overview</h3>
+          {data && (
+            <button className="btn-cancel" onClick={exportCsv} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              ⬇ Export (CSV)
+            </button>
+          )}
         </div>
         <div className="stats-card-body" style={{ padding: 24 }}>
           <button
@@ -292,6 +312,23 @@ export default function Attendance() {
   );
 }
 
+function PerSubjectChart({ summary }) {
+  const data = summary.map((s) => ({ course: s.course_code, pct: s.percentage || 0 }));
+  if (!data.length) return null;
+  return (
+    <ResponsiveContainer width="100%" height={Math.max(100, data.length * 36)}>
+      <BarChart data={data} layout="vertical" margin={{ left: 8, right: 24 }}>
+        <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} unit="%" />
+        <YAxis type="category" dataKey="course" tick={{ fontSize: 13, fill: '#475569' }} axisLine={false} tickLine={false} width={70} />
+        <Tooltip formatter={(v) => [`${v}%`, 'Attendance']} cursor={{ fill: '#f8fafc' }} />
+        <Bar dataKey="pct" radius={[0, 4, 4, 0]} maxBarSize={20}>
+          {data.map((d) => <Cell key={d.course} fill={d.pct >= MIN_ATTENDANCE_PCT ? '#16a34a' : '#ef4444'} />)}
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
 function AttendanceBody({ data }) {
   const { overallPct = 0, summary = [] } = data;
   return (
@@ -302,9 +339,10 @@ function AttendanceBody({ data }) {
         </div>
         <Stat label="OVERALL %" value={`${overallPct}%`} bg="#eff6ff" color="#2563eb" />
       </div>
+      <PerSubjectChart summary={summary} />
       {summary.length > 0 && (
         <>
-          <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: '#64748b' }}>PER SUBJECT</h4>
+          <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, marginTop: 24, color: '#64748b' }}>PER SUBJECT</h4>
           {summary.map((s, i) => {
             const pct = s.percentage || 0;
             const color = pct >= 75 ? '#16a34a' : '#ef4444';

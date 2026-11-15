@@ -14,7 +14,7 @@ import { isSameCollege, scopeToCollege } from '../common/tenancy/scope-to-colleg
 import { sectionsOfCourse } from '../common/course-sections';
 import { buildAttendanceCalendar, excludeHolidays } from '../common/academic-calendar';
 import { studentOutcomeReport } from '../common/outcome-mastery';
-import { computeCGPA, predictedFinalGrade } from '../common/grading';
+import { computeCGPA, computeGradeTrend, predictedFinalGrade } from '../common/grading';
 
 @Injectable()
 export class StudentsService {
@@ -96,6 +96,10 @@ export class StudentsService {
     const { cgpa, courses } = computeCGPA(this.db, userId);
     const predicted = predictedFinalGrade(this.db, userId);
     return { cgpa, predictedGrade: predicted?.letter ?? null, courses };
+  }
+
+  async getGradeTrend(userId: string) {
+    return computeGradeTrend(this.db, userId);
   }
 
   async getCourses(userId: string) {
