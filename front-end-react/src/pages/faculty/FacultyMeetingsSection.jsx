@@ -126,8 +126,7 @@ export default function FacultyMeetingsSection() {
         </div>
         <button
           type="button"
-          className="btn btn-primary" style={{ background: '#0284c7', color: '#ffffff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
-          style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px', fontWeight: 600, background: '#0284c7', color: '#ffffff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+          className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px', fontWeight: 600, background: '#0284c7', color: '#ffffff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
           onClick={() => setCreateModalOpen(true)}
         >
           <span>+</span> Schedule Meeting with Student
