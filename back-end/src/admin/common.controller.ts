@@ -378,6 +378,9 @@ return {
 ...a,
 course_name: course?.course_name,
 course_code: course?.course_code,
+// Lets the UI gate Edit/Delete without an extra request per card —
+// see assertCanModifyAssessment's own "locked once marked" policy.
+has_marks: this.db.marks_entry.some((m) => m.assessment_id === a.assessment_id),
 };
 });
 }
@@ -452,6 +455,78 @@ college_id: writeCollegeId(actorCollegeId),
 };
 this.db.assessments.push(newAssessment);
 return { success: true, data: newAssessment };
+}
+
+/**
+ * Shared gate for PATCH/DELETE: only the owning faculty (admin/head/
+ * superadmin may act on any assessment, matching createAssessment's own
+ * "set one up on a faculty member's behalf" allowance), and only before
+ * the first mark is entered. marks_entry doesn't snapshot weightage, so
+ * editing it after grading started would retroactively reshuffle every
+ * already-graded student's percentage — same reasoning recordMarks()
+ * already applies to locking a mark itself once entered.
+ */
+private assertCanModifyAssessment(assessment: any, userId: string, role: string) {
+if (role === 'faculty' && assessment.faculty_id !== userId) notFoundInMyCollege('Assessment');
+const hasMarks = this.db.marks_entry.some(
+(m: any) => m.assessment_id === assessment.assessment_id,
+);
+if (hasMarks)
+throw new BadRequestException(
+errorBody(
+ErrorCode.BUSINESS_RULE_VIOLATION,
+'This assessment already has marks recorded — it can no longer be edited or deleted.',
+),
+);
+}
+
+@Patch('assessments/:id')
+@Roles('faculty', 'admin', 'head', 'superadmin')
+@ApiOperation({ summary: 'Edit an assessment that has no marks recorded yet' })
+@ApiBody({ schema: { type: 'object', additionalProperties: true } })
+async updateAssessment(
+@Param('id') id: string,
+@Body() body: any,
+@CurrentUserId() userId: string,
+@CurrentUserRole() actorRole: string,
+@CurrentUserCollegeId() actorCollegeId: string | null,
+) {
+const assessment = this.db.assessments.find((a) => a.assessment_id === id);
+if (!isSameCollege(assessment, actorCollegeId)) notFoundInMyCollege('Assessment');
+this.assertCanModifyAssessment(assessment, userId, actorRole);
+
+// course_id/section/faculty_id/college_id/assessment_id are structural —
+// moving an assessment to a different course/section/owner is out of
+// scope here, same as updateUser's own protected-fields exclusion.
+const editable = pickDefined({
+name: body.name,
+type: body.type,
+date: body.date,
+max_marks: body.max_marks,
+weightage: body.weightage,
+exam_mode: body.exam_mode,
+});
+Object.assign(assessment, editable);
+this.db.persist();
+return { success: true, data: assessment };
+}
+
+@Delete('assessments/:id')
+@Roles('faculty', 'admin', 'head', 'superadmin')
+@ApiOperation({ summary: 'Delete an assessment that has no marks recorded yet' })
+async deleteAssessment(
+@Param('id') id: string,
+@CurrentUserId() userId: string,
+@CurrentUserRole() actorRole: string,
+@CurrentUserCollegeId() actorCollegeId: string | null,
+) {
+const assessment = this.db.assessments.find((a) => a.assessment_id === id);
+if (!isSameCollege(assessment, actorCollegeId)) notFoundInMyCollege('Assessment');
+this.assertCanModifyAssessment(assessment, userId, actorRole);
+
+const index = this.db.assessments.indexOf(assessment);
+this.db.assessments.splice(index, 1);
+return { success: true };
 }
 
 // OUTCOMES_TRACKING_PLAN.md: which Course Outcomes this assessment
@@ -566,12 +641,63 @@ if (existing)
 throw new BadRequestException(
 errorBody(
 ErrorCode.DUPLICATE_RESOURCE,
-'Marks already entered and locked for this student. Cannot update.',
+'Marks already entered for this student. Use the edit option to correct them.',
 ),
 );
 const id = `m${Date.now()}`;
 const entry = { entry_id: id, ...body, college_id: collegeId };
 this.db.marks_entry.push(entry);
+return { success: true, data: entry };
+}
+
+/**
+ * FR15: faculty must be able to "enter and update" marks — this was the
+ * missing half. A correction, not a silent overwrite: previous_marks_obtained/
+ * corrected_by/corrected_at are kept alongside the new value, the same
+ * one-level "what it was before this change" trail
+ * common/leave-attendance.sync.ts already keeps for its own correction case
+ * (previous_status/source). CGPA, course grades, and class-performance never
+ * need a code change to reflect this — grading.ts computes all of them fresh
+ * on every read, so a corrected mark is simply true from here on. In a small
+ * cohort this can shift OTHER students' relative-curve letter grade too —
+ * that is the curve working correctly on true data, not a side effect.
+ */
+@Patch('marks/:id')
+@Roles('faculty', 'admin', 'head', 'superadmin')
+@ApiOperation({ summary: 'Correct an already-entered mark' })
+@ApiBody({ schema: { type: 'object', additionalProperties: true } })
+async updateMarks(
+@Param('id') id: string,
+@Body() body: { marks_obtained: number; feedback_text?: string },
+@CurrentUserId() userId: string,
+@CurrentUserRole() actorRole: string,
+@CurrentUserCollegeId() actorCollegeId: string | null,
+) {
+const entry = this.db.marks_entry.find((m) => m.entry_id === id);
+if (!isSameCollege(entry, actorCollegeId)) notFoundInMyCollege('Marks entry');
+
+const assessment = this.db.assessments.find(
+(a) => a.assessment_id === entry.assessment_id,
+);
+if (actorRole === 'faculty' && assessment?.faculty_id !== userId)
+notFoundInMyCollege('Marks entry');
+
+const val = Number(body?.marks_obtained);
+if (Number.isNaN(val) || val < 0 || val > Number(entry.max_marks)) {
+throw new BadRequestException(
+errorBody(
+ErrorCode.BUSINESS_RULE_VIOLATION,
+`marks_obtained must be between 0 and ${entry.max_marks}`,
+),
+);
+}
+
+entry.previous_marks_obtained = entry.marks_obtained;
+entry.marks_obtained = val;
+entry.corrected_by = userId;
+entry.corrected_at = new Date().toISOString();
+if (body?.feedback_text !== undefined) entry.feedback_text = body.feedback_text;
+this.db.persist();
 return { success: true, data: entry };
 }
 
@@ -1132,7 +1258,7 @@ this.db.persist();
 // M-02: approved leave now writes EXCUSED sessions across the leave window so
 // the student is not marked absent for time the institution authorised.
 // Reverting the approval removes exactly what it added.
-const attendance = syncLeaveAttendance(this.db, leave, status);
+const attendance = syncLeaveAttendance(this.db, leave, status, collegeId);
 return { success: true, data: leave, attendance };
 }
 
@@ -1548,6 +1674,66 @@ attendancePct: attendance_pct,
 .filter((s) => s.is_at_risk);
 }
 
+/**
+ * SRS 6.2 #3 / 6.3 #10: "Manage User Roles and oversee Master Attendance" —
+ * nothing before this let admin/head browse the raw attendance register at
+ * all, only approve requests (AttendanceOverride.jsx) or read one aggregate
+ * percentage (reports/overview). Unfiltered by default — "master" means
+ * the whole college's register, not a report pre-narrowed by the server;
+ * the frontend picks a sane default view, not this endpoint.
+ */
+@Get('attendance-register')
+@Roles('admin', 'head', 'superadmin')
+@ApiOperation({ summary: 'Browse/filter the institution-wide attendance register' })
+async getAttendanceRegister(
+@Query('course_id') courseId: string | undefined,
+@Query('section') section: string | undefined,
+@Query('date_from') dateFrom: string | undefined,
+@Query('date_to') dateTo: string | undefined,
+@Query('status') status: string | undefined,
+@Query('student_id') studentId: string | undefined,
+@CurrentUserCollegeId() collegeId: string | null,
+) {
+let records = excludeHolidays(
+this.db,
+scopeToCollege(this.db.attendance_log, collegeId),
+collegeId,
+);
+if (courseId) records = records.filter((r: any) => r.course_id === courseId);
+if (studentId) records = records.filter((r: any) => r.student_id === studentId);
+if (dateFrom) records = records.filter((r: any) => r.date >= dateFrom);
+if (dateTo) records = records.filter((r: any) => r.date <= dateTo);
+if (status)
+records = records.filter(
+(r: any) => normalizeAttendanceStatus(r.status) === normalizeAttendanceStatus(status),
+);
+
+const enriched = records.map((r: any) => {
+const student = this.db.students.find((s) => s.user_id === r.student_id);
+const course = this.db.courses.find((c) => c.course_id === r.course_id);
+const enrollment = this.db.enrollment.find(
+(e) => e.student_id === r.student_id && e.course_id === r.course_id,
+);
+return {
+log_id: r.log_id,
+student_id: r.student_id,
+student_name: student ? `${student.first_name} ${student.last_name || ''}`.trim() : r.student_id,
+course_id: r.course_id,
+course_code: course?.course_code || r.course_id,
+course_name: course?.course_name || 'Unknown',
+section: enrollment?.section ?? null,
+date: r.date,
+status: normalizeAttendanceStatus(r.status),
+};
+});
+
+// section filters on the joined field, so it has to happen after the join.
+const filtered = section ? enriched.filter((r) => r.section === section) : enriched;
+filtered.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+
+return { records: filtered, summary: summariseAttendance(filtered) };
+}
+
 // â”€â”€ Resources â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 @Get('resources')
 @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
@@ -1744,23 +1930,7 @@ return { success: true, data: newEnrollment };
 }
 
 // â”€â”€ Meetings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-@Post('meetings')
-@Roles('faculty', 'admin', 'head')
-@ApiOperation({ summary: 'Schedule a meeting with a student' })
-@ApiBody({ schema: { type: 'object', additionalProperties: true } })
-async scheduleMeeting(@Body() body: any) {
-// Never persisted (see the original comment this carries forward): a
-// stub response, so there is no collection here to scope.
-return {
-success: true,
-message: 'Meeting scheduled successfully',
-meeting: {
-meeting_id: `mt${Date.now()}`,
-...body,
-created_at: new Date().toISOString(),
-},
-};
-}
+
 
 // â”€â”€ Syllabus Progress â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // OUTCOMES_TRACKING_PLAN.md: retired in favour of real topics with their

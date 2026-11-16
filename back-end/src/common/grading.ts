@@ -57,13 +57,19 @@ export function gradeForPercentile(percentile: number): { letter: string; points
 }
 
 /** This student's current weighted percentage in one course, or null if
- *  nothing of theirs has been graded yet. */
+ *  nothing of theirs has been graded yet. `asOfDate`, when given, restricts
+ *  this to assessments dated on or before it — the building block
+ *  computeGradeTrend() uses to replay this same calculation at each point
+ *  in the term, rather than only ever seeing today's snapshot (FR29). */
 export function computeCoursePercentage(
   db: InMemoryDbService,
   studentId: string,
   courseId: string,
+  asOfDate?: string,
 ): number | null {
-  const assessments = db.assessments.filter((a: any) => a.course_id === courseId);
+  const assessments = db.assessments.filter(
+    (a: any) => a.course_id === courseId && (!asOfDate || !a.date || a.date <= asOfDate),
+  );
   let weightedSum = 0;
   let totalWeight = 0;
   for (const a of assessments) {
@@ -150,6 +156,7 @@ export interface CourseGradeRow {
 export function computeCourseGradesForCourse(
   db: InMemoryDbService,
   courseId: string,
+  asOfDate?: string,
 ): CourseGradeRow[] {
   const studentIds = new Set(
     db.enrollment
@@ -158,7 +165,7 @@ export function computeCourseGradesForCourse(
   );
 
   const ranked = Array.from(studentIds)
-    .map((studentId) => ({ studentId, percentage: computeCoursePercentage(db, studentId as string, courseId) }))
+    .map((studentId) => ({ studentId, percentage: computeCoursePercentage(db, studentId as string, courseId, asOfDate) }))
     .filter((r): r is { studentId: string; percentage: number } => r.percentage !== null)
     .sort((a, b) => b.percentage - a.percentage);
 
@@ -193,8 +200,9 @@ export function computeStudentCourseGrade(
   db: InMemoryDbService,
   studentId: string,
   courseId: string,
+  asOfDate?: string,
 ): CourseGradeRow | null {
-  const rows = computeCourseGradesForCourse(db, courseId);
+  const rows = computeCourseGradesForCourse(db, courseId, asOfDate);
   return rows.find((r) => r.student_id === studentId) ?? null;
 }
 
@@ -215,6 +223,7 @@ export interface CourseCgpaRow {
 export function computeCGPA(
   db: InMemoryDbService,
   studentId: string,
+  asOfDate?: string,
 ): { cgpa: number | null; courses: CourseCgpaRow[] } {
   const enrolledCourseIds = db.enrollment
     .filter((e: any) => e.student_id === studentId && e.status === 'active')
@@ -222,7 +231,7 @@ export function computeCGPA(
 
   const courses: CourseCgpaRow[] = [];
   for (const courseId of enrolledCourseIds) {
-    const grade = computeStudentCourseGrade(db, studentId, courseId);
+    const grade = computeStudentCourseGrade(db, studentId, courseId, asOfDate);
     if (!grade) continue;
     const course = db.courses.find((c: any) => c.course_id === courseId);
     courses.push({
@@ -241,6 +250,34 @@ export function computeCGPA(
 
   const weightedSum = courses.reduce((sum, c) => sum + c.gradePoint * c.credits, 0);
   return { cgpa: Math.round((weightedSum / totalCredits) * 100) / 100, courses };
+}
+
+export interface GradeTrendPoint {
+  date: string;
+  cgpa: number | null;
+}
+
+/**
+ * FR29: "trends over time" for grades/CGPA — previously only ever a
+ * current snapshot. Nothing stores a historical CGPA snapshot anywhere, so
+ * this replays computeCGPA's own curve-and-credit-weighting logic as of
+ * each date an assessment of this student's actually landed, using the
+ * `asOfDate` cutoff threaded through computeCoursePercentage /
+ * computeCourseGradesForCourse / computeCGPA above. The cohort's curve is
+ * recomputed at each cutoff too (not just this student's own percentage),
+ * because the relative grade bands depend on everyone's standing as of
+ * that date, not just this student's.
+ */
+export function computeGradeTrend(db: InMemoryDbService, studentId: string): GradeTrendPoint[] {
+  const graded = db.marks_entry.filter((m: any) => m.student_id === studentId);
+  const dates = new Set<string>();
+  for (const m of graded) {
+    const a = db.assessments.find((x: any) => x.assessment_id === m.assessment_id);
+    if (a?.date) dates.add(a.date);
+  }
+  return Array.from(dates)
+    .sort()
+    .map((date) => ({ date, cgpa: computeCGPA(db, studentId, date).cgpa }));
 }
 
 /** A single predicted letter for the dashboard headline, derived from the

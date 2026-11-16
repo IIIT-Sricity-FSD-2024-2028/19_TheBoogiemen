@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { apiFetch } from '../../api/client';
 
 function masteryColor(value) {
@@ -91,11 +92,23 @@ export default function Outcomes() {
           {report.programOutcomes.length === 0 ? (
             <p style={{ color: '#64748b', textAlign: 'center' }}>No Program Outcomes defined for your college yet.</p>
           ) : (
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              {report.programOutcomes.map((po) => (
-                <OutcomeCell key={po.po_id} code={po.code} label={po.description} value={po.mastery} />
-              ))}
-            </div>
+            <>
+              <ResponsiveContainer width="100%" height={Math.max(100, report.programOutcomes.length * 36)}>
+                <BarChart data={report.programOutcomes.map((po) => ({ ...po, value: po.mastery ?? 0 }))} layout="vertical" margin={{ left: 8, right: 24 }}>
+                  <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} unit="%" />
+                  <YAxis type="category" dataKey="code" tick={{ fontSize: 13, fill: '#475569' }} axisLine={false} tickLine={false} width={50} />
+                  <Tooltip formatter={(v, _n, p) => [p.payload.mastery === null ? 'No data yet' : `${v}%`, p.payload.description]} cursor={{ fill: '#f8fafc' }} />
+                  <Bar dataKey="value" radius={[0, 4, 4, 0]} maxBarSize={20}>
+                    {report.programOutcomes.map((po) => <Cell key={po.po_id} fill={masteryColor(po.mastery).bg} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 20 }}>
+                {report.programOutcomes.map((po) => (
+                  <OutcomeCell key={po.po_id} code={po.code} label={po.description} value={po.mastery} />
+                ))}
+              </div>
+            </>
           )}
         </div>
       </div>

@@ -10,6 +10,7 @@ import {
   computeCGPA,
   computeCoursePercentage,
   computeCourseGradesForCourse,
+  computeGradeTrend,
   computeStudentCourseGrade,
   gradeForPercentile,
   predictedFinalGrade,
@@ -304,5 +305,45 @@ describe('predictedFinalGrade', () => {
   it('returns null when CGPA itself is null', () => {
     const db = dbWith();
     expect(predictedFinalGrade(db, 's1')).toBeNull();
+  });
+});
+
+describe('computeGradeTrend', () => {
+  it('replays CGPA as of each date the student actually has a graded assessment, in order', () => {
+    const db = dbWith({
+      assessments: [
+        { assessment_id: 'a1', course_id: 'c1', weightage: 50, date: '2026-01-10' },
+        { assessment_id: 'a2', course_id: 'c1', weightage: 50, date: '2026-02-15' },
+      ],
+      enrollment: [{ student_id: 's1', course_id: 'c1', status: 'active' }],
+      marks_entry: [
+        { student_id: 's1', assessment_id: 'a1', marks_obtained: 40, max_marks: 100 },
+        { student_id: 's1', assessment_id: 'a2', marks_obtained: 90, max_marks: 100 },
+      ],
+      courses: [{ course_id: 'c1', course_code: 'C1', course_name: 'Course One', credits: 4 }],
+    });
+    const trend = computeGradeTrend(db, 's1');
+    expect(trend.map((p) => p.date)).toEqual(['2026-01-10', '2026-02-15']);
+    // Lone student in the cohort both times -> top band (O, 10 pts) regardless
+    // of the raw score change, same N=1 curve edge case as everywhere else.
+    expect(trend.every((p) => p.cgpa === 10)).toBe(true);
+  });
+
+  it('returns an empty series when the student has no graded assessments', () => {
+    const db = dbWith();
+    expect(computeGradeTrend(db, 's1')).toEqual([]);
+  });
+
+  it('ignores assessments the student has no mark for when collecting trend dates', () => {
+    const db = dbWith({
+      assessments: [
+        { assessment_id: 'a1', course_id: 'c1', weightage: 100, date: '2026-01-10' },
+        { assessment_id: 'a2', course_id: 'c1', weightage: 100, date: '2026-03-01' }, // ungraded for s1
+      ],
+      enrollment: [{ student_id: 's1', course_id: 'c1', status: 'active' }],
+      marks_entry: [{ student_id: 's1', assessment_id: 'a1', marks_obtained: 70, max_marks: 100 }],
+      courses: [{ course_id: 'c1', course_code: 'C1', course_name: 'Course One', credits: 4 }],
+    });
+    expect(computeGradeTrend(db, 's1').map((p) => p.date)).toEqual(['2026-01-10']);
   });
 });

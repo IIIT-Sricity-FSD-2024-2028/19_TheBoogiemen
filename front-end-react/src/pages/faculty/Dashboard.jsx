@@ -13,6 +13,7 @@ import { useNotifications } from '../../context/NotificationsContext';
 import SendAlertModal from '../../components/shared/SendAlertModal';
 import MeetingModal from '../../components/shared/MeetingModal';
 import Modal from '../../components/shared/Modal';
+import { autoAlertAtRiskStudents } from '../../utils/riskAlerts';
 
 export default function Dashboard({ onNavigate }) {
   return (
@@ -62,14 +63,27 @@ function Metrics({ onNavigate }) {
 }
 
 function Intervention() {
+  const { send } = useNotifications();
   const [students, setStudents] = useState(undefined);
   const [alertTarget, setAlertTarget] = useState(null);
   const [meetingTarget, setMeetingTarget] = useState(null);
 
   useEffect(() => {
-    apiFetch('/admin/users')
-      .then((all) => setStudents(all.filter((u) => u.role === 'student' && u.is_at_risk)))
+    // Was reading /admin/users, which carries no is_at_risk/cgpa/risk_reasons
+    // field at all (sanitizeUser only strips password fields) — this panel
+    // showed "No students currently flagged" unconditionally. /faculty/me/students
+    // is the same real, computed source StudentOverview.jsx already uses.
+    apiFetch('/faculty/me/students')
+      .then((all) => {
+        const atRisk = all.filter((s) => s.is_at_risk);
+        setStudents(atRisk);
+        // FR10: notify each at-risk student automatically — the system
+        // flags them the moment this loads, rather than only if a faculty
+        // member happens to notice and click "Send Alert" below.
+        autoAlertAtRiskStudents(atRisk, send);
+      })
       .catch(() => setStudents([]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -91,6 +105,9 @@ function Intervention() {
               <div>
                 <div style={{ fontWeight: 700, color: s.cgpa && s.cgpa < 6 ? '#dc2626' : '#d97706' }}>{s.first_name} {s.last_name || ''}</div>
                 <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>ID: {s.user_id} &nbsp;·&nbsp; CGPA: {s.cgpa || 'N/A'}</div>
+                {s.risk_reasons?.length > 0 && (
+                  <div style={{ fontSize: 11, color: '#ef4444', marginTop: 2 }}>{s.risk_reasons.join(' · ')}</div>
+                )}
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button
