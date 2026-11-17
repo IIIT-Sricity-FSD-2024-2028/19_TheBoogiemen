@@ -1,184 +1,145 @@
 /**
-* NotificationsContext — toasts, the notification bell's data, and the
-* localStorage-backed broadcast/personal notification log.
-*
-* Ported from legacy fixes.js's `window.Notifications` IIFE and
-* `showToast()`. Still backed by the same localStorage keys (so data a user
-* already has from the legacy app keeps working), just exposed through
-* context + a hook instead of a global.
-*
-* CROSS-TAB NOTE (broadcast bug fix):
-* The legacy app re-read localStorage fresh on every page load and every
-* bell render. In the React SPA the provider mounts ONCE and initializes
-* state from localStorage a single time, so a broadcast written by another
-* tab (faculty) would never reach an already-open tab (student) until a
-* full reload. A `storage` event listener now re-syncs state whenever
-* another tab writes to the notification keys. The `storage` event only
-* fires in OTHER tabs than the one that wrote, so local writes still flow
-* through setState as before — no double-handling.
-*
-* CROSS-COLLEGE NOTE (broadcast tenant-leak fix):
-* A broadcast was keyed only by role ('student', 'all', ...), never by
-* college — localStorage is shared per browser ORIGIN, not per logged-in
-* user, so a student at College B who ever shares that origin with a
-* College A session (a shared/public machine, or simply two different
-* logins over time in the same browser) saw College A's "all students"
-* announcements too. Every broadcast now carries the SENDER's own
-* college_id (read from AuthContext right here, not passed in by any of
-* the ~9 call sites, so none of them had to change and none can forget
-* to) and every read is filtered to the VIEWER's own college_id the same
-* way. A null college_id (superadmin, who belongs to no single college —
-* see scope-to-college.ts's own docstring for this exact convention) is
-* treated as "every college": a superadmin-sent broadcast reaches
-* everyone, and a superadmin viewer sees every college's broadcasts.
-*/
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+ * NotificationsContext — REDUX_MIGRATION_PLAN.md Phase 2 facade.
+ *
+ * `useNotifications()` now reads/writes the Redux `notificationsSlice`
+ * (features/notifications) — same hook name, same returned shape
+ * (`toast, showToast, forUser, getUnreadBC, unread, send, broadcast,
+ * broadcastAll, markRead, markBCRead, clearAll`) — so all 34 call sites
+ * across the app are UNCHANGED.
+ *
+ * `NotificationsProvider` is now an inert pass-through, same reasoning as
+ * AuthContext.jsx's: persistence and cross-tab sync both moved to
+ * store/index.js (a middleware + a listener registered once at module
+ * load, not once per provider mount — equivalent today, but means this
+ * component can be deleted in Phase 4 without losing either).
+ *
+ * TOAST TIMER NOTE: the pre-Redux provider held its pending-dismiss timer
+ * in a `useRef`, safe because the provider mounts exactly once for the
+ * whole app. A facade hook has no such guarantee — `useNotifications()` is
+ * called from 34 different components, so a `useRef` here would give each
+ * CALLER its own independent timer instead of the one shared timer the
+ * original behavior depends on (newest toast cancels any still-pending
+ * dismissal, regardless of which component triggered either one). A
+ * module-scope variable is the equivalent of the old ref: this module, like
+ * any ES module, is evaluated once and shared by every importer — so it's
+ * the direct one-for-one replacement, not a new design.
+ */
+import { useCallback } from 'react';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { useAuth } from './AuthContext';
+import {
+  personalReceived,
+  broadcastReceived,
+  personalMarkedRead,
+  personalCleared,
+  toastShown,
+  toastCleared,
+} from '../features/notifications/notificationsSlice';
+import { visibleToViewer, readBCReadIds, writeBCReadIds } from '../features/notifications/notificationsStorage';
 
-const KEY = 'bp_notifications';
-const BKEY = 'bp_broadcasts';
-const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
-
-function readJSON(key, fallback) {
-try {
-return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback));
-} catch {
-return fallback;
-}
-}
-
-function notExpired(entry) {
-return !entry.timestamp || Date.now() - entry.timestamp < THIRTY_DAYS;
-}
-
-const NotificationsContext = createContext(null);
-
-/** null (superadmin, who belongs to no single college) sees/reaches every
- *  college; otherwise only an exact match or a null-authored (platform-wide)
- *  broadcast is visible. Mirrors scope-to-college.ts's own null convention. */
-function visibleToViewer(broadcast, viewerCollegeId) {
-return viewerCollegeId === null || broadcast.collegeId == null || broadcast.collegeId === viewerCollegeId;
-}
-
-export function NotificationsProvider({ children }) {
-const { user } = useAuth();
-const collegeId = user?.college_id ?? null;
-const [personal, setPersonal] = useState(() => readJSON(KEY, []).filter(notExpired));
-const [broadcasts, setBroadcasts] = useState(() => readJSON(BKEY, []).filter(notExpired));
-const [toast, setToast] = useState(null);
-const toastTimer = useRef(null);
-
-useEffect(() => {
-localStorage.setItem(KEY, JSON.stringify(personal));
-}, [personal]);
-
-useEffect(() => {
-localStorage.setItem(BKEY, JSON.stringify(broadcasts));
-}, [broadcasts]);
-
-// Re-sync from localStorage when ANOTHER tab writes. This is what lets a
-// faculty broadcast (sent from the faculty tab) appear on an open student
-// tab without a reload. The event never fires in the writing tab itself,
-// so this only ever applies external changes.
-useEffect(() => {
-const onStorage = (e) => {
-if (!e || !e.key) return;
-if (e.key === KEY) {
-setPersonal(readJSON(KEY, []).filter(notExpired));
-} else if (e.key === BKEY) {
-setBroadcasts(readJSON(BKEY, []).filter(notExpired));
-}
-};
-window.addEventListener('storage', onStorage);
-return () => window.removeEventListener('storage', onStorage);
-}, []);
-
-const showToast = useCallback((msg, type = 'success') => {
-clearTimeout(toastTimer.current);
-setToast({ id: Date.now(), msg, type });
-toastTimer.current = setTimeout(() => setToast(null), 3500);
-}, []);
-
-const forUser = useCallback((uid) => personal.filter((n) => n.to === uid), [personal]);
-
-const getUnreadBC = useCallback(
-(role) => {
-const readIds = readJSON(`bp_bc_read_${role}`, []);
-return broadcasts.filter(
-(b) =>
-(b.forRole === 'all' || b.forRole === role) &&
-visibleToViewer(b, collegeId) &&
-!readIds.includes(b.id),
-);
-},
-[broadcasts, collegeId],
-);
-
-const unread = useCallback((uid) => forUser(uid).filter((n) => !n.read).length, [forUser]);
+let toastTimerId = null;
 
 const timeLabel = () =>
-new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+  new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 
-const send = useCallback((toUserId, fromName, message, type = 'alert') => {
-const ts = Date.now();
-setPersonal((all) =>
-[{ id: ts, to: toUserId, from: fromName, message, type, read: false, time: timeLabel(), timestamp: ts }, ...all].slice(0, 200),
-);
-}, []);
-
-const broadcast = useCallback((targetRole, fromName, message, type = 'info') => {
-const ts = Date.now();
-setBroadcasts((bc) =>
-[{ id: ts, forRole: targetRole, collegeId, from: fromName, message, type, time: timeLabel(), timestamp: ts }, ...bc].slice(0, 500),
-);
-}, [collegeId]);
-
-const broadcastAll = useCallback((fromName, message, type = 'info') => broadcast('all', fromName, message, type), [broadcast]);
-
-const markRead = useCallback((uid) => {
-setPersonal((all) => all.map((n) => (n.to === uid ? { ...n, read: true } : n)));
-}, []);
-
-const markBCRead = useCallback(
-(role) => {
-const ids = broadcasts
-.filter((b) => (b.forRole === 'all' || b.forRole === role) && visibleToViewer(b, collegeId))
-.map((b) => b.id);
-localStorage.setItem(`bp_bc_read_${role}`, JSON.stringify(ids));
-},
-[broadcasts, collegeId],
-);
-
-const clearAll = useCallback(
-(role) => {
-setPersonal([]);
-const ids = broadcasts
-.filter((b) => (b.forRole === 'all' || b.forRole === role) && visibleToViewer(b, collegeId))
-.map((b) => b.id);
-localStorage.setItem(`bp_bc_read_${role}`, JSON.stringify(ids));
-},
-[broadcasts, collegeId],
-);
-
-const value = {
-toast,
-showToast,
-forUser,
-getUnreadBC,
-unread,
-send,
-broadcast,
-broadcastAll,
-markRead,
-markBCRead,
-clearAll,
-};
-
-return <NotificationsContext.Provider value={value}>{children}</NotificationsContext.Provider>;
+export function NotificationsProvider({ children }) {
+  return children;
 }
 
 export function useNotifications() {
-const ctx = useContext(NotificationsContext);
-if (!ctx) throw new Error('useNotifications must be used within NotificationsProvider');
-return ctx;
+  const dispatch = useAppDispatch();
+  const { user } = useAuth();
+  const collegeId = user?.college_id ?? null;
+
+  const toast = useAppSelector((state) => state.notifications.toast);
+  const personal = useAppSelector((state) => state.notifications.personal);
+  const broadcasts = useAppSelector((state) => state.notifications.broadcasts);
+
+  const showToast = useCallback((msg, type = 'success') => {
+    clearTimeout(toastTimerId);
+    dispatch(toastShown({ id: Date.now(), msg, type }));
+    toastTimerId = setTimeout(() => dispatch(toastCleared()), 3500);
+  }, [dispatch]);
+
+  const forUser = useCallback((uid) => personal.filter((n) => n.to === uid), [personal]);
+
+  const getUnreadBC = useCallback(
+    (role) => {
+      const readIds = readBCReadIds(role);
+      return broadcasts.filter(
+        (b) =>
+          (b.forRole === 'all' || b.forRole === role) &&
+          visibleToViewer(b, collegeId) &&
+          !readIds.includes(b.id),
+      );
+    },
+    [broadcasts, collegeId],
+  );
+
+  const unread = useCallback((uid) => forUser(uid).filter((n) => !n.read).length, [forUser]);
+
+  const send = useCallback(
+    (toUserId, fromName, message, type = 'alert') => {
+      const ts = Date.now();
+      dispatch(
+        personalReceived({ id: ts, to: toUserId, from: fromName, message, type, read: false, time: timeLabel(), timestamp: ts }),
+      );
+    },
+    [dispatch],
+  );
+
+  const broadcast = useCallback(
+    (targetRole, fromName, message, type = 'info') => {
+      const ts = Date.now();
+      dispatch(
+        broadcastReceived({ id: ts, forRole: targetRole, collegeId, from: fromName, message, type, time: timeLabel(), timestamp: ts }),
+      );
+    },
+    [dispatch, collegeId],
+  );
+
+  const broadcastAll = useCallback(
+    (fromName, message, type = 'info') => broadcast('all', fromName, message, type),
+    [broadcast],
+  );
+
+  const markRead = useCallback((uid) => dispatch(personalMarkedRead(uid)), [dispatch]);
+
+  // Not Redux state — the "read" marker was never part of React state
+  // pre-Redux either, only a direct localStorage write. See
+  // notificationsStorage.js's own comment for why that stays as-is.
+  const markBCRead = useCallback(
+    (role) => {
+      const ids = broadcasts
+        .filter((b) => (b.forRole === 'all' || b.forRole === role) && visibleToViewer(b, collegeId))
+        .map((b) => b.id);
+      writeBCReadIds(role, ids);
+    },
+    [broadcasts, collegeId],
+  );
+
+  const clearAll = useCallback(
+    (role) => {
+      dispatch(personalCleared());
+      const ids = broadcasts
+        .filter((b) => (b.forRole === 'all' || b.forRole === role) && visibleToViewer(b, collegeId))
+        .map((b) => b.id);
+      writeBCReadIds(role, ids);
+    },
+    [dispatch, broadcasts, collegeId],
+  );
+
+  return {
+    toast,
+    showToast,
+    forUser,
+    getUnreadBC,
+    unread,
+    send,
+    broadcast,
+    broadcastAll,
+    markRead,
+    markBCRead,
+    clearAll,
+  };
 }

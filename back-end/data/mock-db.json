@@ -1856,6 +1856,14 @@
       "venue": "Test Hall",
       "description": "",
       "college_id": "c-default"
+    },
+    {
+      "event_id": "ev1794895792568",
+      "event_name": "Redux Cross-Tab Test Event",
+      "date": "2026-11-18",
+      "venue": "Hall X",
+      "description": "",
+      "college_id": "c-default"
     }
   ],
   "resources": [
