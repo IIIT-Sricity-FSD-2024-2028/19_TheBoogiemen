@@ -7,10 +7,12 @@
  * text/numbers, no visual element of any kind.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { apiFetch } from '../../api/client';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { useNotifications } from '../../context/NotificationsContext';
+import { fetchAtRisk, fetchOverview } from '../../features/institutionalReports/institutionalReportsThunks';
 import Meter from '../../components/shared/Meter';
 import { downloadCsv } from '../../utils/csv';
 
@@ -58,17 +60,17 @@ function AtRiskCauseChart({ atRisk }) {
 
 export default function InstitutionalReports() {
   const { showToast } = useNotifications();
-  const [atRisk, setAtRisk] = useState(undefined);
-  const [overview, setOverview] = useState(undefined);
+  const dispatch = useAppDispatch();
+  // atRisk stays `null` pre-load (not `undefined`) in the slice specifically
+  // so this page's own `atRisk === undefined ? null : ...` distinction still
+  // works unchanged below — see institutionalReportsSlice.js's comment.
+  const atRisk = useAppSelector((state) => (state.institutionalReports.atRiskStatus === 'idle' || state.institutionalReports.atRiskStatus === 'loading' ? undefined : state.institutionalReports.atRisk));
+  const overview = useAppSelector((state) => state.institutionalReports.overview);
 
   useEffect(() => {
-    apiFetch('/reports/at-risk')
-      .then(setAtRisk)
-      .catch(() => setAtRisk([]));
-    apiFetch('/reports/overview')
-      .then((data) => setOverview(data.summary))
-      .catch(() => setOverview(null));
-  }, []);
+    dispatch(fetchAtRisk());
+    dispatch(fetchOverview());
+  }, [dispatch]);
 
   const exportNba = () => {
     const lines = ['Student Name,ID,CGPA,Attendance %,Status'];

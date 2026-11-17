@@ -13,7 +13,8 @@
 
 import { useEffect, useState } from 'react';
 import { Bar, BarChart, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { apiFetch } from '../../api/client';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchFacultyCourses, fetchClassPerformanceForCourse } from '../../features/classPerformance/classPerformanceThunks';
 import { downloadCsv } from '../../utils/csv';
 
 const GRADE_COLOR = {
@@ -69,35 +70,22 @@ function classAverageForOutcome(report, loId) {
 }
 
 export default function ClassPerformance() {
-  const [courses, setCourses] = useState(null);
+  const dispatch = useAppDispatch();
+  const courses = useAppSelector((state) => state.classPerformance.courses);
   const [courseId, setCourseId] = useState('');
-  const [performance, setPerformance] = useState(undefined);
-  const [outcomes, setOutcomes] = useState(undefined);
-  const [error, setError] = useState(null);
+  const forCourse = useAppSelector((state) => state.classPerformance.byCourse[courseId]);
+  const performance = forCourse?.performance;
+  const outcomes = forCourse?.outcomes;
+  const error = forCourse?.status === 'failed' ? forCourse.error : null;
 
   useEffect(() => {
-    apiFetch('/faculty/me/courses').then(setCourses).catch(() => setCourses([]));
-  }, []);
+    dispatch(fetchFacultyCourses());
+  }, [dispatch]);
 
   useEffect(() => {
-    if (!courseId) {
-      setPerformance(undefined);
-      setOutcomes(undefined);
-      return;
-    }
-    setPerformance(undefined);
-    setOutcomes(undefined);
-    setError(null);
-    Promise.all([
-      apiFetch(`/faculty/me/class-performance?course_id=${courseId}`),
-      apiFetch(`/faculty/me/outcomes?course_id=${courseId}`).catch(() => null),
-    ])
-      .then(([perf, out]) => {
-        setPerformance(perf);
-        setOutcomes(out);
-      })
-      .catch((e) => setError(e.message));
-  }, [courseId]);
+    if (!courseId) return;
+    dispatch(fetchClassPerformanceForCourse(courseId));
+  }, [dispatch, courseId]);
 
   const totalGraded = performance ? performance.total_enrolled - performance.ungraded_count : 0;
   const distributionData = performance

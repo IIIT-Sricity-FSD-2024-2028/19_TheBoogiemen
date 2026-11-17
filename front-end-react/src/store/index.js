@@ -13,12 +13,26 @@ import authReducer from '../features/auth/authSlice';
 import notificationsReducer, { personalSynced, broadcastsSynced } from '../features/notifications/notificationsSlice';
 import { notificationsPersistenceMiddleware } from '../features/notifications/notificationsMiddleware';
 import { KEY, BKEY, readJSON, notExpired } from '../features/notifications/notificationsStorage';
+import coursesReducer from '../features/courses/coursesSlice';
+import holidaysReducer from '../features/holidays/holidaysSlice';
+import programOutcomesReducer from '../features/programOutcomes/programOutcomesSlice';
+import learningOutcomesReducer from '../features/learningOutcomes/learningOutcomesSlice';
+import institutionalReportsReducer from '../features/institutionalReports/institutionalReportsSlice';
+import attendanceRegisterReducer from '../features/attendanceRegister/attendanceRegisterSlice';
+import classPerformanceReducer from '../features/classPerformance/classPerformanceSlice';
 import { getUser } from '../api/client';
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
     notifications: notificationsReducer,
+    courses: coursesReducer,
+    holidays: holidaysReducer,
+    programOutcomes: programOutcomesReducer,
+    learningOutcomes: learningOutcomesReducer,
+    institutionalReports: institutionalReportsReducer,
+    attendanceRegister: attendanceRegisterReducer,
+    classPerformance: classPerformanceReducer,
   },
   middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(notificationsPersistenceMiddleware),
   // Hydrates from localStorage once, at real app boot — same effect as the

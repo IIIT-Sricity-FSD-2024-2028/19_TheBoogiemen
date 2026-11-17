@@ -4,34 +4,39 @@
  * to the college, not a department — courses carry no department_id
  * anywhere in this schema, so a true department-level PO list is out of
  * scope for now (see the plan's own note on this simplification).
+ *
+ * REDUX_MIGRATION_PLAN.md Phase 3: migrated to programOutcomesSlice, same
+ * shape as Holidays.jsx's own migration.
  */
 
 import { useEffect, useState } from 'react';
-import { apiFetch } from '../../api/client';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { useNotifications } from '../../context/NotificationsContext';
+import { fetchProgramOutcomes, createProgramOutcome, deleteProgramOutcome } from '../../features/programOutcomes/programOutcomesThunks';
 
 export default function ProgramOutcomes() {
   const { showToast } = useNotifications();
-  const [outcomes, setOutcomes] = useState(undefined);
+  const dispatch = useAppDispatch();
+  const outcomes = useAppSelector((state) =>
+    state.programOutcomes.status === 'idle' || state.programOutcomes.status === 'loading' ? undefined : state.programOutcomes.items,
+  );
   const [code, setCode] = useState('');
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const load = () => apiFetch('/program-outcomes').then(setOutcomes).catch(() => setOutcomes([]));
-  // Wrapped, not passed directly — see Team.jsx's fix note: load() returns a
-  // Promise, which React would otherwise try to call as an unmount cleanup.
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    dispatch(fetchProgramOutcomes());
+  }, [dispatch]);
 
   const add = async (e) => {
     e.preventDefault();
     if (!code.trim() || !description.trim()) return showToast('Code and description are both required', 'warning');
     setSubmitting(true);
     try {
-      await apiFetch('/program-outcomes', { method: 'POST', body: JSON.stringify({ code: code.trim(), description: description.trim() }) });
+      await dispatch(createProgramOutcome({ code: code.trim(), description: description.trim() })).unwrap();
       showToast('Program Outcome added!', 'success');
       setCode('');
       setDescription('');
-      load();
     } catch (e2) {
       showToast('Failed: ' + e2.message, 'error');
     } finally {
@@ -41,9 +46,8 @@ export default function ProgramOutcomes() {
 
   const remove = async (id) => {
     try {
-      await apiFetch(`/program-outcomes/${id}`, { method: 'DELETE' });
+      await dispatch(deleteProgramOutcome(id)).unwrap();
       showToast('Program Outcome removed', 'success');
-      load();
     } catch (e) {
       showToast('Failed: ' + e.message, 'error');
     }
