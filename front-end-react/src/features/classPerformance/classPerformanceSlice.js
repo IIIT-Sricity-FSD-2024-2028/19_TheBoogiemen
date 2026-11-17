@@ -8,13 +8,14 @@
  * overwriting the current one. `action.meta.arg` is the courseId
  * createAsyncThunk was dispatched with — no need to thread it through the
  * payload separately (same technique as learningOutcomesSlice's byCourse).
+ *
+ * The course DROPDOWN's own data moved to features/facultyCourses/ once a
+ * second file needed it — see that slice's own comment.
  */
 import { createSlice } from '@reduxjs/toolkit';
-import { fetchFacultyCourses, fetchClassPerformanceForCourse } from './classPerformanceThunks';
+import { fetchClassPerformanceForCourse } from './classPerformanceThunks';
 
 const initialState = {
-  courses: null,
-  coursesStatus: 'idle',
   byCourse: {}, // courseId -> { performance, outcomes, status, error }
 };
 
@@ -24,17 +25,6 @@ const classPerformanceSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(fetchFacultyCourses.pending, (state) => {
-        state.coursesStatus = 'loading';
-      })
-      .addCase(fetchFacultyCourses.fulfilled, (state, action) => {
-        state.coursesStatus = 'succeeded';
-        state.courses = action.payload;
-      })
-      .addCase(fetchFacultyCourses.rejected, (state) => {
-        state.coursesStatus = 'failed';
-        state.courses = [];
-      })
       .addCase(fetchClassPerformanceForCourse.pending, (state, action) => {
         const courseId = action.meta.arg;
         state.byCourse[courseId] = { performance: null, outcomes: null, status: 'loading', error: null };

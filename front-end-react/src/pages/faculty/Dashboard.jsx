@@ -4,16 +4,42 @@
  * The latter two are injected into dashboard-view at runtime by fixes.js,
  * not present in faculty.html's static markup (see the migration notes in
  * student/Attendance.jsx for the same pattern).
+ *
+ * Redux migration (Dev 4): Metrics reuses the shared usersSlice +
+ * timetableSlice (the same faculty-timetable fetch Timetable.jsx itself
+ * uses, deduped into one byRole.faculty bucket); Intervention reuses
+ * facultyStudentsSlice; ActionRequired reuses attendanceRequestsSlice +
+ * researchSlice; CourseOutcomesModal extends Dev 3's learningOutcomesSlice
+ * with its first real create/delete/po-mapping consumer; CourseSyllabusPanel
+ * is this file's own new topics/topicCompletions slices; SyllabusManager
+ * reuses Dev 3's coursesSlice (unscoped /courses, not /faculty/me/courses —
+ * see its own comment below for why) and programOutcomesSlice.
  */
 
 import { useEffect, useState } from 'react';
-import { apiFetch } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationsContext';
 import SendAlertModal from '../../components/shared/SendAlertModal';
 import MeetingModal from '../../components/shared/MeetingModal';
 import Modal from '../../components/shared/Modal';
 import { autoAlertAtRiskStudents } from '../../utils/riskAlerts';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchAllUsers } from '../../features/users/usersThunks';
+import { fetchTimetable } from '../../features/timetable/timetableThunks';
+import { fetchFacultyStudents } from '../../features/facultyStudents/facultyStudentsThunks';
+import { fetchAttendanceRequests } from '../../features/attendanceRequests/attendanceRequestsThunks';
+import { fetchResearch } from '../../features/research/researchThunks';
+import { fetchCourses } from '../../features/courses/coursesThunks';
+import { fetchProgramOutcomes } from '../../features/programOutcomes/programOutcomesThunks';
+import {
+  fetchLearningOutcomes,
+  createLearningOutcome,
+  deleteLearningOutcome,
+  setLearningOutcomePoMapping,
+} from '../../features/learningOutcomes/learningOutcomesThunks';
+import { fetchTopics, createTopic, deleteTopic } from '../../features/topics/topicsThunks';
+import { fetchTopicCompletionsForCourse, setTopicCompletion } from '../../features/topicCompletions/topicCompletionsThunks';
+import { previewSet } from '../../features/topicCompletions/topicCompletionsSlice';
 
 export default function Dashboard({ onNavigate }) {
   return (
@@ -27,24 +53,25 @@ export default function Dashboard({ onNavigate }) {
 }
 
 function Metrics({ onNavigate }) {
-  const [totalStudents, setTotalStudents] = useState('—');
-  const [classesThisWeek, setClassesThisWeek] = useState('—');
+  const dispatch = useAppDispatch();
+  const users = useAppSelector((state) => state.users.items);
+  const usersStatus = useAppSelector((state) => state.users.status);
+  const timetableEntry = useAppSelector((state) => state.timetable.byRole.faculty);
 
   useEffect(() => {
-    apiFetch('/admin/users')
-      .then((all) => setTotalStudents(all.filter((u) => u.role === 'student').length))
-      .catch(() => setTotalStudents('—'));
-    apiFetch('/faculty/me/timetable')
-      .then((tt) => {
-        if (!tt?.grid) return;
-        let slots = 0;
-        Object.values(tt.grid).forEach((day) => {
-          slots += Object.keys(day).length;
-        });
-        setClassesThisWeek(slots);
-      })
-      .catch(() => setClassesThisWeek('—'));
-  }, []);
+    dispatch(fetchAllUsers());
+    dispatch(fetchTimetable('faculty'));
+  }, [dispatch]);
+
+  const totalStudents = usersStatus === 'succeeded' ? users.filter((u) => u.role === 'student').length : '—';
+  let classesThisWeek = '—';
+  if (timetableEntry?.data?.grid) {
+    let slots = 0;
+    Object.values(timetableEntry.data.grid).forEach((day) => {
+      slots += Object.keys(day).length;
+    });
+    classesThisWeek = slots;
+  }
 
   return (
     <div className="metrics-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
@@ -63,8 +90,9 @@ function Metrics({ onNavigate }) {
 }
 
 function Intervention() {
+  const dispatch = useAppDispatch();
   const { send } = useNotifications();
-  const [students, setStudents] = useState(undefined);
+  const facultyStudents = useAppSelector((state) => state.facultyStudents.items);
   const [alertTarget, setAlertTarget] = useState(null);
   const [meetingTarget, setMeetingTarget] = useState(null);
 
@@ -73,18 +101,18 @@ function Intervention() {
     // field at all (sanitizeUser only strips password fields) — this panel
     // showed "No students currently flagged" unconditionally. /faculty/me/students
     // is the same real, computed source StudentOverview.jsx already uses.
-    apiFetch('/faculty/me/students')
-      .then((all) => {
-        const atRisk = all.filter((s) => s.is_at_risk);
-        setStudents(atRisk);
+    dispatch(fetchFacultyStudents()).then((action) => {
+      if (action.payload) {
         // FR10: notify each at-risk student automatically — the system
         // flags them the moment this loads, rather than only if a faculty
         // member happens to notice and click "Send Alert" below.
-        autoAlertAtRiskStudents(atRisk, send);
-      })
-      .catch(() => setStudents([]));
+        autoAlertAtRiskStudents(action.payload.filter((s) => s.is_at_risk), send);
+      }
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const students = facultyStudents === null ? undefined : facultyStudents.filter((s) => s.is_at_risk);
 
   return (
     <div className="stats-card">
@@ -134,22 +162,27 @@ function Intervention() {
 }
 
 function ActionRequired({ onNavigate }) {
-  const [items, setItems] = useState(undefined);
+  const dispatch = useAppDispatch();
+  const { items: attReqs, status: attStatus } = useAppSelector((state) => state.attendanceRequests);
+  const { items: research, status: researchStatus } = useAppSelector((state) => state.research);
 
   useEffect(() => {
-    Promise.all([apiFetch('/attendance-requests').catch(() => []), apiFetch('/research').catch(() => [])])
-      .then(([attReqs, research]) => {
-        const canGrant = attReqs.filter((r) => r.admin_status === 'approved' && r.faculty_status !== 'granted').length;
-        const pendBTP = research.filter((p) => p.status === 'active' && (p.uploads || []).length > 0).length;
-        const list = [];
-        if (canGrant) list.push({ icon: '✅', text: `${canGrant} attendance request(s) to grant`, view: 'attendance' });
-        if (pendBTP) list.push({ icon: '📤', text: `${pendBTP} BTP submission(s) to review`, view: 'research' });
-        setItems(list);
-      })
-      .catch(() => setItems([]));
-  }, []);
+    dispatch(fetchAttendanceRequests());
+    dispatch(fetchResearch());
+  }, [dispatch]);
 
-  if (items === undefined) return null;
+  // Wait for BOTH to settle before computing anything, same as the
+  // pre-Redux page's own Promise.all — each slice's own rejected handler
+  // already degrades to an empty array, matching that Promise.all's
+  // per-fetch .catch(() => []).
+  const bothSettled = (attStatus === 'succeeded' || attStatus === 'failed') && (researchStatus === 'succeeded' || researchStatus === 'failed');
+  if (!bothSettled) return null;
+
+  const canGrant = (attReqs || []).filter((r) => r.admin_status === 'approved' && r.faculty_status !== 'granted').length;
+  const pendBTP = (research || []).filter((p) => p.status === 'active' && (p.uploads || []).length > 0).length;
+  const items = [];
+  if (canGrant) items.push({ icon: '✅', text: `${canGrant} attendance request(s) to grant`, view: 'attendance' });
+  if (pendBTP) items.push({ icon: '📤', text: `${pendBTP} BTP submission(s) to review`, view: 'research' });
 
   return (
     <div style={{ marginBottom: 20 }}>
@@ -180,34 +213,26 @@ function ActionRequired({ onNavigate }) {
  * teaches, and each taggable to the course's own Course Outcomes.
  */
 function CourseOutcomesModal({ course, programOutcomes, onClose, onChanged }) {
+  const dispatch = useAppDispatch();
   const { showToast } = useNotifications();
-  const [outcomes, setOutcomes] = useState(null);
+  const outcomes = useAppSelector((state) => (course ? state.learningOutcomes.byCourse[course.course_id] : undefined)) ?? null;
   const [code, setCode] = useState('');
   const [description, setDescription] = useState('');
   const [mappingTarget, setMappingTarget] = useState(null); // the CO currently being mapped to POs
   const [draftMapping, setDraftMapping] = useState([]); // [{po_id, strength}] while editing
 
-  const load = () => {
+  useEffect(() => {
     if (!course) return;
-    apiFetch(`/learning-outcomes?course_id=${course.course_id}`)
-      .then(setOutcomes)
-      .catch(() => setOutcomes([]));
-  };
-  // Wrapped, not passed directly — see Team.jsx's fix note: load() returns a
-  // Promise, which React would otherwise try to call as an unmount cleanup.
-  useEffect(() => { load(); }, [course]);
+    dispatch(fetchLearningOutcomes(course.course_id));
+  }, [dispatch, course]);
 
   const addOutcome = async (e) => {
     e.preventDefault();
     if (!code.trim() || !description.trim()) return showToast('Code and description are both required', 'warning');
     try {
-      await apiFetch('/learning-outcomes', {
-        method: 'POST',
-        body: JSON.stringify({ course_id: course.course_id, code: code.trim(), description: description.trim() }),
-      });
+      await dispatch(createLearningOutcome({ courseId: course.course_id, code: code.trim(), description: description.trim() })).unwrap();
       setCode('');
       setDescription('');
-      load();
       onChanged();
     } catch (e2) {
       showToast('Failed: ' + e2.message, 'error');
@@ -216,8 +241,7 @@ function CourseOutcomesModal({ course, programOutcomes, onClose, onChanged }) {
 
   const removeOutcome = async (id) => {
     try {
-      await apiFetch(`/learning-outcomes/${id}`, { method: 'DELETE' });
-      load();
+      await dispatch(deleteLearningOutcome({ loId: id, courseId: course.course_id })).unwrap();
       onChanged();
     } catch (e) {
       showToast('Failed: ' + e.message, 'error');
@@ -241,13 +265,9 @@ function CourseOutcomesModal({ course, programOutcomes, onClose, onChanged }) {
 
   const saveMapping = async () => {
     try {
-      await apiFetch(`/learning-outcomes/${mappingTarget.lo_id}/po-mapping`, {
-        method: 'PUT',
-        body: JSON.stringify({ po_mapping: draftMapping }),
-      });
+      await dispatch(setLearningOutcomePoMapping({ loId: mappingTarget.lo_id, courseId: course.course_id, poMapping: draftMapping })).unwrap();
       showToast('PO mapping saved', 'success');
       setMappingTarget(null);
-      load();
     } catch (e) {
       showToast('Failed: ' + e.message, 'error');
     }
@@ -337,32 +357,16 @@ function TopicRow({ topic, mySections, completionBySection, onProgressChange, on
 }
 
 function CourseSyllabusPanel({ course, programOutcomes }) {
+  const dispatch = useAppDispatch();
   const { showToast } = useNotifications();
-  const [topics, setTopics] = useState(null);
-  const [completionBySection, setCompletionBySection] = useState({}); // section -> { topic_id: progress }
+  const topics = useAppSelector((state) => state.topics.byCourse[course.course_id]?.items) ?? null;
+  const completionBySection = useAppSelector((state) => state.topicCompletions.byCourse[course.course_id]) ?? {};
   const [newTopic, setNewTopic] = useState('');
   const [outcomesOpen, setOutcomesOpen] = useState(false);
 
-  const load = async () => {
-    try {
-      const list = await apiFetch(`/topics?course_id=${course.course_id}`);
-      setTopics(list);
-      const perSection = await Promise.all(
-        course.mySections.map((sec) =>
-          apiFetch(`/topic-completions?course_id=${course.course_id}&section=${sec}`).then((rows) => [sec, rows]),
-        ),
-      );
-      const bySection = {};
-      perSection.forEach(([sec, rows]) => {
-        bySection[sec] = {};
-        rows.forEach((r) => {
-          bySection[sec][r.topic_id] = r.progress;
-        });
-      });
-      setCompletionBySection(bySection);
-    } catch {
-      setTopics([]);
-    }
+  const load = () => {
+    dispatch(fetchTopics(course.course_id));
+    dispatch(fetchTopicCompletionsForCourse({ courseId: course.course_id, sections: course.mySections }));
   };
   useEffect(() => {
     load();
@@ -373,7 +377,7 @@ function CourseSyllabusPanel({ course, programOutcomes }) {
     e.preventDefault();
     if (!newTopic.trim()) return;
     try {
-      await apiFetch('/topics', { method: 'POST', body: JSON.stringify({ course_id: course.course_id, title: newTopic.trim() }) });
+      await dispatch(createTopic({ courseId: course.course_id, title: newTopic.trim() })).unwrap();
       setNewTopic('');
       load();
     } catch (e2) {
@@ -383,7 +387,7 @@ function CourseSyllabusPanel({ course, programOutcomes }) {
 
   const removeTopic = async (topicId) => {
     try {
-      await apiFetch(`/topics/${topicId}`, { method: 'DELETE' });
+      await dispatch(deleteTopic(topicId)).unwrap();
       load();
     } catch (e) {
       showToast('Failed: ' + e.message, 'error');
@@ -391,16 +395,13 @@ function CourseSyllabusPanel({ course, programOutcomes }) {
   };
 
   const onProgressChange = (topicId, section, value) => {
-    setCompletionBySection((prev) => ({ ...prev, [section]: { ...prev[section], [topicId]: Number(value) } }));
+    dispatch(previewSet({ courseId: course.course_id, section, topicId, progress: Number(value) }));
   };
 
   const onSave = async (topicId, section) => {
     const progress = completionBySection[section]?.[topicId] ?? 0;
     try {
-      await apiFetch('/topic-completions', {
-        method: 'PATCH',
-        body: JSON.stringify({ course_id: course.course_id, section, topic_id: topicId, progress }),
-      });
+      await dispatch(setTopicCompletion({ courseId: course.course_id, section, topicId, progress })).unwrap();
       showToast(`Topic updated: Section ${section} → ${progress}%`, 'success');
     } catch (e) {
       showToast('Failed to update topic: ' + e.message, 'error');
@@ -447,36 +448,36 @@ function CourseSyllabusPanel({ course, programOutcomes }) {
 }
 
 function SyllabusManager() {
+  const dispatch = useAppDispatch();
   const { user } = useAuth();
-  const [courses, setCourses] = useState(undefined);
-  const [programOutcomes, setProgramOutcomes] = useState([]);
+  const courses = useAppSelector((state) => state.courses.items);
+  const coursesStatus = useAppSelector((state) => state.courses.status);
+  const programOutcomes = useAppSelector((state) => state.programOutcomes.items);
 
   useEffect(() => {
     // /courses (not /faculty/me/courses) because it carries every
     // section's own faculty_id — /faculty/me/courses only ever attaches
     // one section per course, which breaks if this faculty teaches more
     // than one section of the same course.
-    Promise.all([apiFetch('/courses'), apiFetch('/program-outcomes').catch(() => [])])
-      .then(([allCourses, pos]) => {
-        const myUserId = user?.user_id;
-        const mine = allCourses
-          .map((c) => ({ ...c, mySections: (c.sections || []).filter((s) => s.faculty_id === myUserId).map((s) => s.section) }))
-          .filter((c) => c.mySections.length > 0);
-        setProgramOutcomes(pos);
-        setCourses(mine);
-      })
-      .catch(() => setCourses([]));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    dispatch(fetchCourses());
+    dispatch(fetchProgramOutcomes());
+  }, [dispatch]);
+
+  if (coursesStatus === 'idle' || coursesStatus === 'loading') return null;
+
+  const myUserId = user?.user_id;
+  const mine = coursesStatus === 'failed' ? [] : courses
+    .map((c) => ({ ...c, mySections: (c.sections || []).filter((s) => s.faculty_id === myUserId).map((s) => s.section) }))
+    .filter((c) => c.mySections.length > 0);
 
   return (
     <div style={{ marginTop: 20, padding: 20, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12 }}>
       <h3 style={{ margin: '0 0 14px', fontSize: 15, fontWeight: 700 }}>📊 Syllabus Topics & Course Outcomes</h3>
       <div style={{ fontSize: 13, color: '#64748b', marginBottom: 12 }}>Track topic-wise completion per section, and define the Course Outcomes each topic and assessment contributes to.</div>
-      {courses === undefined ? null : courses.length === 0 ? (
+      {mine.length === 0 ? (
         <p style={{ color: '#64748b', textAlign: 'center' }}>No sections assigned to you yet.</p>
       ) : (
-        courses.map((c) => <CourseSyllabusPanel key={c.course_id} course={c} programOutcomes={programOutcomes} />)
+        mine.map((c) => <CourseSyllabusPanel key={c.course_id} course={c} programOutcomes={programOutcomes} />)
       )}
     </div>
   );

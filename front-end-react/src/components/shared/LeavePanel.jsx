@@ -19,6 +19,8 @@ import { uploadFile, downloadDocument } from '../../api/uploads';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationsContext';
 import Modal from './Modal';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchFacultyLeaves, applyForLeave } from '../../features/facultyLeave/facultyLeaveThunks';
 
 const STATUS_COLORS = {
   approved: ['#dcfce7', '#166534'],
@@ -55,6 +57,7 @@ function LeaveTable({ leaves }) {
 }
 
 function LeaveApplyModal({ open, onClose, onSubmitted }) {
+  const dispatch = useAppDispatch();
   const { showToast } = useNotifications();
   const [leaveType, setLeaveType] = useState('');
   const [start, setStart] = useState('');
@@ -92,10 +95,7 @@ function LeaveApplyModal({ open, onClose, onSubmitted }) {
     setSubmitting(true);
     try {
       const uploaded = file ? await uploadFile(file, 'leave') : null;
-      await apiFetch('/leave', {
-        method: 'POST',
-        body: JSON.stringify({ leave_type: leaveType, start_date: start, end_date: end, reason: reason.trim(), file_id: uploaded?.file_id ?? null }),
-      });
+      await dispatch(applyForLeave({ leave_type: leaveType, start_date: start, end_date: end, reason: reason.trim(), file_id: uploaded?.file_id ?? null })).unwrap();
       showToast(uploaded ? `Leave applied with ${uploaded.original_name}! ✅` : 'Leave applied!', 'success');
       handleClose();
       onSubmitted();
@@ -273,12 +273,14 @@ function AdminLeaveManagement() {
 }
 
 function FacultyLeavePanel() {
-  const [leaves, setLeaves] = useState(undefined);
+  const dispatch = useAppDispatch();
+  const leaves = useAppSelector((state) => state.facultyLeave.items);
   const [modalOpen, setModalOpen] = useState(false);
 
-  const load = () => apiFetch('/leave').then(setLeaves).catch(() => setLeaves([]));
+  const load = () => dispatch(fetchFacultyLeaves());
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const total = leaves?.length ?? 0;
