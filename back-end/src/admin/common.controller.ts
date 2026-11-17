@@ -1,4 +1,10 @@
 import {
+  validateSlotConflicts,
+  validateWeeklyHourRequirements,
+  TIMETABLE_DAYS,
+  TIMETABLE_TIMES,
+} from '../common/timetable-validation';
+import {
 Controller,
 Get,
 Post,
@@ -318,13 +324,347 @@ return rows;
 @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
 @ApiOperation({ summary: 'Get timetable grid for a section' })
 async getTimetable(
-@Query('section') section: string = 'A',
-@CurrentUserCollegeId() collegeId: string | null,
+  @Query('section') section: string = 'A',
+  @Query('status') status: string,
+  @CurrentUserCollegeId() collegeId: string | null,
+  @CurrentUserRole() role: string,
 ) {
-const slots = scopeToCollege(this.db.timetable, collegeId).filter(
-(t) => t.section === section,
-);
-return { grid: buildTimetableGrid(slots), ...TIMETABLE_AXES };
+  let slots = scopeToCollege(this.db.timetable, collegeId).filter(
+    (t) => t.section === section,
+  );
+  // Student & Faculty only see published slots unless admin/head
+  if (role === 'student' || (role === 'faculty' && status !== 'all')) {
+    slots = slots.filter((t) => t.status === undefined || t.status === 'published');
+  } else if (status && status !== 'all') {
+    slots = slots.filter((t) => t.status === status);
+  }
+  return {
+    grid: buildTimetableGrid(slots),
+    slots,
+    section,
+    ...TIMETABLE_AXES,
+  };
+}
+
+@Post('timetable/slot')
+@Roles('head', 'admin', 'superadmin')
+@ApiOperation({ summary: 'Create or update a class session slot with conflict validation' })
+async createOrUpdateSlot(
+  @Body() body: any,
+  @CurrentUserCollegeId() actorCollegeId: string | null,
+) {
+  const {
+    slot_id,
+    day,
+    time,
+    course_id,
+    section,
+    room,
+    type = 'lecture',
+    faculty_id,
+    status = 'draft',
+    semester,
+    branch,
+  } = body;
+
+  if (!day || !time || !course_id || !section) {
+    throw new BadRequestException(
+      errorBody(
+        ErrorCode.BUSINESS_RULE_VIOLATION,
+        'day, time, course_id, and section are required',
+      ),
+    );
+  }
+
+  const collegeId = writeCollegeId(actorCollegeId);
+  const course = this.db.courses.find((c) => c.course_id === course_id);
+  if (!isSameCollege(course, collegeId)) notFoundInMyCollege('Course');
+
+  // Resolve assigned faculty name and id
+  let finalFacultyId = faculty_id;
+  let finalFacultyName: string | undefined = undefined;
+
+  if (!finalFacultyId) {
+    const cs = sectionsOfCourse(this.db, course_id).find((s) => s.section === section);
+    if (cs) finalFacultyId = cs.faculty_id;
+  }
+  if (finalFacultyId) {
+    const fac = (this.db.faculty as any[]).find((f) => f.user_id === finalFacultyId);
+    if (fac) finalFacultyName = `${fac.first_name || ''} ${fac.last_name || ''}`.trim() || fac.email;
+  }
+
+  const slotData = {
+    slot_id: slot_id || `t${Date.now()}`,
+    day: day.toUpperCase(),
+    time,
+    course_id,
+    course_code: course?.course_code || '',
+    course_name: course?.course_name || '',
+    section,
+    room: room || 'TBA',
+    type: (type.toLowerCase() as any) || 'lecture',
+    faculty_id: finalFacultyId,
+    faculty_name: finalFacultyName,
+    status: status || 'draft',
+    college_id: collegeId,
+    semester: semester || course?.semester || 1,
+    branch: branch || 'CS',
+  };
+
+  // Run Conflict Validation
+  const conflicts = validateSlotConflicts(this.db, slotData, {
+    excludeSlotId: slot_id,
+    collegeId,
+  });
+
+  // If force flag is not set, reject on critical conflicts
+  if (conflicts.length > 0 && !body.force) {
+    return {
+      success: false,
+      hasConflicts: true,
+      conflicts,
+      message: conflicts[0].message,
+    };
+  }
+
+  const existingIdx = this.db.timetable.findIndex((t) => t.slot_id === slotData.slot_id);
+  if (existingIdx >= 0) {
+    this.db.timetable[existingIdx] = slotData;
+  } else {
+    this.db.timetable.push(slotData);
+  }
+  this.db.persist();
+
+  return {
+    success: true,
+    data: slotData,
+    conflicts,
+    message: conflicts.length > 0 ? 'Slot saved with warning override' : 'Slot scheduled successfully',
+  };
+}
+
+@Delete('timetable/slot/:id')
+@Roles('head', 'admin', 'superadmin')
+@ApiOperation({ summary: 'Remove a class session slot' })
+async deleteSlot(
+  @Param('id') id: string,
+  @CurrentUserCollegeId() collegeId: string | null,
+) {
+  const idx = this.db.timetable.findIndex((t) => t.slot_id === id);
+  if (idx < 0) {
+    throw new NotFoundException(errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Slot not found'));
+  }
+  const slot = this.db.timetable[idx];
+  if (!isSameCollege(slot, collegeId)) notFoundInMyCollege('Timetable slot');
+
+  this.db.timetable.splice(idx, 1);
+  this.db.persist();
+  return { success: true, message: 'Slot deleted successfully' };
+}
+
+@Post('timetable/validate')
+@Roles('head', 'admin', 'superadmin')
+@ApiOperation({ summary: 'Validate section timetable for conflicts and contact hour requirements' })
+async validateTimetable(
+  @Body() body: { section: string; course_id?: string },
+  @CurrentUserCollegeId() collegeId: string | null,
+) {
+  const section = body.section || 'A';
+  const slots = scopeToCollege(this.db.timetable, collegeId).filter(
+    (t) => t.section === section,
+  );
+
+  const allConflicts: any[] = [];
+  slots.forEach((s) => {
+    const c = validateSlotConflicts(this.db, s, {
+      excludeSlotId: s.slot_id,
+      collegeId,
+      candidateSlots: slots,
+    });
+    if (c.length > 0) allConflicts.push({ slot: s, conflicts: c });
+  });
+
+  // Check weekly hour requirements for courses in this section
+  const sectionCourseIds = [...new Set(slots.map((s) => s.course_id))];
+  const hourReports = sectionCourseIds.map((cid) =>
+    validateWeeklyHourRequirements(this.db, cid, section, slots),
+  );
+
+  return {
+    success: true,
+    section,
+    totalSlots: slots.length,
+    conflicts: allConflicts,
+    hourReports,
+    isValid: allConflicts.length === 0,
+  };
+}
+
+@Post('timetable/publish')
+@Roles('head', 'admin', 'superadmin')
+@ApiOperation({ summary: 'Publish draft timetable for a section after validation' })
+async publishTimetable(
+  @Body() body: { section: string; force?: boolean },
+  @CurrentUserCollegeId() collegeId: string | null,
+) {
+  const section = body.section || 'A';
+  const slots = scopeToCollege(this.db.timetable, collegeId).filter(
+    (t) => t.section === section,
+  );
+
+  if (slots.length === 0) {
+    throw new BadRequestException(
+      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, `No slots scheduled for Section ${section}`),
+    );
+  }
+
+  // Validate all slots
+  const allConflicts: any[] = [];
+  slots.forEach((s) => {
+    const c = validateSlotConflicts(this.db, s, {
+      excludeSlotId: s.slot_id,
+      collegeId,
+      candidateSlots: slots,
+    });
+    if (c.length > 0) allConflicts.push(...c);
+  });
+
+  if (allConflicts.length > 0 && !body.force) {
+    throw new BadRequestException(
+      errorBody(
+        ErrorCode.BUSINESS_RULE_VIOLATION,
+        `Cannot publish timetable: ${allConflicts.length} conflict(s) detected. ${allConflicts[0].message}`,
+      ),
+    );
+  }
+
+  // Mark all slots as published
+  slots.forEach((s) => {
+    s.status = 'published';
+  });
+  this.db.persist();
+
+  return {
+    success: true,
+    message: `Section ${section} timetable published successfully (${slots.length} class sessions)`,
+    publishedCount: slots.length,
+  };
+}
+
+@Post('timetable/generate')
+@Roles('head', 'admin', 'superadmin')
+@ApiOperation({ summary: 'Deterministic automated timetable draft generation with conflict avoidance' })
+async generateTimetable(
+  @Body() body: { section: string; semester?: number; academic_year?: string; clearExistingDrafts?: boolean },
+  @CurrentUserCollegeId() actorCollegeId: string | null,
+) {
+  const section = body.section || 'A';
+  const collegeId = writeCollegeId(actorCollegeId);
+  const semester = body.semester;
+
+  if (body.clearExistingDrafts) {
+    // Clear only draft slots for this section and college
+    for (let i = this.db.timetable.length - 1; i >= 0; i--) {
+      const t = this.db.timetable[i];
+      if (t.section === section && t.status === 'draft' && isSameCollege(t, collegeId)) {
+        this.db.timetable.splice(i, 1);
+      }
+    }
+  }
+
+  // Find all applicable courses for this section
+  let coursesToSchedule = scopeToCollege(this.db.courses, collegeId);
+  if (semester) {
+    coursesToSchedule = coursesToSchedule.filter((c) => c.semester === semester);
+  }
+
+  // Filter courses that have this section offered
+  coursesToSchedule = coursesToSchedule.filter((c) => {
+    const cs = sectionsOfCourse(this.db, c.course_id);
+    return cs.some((s) => s.section === section);
+  });
+
+  if (coursesToSchedule.length === 0) {
+    return {
+      success: false,
+      message: `No courses found with Section ${section} assigned`,
+      generatedSlots: 0,
+    };
+  }
+
+  // Candidate pool of existing slots
+  const candidatePool: any[] = [...scopeToCollege(this.db.timetable, collegeId)];
+  const newlyGenerated: any[] = [];
+  const days = TIMETABLE_DAYS;
+  const times = TIMETABLE_TIMES;
+
+  // Available room resources
+  const availableRooms = scopeToCollege(this.db.resources, collegeId).filter(
+    (r) => r.type === 'Room' || r.type === 'Hall' || r.type === 'Lab',
+  );
+  const defaultLectureRoom = availableRooms.find((r) => r.type !== 'Lab')?.name || '101';
+  const defaultLabRoom = availableRooms.find((r) => r.type === 'Lab')?.name || 'Lab 1';
+
+  for (const course of coursesToSchedule) {
+    const req = validateWeeklyHourRequirements(this.db, course.course_id, section, candidatePool);
+    let hoursNeeded = req.expectedContactHours - req.scheduledHours;
+    if (hoursNeeded <= 0) continue;
+
+    const cs = sectionsOfCourse(this.db, course.course_id).find((s) => s.section === section);
+    const facultyId = cs?.faculty_id;
+    const fac = facultyId ? (this.db.faculty as any[]).find((f) => f.user_id === facultyId) : null;
+    const facultyName = fac ? `${fac.first_name || ''} ${fac.last_name || ''}`.trim() : undefined;
+
+    // Allocate required hours across available days and times without conflict
+    for (const day of days) {
+      if (hoursNeeded <= 0) break;
+      for (const time of times) {
+        if (hoursNeeded <= 0) break;
+
+        const isLab = hoursNeeded === 1 && (course.course_name?.toLowerCase().includes('lab') || course.course_code?.toLowerCase().includes('l'));
+        const targetRoom = isLab ? defaultLabRoom : defaultLectureRoom;
+
+        const slotDraft = {
+          slot_id: `t_gen_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+          day,
+          time,
+          course_id: course.course_id,
+          course_code: course.course_code,
+          course_name: course.course_name,
+          section,
+          room: targetRoom,
+          type: (isLab ? 'lab' : 'lecture') as any,
+          faculty_id: facultyId,
+          faculty_name: facultyName,
+          status: 'draft' as const,
+          college_id: collegeId,
+          semester: course.semester || 1,
+          branch: 'CS',
+        };
+
+        const conflicts = validateSlotConflicts(this.db, slotDraft as any, {
+          collegeId,
+          candidateSlots: candidatePool,
+        });
+
+        if (conflicts.length === 0) {
+          candidatePool.push(slotDraft);
+          newlyGenerated.push(slotDraft);
+          this.db.timetable.push(slotDraft);
+          hoursNeeded--;
+        }
+      }
+    }
+  }
+
+  this.db.persist();
+
+  return {
+    success: true,
+    message: `Generated ${newlyGenerated.length} draft class session(s) for Section ${section}`,
+    generatedSlots: newlyGenerated.length,
+    slots: newlyGenerated,
+  };
 }
 
 @Get('timetable/faculty')
@@ -337,9 +677,11 @@ async getFacultyTimetable(
 // Section-scoped â€” see faculty.service.ts's copy of this same fix for why.
 const mySections = sectionsTaughtBy(this.db, userId);
 const slots = scopeToCollege(this.db.timetable, collegeId).filter((t) =>
+(t.faculty_id === userId ||
 mySections.some(
 (cs) => cs.course_id === t.course_id && cs.section === t.section,
-),
+)) &&
+(t.status === undefined || t.status === 'published'),
 );
 return { grid: buildTimetableGrid(slots), ...TIMETABLE_AXES };
 }
@@ -2656,7 +2998,10 @@ const enrolledCourseIds = this.db.enrollment
 .filter((e) => e.student_id === userId && e.status === 'active')
 .map((e) => e.course_id);
 const slots = scopeToCollege(this.db.timetable, collegeId).filter(
-(t) => t.section === section && enrolledCourseIds.includes(t.course_id),
+(t) =>
+  t.section === section &&
+  enrolledCourseIds.includes(t.course_id) &&
+  (t.status === undefined || t.status === 'published'),
 );
 return { grid: buildTimetableGrid(slots), ...TIMETABLE_AXES };
 }

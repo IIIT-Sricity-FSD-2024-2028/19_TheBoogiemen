@@ -67,16 +67,23 @@ export class FacultyService {
     // Section-scoped, not just course-scoped: two sections of the same
     // course can meet at different times with different faculty, so "my
     // timetable" must match this faculty's own (course_id, section) pairs,
-    // not every slot that happens to share a course_id.
+    // or slots where faculty_id was explicitly assigned to this instructor.
     const mySections = sectionsTaughtBy(this.db, userId);
     const slots = this.db.timetable.filter((t) =>
-      mySections.some(
-        (cs) => cs.course_id === t.course_id && cs.section === t.section,
-      ),
+      (t.faculty_id === userId ||
+        mySections.some(
+          (cs) => cs.course_id === t.course_id && cs.section === t.section,
+        )) &&
+      (t.status === undefined || t.status === 'published'),
     );
     const grid = slots.reduce((acc: any, curr) => {
       if (!acc[curr.day]) acc[curr.day] = {};
-      acc[curr.day][curr.time] = curr;
+      if (!acc[curr.day][curr.time]) acc[curr.day][curr.time] = curr;
+      else {
+        if (!Array.isArray(acc[curr.day][curr.time]))
+          acc[curr.day][curr.time] = [acc[curr.day][curr.time]];
+        acc[curr.day][curr.time].push(curr);
+      }
       return acc;
     }, {});
     return {
