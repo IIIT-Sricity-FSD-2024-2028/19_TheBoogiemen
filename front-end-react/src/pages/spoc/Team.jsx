@@ -6,13 +6,20 @@
 * call explains why: the backend stamps 'admin' + this SPOC's own
 * college_id itself (ROLE_GRANTS in common/dto/user.dto.ts), so a form
 * field here would be decoration.
+*
+* Redux migration (Dev 5): myCollegeSlice (shared with Subscription.jsx)
+* for the admin roster; hiring reuses usersThunks.createUser, the same
+* POST /users admin/UserManagement.jsx's AddUserModal already uses.
 */
 import { useEffect, useState } from 'react';
-import { apiFetch } from '../../api/client';
 import { useNotifications } from '../../context/NotificationsContext';
 import Modal from '../../components/shared/Modal';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchMyCollege } from '../../features/myCollege/myCollegeThunks';
+import { createUser } from '../../features/users/usersThunks';
 
 function HireAdminModal({ open, onClose, onHired }) {
+  const dispatch = useAppDispatch();
   const { showToast } = useNotifications();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -41,10 +48,7 @@ function HireAdminModal({ open, onClose, onHired }) {
 
     setSubmitting(true);
     try {
-      await apiFetch('/users', {
-        method: 'POST',
-        body: JSON.stringify({ role: 'admin', first_name: firstName.trim(), last_name: lastName.trim(), email: email.trim(), password }),
-      });
+      await dispatch(createUser({ role: 'admin', first_name: firstName.trim(), last_name: lastName.trim(), email: email.trim(), password })).unwrap();
       onClose();
       onHired();
     } catch (e2) {
@@ -92,24 +96,16 @@ function HireAdminModal({ open, onClose, onHired }) {
 }
 
 export default function Team() {
-  const [admins, setAdmins] = useState(undefined);
+  const dispatch = useAppDispatch();
+  const college = useAppSelector((state) => state.myCollege.data);
   const [hireOpen, setHireOpen] = useState(false);
+  const admins = college === undefined ? undefined : college?.admins || [];
 
-  // FIX: Wrap the async call in a synchronous function inside useEffect.
-  // The previous `useEffect(load, [])` returned a Promise from the effect
-  // callback, which violates React's contract (effects must return undefined
-  // or a cleanup function). In React 18 strict mode, this can cause the
-  // component to fail to mount properly, resulting in a blank page.
+  const load = () => dispatch(fetchMyCollege());
+
   useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await apiFetch('/billing/colleges/me');
-        setAdmins(res?.data?.admins || []);
-      } catch {
-        setAdmins([]);
-      }
-    };
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -143,12 +139,7 @@ export default function Team() {
           })
         )}
       </div>
-      <HireAdminModal open={hireOpen} onClose={() => setHireOpen(false)} onHired={() => {
-        // Re-fetch the admin list after a successful hire
-        apiFetch('/billing/colleges/me')
-          .then((res) => setAdmins(res?.data?.admins || []))
-          .catch(() => setAdmins([]));
-      }} />
+      <HireAdminModal open={hireOpen} onClose={() => setHireOpen(false)} onHired={load} />
     </div>
   );
 }

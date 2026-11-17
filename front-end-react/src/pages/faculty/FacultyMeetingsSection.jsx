@@ -1,10 +1,11 @@
-import { useEffect, useState, useCallback } from 'react';
-import { apiFetch } from '../../api/client';
+import { useEffect, useState } from 'react';
 import { useNotifications } from '../../context/NotificationsContext';
 import MeetingModal from '../../components/shared/MeetingModal';
 import RescheduleModal from '../../components/shared/RescheduleModal';
 import CompleteMeetingModal from '../../components/shared/CompleteMeetingModal';
 import MeetingDetailModal from '../../components/shared/MeetingDetailModal';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchMyMeetings, acceptMeeting, denyMeeting } from '../../features/meetings/meetingsThunks';
 
 const STATUS_BADGES = {
   PENDING: { label: 'Pending Approval', bg: '#fef3c7', color: '#b45309', border: '#fcd34d' },
@@ -17,9 +18,10 @@ const STATUS_BADGES = {
 };
 
 export default function FacultyMeetingsSection() {
+  const dispatch = useAppDispatch();
   const { showToast, send } = useNotifications();
-  const [meetings, setMeetings] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const meetings = useAppSelector((state) => state.meetings.items);
+  const loading = meetings === null;
   const [filter, setFilter] = useState('ALL'); // ALL | REQUESTS | UPCOMING | RESCHEDULES | COMPLETED
 
   // Modals state
@@ -28,22 +30,12 @@ export default function FacultyMeetingsSection() {
   const [completeMeeting, setCompleteMeeting] = useState(null);
   const [rescheduleData, setRescheduleData] = useState({ open: false, meeting: null, mode: 'faculty-direct' });
 
-  const fetchMeetings = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await apiFetch('/meetings/my');
-      const list = Array.isArray(res) ? res : res?.data || [];
-      setMeetings(list);
-    } catch {
-      setMeetings([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const fetchMeetings = () => dispatch(fetchMyMeetings());
 
   useEffect(() => {
     fetchMeetings();
-  }, [fetchMeetings]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const all = meetings || [];
   const today = new Date().toISOString().split('T')[0];
@@ -66,17 +58,17 @@ export default function FacultyMeetingsSection() {
   // Quick accept student request
   const quickAccept = async (m) => {
     try {
-      await apiFetch(`/meetings/${m.meeting_id}/accept`, {
-        method: 'PATCH',
-        body: JSON.stringify({
+      await dispatch(acceptMeeting({
+        meetingId: m.meeting_id,
+        payload: {
           scheduledDate: m.requested_date,
           scheduledStartTime: m.requested_start_time,
           scheduledEndTime: m.requested_end_time,
           meetingType: m.meeting_type,
           meetingLink: m.meeting_link,
           location: m.location,
-        }),
-      });
+        },
+      })).unwrap();
       showToast('Meeting request accepted! Confirmed on schedule. ✅', 'success');
       send(
         m.student_id,
@@ -95,10 +87,7 @@ export default function FacultyMeetingsSection() {
     const reason = window.prompt('Enter reason for declining this request (optional):');
     if (reason === null) return;
     try {
-      await apiFetch(`/meetings/${m.meeting_id}/deny`, {
-        method: 'PATCH',
-        body: JSON.stringify({ reason: reason || 'Faculty unavailable' }),
-      });
+      await dispatch(denyMeeting({ meetingId: m.meeting_id, reason: reason || 'Faculty unavailable' })).unwrap();
       showToast('Meeting request declined.', 'info');
       send(
         m.student_id,

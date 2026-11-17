@@ -12,6 +12,8 @@ import { uploadFile } from '../../api/uploads';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationsContext';
 import Modal from '../../components/shared/Modal';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchPendingSubmissions, createSubmission } from '../../features/submissions/submissionsThunks';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -135,6 +137,7 @@ function UpcomingMeetings() {
 }
 
 function SubmitWorkModal({ assessment, onClose, onSubmitted }) {
+  const dispatch = useAppDispatch();
   const { showToast } = useNotifications();
   const [notes, setNotes] = useState('');
   const [file, setFile] = useState(null);
@@ -152,10 +155,7 @@ function SubmitWorkModal({ assessment, onClose, onSubmitted }) {
     setSubmitting(true);
     try {
       const uploaded = file ? await uploadFile(file, 'assessment_submission') : null;
-      await apiFetch('/submissions', {
-        method: 'POST',
-        body: JSON.stringify({ assessment_id: assessment.assessment_id, notes: notes.trim(), file_id: uploaded?.file_id ?? null }),
-      });
+      await dispatch(createSubmission({ assessment_id: assessment.assessment_id, notes: notes.trim(), file_id: uploaded?.file_id ?? null })).unwrap();
       showToast('Work submitted successfully! Faculty can now grade you. ✅', 'success');
       handleClose();
       onSubmitted();
@@ -205,20 +205,15 @@ function SubmitWorkModal({ assessment, onClose, onSubmitted }) {
 }
 
 function PendingSubmissions() {
-  const [pending, setPending] = useState(null);
+  const dispatch = useAppDispatch();
+  const pending = useAppSelector((state) => state.submissions.pending);
   const [target, setTarget] = useState(null);
 
-  const load = () => {
-    Promise.all([apiFetch('/assessments'), apiFetch('/submissions').catch(() => [])])
-      .then(([assessments, submissions]) => {
-        const online = assessments.filter((a) => a.exam_mode === 'online');
-        setPending(online.filter((a) => !submissions.find((s) => s.assessment_id === a.assessment_id)));
-      })
-      .catch(() => setPending([]));
-  };
-  // Wrapped, not passed directly — see Team.jsx's fix note: load() returns a
-  // Promise, which React would otherwise try to call as an unmount cleanup.
-  useEffect(() => { load(); }, []);
+  const load = () => dispatch(fetchPendingSubmissions());
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!pending || pending.length === 0) return null;
 

@@ -4,28 +4,32 @@
  * the lifetime of the whole page; here the poll only runs while this view
  * is actually mounted, which is strictly less wasteful for the same effect
  * (a near-live thread while the SPOC is looking at it).
+ *
+ * Redux migration (Dev 5): supportThreadSlice/Thunks — the polling itself
+ * stays in the component (a setInterval re-dispatching the fetch thunk);
+ * Redux doesn't change how often a thunk fires, only where its result lives.
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { apiFetch } from '../../api/client';
 import { useNotifications } from '../../context/NotificationsContext';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchMyThread, sendSupportMessage } from '../../features/supportThread/supportThreadThunks';
 
 export default function Support() {
+  const dispatch = useAppDispatch();
   const { showToast } = useNotifications();
-  const [messages, setMessages] = useState(undefined);
+  const messages = useAppSelector((state) => state.supportThread.messages);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const listRef = useRef(null);
 
-  const load = () =>
-    apiFetch('/billing/support/thread')
-      .then((res) => setMessages(res?.data?.messages || []))
-      .catch(() => setMessages([]));
+  const load = () => dispatch(fetchMyThread());
 
   useEffect(() => {
     load();
     const timer = setInterval(load, 20000);
     return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -38,9 +42,8 @@ export default function Support() {
     if (!content) return;
     setSending(true);
     try {
-      const res = await apiFetch('/billing/support/messages', { method: 'POST', body: JSON.stringify({ content }) });
+      await dispatch(sendSupportMessage(content)).unwrap();
       setInput('');
-      setMessages(res.data.messages);
     } catch (e2) {
       showToast('Could not send message: ' + e2.message, 'error');
     } finally {

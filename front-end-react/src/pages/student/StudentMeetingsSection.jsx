@@ -1,8 +1,9 @@
-import { useEffect, useState, useCallback } from 'react';
-import { apiFetch } from '../../api/client';
+import { useEffect, useState } from 'react';
 import MeetingModal from '../../components/shared/MeetingModal';
 import RescheduleModal from '../../components/shared/RescheduleModal';
 import MeetingDetailModal from '../../components/shared/MeetingDetailModal';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchMyMeetings } from '../../features/meetings/meetingsThunks';
 
 const STATUS_BADGES = {
   PENDING: { label: 'Pending Approval', bg: '#fef3c7', color: '#b45309', border: '#fcd34d' },
@@ -15,8 +16,9 @@ const STATUS_BADGES = {
 };
 
 export default function StudentMeetingsSection() {
-  const [meetings, setMeetings] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useAppDispatch();
+  const meetings = useAppSelector((state) => state.meetings.items);
+  const loading = meetings === null;
   const [filter, setFilter] = useState('ALL'); // ALL | UPCOMING | PENDING | PROPOSALS | COMPLETED
 
   // Modals state
@@ -24,22 +26,12 @@ export default function StudentMeetingsSection() {
   const [detailMeeting, setDetailMeeting] = useState(null);
   const [rescheduleData, setRescheduleData] = useState({ open: false, meeting: null, mode: 'request' });
 
-  const fetchMeetings = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await apiFetch('/meetings/my');
-      const list = Array.isArray(res) ? res : res?.data || [];
-      setMeetings(list);
-    } catch {
-      setMeetings([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const fetchMeetings = () => dispatch(fetchMyMeetings());
 
   useEffect(() => {
     fetchMeetings();
-  }, [fetchMeetings]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const all = meetings || [];
   const today = new Date().toISOString().split('T')[0];

@@ -14,13 +14,13 @@
  */
 
 import { useEffect, useState } from 'react';
-import { apiFetch } from '../../api/client';
 import { uploadFile, downloadDocument } from '../../api/uploads';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationsContext';
 import Modal from './Modal';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { fetchFacultyLeaves, applyForLeave } from '../../features/facultyLeave/facultyLeaveThunks';
+import { fetchAllLeaves, decideLeave } from '../../features/adminLeave/adminLeaveThunks';
 
 const STATUS_COLORS = {
   approved: ['#dcfce7', '#166534'],
@@ -229,18 +229,20 @@ function AdminLeaveRow({ leave, onDecide }) {
 }
 
 function AdminLeaveManagement() {
+  const dispatch = useAppDispatch();
   const { user } = useAuth();
   const { showToast, send } = useNotifications();
-  const [leaves, setLeaves] = useState(undefined);
+  const leaves = useAppSelector((state) => state.adminLeave.items);
 
-  const load = () => apiFetch('/leave').then(setLeaves).catch(() => setLeaves([]));
+  const load = () => dispatch(fetchAllLeaves());
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const decide = async (leave, status) => {
     try {
-      await apiFetch(`/leave/${leave.leave_id}`, { method: 'PATCH', body: JSON.stringify({ status }) });
+      await dispatch(decideLeave({ leaveId: leave.leave_id, status })).unwrap();
       showToast(`Leave ${status === 'approved' ? 'approved ✅' : 'rejected ❌'}`, status === 'approved' ? 'success' : 'warning');
       const studentId = leave.student_id || leave.user_id;
       if (studentId) {

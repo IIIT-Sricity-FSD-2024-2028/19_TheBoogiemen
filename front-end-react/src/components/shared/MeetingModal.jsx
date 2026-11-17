@@ -1,20 +1,27 @@
+/**
+ * Redux migration (Dev 5): meetingsSlice/Thunks — directory lookup +
+ * create.
+ */
 import { useEffect, useState } from 'react';
-import { apiFetch } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationsContext';
 import Modal from './Modal';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchMeetingDirectory, createMeeting } from '../../features/meetings/meetingsThunks';
 
 const HOURS = Array.from({ length: 12 }, (_, i) => String(i + 1));
 const MINUTES = ['00', '15', '30', '45'];
 
 export default function MeetingModal({ open, preselected, onClose, onRefresh }) {
+  const dispatch = useAppDispatch();
   const { user } = useAuth();
   const { showToast, send } = useNotifications();
 
   const isStudent = user?.role === 'student';
   const isFaculty = user?.role === 'faculty' || user?.role === 'admin' || user?.role === 'head';
 
-  const [counterparts, setCounterparts] = useState(null);
+  const directory = useAppSelector((state) => state.meetings.directory);
+  const counterparts = preselected ? [preselected] : directory;
   const [selectedId, setSelectedId] = useState('');
   const today = new Date().toISOString().split('T')[0];
   const [date, setDate] = useState('');
@@ -49,25 +56,11 @@ export default function MeetingModal({ open, preselected, onClose, onRefresh }) 
 
     if (preselected) {
       setSelectedId(preselected.id || preselected.user_id);
-      setCounterparts([preselected]);
     } else {
       setSelectedId('');
-      setCounterparts(null);
-      const endpoint = isStudent ? '/meetings/faculty-list' : '/meetings/student-list';
-      apiFetch(endpoint)
-        .then((res) => {
-          const list = Array.isArray(res) ? res : res?.data || [];
-          setCounterparts(
-            list.map((c) => ({
-              id: c.user_id || c.id,
-              name: c.name || `${c.first_name || ''} ${c.last_name || ''}`.trim() || c.username || 'User',
-              department: c.department || '',
-            })),
-          );
-        })
-        .catch(() => setCounterparts([]));
+      dispatch(fetchMeetingDirectory(isStudent ? 'student' : 'faculty'));
     }
-  }, [open, preselected, isStudent]);
+  }, [open, preselected, isStudent, dispatch]);
 
   const to24Hour = (hourStr, minuteStr, periodStr) => {
     let h = parseInt(hourStr, 10);
@@ -127,10 +120,7 @@ export default function MeetingModal({ open, preselected, onClose, onRefresh }) 
             location: mode === 'IN_PERSON' ? location.trim() : undefined,
           };
 
-      await apiFetch('/meetings', {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      });
+      await dispatch(createMeeting(payload)).unwrap();
 
       const senderName = user?.first_name || (isStudent ? 'Student' : 'Faculty');
       const timeDisplay = `${hour}:${minute} ${period}`;

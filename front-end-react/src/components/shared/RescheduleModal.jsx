@@ -1,12 +1,18 @@
+/**
+ * Redux migration (Dev 5): meetingsSlice/Thunks — all four reschedule-
+ * shaped mutations this one modal covers (request/propose/direct/handle).
+ */
 import { useState, useEffect } from 'react';
 import Modal from './Modal';
-import { apiFetch } from '../../api/client';
 import { useNotifications } from '../../context/NotificationsContext';
+import { useAppDispatch } from '../../store/hooks';
+import { requestReschedule, askReschedule, directReschedule, handleStudentReschedule } from '../../features/meetings/meetingsThunks';
 
 const HOURS = Array.from({ length: 12 }, (_, i) => String(i + 1));
 const MINUTES = ['00', '15', '30', '45'];
 
 export default function RescheduleModal({ open, meeting, mode, onClose, onRefresh }) {
+  const dispatch = useAppDispatch();
   const { showToast, send } = useNotifications();
   const today = new Date().toISOString().split('T')[0];
 
@@ -70,15 +76,15 @@ export default function RescheduleModal({ open, meeting, mode, onClose, onRefres
         if (date < today) throw new Error('Date cannot be in the past');
         if (startTime >= endTime) throw new Error('Start time must be before end time');
 
-        await apiFetch(`/meetings/${meeting.meeting_id}/request-reschedule`, {
-          method: 'PATCH',
-          body: JSON.stringify({
+        await dispatch(requestReschedule({
+          meetingId: meeting.meeting_id,
+          payload: {
             proposedDate: date,
             proposedStartTime: startTime,
             proposedEndTime: endTime,
             reason: reason.trim() || 'Schedule conflict',
-          }),
-        });
+          },
+        })).unwrap();
 
         showToast('Reschedule request sent to faculty! 📅', 'success');
         send(
@@ -93,9 +99,9 @@ export default function RescheduleModal({ open, meeting, mode, onClose, onRefres
         if (date < today) throw new Error('Date cannot be in the past');
         if (startTime >= endTime) throw new Error('Start time must be before end time');
 
-        await apiFetch(`/meetings/${meeting.meeting_id}/ask-reschedule`, {
-          method: 'PATCH',
-          body: JSON.stringify({
+        await dispatch(askReschedule({
+          meetingId: meeting.meeting_id,
+          payload: {
             proposedDate: date,
             proposedStartTime: startTime,
             proposedEndTime: endTime,
@@ -103,8 +109,8 @@ export default function RescheduleModal({ open, meeting, mode, onClose, onRefres
             meetingType,
             meetingLink: meetingType === 'ONLINE' ? meetingLink : undefined,
             location: meetingType === 'IN_PERSON' ? location : undefined,
-          }),
-        });
+          },
+        })).unwrap();
 
         showToast('Alternative time proposed to student! 📩', 'success');
         send(
@@ -119,9 +125,9 @@ export default function RescheduleModal({ open, meeting, mode, onClose, onRefres
         if (date < today) throw new Error('Date cannot be in the past');
         if (startTime >= endTime) throw new Error('Start time must be before end time');
 
-        await apiFetch(`/meetings/${meeting.meeting_id}/reschedule`, {
-          method: 'PATCH',
-          body: JSON.stringify({
+        await dispatch(directReschedule({
+          meetingId: meeting.meeting_id,
+          payload: {
             scheduledDate: date,
             scheduledStartTime: startTime,
             scheduledEndTime: endTime,
@@ -129,8 +135,8 @@ export default function RescheduleModal({ open, meeting, mode, onClose, onRefres
             meetingType,
             meetingLink: meetingType === 'ONLINE' ? meetingLink : undefined,
             location: meetingType === 'IN_PERSON' ? location : undefined,
-          }),
-        });
+          },
+        })).unwrap();
 
         showToast('Meeting rescheduled directly! Student notified. 📅', 'success');
         send(
@@ -154,10 +160,7 @@ export default function RescheduleModal({ open, meeting, mode, onClose, onRefres
           payload.location = meetingType === 'IN_PERSON' ? location : undefined;
         }
 
-        await apiFetch(`/meetings/${meeting.meeting_id}/handle-student-reschedule`, {
-          method: 'PATCH',
-          body: JSON.stringify(payload),
-        });
+        await dispatch(handleStudentReschedule({ meetingId: meeting.meeting_id, payload })).unwrap();
 
         if (action === 'ACCEPT') {
           showToast('Approved student reschedule request! 📅', 'success');

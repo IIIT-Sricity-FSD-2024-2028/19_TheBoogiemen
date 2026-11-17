@@ -7,13 +7,16 @@
  * No "add college" action here on purpose — a college becomes valid by
  * purchasing a subscription, not by a superadmin clicking a button; the
  * legacy comment on this exact table explains why.
+ *
+ * Redux migration (Dev 5): billingSlice/Thunks.
  */
 
-import { useCallback,useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { apiFetch } from '../../api/client';
 import { useNotifications } from '../../context/NotificationsContext';
 import Modal from '../../components/shared/Modal';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchColleges, fetchRevenue, fetchSupportThreads, fetchSupportThread, replySupportThread } from '../../features/billing/billingThunks';
 
 const formatRupees = (paise) => '₹' + (Number(paise || 0) / 100).toLocaleString('en-IN', { maximumFractionDigits: 0 });
 
@@ -25,13 +28,12 @@ const formatRupees = (paise) => '₹' + (Number(paise || 0) / 100).toLocaleStrin
  * second hue is needed (dataviz skill: sequential/magnitude -> one hue).
  */
 function RevenueSection() {
-  const [revenue, setRevenue] = useState(undefined);
+  const dispatch = useAppDispatch();
+  const revenue = useAppSelector((state) => state.billing.revenue);
 
   useEffect(() => {
-    apiFetch('/billing/colleges/revenue')
-      .then((res) => setRevenue(res?.data))
-      .catch(() => setRevenue(null));
-  }, []);
+    dispatch(fetchRevenue());
+  }, [dispatch]);
 
   if (revenue === undefined) return null;
   if (revenue === null) return null;
@@ -75,21 +77,19 @@ function RevenueSection() {
 }
 
 function InstitutionsTable() {
-  const [colleges, setColleges] = useState(undefined);
-  const [revenueByCollege, setRevenueByCollege] = useState({});
+  const dispatch = useAppDispatch();
+  const colleges = useAppSelector((state) => state.billing.colleges);
+  const revenue = useAppSelector((state) => state.billing.revenue);
 
   useEffect(() => {
-    apiFetch('/billing/colleges')
-      .then((res) => setColleges(res?.data || []))
-      .catch(() => setColleges([]));
-    apiFetch('/billing/colleges/revenue')
-      .then((res) => {
-        const map = {};
-        (res?.data?.by_college || []).forEach((c) => { map[c.college_id] = c.revenue_paise; });
-        setRevenueByCollege(map);
-      })
-      .catch(() => setRevenueByCollege({}));
-  }, []);
+    dispatch(fetchColleges());
+    dispatch(fetchRevenue());
+  }, [dispatch]);
+
+  const revenueByCollege = {};
+  (revenue?.by_college || []).forEach((c) => {
+    revenueByCollege[c.college_id] = c.revenue_paise;
+  });
 
   return (
     <div className="stats-card">
@@ -135,17 +135,18 @@ function InstitutionsTable() {
 }
 
 function ThreadModal({ threadId, onClose, onReplied }) {
+  const dispatch = useAppDispatch();
   const { showToast } = useNotifications();
-  const [thread, setThread] = useState(undefined);
+  const thread = useAppSelector((state) => (threadId ? state.billing.byThreadId[threadId] : undefined));
   const [reply, setReply] = useState('');
   const [sending, setSending] = useState(false);
 
   useEffect(() => {
     if (!threadId) return;
     setReply('');
-    apiFetch(`/billing/support/threads/${threadId}`)
-      .then((res) => setThread(res?.data))
-      .catch((e) => showToast('Failed to open thread: ' + e.message, 'error'));
+    dispatch(fetchSupportThread(threadId)).then((action) => {
+      if (action.error) showToast('Failed to open thread: ' + action.error.message, 'error');
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [threadId]);
 
@@ -157,8 +158,7 @@ function ThreadModal({ threadId, onClose, onReplied }) {
     }
     setSending(true);
     try {
-      const res = await apiFetch(`/billing/support/threads/${threadId}/reply`, { method: 'POST', body: JSON.stringify({ content }) });
-      setThread(res.data);
+      await dispatch(replySupportThread({ threadId, content })).unwrap();
       setReply('');
       onReplied();
     } catch (e) {
@@ -217,21 +217,19 @@ function ThreadModal({ threadId, onClose, onReplied }) {
 }
 
 function SupportInbox() {
+  const dispatch = useAppDispatch();
   const { showToast } = useNotifications();
-  const [threads, setThreads] = useState(undefined);
+  const threads = useAppSelector((state) => state.billing.supportThreads);
   const [openThreadId, setOpenThreadId] = useState(null);
 
-  // We define `load` using useCallback so it has a stable reference 
-  // for the useEffect dependency array and the ThreadModal's onReplied prop.
-  const load = useCallback(() => {
-    apiFetch('/billing/support/threads')
-      .then((res) => setThreads(res?.data || []))
-      .catch((e) => showToast('Failed to load support inbox: ' + e.message, 'error'));
-  }, [showToast]);
+  const load = () => dispatch(fetchSupportThreads()).then((action) => {
+    if (action.error) showToast('Failed to load support inbox: ' + action.error.message, 'error');
+  });
 
   useEffect(() => {
     load();
-  }, [load]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="stats-card">
