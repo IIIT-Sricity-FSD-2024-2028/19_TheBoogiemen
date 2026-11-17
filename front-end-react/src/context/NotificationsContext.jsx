@@ -16,8 +16,24 @@
 * another tab writes to the notification keys. The `storage` event only
 * fires in OTHER tabs than the one that wrote, so local writes still flow
 * through setState as before — no double-handling.
+*
+* CROSS-COLLEGE NOTE (broadcast tenant-leak fix):
+* A broadcast was keyed only by role ('student', 'all', ...), never by
+* college — localStorage is shared per browser ORIGIN, not per logged-in
+* user, so a student at College B who ever shares that origin with a
+* College A session (a shared/public machine, or simply two different
+* logins over time in the same browser) saw College A's "all students"
+* announcements too. Every broadcast now carries the SENDER's own
+* college_id (read from AuthContext right here, not passed in by any of
+* the ~9 call sites, so none of them had to change and none can forget
+* to) and every read is filtered to the VIEWER's own college_id the same
+* way. A null college_id (superadmin, who belongs to no single college —
+* see scope-to-college.ts's own docstring for this exact convention) is
+* treated as "every college": a superadmin-sent broadcast reaches
+* everyone, and a superadmin viewer sees every college's broadcasts.
 */
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { useAuth } from './AuthContext';
 
 const KEY = 'bp_notifications';
 const BKEY = 'bp_broadcasts';
@@ -37,7 +53,16 @@ return !entry.timestamp || Date.now() - entry.timestamp < THIRTY_DAYS;
 
 const NotificationsContext = createContext(null);
 
+/** null (superadmin, who belongs to no single college) sees/reaches every
+ *  college; otherwise only an exact match or a null-authored (platform-wide)
+ *  broadcast is visible. Mirrors scope-to-college.ts's own null convention. */
+function visibleToViewer(broadcast, viewerCollegeId) {
+return viewerCollegeId === null || broadcast.collegeId == null || broadcast.collegeId === viewerCollegeId;
+}
+
 export function NotificationsProvider({ children }) {
+const { user } = useAuth();
+const collegeId = user?.college_id ?? null;
 const [personal, setPersonal] = useState(() => readJSON(KEY, []).filter(notExpired));
 const [broadcasts, setBroadcasts] = useState(() => readJSON(BKEY, []).filter(notExpired));
 const [toast, setToast] = useState(null);
@@ -80,10 +105,13 @@ const getUnreadBC = useCallback(
 (role) => {
 const readIds = readJSON(`bp_bc_read_${role}`, []);
 return broadcasts.filter(
-(b) => (b.forRole === 'all' || b.forRole === role) && !readIds.includes(b.id),
+(b) =>
+(b.forRole === 'all' || b.forRole === role) &&
+visibleToViewer(b, collegeId) &&
+!readIds.includes(b.id),
 );
 },
-[broadcasts],
+[broadcasts, collegeId],
 );
 
 const unread = useCallback((uid) => forUser(uid).filter((n) => !n.read).length, [forUser]);
@@ -101,9 +129,9 @@ setPersonal((all) =>
 const broadcast = useCallback((targetRole, fromName, message, type = 'info') => {
 const ts = Date.now();
 setBroadcasts((bc) =>
-[{ id: ts, forRole: targetRole, from: fromName, message, type, time: timeLabel(), timestamp: ts }, ...bc].slice(0, 500),
+[{ id: ts, forRole: targetRole, collegeId, from: fromName, message, type, time: timeLabel(), timestamp: ts }, ...bc].slice(0, 500),
 );
-}, []);
+}, [collegeId]);
 
 const broadcastAll = useCallback((fromName, message, type = 'info') => broadcast('all', fromName, message, type), [broadcast]);
 
@@ -113,19 +141,23 @@ setPersonal((all) => all.map((n) => (n.to === uid ? { ...n, read: true } : n)));
 
 const markBCRead = useCallback(
 (role) => {
-const ids = broadcasts.filter((b) => b.forRole === 'all' || b.forRole === role).map((b) => b.id);
+const ids = broadcasts
+.filter((b) => (b.forRole === 'all' || b.forRole === role) && visibleToViewer(b, collegeId))
+.map((b) => b.id);
 localStorage.setItem(`bp_bc_read_${role}`, JSON.stringify(ids));
 },
-[broadcasts],
+[broadcasts, collegeId],
 );
 
 const clearAll = useCallback(
 (role) => {
 setPersonal([]);
-const ids = broadcasts.filter((b) => b.forRole === 'all' || b.forRole === role).map((b) => b.id);
+const ids = broadcasts
+.filter((b) => (b.forRole === 'all' || b.forRole === role) && visibleToViewer(b, collegeId))
+.map((b) => b.id);
 localStorage.setItem(`bp_bc_read_${role}`, JSON.stringify(ids));
 },
-[broadcasts],
+[broadcasts, collegeId],
 );
 
 const value = {

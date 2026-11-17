@@ -10,17 +10,85 @@
  */
 
 import { useCallback,useEffect, useState } from 'react';
+import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { apiFetch } from '../../api/client';
 import { useNotifications } from '../../context/NotificationsContext';
 import Modal from '../../components/shared/Modal';
 
+const formatRupees = (paise) => '₹' + (Number(paise || 0) / 100).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+
+/**
+ * Revenue means a CAPTURED payment (GET /billing/colleges/revenue), never the
+ * quoted/contracted price — a college can have an active subscription with
+ * no payment ever captured. Single-hue bars: this is one metric (magnitude)
+ * compared across colleges, not a categorical "kind" distinction, so no
+ * second hue is needed (dataviz skill: sequential/magnitude -> one hue).
+ */
+function RevenueSection() {
+  const [revenue, setRevenue] = useState(undefined);
+
+  useEffect(() => {
+    apiFetch('/billing/colleges/revenue')
+      .then((res) => setRevenue(res?.data))
+      .catch(() => setRevenue(null));
+  }, []);
+
+  if (revenue === undefined) return null;
+  if (revenue === null) return null;
+
+  const chartData = revenue.by_college
+    .filter((c) => c.revenue_paise > 0)
+    .map((c) => ({ name: c.college_name, revenue: c.revenue_paise / 100 }));
+
+  return (
+    <div className="stats-card" style={{ marginBottom: 20 }}>
+      <div className="stats-card-header">
+        <div>
+          <h3>Revenue</h3>
+          <p>Payments actually captured, per institute — not quotes or active subscriptions that were never paid.</p>
+        </div>
+      </div>
+      <div className="stats-card-body" style={{ padding: 24 }}>
+        <div style={{ display: 'flex', gap: 40, marginBottom: chartData.length ? 28 : 0 }}>
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>Total Revenue</div>
+            <div style={{ fontSize: 36, fontWeight: 800, color: '#6366f1' }}>{formatRupees(revenue.total_revenue_paise)}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>Captured Payments</div>
+            <div style={{ fontSize: 36, fontWeight: 800, color: '#0f172a' }}>{revenue.total_payments}</div>
+          </div>
+        </div>
+        {chartData.length > 0 && (
+          <ResponsiveContainer width="100%" height={Math.max(100, chartData.length * 40)}>
+            <BarChart data={chartData} layout="vertical" margin={{ left: 8, right: 56 }}>
+              <XAxis type="number" tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} tickFormatter={(v) => `₹${v.toLocaleString('en-IN')}`} />
+              <YAxis type="category" dataKey="name" tick={{ fontSize: 13, fill: '#475569' }} axisLine={false} tickLine={false} width={140} />
+              <Tooltip formatter={(v) => [`₹${Number(v).toLocaleString('en-IN')}`, 'Revenue']} cursor={{ fill: '#f8fafc' }} />
+              <Bar dataKey="revenue" fill="#6366f1" radius={[0, 4, 4, 0]} maxBarSize={24} />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function InstitutionsTable() {
   const [colleges, setColleges] = useState(undefined);
+  const [revenueByCollege, setRevenueByCollege] = useState({});
 
   useEffect(() => {
     apiFetch('/billing/colleges')
       .then((res) => setColleges(res?.data || []))
       .catch(() => setColleges([]));
+    apiFetch('/billing/colleges/revenue')
+      .then((res) => {
+        const map = {};
+        (res?.data?.by_college || []).forEach((c) => { map[c.college_id] = c.revenue_paise; });
+        setRevenueByCollege(map);
+      })
+      .catch(() => setRevenueByCollege({}));
   }, []);
 
   return (
@@ -37,7 +105,7 @@ function InstitutionsTable() {
         ) : (
           <table className="crud-table">
             <thead>
-              <tr><th>College</th><th>SPOC</th><th>Admins</th><th>Students</th><th>Faculty</th></tr>
+              <tr><th>College</th><th>SPOC</th><th>Admins</th><th>Students</th><th>Faculty</th><th style={{ textAlign: 'right' }}>Revenue</th></tr>
             </thead>
             <tbody>
               {colleges.map((c) => (
@@ -55,6 +123,7 @@ function InstitutionsTable() {
                   <td>{c.admin_count}</td>
                   <td>{c.student_count}</td>
                   <td>{c.faculty_count}</td>
+                  <td style={{ textAlign: 'right', fontWeight: 700, color: '#475569' }}>{formatRupees(revenueByCollege[c.college_id])}</td>
                 </tr>
               ))}
             </tbody>
@@ -205,6 +274,7 @@ function SupportInbox() {
 export default function Institutions() {
   return (
     <>
+      <RevenueSection />
       <InstitutionsTable />
       <SupportInbox />
     </>

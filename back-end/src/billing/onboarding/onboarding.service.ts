@@ -66,7 +66,7 @@ export class OnboardingService {
       session_id: sessionId,
       email,
       password_hash: await this.passwordService.hash(dto.password),
-      first_name: dto.first_name ?? null,
+      first_name: dto.first_name,
       last_name: dto.last_name ?? null,
       phone: dto.phone ?? null,
       college_name: dto.college.name,

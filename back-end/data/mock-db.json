@@ -112,6 +112,50 @@
       "role": "admin",
       "college_id": "c-default",
       "password_hash": "$2b$12$b8AdsDj1oTb4CHX6O7Zr6.r41FqWFh7b.cjjmg4zkIxiWfB.3zpEm"
+    },
+    {
+      "user_id": "u1794837321907s",
+      "username": "Priyanka",
+      "first_name": "Priyanka",
+      "last_name": "Mehta",
+      "email": "realname@example.com",
+      "phone": "",
+      "role": "spoc",
+      "college_id": "col1794837321905",
+      "password_hash": "$2b$12$C3w.TIhq5eo6yBjFgTNkO.rH4MjU/UaPCpNgkQimfmC6T.GP6md7a"
+    },
+    {
+      "user_id": "u17948383923290",
+      "username": "Rahul",
+      "first_name": "Rahul",
+      "last_name": "Verma",
+      "email": "rahul.verma.bulk@example.com",
+      "phone": "9000011111",
+      "role": "student",
+      "college_id": "c-default",
+      "password_hash": "$2b$12$L.eAYoC9OFB3zQBKZNIB1Od8vsG6Jkuu2KF5fUHn8gMchYDPQ4gZq"
+    },
+    {
+      "user_id": "u17948383926491",
+      "username": "Sneha",
+      "first_name": "Sneha",
+      "last_name": "Iyer",
+      "email": "sneha.iyer.bulk@example.com",
+      "phone": "9000022222",
+      "role": "student",
+      "college_id": "c-default",
+      "password_hash": "$2b$12$JBs.9NZvKYizL5RUV9.EAew9etYelmSQH/YEP1NnDXJFBSxMC9tla"
+    },
+    {
+      "user_id": "u17948386129980",
+      "username": "Kavya",
+      "first_name": "Kavya",
+      "last_name": "Nair",
+      "email": "kavya.nair.uitest@example.com",
+      "phone": "9000033333",
+      "role": "student",
+      "college_id": "c-default",
+      "password_hash": "$2b$12$U.YR4Z0wfx5X0D/g6cNanOdJYNXjtZeVPxi9OCIo28nWteztgZbXu"
     }
   ],
   "students": [
@@ -155,6 +199,48 @@
       "join_date": "2026-10-06",
       "dob": "2005-01-01",
       "phone": "",
+      "college_id": "c-default"
+    },
+    {
+      "user_id": "u17948383923290",
+      "first_name": "Rahul",
+      "last_name": "Verma",
+      "branch": "CS",
+      "batch": "2024-2028",
+      "cgpa": 8.2,
+      "section": "A",
+      "email": "rahul.verma.bulk@example.com",
+      "join_date": "2026-11-16",
+      "dob": "2005-01-01",
+      "phone": "9000011111",
+      "college_id": "c-default"
+    },
+    {
+      "user_id": "u17948383926491",
+      "first_name": "Sneha",
+      "last_name": "Iyer",
+      "branch": "ECE",
+      "batch": "2024-2028",
+      "cgpa": 7.9,
+      "section": "B",
+      "email": "sneha.iyer.bulk@example.com",
+      "join_date": "2026-11-16",
+      "dob": "2005-01-01",
+      "phone": "9000022222",
+      "college_id": "c-default"
+    },
+    {
+      "user_id": "u17948386129980",
+      "first_name": "Kavya",
+      "last_name": "Nair",
+      "branch": "CS",
+      "batch": "2024-2028",
+      "cgpa": 8.9,
+      "section": "A",
+      "email": "kavya.nair.uitest@example.com",
+      "join_date": "2026-11-16",
+      "dob": "2005-01-01",
+      "phone": "9000033333",
       "college_id": "c-default"
     }
   ],
@@ -1762,6 +1848,14 @@
       "venue": "Main Lawn",
       "description": "",
       "college_id": "c-default"
+    },
+    {
+      "event_id": "ev1794841412929",
+      "event_name": "Tenant Isolation Test Event",
+      "date": "2026-11-17",
+      "venue": "Test Hall",
+      "description": "",
+      "college_id": "c-default"
     }
   ],
   "resources": [
@@ -1884,6 +1978,17 @@
       "amount": 2500,
       "due_date": "2026-12-31",
       "college_id": "c-default"
+    },
+    {
+      "fee_id": "f1794841283052",
+      "status": "paid",
+      "student_id": "u1",
+      "fee_type": "Tuition Fee",
+      "amount": 47000,
+      "due_date": "2026-12-15",
+      "semester": "3",
+      "college_id": "c-default",
+      "paid_date": "16/11/2026"
     }
   ],
   "submissions": [],
@@ -2939,6 +3044,15 @@
       "type": null,
       "status": "active",
       "created_at": "2026-10-05T08:10:23.669Z"
+    },
+    {
+      "college_id": "col1794837321905",
+      "name": "Real Name Test College",
+      "city": null,
+      "state": null,
+      "type": null,
+      "status": "active",
+      "created_at": "2026-11-16T13:55:21.905Z"
     }
   ],
   "support_threads": [
@@ -2984,6 +3098,21 @@
       "status": "completed",
       "created_at": "2026-10-05T08:09:26.077Z",
       "expires_at": "2026-10-05T09:09:26.077Z"
+    },
+    {
+      "session_id": "os1794837321120",
+      "email": "realname@example.com",
+      "password_hash": null,
+      "first_name": "Priyanka",
+      "last_name": "Mehta",
+      "phone": null,
+      "college_name": "Real Name Test College",
+      "city": null,
+      "state": null,
+      "type": null,
+      "status": "completed",
+      "created_at": "2026-11-16T13:55:21.120Z",
+      "expires_at": "2026-11-16T14:55:21.120Z"
     }
   ],
   "quotes": [
@@ -3045,6 +3174,55 @@
       "status": "accepted",
       "expires_at": "2026-10-05T09:09:26.077Z",
       "created_at": "2026-10-05T08:10:09.931Z"
+    },
+    {
+      "quote_id": "q1794837321770",
+      "session_id": "os1794837321120",
+      "college_id": null,
+      "metrics": {
+        "student_count": 100,
+        "faculty_count": 10,
+        "modules": [],
+        "term_years": 1
+      },
+      "breakdown": {
+        "pricing_version": "v1",
+        "metrics": {
+          "student_count": 100,
+          "faculty_count": 10,
+          "modules": [],
+          "term_years": 1
+        },
+        "lines": [
+          {
+            "label": "Students (100)",
+            "amount_paise": 1200000
+          },
+          {
+            "label": "Faculty (10)",
+            "amount_paise": 200000
+          },
+          {
+            "label": "Minimum contract value applied",
+            "amount_paise": 1100000
+          },
+          {
+            "label": "GST (18%)",
+            "amount_paise": 450000
+          }
+        ],
+        "subtotal_paise": 1400000,
+        "discount_rate": 0,
+        "discount_paise": 0,
+        "after_discount_paise": 1400000,
+        "contract_paise": 2500000,
+        "gst_paise": 450000,
+        "payable_paise": 2950000
+      },
+      "pricing_version": "v1",
+      "status": "accepted",
+      "expires_at": "2026-11-16T14:55:21.120Z",
+      "created_at": "2026-11-16T13:55:21.770Z"
     }
   ],
   "payments": [
@@ -3057,6 +3235,16 @@
       "amount_paise": 9735000,
       "status": "captured",
       "created_at": "2026-10-05T08:10:16.322Z"
+    },
+    {
+      "payment_id": "pay1794837321846",
+      "quote_id": "q1794837321770",
+      "subscription_id": "sub1794837321910",
+      "gateway": "mock",
+      "gateway_order_id": "mock_6dc15a01-a4c4-422f-b2ab-84e03c218020",
+      "amount_paise": 2950000,
+      "status": "captured",
+      "created_at": "2026-11-16T13:55:21.846Z"
     }
   ],
   "subscriptions": [
@@ -3074,6 +3262,19 @@
       "starts_on": "2026-10-05",
       "ends_on": "2027-10-05",
       "created_at": "2026-10-05T08:10:23.696Z"
+    },
+    {
+      "subscription_id": "sub1794837321910",
+      "college_id": "col1794837321905",
+      "quote_id": "q1794837321770",
+      "student_seats": 100,
+      "faculty_seats": 10,
+      "modules": [],
+      "status": "active",
+      "starts_on": "2026-11-16",
+      "ends_on": "2027-11-16",
+      "created_at": "2026-11-16T13:55:21.911Z"
     }
-  ]
+  ],
+  "meetings": []
 }

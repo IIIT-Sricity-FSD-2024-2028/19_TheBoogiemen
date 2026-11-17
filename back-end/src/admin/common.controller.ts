@@ -15,7 +15,11 @@ InternalServerErrorException,
 NotFoundException,
 UsePipes,
 ValidationPipe,
+UseInterceptors,
+UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { parse as parseCsv } from 'csv-parse/sync';
 import { v4 as uuidv4 } from 'uuid';
 import { InMemoryDbService } from '../database/in-memory-db.service';
 import { Roles } from '../auth/roles.guard';
@@ -39,7 +43,7 @@ sectionsTaughtBy,
 sectionTaughtIn,
 } from '../common/course-sections';
 import { RequiresModule } from '../common/guards/requires-module.guard';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiConsumes } from '@nestjs/swagger';
 import {
 ATTENDANCE_STATUS,
 eachDateInRange,
@@ -54,6 +58,8 @@ import { excludeHolidays, expandClassDates } from '../common/academic-calendar';
 import { collegeAverageCoMastery } from '../common/outcome-mastery';
 import { computeCGPA } from '../common/grading';
 import { normalizeEmail } from '../common/normalize-email';
+import { BULK_ONBOARD_UPLOAD_OPTIONS } from './bulk-onboard-upload.config';
+import { mapRowToCanonicalFields, randomRosterPassword } from './bulk-onboard.util';
 import {
 CreateUserDto,
 ResetUserPasswordDto,
@@ -1395,6 +1401,190 @@ college_id: collegeId,
 return { success: true, data: sanitizeUser(newUser) };
 }
 
+/**
+ * Bulk student/faculty onboarding from a roster CSV — the explicit use case
+ * is a Google Form export compiled into a sheet, so headers are matched
+ * loosely (bulk-onboard.util.ts) rather than requiring an exact column
+ * name. Every row is independent: one bad row (missing email, duplicate,
+ * seat limit hit) is skipped and reported, never aborts the rest of the
+ * file — same "report what happened, don't all-or-nothing it" convention
+ * scripts/seed-postgres.ts already uses for its own bulk import.
+ *
+ * Reuses the exact same rules createUser() enforces per account (privilege
+ * ceiling, global email uniqueness, seat availability, password hashing) —
+ * those live in shared functions already, so there's nothing to duplicate
+ * but the "assemble one row's user record" shape, which differs enough
+ * (more columns, defaults instead of a required DTO) that sharing it with
+ * createUser would cost more clarity than it saves.
+ */
+@Post('users/bulk-onboard')
+@Roles('admin', 'superadmin', 'head', 'spoc')
+@UseInterceptors(FileInterceptor('file', BULK_ONBOARD_UPLOAD_OPTIONS))
+@ApiConsumes('multipart/form-data')
+@ApiOperation({
+summary: 'Bulk-create student/faculty accounts from a roster CSV',
+})
+@ApiBody({
+schema: {
+type: 'object',
+required: ['file'],
+properties: {
+file: { type: 'string', format: 'binary' },
+role: { type: 'string', enum: ['student', 'faculty'] },
+},
+},
+})
+async bulkOnboardUsers(
+@UploadedFile() file: Express.Multer.File | undefined,
+@Query('role') defaultRoleRaw: string | undefined,
+@CurrentUserRole() actorRole: string,
+@CurrentUserCollegeId() actorCollegeId: string | null,
+) {
+if (!file) {
+throw new BadRequestException(
+errorBody(
+ErrorCode.VALIDATION_FAILED,
+'No file was uploaded. Send it as multipart/form-data under the field "file".',
+),
+);
+}
+const defaultRole = (defaultRoleRaw || 'student').trim().toLowerCase();
+if (defaultRole !== 'student' && defaultRole !== 'faculty') {
+throw new BadRequestException(
+errorBody(ErrorCode.VALIDATION_FAILED, '"role" must be "student" or "faculty" when given.'),
+);
+}
+
+let rows: Record<string, string>[];
+try {
+rows = parseCsv(file.buffer, { columns: true, skip_empty_lines: true, trim: true, bom: true });
+} catch (err: any) {
+throw new BadRequestException(
+errorBody(ErrorCode.VALIDATION_FAILED, `Could not parse CSV: ${err.message}`),
+);
+}
+if (!rows.length) {
+throw new BadRequestException(errorBody(ErrorCode.VALIDATION_FAILED, 'The CSV has no data rows.'));
+}
+
+const collegeId = writeCollegeId(actorCollegeId);
+const unrecognizedHeaders = new Set<string>();
+const seenEmails = new Set<string>();
+const results: Record<string, any>[] = [];
+let created = 0;
+
+for (let i = 0; i < rows.length; i++) {
+const rowNum = i + 2; // header is row 1
+const fields = mapRowToCanonicalFields(rows[i], unrecognizedHeaders);
+const role = (fields.role || defaultRole).trim().toLowerCase();
+const email = fields.email ? normalizeEmail(fields.email) : '';
+
+const skip = (reason: string) => {
+results.push({ row: rowNum, email: fields.email || null, status: 'skipped', reason });
+};
+
+if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+skip('missing or invalid email');
+continue;
+}
+if (!fields.first_name) {
+skip('missing name');
+continue;
+}
+if (role !== 'student' && role !== 'faculty') {
+skip(`unsupported role "${role}" — only student/faculty may be bulk-onboarded`);
+continue;
+}
+if (!canAssignRole(actorRole, role)) {
+skip(`your role may not create "${role}" accounts`);
+continue;
+}
+if (seenEmails.has(email)) {
+skip('duplicate email within this file');
+continue;
+}
+if (this.db.users.find((u: any) => normalizeEmail(u.email) === email)) {
+skip('email already exists');
+continue;
+}
+seenEmails.add(email);
+
+try {
+assertSeatAvailable(this.db, collegeId, role as 'student' | 'faculty');
+} catch (err: any) {
+skip(err?.getResponse?.()?.message || err.message || 'seat limit exceeded');
+continue;
+}
+
+const generatedPassword = fields.password ? null : randomRosterPassword();
+const password = fields.password || generatedPassword!;
+const id = `u${Date.now()}${i}`;
+const newUser = {
+user_id: id,
+username: fields.first_name,
+first_name: fields.first_name,
+last_name: fields.last_name || '',
+email,
+phone: fields.phone || '',
+role,
+college_id: collegeId,
+password_hash: await this.passwordService.hash(password),
+};
+this.db.users.push(newUser);
+
+if (role === 'student') {
+this.db.students.push({
+user_id: id,
+first_name: fields.first_name,
+last_name: fields.last_name || '',
+branch: fields.branch || 'Unspecified',
+batch: fields.batch || '',
+cgpa: fields.cgpa ? Number(fields.cgpa) : 0,
+section: fields.section || 'A',
+email,
+join_date: new Date().toISOString().split('T')[0],
+dob: '2005-01-01',
+phone: fields.phone || '',
+college_id: collegeId,
+});
+} else {
+this.db.faculty.push({
+user_id: id,
+first_name: fields.first_name,
+last_name: fields.last_name || '',
+designation: fields.designation || 'Assistant Professor',
+department_id: fields.department_id || 'dept1',
+email,
+phone: fields.phone || '',
+college_id: collegeId,
+});
+}
+
+created++;
+results.push({
+row: rowNum,
+email,
+status: 'created',
+user_id: id,
+role,
+...(generatedPassword ? { generated_password: generatedPassword } : {}),
+});
+}
+
+this.db.persist();
+
+return {
+success: true,
+data: {
+total_rows: rows.length,
+created,
+skipped: rows.length - created,
+unrecognized_headers: [...unrecognizedHeaders],
+results,
+},
+};
+}
+
 @Put('users/:id')
 @Roles('admin', 'superadmin', 'head')
 @StrictBody()
@@ -1615,6 +1805,156 @@ kpis: { placement_rate: '94%', student_satisfaction: '4.2/5' },
 };
 }
 
+/**
+ * Faculty + student metrics for the User Management portal, filterable by
+ * course or semester (a student has no semester field of its own —
+ * semester lives on courses, so "semester-wise" means "enrolled in a
+ * course belonging to that semester," derived via enrollment the same way
+ * every other per-course student query in this file already works).
+ *
+ * With no filter, every student/faculty record counts, matching
+ * reports/overview's own convention. With a filter, only students actually
+ * enrolled in a matching course (and faculty teaching one) count — the
+ * filter narrows who's measured, not just which courses are listed.
+ */
+@Get('metrics/academic')
+@Roles('admin', 'head', 'superadmin')
+@ApiOperation({ summary: 'Faculty/student metrics, filterable by course or semester' })
+async getAcademicMetrics(
+@Query('course_id') courseId: string | undefined,
+@Query('semester') semesterRaw: string | undefined,
+@CurrentUserCollegeId() collegeId: string | null,
+) {
+const semester =
+semesterRaw !== undefined && semesterRaw !== '' ? Number(semesterRaw) : undefined;
+if (semester !== undefined && (!Number.isInteger(semester) || semester < 1)) {
+throw new BadRequestException(
+errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, 'semester must be a positive integer'),
+);
+}
+const filterActive = !!courseId || semester !== undefined;
+
+const courses = scopeToCollege(this.db.courses, collegeId);
+const matchingCourseIds = new Set(
+courses
+.filter(
+(c: any) =>
+(!courseId || c.course_id === courseId) &&
+(semester === undefined || c.semester === semester),
+)
+.map((c: any) => c.course_id),
+);
+
+const enrollment = scopeToCollege(this.db.enrollment, collegeId).filter(
+(e: any) => e.status === 'active' && matchingCourseIds.has(e.course_id),
+);
+
+const allStudents = scopeToCollege(this.db.students, collegeId);
+const enrolledStudentIds = new Set(enrollment.map((e: any) => e.student_id));
+const students = filterActive
+? allStudents.filter((s: any) => enrolledStudentIds.has(s.user_id))
+: allStudents;
+
+const cgpas = students
+.map((s: any) => computeCGPA(this.db, s.user_id).cgpa)
+.filter((v: number | null): v is number => v !== null);
+const avgCgpa =
+cgpas.length > 0
+? Math.round((cgpas.reduce((a: number, b: number) => a + b, 0) / cgpas.length) * 100) / 100
+: null;
+
+const studentIds = new Set(students.map((s: any) => s.user_id));
+const attendanceRecords = excludeHolidays(
+this.db,
+this.db.attendance_log.filter(
+(a: any) => studentIds.has(a.student_id) && matchingCourseIds.has(a.course_id),
+),
+collegeId,
+);
+const attendanceSummary = summariseAttendance(attendanceRecords);
+
+const byBranch = new Map<string, number>();
+students.forEach((s: any) => {
+const branch = s.branch || 'Unspecified';
+byBranch.set(branch, (byBranch.get(branch) ?? 0) + 1);
+});
+
+// Per-semester and per-course counts are distinct STUDENTS, not enrollment
+// rows — a student in two semester-3 courses must not be double-counted
+// within that one semester's bucket (showing up in two different
+// semesters' buckets at once, e.g. a backlog course, is real and expected).
+const bySemester = new Map<string, Set<string>>();
+const byCourse = new Map<string, Set<string>>();
+enrollment.forEach((e: any) => {
+const course = courses.find((c: any) => c.course_id === e.course_id);
+const semKey = course?.semester != null ? String(course.semester) : 'unspecified';
+if (!bySemester.has(semKey)) bySemester.set(semKey, new Set());
+bySemester.get(semKey)!.add(e.student_id);
+if (!byCourse.has(e.course_id)) byCourse.set(e.course_id, new Set());
+byCourse.get(e.course_id)!.add(e.student_id);
+});
+
+const allFaculty = scopeToCollege(this.db.faculty, collegeId);
+const sections = scopeToCollege(this.db.course_sections, collegeId).filter((cs: any) =>
+matchingCourseIds.has(cs.course_id),
+);
+const facultyIdsInScope = new Set(sections.map((cs: any) => cs.faculty_id));
+const faculty = filterActive
+? allFaculty.filter((f: any) => facultyIdsInScope.has(f.user_id))
+: allFaculty;
+
+const byDesignation = new Map<string, number>();
+faculty.forEach((f: any) => {
+const designation = f.designation || 'Unspecified';
+byDesignation.set(designation, (byDesignation.get(designation) ?? 0) + 1);
+});
+
+const workload = faculty
+.map((f: any) => {
+const mySections = sections.filter((cs: any) => cs.faculty_id === f.user_id);
+return {
+faculty_id: f.user_id,
+name: `${f.first_name} ${f.last_name || ''}`.trim(),
+designation: f.designation || null,
+sections_taught: mySections.length,
+courses_taught: new Set(mySections.map((cs: any) => cs.course_id)).size,
+};
+})
+.sort((a, b) => b.sections_taught - a.sections_taught);
+
+return {
+filters: { course_id: courseId ?? null, semester: semester ?? null },
+available_semesters: [...new Set(courses.map((c: any) => c.semester).filter((s: any) => s != null))].sort(
+(a: number, b: number) => a - b,
+),
+students: {
+total: students.length,
+avg_cgpa: avgCgpa,
+avg_attendance_pct: attendanceRecords.length > 0 ? attendanceSummary.percentage : null,
+by_branch: [...byBranch.entries()].map(([branch, count]) => ({ branch, count })),
+by_semester: [...bySemester.entries()]
+.map(([sem, set]) => ({ semester: sem === 'unspecified' ? null : Number(sem), count: set.size }))
+.sort((a, b) => (a.semester ?? Infinity) - (b.semester ?? Infinity)),
+by_course: [...byCourse.entries()]
+.map(([courseIdKey, set]) => {
+const course = courses.find((c: any) => c.course_id === courseIdKey);
+return {
+course_id: courseIdKey,
+course_code: course?.course_code || courseIdKey,
+course_name: course?.course_name || 'Unknown',
+enrolled_count: set.size,
+};
+})
+.sort((a, b) => b.enrolled_count - a.enrolled_count),
+},
+faculty: {
+total: faculty.length,
+by_designation: [...byDesignation.entries()].map(([designation, count]) => ({ designation, count })),
+workload,
+},
+};
+}
+
 @Get('reports/at-risk')
 @Roles('admin', 'head', 'superadmin', 'faculty')
 @ApiOperation({ summary: 'Get at-risk students list' })
@@ -1832,6 +2172,27 @@ ErrorCode.BUSINESS_RULE_VIOLATION,
 const student = this.db.students.find((s) => s.user_id === body.student_id);
 if (!isSameCollege(student, actorCollegeId))
 notFoundInMyCollege('Student');
+// A student already prompted to pay (or who already paid) this exact fee
+// must never get a second row for it — re-running "generate semester
+// fees" for students who already have that semester's fee, paid or not,
+// previously created a brand-new PENDING row sitting right next to their
+// already-PAID one: the fee itself looked settled, but the student (and
+// the compliance %) still showed it outstanding.
+const duplicate = scopeToCollege(this.db.fees, writeCollegeId(actorCollegeId)).find(
+(f: any) =>
+f.student_id === body.student_id &&
+String(f.semester) === String(body.semester) &&
+f.fee_type === body.fee_type,
+);
+if (duplicate) {
+throw new BadRequestException(
+errorBody(
+ErrorCode.DUPLICATE_RESOURCE,
+`A "${body.fee_type}" fee for semester ${body.semester} already exists for this student (status: ${duplicate.status}). Edit that record instead of creating a new one.`,
+{ existing_fee_id: duplicate.fee_id, status: duplicate.status },
+),
+);
+}
 const id = `f${Date.now()}`;
 const newFee = {
 fee_id: id,
@@ -1856,7 +2217,15 @@ async updateFee(
 ) {
 const fee = this.db.fees.find((f) => f.fee_id === id);
 if (!isSameCollege(fee, collegeId)) notFoundInMyCollege('Fee record');
-Object.assign(fee, { ...body, amount: Number(body.amount || fee.amount) });
+// status (and paid_date, its own side effect) is a protected transition —
+// it belongs exclusively to PATCH /fees/:id/pay, same "a privileged field
+// must not ride through a general update route" rule updateUser() already
+// enforces for role/password. Before this, editing ANY field on an
+// already-PAID fee (the frontend's edit form always sent status:
+// 'pending', correct or not) silently reverted it to unpaid — the fee was
+// genuinely settled, but the record started asking to be paid again.
+const { status, paid_date, fee_id, student_id, college_id, ...safeUpdates } = body ?? {};
+Object.assign(fee, { ...safeUpdates, amount: Number(safeUpdates.amount || fee.amount) });
 return { success: true, data: fee };
 }
 

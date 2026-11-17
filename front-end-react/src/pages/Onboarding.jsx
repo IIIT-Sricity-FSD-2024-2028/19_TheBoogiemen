@@ -142,7 +142,7 @@ export default function Onboarding() {
         body: JSON.stringify({
           email: details.email.trim(),
           password: details.password,
-          first_name: details.first_name.trim() || undefined,
+          first_name: details.first_name.trim(),
           last_name: details.last_name.trim() || undefined,
           phone: details.phone.trim() || undefined,
           college: {
@@ -248,8 +248,8 @@ export default function Onboarding() {
             <form onSubmit={submitDetails}>
               <div className="form-row">
                 <div className="form-group">
-                  <label>First Name</label>
-                  <input type="text" value={details.first_name} onChange={(e) => setDetails({ ...details, first_name: e.target.value })} />
+                  <label>First Name <span style={{ color: '#ef4444' }}>*</span></label>
+                  <input type="text" required value={details.first_name} onChange={(e) => setDetails({ ...details, first_name: e.target.value })} />
                 </div>
                 <div className="form-group">
                   <label>Last Name</label>

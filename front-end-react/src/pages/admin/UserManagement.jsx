@@ -1,10 +1,155 @@
 import { useEffect, useState } from 'react';
+import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { apiFetch } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationsContext';
+import { downloadCsv } from '../../utils/csv';
 import Modal from '../../components/shared/Modal';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function Stat({ label, value, color }) {
+return (
+<div>
+<div style={{ fontSize: 12, fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>{label}</div>
+<div style={{ fontSize: 28, fontWeight: 800, color: color || '#0f172a' }}>{value}</div>
+</div>
+);
+}
+
+/**
+ * Head/admin's "complete metrics" view — faculty and student counts, real
+ * breakdowns (branch, semester, course, designation), and faculty
+ * workload, filterable by course or semester. A student has no semester
+ * field of its own (GET /metrics/academic derives it from enrollment ->
+ * course.semester), so the semester dropdown's options come from the
+ * courses that actually have one, not a hardcoded 1-8 list.
+ */
+function AcademicMetrics() {
+const [courses, setCourses] = useState(null);
+const [courseId, setCourseId] = useState('');
+const [semester, setSemester] = useState('');
+const [metrics, setMetrics] = useState(undefined);
+
+useEffect(() => {
+apiFetch('/courses').then(setCourses).catch(() => setCourses([]));
+}, []);
+
+useEffect(() => {
+setMetrics(undefined);
+const params = new URLSearchParams();
+if (courseId) params.set('course_id', courseId);
+if (semester) params.set('semester', semester);
+const qs = params.toString();
+apiFetch(`/metrics/academic${qs ? '?' + qs : ''}`)
+.then(setMetrics)
+.catch(() => setMetrics(null));
+}, [courseId, semester]);
+
+if (metrics === null) return null;
+
+return (
+<div className="stats-card" style={{ marginBottom: 20 }}>
+<div className="stats-card-header">
+<div>
+<h3>Academic Metrics</h3>
+<p>Faculty and student counts, filterable by course or semester — a student's "semester" comes from what they're enrolled in.</p>
+</div>
+</div>
+<div className="stats-card-body" style={{ padding: 24 }}>
+<div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
+<div>
+<label style={{ fontSize: 12, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>Course</label>
+<select value={courseId} onChange={(e) => setCourseId(e.target.value)} style={{ padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 13, minWidth: 220 }}>
+<option value="">All Courses</option>
+{courses?.map((c) => (
+<option key={c.course_id} value={c.course_id}>{c.course_code} - {c.course_name}</option>
+))}
+</select>
+</div>
+<div>
+<label style={{ fontSize: 12, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>Semester</label>
+<select value={semester} onChange={(e) => setSemester(e.target.value)} style={{ padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 13, minWidth: 140 }}>
+<option value="">All Semesters</option>
+{(metrics?.available_semesters || []).map((s) => (
+<option key={s} value={s}>Semester {s}</option>
+))}
+</select>
+</div>
+</div>
+
+{!metrics ? (
+<div style={{ textAlign: 'center', color: '#64748b', padding: 20 }}>Loading...</div>
+) : (
+<>
+<div style={{ display: 'flex', gap: 40, flexWrap: 'wrap', marginBottom: 28, padding: 16, background: '#f8fafc', borderRadius: 10 }}>
+<Stat label="Students" value={metrics.students.total} color="#6366f1" />
+<Stat label="Faculty" value={metrics.faculty.total} color="#2563eb" />
+<Stat label="Avg CGPA" value={metrics.students.avg_cgpa ?? '—'} />
+<Stat label="Avg Attendance" value={metrics.students.avg_attendance_pct !== null ? `${metrics.students.avg_attendance_pct}%` : '—'} />
+</div>
+
+<div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
+{metrics.students.by_branch.map((b) => (
+<span key={b.branch} style={{ fontSize: 12, padding: '6px 12px', background: '#eef2ff', color: '#4338ca', borderRadius: 999, fontWeight: 600 }}>{b.branch}: {b.count}</span>
+))}
+{metrics.faculty.by_designation.map((d) => (
+<span key={d.designation} style={{ fontSize: 12, padding: '6px 12px', background: '#f0fdf4', color: '#15803d', borderRadius: 999, fontWeight: 600 }}>{d.designation}: {d.count}</span>
+))}
+</div>
+
+{metrics.students.by_semester.length > 0 && (
+<>
+<h4 style={{ fontSize: 13, fontWeight: 700, marginBottom: 12, color: '#475569' }}>STUDENTS BY SEMESTER</h4>
+<ResponsiveContainer width="100%" height={Math.max(100, metrics.students.by_semester.length * 36)}>
+<BarChart data={metrics.students.by_semester.map((s) => ({ name: `Sem ${s.semester ?? '—'}`, count: s.count }))} layout="vertical" margin={{ left: 8, right: 24 }}>
+<XAxis type="number" allowDecimals={false} tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} />
+<YAxis type="category" dataKey="name" tick={{ fontSize: 13, fill: '#475569' }} axisLine={false} tickLine={false} width={70} />
+<Tooltip formatter={(v) => [`${v} student${v === 1 ? '' : 's'}`, 'Count']} cursor={{ fill: '#f8fafc' }} />
+<Bar dataKey="count" fill="#6366f1" radius={[0, 4, 4, 0]} maxBarSize={22} />
+</BarChart>
+</ResponsiveContainer>
+</>
+)}
+
+{metrics.students.by_course.length > 0 && (
+<>
+<h4 style={{ fontSize: 13, fontWeight: 700, margin: '28px 0 12px', color: '#475569' }}>STUDENTS BY COURSE</h4>
+<ResponsiveContainer width="100%" height={Math.max(100, metrics.students.by_course.length * 36)}>
+<BarChart data={metrics.students.by_course.map((c) => ({ name: c.course_code, count: c.enrolled_count }))} layout="vertical" margin={{ left: 8, right: 24 }}>
+<XAxis type="number" allowDecimals={false} tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} />
+<YAxis type="category" dataKey="name" tick={{ fontSize: 13, fill: '#475569' }} axisLine={false} tickLine={false} width={70} />
+<Tooltip formatter={(v) => [`${v} student${v === 1 ? '' : 's'}`, 'Enrolled']} cursor={{ fill: '#f8fafc' }} />
+<Bar dataKey="count" fill="#6366f1" radius={[0, 4, 4, 0]} maxBarSize={22} />
+</BarChart>
+</ResponsiveContainer>
+</>
+)}
+
+<h4 style={{ fontSize: 13, fontWeight: 700, margin: '28px 0 12px', color: '#475569' }}>FACULTY WORKLOAD</h4>
+{metrics.faculty.workload.length === 0 ? (
+<p style={{ color: '#94a3b8', fontSize: 13 }}>No faculty match this filter.</p>
+) : (
+<table className="crud-table">
+<thead><tr><th>Faculty</th><th>Designation</th><th style={{ textAlign: 'right' }}>Sections</th><th style={{ textAlign: 'right' }}>Courses</th></tr></thead>
+<tbody>
+{metrics.faculty.workload.map((f) => (
+<tr key={f.faculty_id}>
+<td>{f.name}</td>
+<td style={{ color: '#64748b' }}>{f.designation || '—'}</td>
+<td style={{ textAlign: 'right', fontWeight: 600 }}>{f.sections_taught}</td>
+<td style={{ textAlign: 'right', fontWeight: 600 }}>{f.courses_taught}</td>
+</tr>
+))}
+</tbody>
+</table>
+)}
+</>
+)}
+</div>
+</div>
+);
+}
 
 function AddUserModal({ open, onClose, onCreated }) {
 const { showToast, send } = useNotifications();
@@ -103,6 +248,136 @@ return (
 );
 }
 
+const TEMPLATE_HEADERS = {
+student: ['first_name', 'last_name', 'email', 'phone', 'branch', 'batch', 'section', 'cgpa'],
+faculty: ['first_name', 'last_name', 'email', 'phone', 'designation', 'department_id'],
+};
+
+/**
+ * Bulk onboarding from a roster CSV — the explicit use case is a Google
+ * Form export. "Download Template" gives the exact column names the
+ * backend recognizes (bulk-onboard.util.ts also accepts common synonyms
+ * like "Email Address"/"Mobile Number", but a Google Form built against
+ * this template's own headers as its question titles is a guaranteed
+ * match, no synonym guessing needed).
+ */
+function BulkOnboardModal({ open, onClose, onDone }) {
+const { showToast } = useNotifications();
+const [role, setRole] = useState('student');
+const [file, setFile] = useState(null);
+const [submitting, setSubmitting] = useState(false);
+const [result, setResult] = useState(null);
+
+useEffect(() => {
+if (!open) return;
+setRole('student');
+setFile(null);
+setResult(null);
+}, [open]);
+
+const downloadTemplate = () => {
+downloadCsv(`BarelyPassing_${role}_roster_template.csv`, [TEMPLATE_HEADERS[role].join(',')]);
+};
+
+const submit = async () => {
+if (!file) return showToast('Choose a CSV file first', 'warning');
+setSubmitting(true);
+setResult(null);
+try {
+const formData = new FormData();
+formData.append('file', file);
+const res = await apiFetch(`/users/bulk-onboard?role=${role}`, { method: 'POST', body: formData });
+setResult(res.data);
+showToast(`${res.data.created} created, ${res.data.skipped} skipped.`, res.data.created > 0 ? 'success' : 'warning');
+onDone();
+} catch (e) {
+showToast('Failed: ' + e.message, 'error');
+} finally {
+setSubmitting(false);
+}
+};
+
+const exportResults = () => {
+if (!result) return;
+const lines = [
+'Row,Email,Status,Reason/Role,Generated Password',
+...result.results.map((r) => `${r.row},"${r.email || ''}",${r.status},"${r.reason || r.role || ''}",${r.generated_password || ''}`),
+];
+downloadCsv('BarelyPassing_BulkOnboard_Results.csv', lines);
+};
+
+return (
+<Modal open={open} onClose={onClose} title="📤 Bulk Onboard from CSV" maxWidth={620}>
+<div className="modal-body">
+{!result ? (
+<>
+<p style={{ fontSize: 13, color: '#64748b', marginBottom: 16 }}>
+Upload a roster CSV — a Google Form export works directly if its question titles match the template's column names below.
+</p>
+<div className="form-group">
+<label>Account Type</label>
+<select value={role} onChange={(e) => setRole(e.target.value)}>
+<option value="student">Student</option>
+<option value="faculty">Faculty</option>
+</select>
+</div>
+<div className="form-group">
+<label>CSV File <span style={{ color: '#ef4444' }}>*</span></label>
+<input type="file" accept=".csv" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+</div>
+<button type="button" onClick={downloadTemplate} style={{ fontSize: 12, background: 'none', border: 'none', color: '#6366f1', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
+⬇ Download {role} CSV template
+</button>
+</>
+) : (
+<>
+<div style={{ display: 'flex', gap: 24, marginBottom: 16 }}>
+<Stat label="Created" value={result.created} color="#16a34a" />
+<Stat label="Skipped" value={result.skipped} color={result.skipped > 0 ? '#ef4444' : '#94a3b8'} />
+</div>
+{result.unrecognized_headers.length > 0 && (
+<p style={{ fontSize: 12, color: '#d97706', background: '#fffbeb', padding: '8px 12px', borderRadius: 6, marginBottom: 12 }}>
+⚠ Unrecognized columns, ignored: {result.unrecognized_headers.join(', ')}
+</p>
+)}
+<div style={{ maxHeight: 280, overflowY: 'auto' }}>
+<table className="crud-table">
+<thead><tr><th>Row</th><th>Email</th><th>Status</th><th>Detail</th></tr></thead>
+<tbody>
+{result.results.map((r) => (
+<tr key={r.row}>
+<td>{r.row}</td>
+<td style={{ fontSize: 12 }}>{r.email || '—'}</td>
+<td>
+<span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 4, background: r.status === 'created' ? '#f0fdf4' : '#fef2f2', color: r.status === 'created' ? '#16a34a' : '#ef4444' }}>
+{r.status.toUpperCase()}
+</span>
+</td>
+<td style={{ fontSize: 12, color: '#64748b' }}>{r.reason || (r.generated_password ? `password: ${r.generated_password}` : '—')}</td>
+</tr>
+))}
+</tbody>
+</table>
+</div>
+</>
+)}
+</div>
+<div className="modal-footer">
+{!result ? (
+<button className="submit-btn" style={{ flex: 1 }} onClick={submit} disabled={submitting}>
+{submitting ? 'Uploading…' : 'Upload & Create Accounts'}
+</button>
+) : (
+<button className="submit-btn" style={{ flex: 1 }} onClick={exportResults}>
+⬇ Export Results (CSV)
+</button>
+)}
+<button className="btn-cancel" onClick={onClose}>Close</button>
+</div>
+</Modal>
+);
+}
+
 function EditUserModal({ user, onClose, onSaved }) {
 const { showToast } = useNotifications();
 const [username, setUsername] = useState('');
@@ -171,6 +446,7 @@ const { showToast } = useNotifications();
 const { user } = useAuth();
 const [users, setUsers] = useState(undefined);
 const [addOpen, setAddOpen] = useState(false);
+const [bulkOpen, setBulkOpen] = useState(false);
 const [editTarget, setEditTarget] = useState(null);
 
 const load = () => apiFetch('/admin/users').then(setUsers).catch(() => setUsers([]));
@@ -204,13 +480,18 @@ showToast('Failed: ' + e.message, 'error');
 };
 
 return (
+<>
+<AcademicMetrics />
 <div className="stats-card">
 <div className="stats-card-header">
 <div>
 <h3>System User Management</h3>
 <p>Manage all institutional users.</p>
 </div>
+<div style={{ display: 'flex', gap: 10 }}>
+<button className="btn-cancel" onClick={() => setBulkOpen(true)}>📤 Bulk Onboard (CSV)</button>
 <button className="page-action-btn" onClick={() => setAddOpen(true)}>+ Add User</button>
+</div>
 </div>
 <div className="stats-card-body">
 {users === undefined ? (
@@ -243,5 +524,7 @@ return (
 <AddUserModal open={addOpen} onClose={() => setAddOpen(false)} onCreated={load} />
 <EditUserModal user={editTarget} onClose={() => setEditTarget(null)} onSaved={load} />
 </div>
+<BulkOnboardModal open={bulkOpen} onClose={() => setBulkOpen(false)} onDone={load} />
+</>
 );
 }

@@ -232,7 +232,10 @@ function EditFeeModal({ fee, onClose, onSaved }) {
     if (Number(amount) < 1) return showToast('Amount must be at least 1', 'warning');
     setSubmitting(true);
     try {
-      await apiFetch(`/fees/${fee.fee_id}`, { method: 'PUT', body: JSON.stringify({ fee_type: feeType, amount: Number(amount), due_date: due, semester, status: 'pending' }) });
+      // status is never sent here — it's a protected field the backend now
+      // ignores on this route anyway (see updateFee's own comment): editing
+      // a fee's terms must never silently revert an already-PAID one.
+      await apiFetch(`/fees/${fee.fee_id}`, { method: 'PUT', body: JSON.stringify({ fee_type: feeType, amount: Number(amount), due_date: due, semester }) });
       const from = user?.first_name || 'Admin';
       if (fee.studentId) send(fee.studentId, from, `💳 Fee updated: ${feeType} ₹${amount} due ${due} (Sem ${semester || 'N/A'}).`, 'fee');
       showToast('Fee updated! Student notified. ✅', 'success');

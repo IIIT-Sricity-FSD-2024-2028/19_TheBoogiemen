@@ -34,6 +34,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "cookie-parser": "^1.4.7",
+    "csv-parse": "^7.0.3",
     "helmet": "^8.3.0",
     "nestjs-pino": "^4.6.1",
     "pg": "^8.23.0",
