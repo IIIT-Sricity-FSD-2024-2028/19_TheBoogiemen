@@ -15,8 +15,8 @@
 * marking them read, restoring the legacy capture-then-mark-then-render order.
 */
 import { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { useNotifications } from '../../context/NotificationsContext';
+import { useAuth } from '../../features/auth/useAuth';
+import { useNotifications } from '../../features/notifications/useNotifications';
 
 // viewId values match the actual view ids each dashboard settles on (kept
 // consistent across actors on purpose, same as legacy's shared

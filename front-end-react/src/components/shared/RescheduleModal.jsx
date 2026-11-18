@@ -4,7 +4,7 @@
  */
 import { useState, useEffect } from 'react';
 import Modal from './Modal';
-import { useNotifications } from '../../context/NotificationsContext';
+import { useNotifications } from '../../features/notifications/useNotifications';
 import { useAppDispatch } from '../../store/hooks';
 import { requestReschedule, askReschedule, directReschedule, handleStudentReschedule } from '../../features/meetings/meetingsThunks';
 

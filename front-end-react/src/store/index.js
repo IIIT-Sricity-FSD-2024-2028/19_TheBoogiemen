@@ -44,6 +44,14 @@ import myCollegeReducer from '../features/myCollege/myCollegeSlice';
 import supportThreadReducer from '../features/supportThread/supportThreadSlice';
 import meetingsReducer from '../features/meetings/meetingsSlice';
 import submissionsReducer from '../features/submissions/submissionsSlice';
+import studentGradesReducer from '../features/studentGrades/studentGradesSlice';
+import studentCoursesReducer from '../features/studentCourses/studentCoursesSlice';
+import studentProfileReducer from '../features/studentProfile/studentProfileSlice';
+import studentOutcomesReducer from '../features/studentOutcomes/studentOutcomesSlice';
+import studentAttendanceReducer from '../features/studentAttendance/studentAttendanceSlice';
+import studentSyllabusReducer from '../features/studentSyllabus/studentSyllabusSlice';
+import licensedModulesReducer from '../features/licensedModules/licensedModulesSlice';
+import timetableManagementReducer from '../features/timetableManagement/timetableManagementSlice';
 import { getUser } from '../api/client';
 
 export const store = configureStore({
@@ -81,6 +89,14 @@ export const store = configureStore({
     supportThread: supportThreadReducer,
     meetings: meetingsReducer,
     submissions: submissionsReducer,
+    studentGrades: studentGradesReducer,
+    studentCourses: studentCoursesReducer,
+    studentProfile: studentProfileReducer,
+    studentOutcomes: studentOutcomesReducer,
+    studentAttendance: studentAttendanceReducer,
+    studentSyllabus: studentSyllabusReducer,
+    licensedModules: licensedModulesReducer,
+    timetableManagement: timetableManagementReducer,
   },
   middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(notificationsPersistenceMiddleware),
   // Hydrates from localStorage once, at real app boot — same effect as the

@@ -13,7 +13,7 @@
 
 import { useEffect, useState } from 'react';
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { useNotifications } from '../../context/NotificationsContext';
+import { useNotifications } from '../../features/notifications/useNotifications';
 import Modal from '../../components/shared/Modal';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { fetchColleges, fetchRevenue, fetchSupportThreads, fetchSupportThread, replySupportThread } from '../../features/billing/billingThunks';

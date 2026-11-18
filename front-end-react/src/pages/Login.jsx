@@ -17,8 +17,8 @@
 */
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth, ROLE_HOME } from '../context/AuthContext';
-import { useNotifications } from '../context/NotificationsContext';
+import { useAuth, ROLE_HOME } from '../features/auth/useAuth';
+import { useNotifications } from '../features/notifications/useNotifications';
 import useBodyClass from '../hooks/useBodyClass';
 import ForgotPasswordModal from '../components/shared/ForgotPasswordModal';
 

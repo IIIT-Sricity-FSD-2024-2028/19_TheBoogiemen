@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { useAuth } from '../../context/AuthContext';
-import { useNotifications } from '../../context/NotificationsContext';
+import { useAuth } from '../../features/auth/useAuth';
+import { useNotifications } from '../../features/notifications/useNotifications';
 import { downloadCsv } from '../../utils/csv';
 import Modal from '../../components/shared/Modal';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';

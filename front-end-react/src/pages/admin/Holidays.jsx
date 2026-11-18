@@ -13,7 +13,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { useNotifications } from '../../context/NotificationsContext';
+import { useNotifications } from '../../features/notifications/useNotifications';
 import { fetchHolidays, createHoliday, deleteHoliday } from '../../features/holidays/holidaysThunks';
 
 export default function Holidays() {

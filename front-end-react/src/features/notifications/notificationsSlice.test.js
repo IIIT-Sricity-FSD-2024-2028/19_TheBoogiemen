@@ -3,7 +3,7 @@
  * middleware, exercised against a real configureStore (same approach as
  * authSlice.test.js). The facade's own behavior (shared toast timer,
  * college-scoped read filtering via useNotifications()) is covered
- * separately in NotificationsContext.test.jsx, since it needs React
+ * separately in useNotifications.test.jsx, since it needs React
  * Testing Library to render hooks with a real <Provider>.
  */
 import { describe, it, expect, beforeEach } from 'vitest';

@@ -9,7 +9,7 @@
  */
 
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../features/auth/useAuth';
 
 export default function ProtectedRoute({ roles = [], children }) {
   const { user } = useAuth();

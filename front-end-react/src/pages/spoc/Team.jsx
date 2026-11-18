@@ -12,7 +12,7 @@
 * POST /users admin/UserManagement.jsx's AddUserModal already uses.
 */
 import { useEffect, useState } from 'react';
-import { useNotifications } from '../../context/NotificationsContext';
+import { useNotifications } from '../../features/notifications/useNotifications';
 import Modal from '../../components/shared/Modal';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { fetchMyCollege } from '../../features/myCollege/myCollegeThunks';

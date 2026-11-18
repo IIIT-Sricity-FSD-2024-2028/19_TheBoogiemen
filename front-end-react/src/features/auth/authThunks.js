@@ -1,12 +1,12 @@
 /**
  * authThunks.js — ported byte-for-byte from the pre-Redux AuthContext.jsx's
- * login()/logout(), so the facade (context/AuthContext.jsx) can stay
+ * login()/logout(), so the facade (features/auth/useAuth.js) can stay
  * behaviorally identical. Not apiFetch(): login/logout happen before and
  * after a session exists, and apiFetch's 401-forces-logout behavior is
  * meaningless at either boundary.
  */
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { clearSession } from '../../api/client';
+import { clearSession, apiFetch } from '../../api/client';
 
 /** Role → the dashboard route that owns it. */
 export const ROLE_HOME = {
@@ -53,3 +53,21 @@ export const logoutUser = createAsyncThunk('auth/logout', async () => {
   }
   clearSession();
 });
+
+// Authenticated mutation — apiFetch is correct here, a 401 genuinely means
+// "your session died," which should force-logout.
+export const changePassword = createAsyncThunk('auth/changePassword', ({ currentPassword, newPassword }) =>
+  apiFetch('/auth/change-password', {
+    method: 'POST',
+    body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+  }),
+);
+
+// Pre-login flow (ForgotPasswordModal) — calls /auth/reset-password, which
+// does not exist anywhere in the backend (only /auth/change-password does,
+// an authenticated route). This 404s today in the pre-Redux code too; a
+// pre-existing product bug, not something this migration introduces or
+// fixes — ported faithfully as-is.
+export const resetPassword = createAsyncThunk('auth/resetPassword', ({ email, newPassword }) =>
+  apiFetch('/auth/reset-password', { method: 'POST', body: JSON.stringify({ email, new_password: newPassword }) }),
+);

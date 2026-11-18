@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNotifications } from '../../context/NotificationsContext';
+import { useNotifications } from '../../features/notifications/useNotifications';
 import MeetingModal from '../../components/shared/MeetingModal';
 import RescheduleModal from '../../components/shared/RescheduleModal';
 import CompleteMeetingModal from '../../components/shared/CompleteMeetingModal';

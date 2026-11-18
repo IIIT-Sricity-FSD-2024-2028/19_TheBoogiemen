@@ -12,11 +12,12 @@
  *     submitFacultyBTPProgress() — see parity exceptions log)
  */
 import { useEffect, useState } from 'react';
-import { apiFetch } from '../../api/client';
 import { uploadFile, downloadDocument } from '../../api/uploads';
-import { useAuth } from '../../context/AuthContext';
-import { useNotifications } from '../../context/NotificationsContext';
+import { useAuth } from '../../features/auth/useAuth';
+import { useNotifications } from '../../features/notifications/useNotifications';
 import Modal from './Modal';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchResearch, updateResearchProgress } from '../../features/research/researchThunks';
 
 // ── Student components (unchanged) ──────────────────────────────────────────
 
@@ -58,6 +59,7 @@ function ProjectCard({ project, onUpload }) {
 }
 
 function BTPUploadModal({ project, onClose, onSubmitted }) {
+    const dispatch = useAppDispatch();
     const { user } = useAuth();
     const { showToast, broadcast } = useNotifications();
     const [notes, setNotes] = useState('');
@@ -94,10 +96,10 @@ function BTPUploadModal({ project, onClose, onSubmitted }) {
         setSubmitting(true);
         try {
             const uploaded = await uploadFile(file, 'research_milestone');
-            await apiFetch(`/research/${project.project_id}/progress`, {
-                method: 'PATCH',
-                body: JSON.stringify({ submission_notes: notes.trim(), file_id: uploaded?.file_id ?? null, file_name: uploaded?.original_name ?? null }),
-            });
+            await dispatch(updateResearchProgress({
+                projectId: project.project_id,
+                payload: { submission_notes: notes.trim(), file_id: uploaded?.file_id ?? null, file_name: uploaded?.original_name ?? null },
+            })).unwrap();
             const studentName = user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() : 'A student';
             broadcast('faculty', studentName, `📤 ${studentName} has submitted work for BTP project "${project.title}". File: ${file.name}. Please review and give feedback.`, 'info');
             showToast('Work submitted to faculty! Faculty has been notified. ✅', 'success');
@@ -262,6 +264,7 @@ function FacultyProjectCard({ project, onOpenProgress }) {
  * { progress, faculty_feedback }, then notify the student.
  */
 function FacultyBTPProgressModal({ project, onClose, onSaved }) {
+    const dispatch = useAppDispatch();
     const { user } = useAuth();
     const { showToast, send } = useNotifications();
     const [progress, setProgress] = useState('');
@@ -292,10 +295,10 @@ function FacultyBTPProgressModal({ project, onClose, onSaved }) {
 
         setSubmitting(true);
         try {
-            await apiFetch(`/research/${project.project_id}/progress`, {
-                method: 'PATCH',
-                body: JSON.stringify({ progress: progressNum, faculty_feedback: feedback.trim() }),
-            });
+            await dispatch(updateResearchProgress({
+                projectId: project.project_id,
+                payload: { progress: progressNum, faculty_feedback: feedback.trim() },
+            })).unwrap();
             // Notify the supervised student
             const studentId = project.student_id || project.students?.[0]?.user_id;
             const from = user?.first_name || 'Faculty';
@@ -368,14 +371,16 @@ function FacultyBTPProgressModal({ project, onClose, onSaved }) {
 // ── Main component ──────────────────────────────────────────────────────────
 
 export default function ResearchPanel({ role }) {
-    const [projects, setProjects] = useState(undefined);
+    const dispatch = useAppDispatch();
+    const projects = useAppSelector((state) => state.research.items);
     const [uploadTarget, setUploadTarget] = useState(null);       // student
     const [progressTarget, setProgressTarget] = useState(null);   // faculty
 
-    const load = () => apiFetch('/research').then(setProjects).catch(() => setProjects([]));
+    const load = () => dispatch(fetchResearch());
 
     useEffect(() => {
         load();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     if (role !== 'student' && role !== 'faculty') return null;

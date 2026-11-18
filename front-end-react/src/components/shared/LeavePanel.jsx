@@ -15,8 +15,8 @@
 
 import { useEffect, useState } from 'react';
 import { uploadFile, downloadDocument } from '../../api/uploads';
-import { useAuth } from '../../context/AuthContext';
-import { useNotifications } from '../../context/NotificationsContext';
+import { useAuth } from '../../features/auth/useAuth';
+import { useNotifications } from '../../features/notifications/useNotifications';
 import Modal from './Modal';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { fetchFacultyLeaves, applyForLeave } from '../../features/facultyLeave/facultyLeaveThunks';

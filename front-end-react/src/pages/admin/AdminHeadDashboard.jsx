@@ -8,7 +8,7 @@
  */
 
 import { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../features/auth/useAuth';
 import DashboardShell from '../../components/layout/DashboardShell';
 import Settings from '../../components/shared/Settings';
 import LeavePanel from '../../components/shared/LeavePanel';

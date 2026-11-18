@@ -7,10 +7,11 @@
  * the raw marks behind it.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Bar, BarChart, Cell, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { apiFetch } from '../../api/client';
 import { downloadCsv } from '../../utils/csv';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchMyGrades } from '../../features/studentGrades/studentGradesThunks';
 
 const GRADE_COLOR = {
   O: { bg: '#86efac', fg: '#14532d' },
@@ -32,20 +33,15 @@ function GradeBadge({ letter }) {
 }
 
 export default function Grades() {
-  const [grades, setGrades] = useState(undefined);
-  const [marks, setMarks] = useState(undefined);
-  const [trend, setTrend] = useState(undefined);
-  const [error, setError] = useState(null);
+  const dispatch = useAppDispatch();
+  const grades = useAppSelector((state) => state.studentGrades.grades);
+  const marks = useAppSelector((state) => state.studentGrades.marks);
+  const trend = useAppSelector((state) => state.studentGrades.trend);
+  const error = useAppSelector((state) => state.studentGrades.error);
 
   useEffect(() => {
-    Promise.all([apiFetch('/students/me/grades'), apiFetch('/students/me/marks'), apiFetch('/students/me/grade-trend').catch(() => [])])
-      .then(([g, m, t]) => {
-        setGrades(g);
-        setMarks(m);
-        setTrend(t);
-      })
-      .catch((e) => setError(e.message));
-  }, []);
+    dispatch(fetchMyGrades());
+  }, [dispatch]);
 
   if (error) return <p style={{ color: '#ef4444' }}>Failed to load grades: {error}</p>;
   if (!grades || !marks) return null;

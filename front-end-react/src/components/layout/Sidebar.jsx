@@ -9,7 +9,7 @@
  * foundation layer.
  */
 
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../features/auth/useAuth';
 
 export default function Sidebar({ brandSubtitle, avatarLetter, avatarClassName = 'avatar-default', roleLabel, navItems, licensedModules, activeView, onSelect, onLogout }) {
   const { user } = useAuth();

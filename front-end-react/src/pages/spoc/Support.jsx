@@ -11,7 +11,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { useNotifications } from '../../context/NotificationsContext';
+import { useNotifications } from '../../features/notifications/useNotifications';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { fetchMyThread, sendSupportMessage } from '../../features/supportThread/supportThreadThunks';
 

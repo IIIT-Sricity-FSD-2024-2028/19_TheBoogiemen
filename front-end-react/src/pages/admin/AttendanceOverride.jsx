@@ -12,32 +12,33 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { apiFetch } from '../../api/client';
 import { downloadDocument } from '../../api/uploads';
-import { useAuth } from '../../context/AuthContext';
-import { useNotifications } from '../../context/NotificationsContext';
+import { useAuth } from '../../features/auth/useAuth';
+import { useNotifications } from '../../features/notifications/useNotifications';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchAllLeaves, decideLeave } from '../../features/adminLeave/adminLeaveThunks';
+import { fetchAttendanceRequests, decideAttendanceRequest } from '../../features/attendanceRequests/attendanceRequestsThunks';
 
 function MedicalOverrides() {
+  const dispatch = useAppDispatch();
   const { user } = useAuth();
   const { showToast, send } = useNotifications();
-  const [overrides, setOverrides] = useState(undefined);
+  const leaves = useAppSelector((state) => state.adminLeave.items);
+  // Case-insensitive: the student form posts "medical" while older
+  // records store "Medical".
+  const overrides = leaves === undefined
+    ? undefined
+    : leaves.filter((l) => String(l.leave_type || '').trim().toLowerCase() === 'medical' && String(l.status || '').trim().toLowerCase() === 'pending');
 
-  const load = () => {
-    apiFetch('/leave')
-      .then((leaves) => {
-        // Case-insensitive: the student form posts "medical" while older
-        // records store "Medical".
-        setOverrides(leaves.filter((l) => String(l.leave_type || '').trim().toLowerCase() === 'medical' && String(l.status || '').trim().toLowerCase() === 'pending'));
-      })
-      .catch(() => setOverrides([]));
-  };
-  // Wrapped, not passed directly — see Team.jsx's fix note: load() returns a
-  // Promise, which React would otherwise try to call as an unmount cleanup.
-  useEffect(() => { load(); }, []);
+  const load = () => dispatch(fetchAllLeaves());
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const approve = async (l) => {
     try {
-      await apiFetch(`/leave/${l.leave_id}`, { method: 'PATCH', body: JSON.stringify({ status: 'approved' }) });
+      await dispatch(decideLeave({ leaveId: l.leave_id, status: 'approved' })).unwrap();
       showToast('Leave approved ✅', 'success');
       const studentId = l.student_id || l.user_id;
       if (studentId) {
@@ -83,13 +84,15 @@ function MedicalOverrides() {
  * legacy ungrouped row (no group_id) is just its own singleton group.
  */
 function AttendanceRequests() {
+  const dispatch = useAppDispatch();
   const { user } = useAuth();
   const { showToast, send, broadcast } = useNotifications();
-  const [requests, setRequests] = useState(undefined);
+  const requests = useAppSelector((state) => state.attendanceRequests.items);
 
-  const load = () => apiFetch('/attendance-requests').then(setRequests).catch(() => setRequests([]));
+  const load = () => dispatch(fetchAttendanceRequests());
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const groups = useMemo(() => {
@@ -108,7 +111,7 @@ function AttendanceRequests() {
       await Promise.all(
         rows
           .filter((r) => r.admin_status === 'pending')
-          .map((r) => apiFetch(`/attendance-request/${r.request_id}`, { method: 'PATCH', body: JSON.stringify({ status }) })),
+          .map((r) => dispatch(decideAttendanceRequest({ requestId: r.request_id, status })).unwrap()),
       );
       const from = user?.first_name || 'Admin';
       const studentId = rows[0].student_id;

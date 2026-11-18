@@ -1,17 +1,17 @@
 /** Profile — ported from legacy fixes.js renderStudentProfile(). */
 
-import { useEffect, useState } from 'react';
-import { apiFetch } from '../../api/client';
+import { useEffect } from 'react';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchMyProfile } from '../../features/studentProfile/studentProfileThunks';
 
 export default function Profile() {
-  const [student, setStudent] = useState(undefined);
-  const [error, setError] = useState(null);
+  const dispatch = useAppDispatch();
+  const student = useAppSelector((state) => state.studentProfile.data);
+  const error = student === null ? 'Failed to load profile' : null;
 
   useEffect(() => {
-    apiFetch('/students/me')
-      .then(setStudent)
-      .catch((e) => setError(e.message));
-  }, []);
+    dispatch(fetchMyProfile());
+  }, [dispatch]);
 
   return (
     <div className="stats-card">
