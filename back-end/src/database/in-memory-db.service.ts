@@ -5,14 +5,21 @@ import * as path from 'path';
 
 @Injectable()
 export class InMemoryDbService implements OnModuleInit {
-  private readonly dataPath = path.join(
-    __dirname,
-    '..',
-    '..',
-    '..',
-    'data',
-    'mock-db.json',
-  );
+  private resolveDataPath(): string {
+    const candidates = [
+      path.join(process.cwd(), 'data', 'mock-db.json'),
+      path.join(process.cwd(), 'back-end', 'data', 'mock-db.json'),
+      path.join(__dirname, '..', '..', '..', 'data', 'mock-db.json'),
+      path.join(__dirname, '..', '..', 'data', 'mock-db.json'),
+      path.join(__dirname, '..', 'data', 'mock-db.json'),
+    ];
+    for (const p of candidates) {
+      if (fs.existsSync(p)) return p;
+    }
+    return path.join(process.cwd(), 'data', 'mock-db.json');
+  }
+
+  private readonly dataPath = this.resolveDataPath();
   private isLoaded = false;
 
   public departments = this.createProxyArray([]);
@@ -37,9 +44,18 @@ export class InMemoryDbService implements OnModuleInit {
   public fees = this.createProxyArray([]);
   public submissions = this.createProxyArray([]);
   public timetable = this.createProxyArray([]);
-  public syllabus_progress = this.createProxyArray([]);
   public attendance_requests = this.createProxyArray([]);
   public resource_bookings = this.createProxyArray([]);
+  public holidays = this.createProxyArray([]);
+  // OUTCOMES_TRACKING_PLAN.md: retires syllabus_progress's flat
+  // course-level % (and its inert, never-written `modules[]`) in favour of
+  // real topics with their own identity, each taggable to the learning
+  // outcomes it contributes to. topic_completions is what varies by
+  // section; topics themselves don't.
+  public program_outcomes = this.createProxyArray([]);
+  public learning_outcomes = this.createProxyArray([]);
+  public topics = this.createProxyArray([]);
+  public topic_completions = this.createProxyArray([]);
   // SPOC / multi-college platform. New collections MUST also be added to the
   // dataToSave object in persist() below — a collection declared only here
   // updates in memory but is silently dropped on every write, which is
@@ -54,6 +70,7 @@ export class InMemoryDbService implements OnModuleInit {
   public quotes = this.createProxyArray([]);
   public payments = this.createProxyArray([]);
   public subscriptions = this.createProxyArray([]);
+  public meetings = this.createProxyArray([]);
 
   constructor(
     @InjectPinoLogger(InMemoryDbService.name)
@@ -155,9 +172,13 @@ export class InMemoryDbService implements OnModuleInit {
         fees: this.fees,
         submissions: this.submissions,
         timetable: this.timetable,
-        syllabus_progress: this.syllabus_progress,
         attendance_requests: this.attendance_requests,
         resource_bookings: this.resource_bookings,
+        holidays: this.holidays,
+        program_outcomes: this.program_outcomes,
+        learning_outcomes: this.learning_outcomes,
+        topics: this.topics,
+        topic_completions: this.topic_completions,
         colleges: this.colleges,
         support_threads: this.support_threads,
         support_messages: this.support_messages,
@@ -165,6 +186,7 @@ export class InMemoryDbService implements OnModuleInit {
         quotes: this.quotes,
         payments: this.payments,
         subscriptions: this.subscriptions,
+        meetings: this.meetings,
       };
 
       fs.writeFileSync(

@@ -48,11 +48,17 @@ export class SpocDetailsDto {
   @IsEmail()
   email: string;
 
-  @ApiPropertyOptional({ example: 'Anita' })
-  @IsOptional()
+  // Required: a blank name here used to fall silently through to
+  // createCollegeAndSpoc()'s email-local-part fallback (colleges.service.ts),
+  // so a SPOC record could end up named after its own inbox ("spoc" from
+  // "spoc@stxaviers.edu") instead of a real person. Rejecting it at the
+  // boundary is the fix; that fallback has been removed now that both
+  // callers guarantee a real name.
+  @ApiProperty({ example: 'Anita' })
   @IsString()
+  @MinLength(1)
   @MaxLength(80)
-  first_name?: string;
+  first_name: string;
 
   @ApiPropertyOptional({ example: 'Rao' })
   @IsOptional()

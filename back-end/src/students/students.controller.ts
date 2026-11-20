@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Body,
+  Query,
   BadRequestException,
 } from '@nestjs/common';
 import { StudentsService } from './students.service';
@@ -38,8 +39,45 @@ export class StudentsController {
     status: 200,
     description: 'Attendance records and per-course summary',
   })
-  async getAttendance(@CurrentUserId() userId: string) {
-    return this.studentsService.getAttendance(userId);
+  async getAttendance(
+    @CurrentUserId() userId: string,
+    @CurrentUserCollegeId() collegeId: string | null,
+  ) {
+    return this.studentsService.getAttendance(userId, collegeId);
+  }
+
+  @Get('me/attendance-calendar')
+  @Roles('student')
+  @ApiOperation({
+    summary: 'Get a day-by-day attendance calendar for one month, for the heatmap view',
+  })
+  @ApiResponse({ status: 200, description: 'One cell per day in the requested month' })
+  async getAttendanceCalendar(
+    @CurrentUserId() userId: string,
+    @Query('month') month: string,
+    @CurrentUserCollegeId() collegeId: string | null,
+  ) {
+    return this.studentsService.getAttendanceCalendar(userId, month, collegeId);
+  }
+
+  @Get('me/outcomes')
+  @Roles('student')
+  @ApiOperation({
+    summary: 'Get Course Outcome and Program Outcome mastery for the current student',
+  })
+  @ApiResponse({ status: 200, description: 'Mastery % per CO and per PO, for the heatmap' })
+  async getOutcomes(@CurrentUserId() userId: string) {
+    return this.studentsService.getOutcomes(userId);
+  }
+
+  @Get('me/grades')
+  @Roles('student')
+  @ApiOperation({
+    summary: 'Get CGPA, predicted final grade, and per-course grades for the current student',
+  })
+  @ApiResponse({ status: 200, description: 'CGPA, predicted letter grade, and per-course percentage/grade breakdown' })
+  async getGrades(@CurrentUserId() userId: string) {
+    return this.studentsService.getGrades(userId);
   }
 
   @Get('me/courses')
@@ -62,6 +100,14 @@ export class StudentsController {
   })
   async getMarks(@CurrentUserId() userId: string) {
     return this.studentsService.getMarks(userId);
+  }
+
+  @Get('me/grade-trend')
+  @Roles('student')
+  @ApiOperation({ summary: 'FR29: CGPA over time, as of each graded assessment date' })
+  @ApiResponse({ status: 200, description: 'Chronological CGPA snapshots' })
+  async getGradeTrend(@CurrentUserId() userId: string) {
+    return this.studentsService.getGradeTrend(userId);
   }
 
   @Get('me/fees')

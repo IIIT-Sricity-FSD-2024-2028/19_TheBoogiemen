@@ -16,6 +16,7 @@ import { ErrorCode, errorBody } from '../common/errors/error-codes';
 import { CreateCollegeDto } from './dto/create-college.dto';
 import { PRICED_MODULES, PricedModule } from './dto/estimate.dto';
 import { getActiveSubscription, isExpired, planStatus } from '../common/billing/subscription';
+import { normalizeEmail } from '../common/normalize-email';
 
 export function sanitizeUser<T extends Record<string, any>>(user: T): Partial<T> {
   const { password, password_hash, ...safe } = user ?? {};
@@ -28,7 +29,7 @@ export interface CreateCollegeAndSpocParams {
   state?: string | null;
   type?: string | null;
   spocEmail: string;
-  spocFirstName?: string;
+  spocFirstName: string;
   spocLastName?: string;
   spocPhone?: string;
   /**
@@ -58,7 +59,10 @@ export class CollegesService {
    * because there is only one implementation to fix.
    */
   async createCollegeAndSpoc(params: CreateCollegeAndSpocParams) {
-    if (this.db.users.find((u) => u.email === params.spocEmail)) {
+    // Case-insensitive, same as every other account-creation path: email is
+    // a login identifier, not a case-sensitive string.
+    const spocEmail = normalizeEmail(params.spocEmail);
+    if (this.db.users.find((u) => normalizeEmail(u.email) === spocEmail)) {
       throw new BadRequestException(
         errorBody(ErrorCode.DUPLICATE_RESOURCE, 'Email already exists'),
       );
@@ -77,13 +81,12 @@ export class CollegesService {
     this.db.colleges.push(college);
 
     const userId = `u${Date.now()}s`;
-    const firstName = params.spocFirstName || params.spocEmail.split('@')[0];
     const spocUser = {
       user_id: userId,
-      username: firstName,
-      first_name: firstName,
+      username: params.spocFirstName,
+      first_name: params.spocFirstName,
       last_name: params.spocLastName || '',
-      email: params.spocEmail,
+      email: spocEmail,
       phone: params.spocPhone || '',
       role: 'spoc' as const,
       college_id: collegeId,
@@ -131,6 +134,47 @@ export class CollegesService {
 
   async findAll() {
     return this.db.colleges.map((c) => this.withStats(c));
+  }
+
+  /**
+   * Superadmin revenue view: money actually collected per college, not the
+   * quoted/contracted price. A quote can exist (or a subscription be active)
+   * with no payment ever captured — `payments.status === 'captured'` is the
+   * one fact that means money changed hands, so it's the only thing summed
+   * here. Every college is included, zero-revenue ones too, since the point
+   * of this report is seeing who hasn't paid as much as who has.
+   */
+  async getRevenueReport() {
+    const captured = this.db.payments.filter((p: any) => p.status === 'captured');
+
+    const byCollege = this.db.colleges.map((college: any) => {
+      const subIds = new Set(
+        this.db.subscriptions
+          .filter((s: any) => s.college_id === college.college_id)
+          .map((s: any) => s.subscription_id),
+      );
+      const collegePayments = captured.filter((p: any) => subIds.has(p.subscription_id));
+      const revenuePaise = collegePayments.reduce((sum: number, p: any) => sum + Number(p.amount_paise || 0), 0);
+      const lastPaymentAt = collegePayments
+        .map((p: any) => p.created_at)
+        .sort()
+        .at(-1) ?? null;
+      return {
+        college_id: college.college_id,
+        college_name: college.name,
+        revenue_paise: revenuePaise,
+        payment_count: collegePayments.length,
+        last_payment_at: lastPaymentAt,
+      };
+    });
+
+    byCollege.sort((a, b) => b.revenue_paise - a.revenue_paise);
+
+    return {
+      total_revenue_paise: captured.reduce((sum: number, p: any) => sum + Number(p.amount_paise || 0), 0),
+      total_payments: captured.length,
+      by_college: byCollege,
+    };
   }
 
   async findOne(collegeId: string) {
@@ -182,9 +226,11 @@ export class CollegesService {
             starts_on: sub.starts_on,
             ends_on: sub.ends_on,
             status: planStatus(sub),
-            // Annual, the same figure computeQuote() priced and payment
-            // captured — null only if the quote row itself is ever missing.
+            // The one-time total for the whole committed term, the same
+            // figure computeQuote() priced and payment captured — null only
+            // if the quote row itself is ever missing.
             payable_paise: quote?.breakdown?.payable_paise ?? null,
+            term_years: quote?.metrics?.term_years ?? null,
           }
         : null,
     };

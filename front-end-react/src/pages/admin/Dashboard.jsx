@@ -3,8 +3,9 @@
  * action-required-widget injection (role !== 'student' branch, shared with
  * faculty/Dashboard.jsx's own copy — see that file's notes on why this
  * isn't a shared component: the data-fetching differs per role).
- * "AVG ATTAINMENT 81%" is static demo content in the legacy markup too,
- * not computed from real data.
+ * "AVG ATTAINMENT" now reads /reports/overview's real avg_co_attainment
+ * (OUTCOMES_TRACKING_PLAN.md) — it used to be a static "81%" in both this
+ * port and the legacy markup it came from.
  */
 
 import { useEffect, useState } from 'react';
@@ -21,13 +22,13 @@ export default function Dashboard({ onNavigate }) {
 }
 
 function Metrics({ onNavigate }) {
-  const [counts, setCounts] = useState({ students: 0, faculty: 0, courses: 0 });
+  const [counts, setCounts] = useState({ students: 0, faculty: 0, courses: 0, attainment: 'No data yet' });
 
   useEffect(() => {
     apiFetch('/reports/overview')
       .then((data) => {
         const s = data.summary;
-        setCounts({ students: s.total_students, faculty: s.total_faculty, courses: s.total_courses });
+        setCounts({ students: s.total_students, faculty: s.total_faculty, courses: s.total_courses, attainment: s.avg_co_attainment });
       })
       .catch(() => {});
   }, []);
@@ -51,7 +52,7 @@ function Metrics({ onNavigate }) {
       </div>
       <div className="metric-card" style={{ cursor: 'pointer' }} onClick={() => onNavigate('institutional-reports')} title="View attainment">
         <div className="label">AVG ATTAINMENT</div>
-        <div className="value">81%</div>
+        <div className="value" style={{ fontSize: counts.attainment === 'No data yet' ? 14 : undefined }}>{counts.attainment}</div>
         <div className="sub">click to view report ↗</div>
       </div>
     </div>

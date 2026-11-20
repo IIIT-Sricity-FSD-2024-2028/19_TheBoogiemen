@@ -20,6 +20,10 @@ import ResourceManagement from './ResourceManagement';
 import FeeCompliance from './FeeCompliance';
 import UserManagement from './UserManagement';
 import AttendanceOverride from './AttendanceOverride';
+import AttendanceRegister from './AttendanceRegister';
+import Holidays from './Holidays';
+import ProgramOutcomes from './ProgramOutcomes';
+import TimetableManagement from './TimetableManagement';
 
 const NAV_ITEMS = [
   {
@@ -98,11 +102,43 @@ const NAV_ITEMS = [
     ),
   },
   {
+    id: 'attendance-register',
+    label: 'Master Attendance',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" />
+        <line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
+        <path d="M9 16l2 2 4-4" />
+      </svg>
+    ),
+  },
+  {
     id: 'leave',
     label: 'Leave Requests',
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" />
+      </svg>
+    ),
+  },
+  {
+    id: 'holidays',
+    label: 'Holidays',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" />
+        <line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /><path d="M8 14h.01M12 14h.01M16 14h.01M8 17h.01M12 17h.01" />
+      </svg>
+    ),
+  },
+  {
+    id: 'program-outcomes',
+    label: 'Program Outcomes',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
+        <rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+        <path d="M7 6.5h0M18 6.5h0M18 17.5h0M7 17.5h0" />
       </svg>
     ),
   },
@@ -112,12 +148,16 @@ const TITLES = {
   dashboard: 'Dashboard',
   'institutional-reports': 'Institutional Reports',
   'event-scheduler': 'Event Scheduler',
+  'timetable-management': 'Academic Timetable',
   'course-management': 'Course Management',
   'resource-management': 'Resources',
   'fee-compliance': 'Fee Compliance',
   'user-management': 'User Management',
   'attendance-override': 'Overrides',
+  'attendance-register': 'Master Attendance',
   'leave': 'Leave Requests',
+  holidays: 'Holidays',
+  'program-outcomes': 'Program Outcomes',
   settings: 'Settings',
 };
 
@@ -129,12 +169,16 @@ export default function AdminHeadDashboard() {
     dashboard: <Dashboard onNavigate={setActiveView} />,
     'institutional-reports': <InstitutionalReports />,
     'event-scheduler': <EventScheduler />,
+    'timetable-management': <TimetableManagement />,
     'course-management': <CourseManagement />,
     'resource-management': <ResourceManagement />,
     'fee-compliance': <FeeCompliance />,
     'user-management': <UserManagement />,
     'attendance-override': <AttendanceOverride />,
+    'attendance-register': <AttendanceRegister />,
     'leave': <LeavePanel role={user?.role} />,
+    holidays: <Holidays />,
+    'program-outcomes': <ProgramOutcomes />,
     settings: <Settings />,
   };
 

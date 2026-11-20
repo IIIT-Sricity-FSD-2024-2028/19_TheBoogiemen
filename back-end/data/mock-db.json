@@ -112,6 +112,50 @@
       "role": "admin",
       "college_id": "c-default",
       "password_hash": "$2b$12$b8AdsDj1oTb4CHX6O7Zr6.r41FqWFh7b.cjjmg4zkIxiWfB.3zpEm"
+    },
+    {
+      "user_id": "u1794837321907s",
+      "username": "Priyanka",
+      "first_name": "Priyanka",
+      "last_name": "Mehta",
+      "email": "realname@example.com",
+      "phone": "",
+      "role": "spoc",
+      "college_id": "col1794837321905",
+      "password_hash": "$2b$12$C3w.TIhq5eo6yBjFgTNkO.rH4MjU/UaPCpNgkQimfmC6T.GP6md7a"
+    },
+    {
+      "user_id": "u17948383923290",
+      "username": "Rahul",
+      "first_name": "Rahul",
+      "last_name": "Verma",
+      "email": "rahul.verma.bulk@example.com",
+      "phone": "9000011111",
+      "role": "student",
+      "college_id": "c-default",
+      "password_hash": "$2b$12$L.eAYoC9OFB3zQBKZNIB1Od8vsG6Jkuu2KF5fUHn8gMchYDPQ4gZq"
+    },
+    {
+      "user_id": "u17948383926491",
+      "username": "Sneha",
+      "first_name": "Sneha",
+      "last_name": "Iyer",
+      "email": "sneha.iyer.bulk@example.com",
+      "phone": "9000022222",
+      "role": "student",
+      "college_id": "c-default",
+      "password_hash": "$2b$12$JBs.9NZvKYizL5RUV9.EAew9etYelmSQH/YEP1NnDXJFBSxMC9tla"
+    },
+    {
+      "user_id": "u17948386129980",
+      "username": "Kavya",
+      "first_name": "Kavya",
+      "last_name": "Nair",
+      "email": "kavya.nair.uitest@example.com",
+      "phone": "9000033333",
+      "role": "student",
+      "college_id": "c-default",
+      "password_hash": "$2b$12$U.YR4Z0wfx5X0D/g6cNanOdJYNXjtZeVPxi9OCIo28nWteztgZbXu"
     }
   ],
   "students": [
@@ -155,6 +199,48 @@
       "join_date": "2026-10-06",
       "dob": "2005-01-01",
       "phone": "",
+      "college_id": "c-default"
+    },
+    {
+      "user_id": "u17948383923290",
+      "first_name": "Rahul",
+      "last_name": "Verma",
+      "branch": "CS",
+      "batch": "2024-2028",
+      "cgpa": 8.2,
+      "section": "A",
+      "email": "rahul.verma.bulk@example.com",
+      "join_date": "2026-11-16",
+      "dob": "2005-01-01",
+      "phone": "9000011111",
+      "college_id": "c-default"
+    },
+    {
+      "user_id": "u17948383926491",
+      "first_name": "Sneha",
+      "last_name": "Iyer",
+      "branch": "ECE",
+      "batch": "2024-2028",
+      "cgpa": 7.9,
+      "section": "B",
+      "email": "sneha.iyer.bulk@example.com",
+      "join_date": "2026-11-16",
+      "dob": "2005-01-01",
+      "phone": "9000022222",
+      "college_id": "c-default"
+    },
+    {
+      "user_id": "u17948386129980",
+      "first_name": "Kavya",
+      "last_name": "Nair",
+      "branch": "CS",
+      "batch": "2024-2028",
+      "cgpa": 8.9,
+      "section": "A",
+      "email": "kavya.nair.uitest@example.com",
+      "join_date": "2026-11-16",
+      "dob": "2005-01-01",
+      "phone": "9000033333",
       "college_id": "c-default"
     }
   ],
@@ -279,22 +365,6 @@
   ],
   "course_sections": [
     {
-      "course_section_id": "cs-c1",
-      "course_id": "c1",
-      "section": "A",
-      "faculty_id": "u2",
-      "faculty_name": "Jane Smith",
-      "college_id": "c-default"
-    },
-    {
-      "course_section_id": "cs-c2",
-      "course_id": "c2",
-      "section": "A",
-      "faculty_id": "u2",
-      "faculty_name": "Jane Smith",
-      "college_id": "c-default"
-    },
-    {
       "course_section_id": "cs-c3",
       "course_id": "c3",
       "section": "A",
@@ -372,6 +442,30 @@
       "section": "A",
       "faculty_id": "u2",
       "faculty_name": "Jane Smith",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "4b1e01f8-4675-4b62-8199-72b25ee22435",
+      "course_id": "c1",
+      "section": "A",
+      "faculty_id": "u2",
+      "faculty_name": "Jane Smith",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "290980f6-7b3d-4dd1-9284-6dc34f161f7b",
+      "course_id": "c2",
+      "section": "A",
+      "faculty_id": "u2",
+      "faculty_name": "Jane Smith",
+      "college_id": "c-default"
+    },
+    {
+      "course_section_id": "abe59698-86cf-46c9-ac57-95e4bdffe487",
+      "course_id": "c2",
+      "section": "B",
+      "faculty_id": "u7",
+      "faculty_name": "Robert Wilson",
       "college_id": "c-default"
     }
   ],
@@ -646,7 +740,8 @@
       "course_id": "c1",
       "date": "2026-11-01",
       "status": "excused",
-      "source": "leave:l1791189782361"
+      "source": "leave:l1791189782361",
+      "college_id": "c-default"
     },
     {
       "log_id": "5eff4323-2c39-4cde-bf23-bbc721611197",
@@ -654,7 +749,8 @@
       "course_id": "c2",
       "date": "2026-11-01",
       "status": "excused",
-      "source": "leave:l1791189782361"
+      "source": "leave:l1791189782361",
+      "college_id": "c-default"
     },
     {
       "log_id": "5670689d-e686-4c58-b96b-5946000247f2",
@@ -662,7 +758,8 @@
       "course_id": "c5",
       "date": "2026-11-01",
       "status": "excused",
-      "source": "leave:l1791189782361"
+      "source": "leave:l1791189782361",
+      "college_id": "c-default"
     },
     {
       "log_id": "dffefade-33f5-4c33-a131-4ab110ac62c2",
@@ -670,7 +767,8 @@
       "course_id": "c7",
       "date": "2026-11-01",
       "status": "excused",
-      "source": "leave:l1791189782361"
+      "source": "leave:l1791189782361",
+      "college_id": "c-default"
     },
     {
       "log_id": "ee1d25c4-f641-470b-ad99-7632a49b19a3",
@@ -678,7 +776,8 @@
       "course_id": "c3",
       "date": "2026-11-01",
       "status": "excused",
-      "source": "leave:l1791189782361"
+      "source": "leave:l1791189782361",
+      "college_id": "c-default"
     },
     {
       "log_id": "1ee534ad-97a0-40dc-8280-1979aa749db9",
@@ -686,7 +785,8 @@
       "course_id": "c1791306246075",
       "date": "2026-11-01",
       "status": "excused",
-      "source": "leave:l1791189782361"
+      "source": "leave:l1791189782361",
+      "college_id": "c-default"
     },
     {
       "log_id": "a05c2de6-a055-4815-92ae-f951a9c20f89",
@@ -694,7 +794,8 @@
       "course_id": "c1",
       "date": "2026-11-02",
       "status": "excused",
-      "source": "leave:l1791189782361"
+      "source": "leave:l1791189782361",
+      "college_id": "c-default"
     },
     {
       "log_id": "923b6206-2a51-4541-a22e-ad724f2455f2",
@@ -702,7 +803,8 @@
       "course_id": "c2",
       "date": "2026-11-02",
       "status": "excused",
-      "source": "leave:l1791189782361"
+      "source": "leave:l1791189782361",
+      "college_id": "c-default"
     },
     {
       "log_id": "4310ffb5-fbf8-4b90-896e-fce306d21f3a",
@@ -710,7 +812,8 @@
       "course_id": "c5",
       "date": "2026-11-02",
       "status": "excused",
-      "source": "leave:l1791189782361"
+      "source": "leave:l1791189782361",
+      "college_id": "c-default"
     },
     {
       "log_id": "accf4821-2d20-45dc-aab7-f78ed0fed28a",
@@ -718,7 +821,8 @@
       "course_id": "c7",
       "date": "2026-11-02",
       "status": "excused",
-      "source": "leave:l1791189782361"
+      "source": "leave:l1791189782361",
+      "college_id": "c-default"
     },
     {
       "log_id": "191e6277-e460-4239-b673-95a212227647",
@@ -726,7 +830,8 @@
       "course_id": "c3",
       "date": "2026-11-02",
       "status": "excused",
-      "source": "leave:l1791189782361"
+      "source": "leave:l1791189782361",
+      "college_id": "c-default"
     },
     {
       "log_id": "55b4ed02-a110-44a0-87bf-62e9db8dad52",
@@ -734,15 +839,17 @@
       "course_id": "c1791306246075",
       "date": "2026-11-02",
       "status": "excused",
-      "source": "leave:l1791189782361"
+      "source": "leave:l1791189782361",
+      "college_id": "c-default"
     },
     {
       "log_id": "6a78fa5f-210a-4dd3-a1ff-e23bccb82885",
       "student_id": "u1",
       "course_id": "c1",
       "date": "2026-11-03",
-      "status": "excused",
-      "source": "leave:l1791189782361"
+      "status": "present",
+      "source": "leave:l1791189782361",
+      "college_id": "c-default"
     },
     {
       "log_id": "fdb4d23f-eaa0-4ba8-9a96-18656f6f8b21",
@@ -750,7 +857,8 @@
       "course_id": "c2",
       "date": "2026-11-03",
       "status": "excused",
-      "source": "leave:l1791189782361"
+      "source": "leave:l1791189782361",
+      "college_id": "c-default"
     },
     {
       "log_id": "8a070de8-e13d-4c77-8784-ca5ccc5e81a2",
@@ -758,7 +866,8 @@
       "course_id": "c5",
       "date": "2026-11-03",
       "status": "excused",
-      "source": "leave:l1791189782361"
+      "source": "leave:l1791189782361",
+      "college_id": "c-default"
     },
     {
       "log_id": "6b3327f1-ab55-4130-a105-3aa9c817587d",
@@ -766,7 +875,8 @@
       "course_id": "c7",
       "date": "2026-11-03",
       "status": "excused",
-      "source": "leave:l1791189782361"
+      "source": "leave:l1791189782361",
+      "college_id": "c-default"
     },
     {
       "log_id": "a97efe70-b221-4ce1-ba74-52e638d49d61",
@@ -774,7 +884,8 @@
       "course_id": "c3",
       "date": "2026-11-03",
       "status": "excused",
-      "source": "leave:l1791189782361"
+      "source": "leave:l1791189782361",
+      "college_id": "c-default"
     },
     {
       "log_id": "69df2785-acae-4aad-93b3-1e9aaf78b4df",
@@ -782,7 +893,448 @@
       "course_id": "c1791306246075",
       "date": "2026-11-03",
       "status": "excused",
-      "source": "leave:l1791189782361"
+      "source": "leave:l1791189782361",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "aab3ea2c-3a09-4d54-8f61-0e48cce8fcbb",
+      "student_id": "u1",
+      "course_id": "c1",
+      "date": "2026-11-05",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "03c2102a-c083-404a-a4be-94323fc4bc5a",
+      "student_id": "u1",
+      "course_id": "c2",
+      "date": "2026-11-05",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "c404bf31-fa04-4c41-8325-483545157e2a",
+      "student_id": "u1",
+      "course_id": "c5",
+      "date": "2026-11-05",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "d462ddc4-fc17-4de4-99c1-e2fd894bcc3b",
+      "student_id": "u1",
+      "course_id": "c7",
+      "date": "2026-11-05",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "ac4bb7e5-3400-4d2b-bd1e-aeccf64dc8db",
+      "student_id": "u1",
+      "course_id": "c3",
+      "date": "2026-11-05",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "eb51b313-70a7-4cc6-a5a5-25a07094a44b",
+      "student_id": "u1",
+      "course_id": "c1791306246075",
+      "date": "2026-11-05",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "a8c252fa-c4f9-431a-870c-4799657455ff",
+      "student_id": "u1",
+      "course_id": "c1",
+      "date": "2026-11-06",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "64973c1c-24ba-4af1-ae7d-bc8186e5786e",
+      "student_id": "u1",
+      "course_id": "c2",
+      "date": "2026-11-06",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "dcbdf0b1-6cfe-4ce4-8dee-585637f67278",
+      "student_id": "u1",
+      "course_id": "c5",
+      "date": "2026-11-06",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "c587d67b-c87d-4ece-8ad2-5484b499d50a",
+      "student_id": "u1",
+      "course_id": "c7",
+      "date": "2026-11-06",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "d22f3223-af66-46f1-a878-a7c6d627fd10",
+      "student_id": "u1",
+      "course_id": "c3",
+      "date": "2026-11-06",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "2719a3a3-4a16-4dad-8128-7a8b3505c312",
+      "student_id": "u1",
+      "course_id": "c1791306246075",
+      "date": "2026-11-06",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "c24c6418-b0cf-4342-b87a-39f22913e71e",
+      "student_id": "u1",
+      "course_id": "c1",
+      "date": "2026-11-07",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "9488bf76-2514-4639-9062-f9f52adcb3c1",
+      "student_id": "u1",
+      "course_id": "c2",
+      "date": "2026-11-07",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "5bf9e87f-ee2f-43c0-8f93-9bf407fd150c",
+      "student_id": "u1",
+      "course_id": "c5",
+      "date": "2026-11-07",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "1a304c26-db57-4194-b82f-9bb06979da84",
+      "student_id": "u1",
+      "course_id": "c7",
+      "date": "2026-11-07",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "4fd90b12-d5c2-434a-8956-859c993080db",
+      "student_id": "u1",
+      "course_id": "c3",
+      "date": "2026-11-07",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "ab409e39-0eba-4c0a-9edc-f5c1012ab4ec",
+      "student_id": "u1",
+      "course_id": "c1791306246075",
+      "date": "2026-11-07",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "a6b259d6-162f-4372-aad8-34328653c76a",
+      "student_id": "u1",
+      "course_id": "c1",
+      "date": "2026-11-08",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "ee082a4b-a31e-4c0d-ac9b-5d3959c4afd9",
+      "student_id": "u1",
+      "course_id": "c2",
+      "date": "2026-11-08",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "d340ec3c-59d9-4825-b6ac-52f3805b5555",
+      "student_id": "u1",
+      "course_id": "c5",
+      "date": "2026-11-08",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "5920a621-3d56-4234-a4df-407ed2d4e2d7",
+      "student_id": "u1",
+      "course_id": "c7",
+      "date": "2026-11-08",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "e14e9781-0a2e-47f9-84cb-e8061a2489c8",
+      "student_id": "u1",
+      "course_id": "c3",
+      "date": "2026-11-08",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "2c1ed6bd-3b7a-4137-8e1d-f4a5e3efde9c",
+      "student_id": "u1",
+      "course_id": "c1791306246075",
+      "date": "2026-11-08",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "444c81b7-3721-4456-8e4c-c056fad03c21",
+      "student_id": "u1",
+      "course_id": "c1",
+      "date": "2026-11-09",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "f4049097-70e5-4dfc-9ad2-5684beff8ee1",
+      "student_id": "u1",
+      "course_id": "c2",
+      "date": "2026-11-09",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "6845106e-f5f9-4ae3-a489-f9caf51c71c4",
+      "student_id": "u1",
+      "course_id": "c5",
+      "date": "2026-11-09",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "1f4c4d89-2113-440f-8dd4-5f0e0af91646",
+      "student_id": "u1",
+      "course_id": "c7",
+      "date": "2026-11-09",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "a24fbc16-32c2-4457-98f9-8a67f53984ef",
+      "student_id": "u1",
+      "course_id": "c3",
+      "date": "2026-11-09",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "1f1b8489-cf77-416f-9f7b-724dc2925983",
+      "student_id": "u1",
+      "course_id": "c1791306246075",
+      "date": "2026-11-09",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "5a64798a-ef10-492a-bb92-d9409bfe9cde",
+      "student_id": "u1",
+      "course_id": "c1",
+      "date": "2026-11-10",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "5146b16d-5747-42d8-94dd-6a033e9259b5",
+      "student_id": "u1",
+      "course_id": "c2",
+      "date": "2026-11-10",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "509bc51f-5ec2-499a-be7a-8c743eac5392",
+      "student_id": "u1",
+      "course_id": "c5",
+      "date": "2026-11-10",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "79ddc543-b6d6-47c4-bafa-dd50d54ca902",
+      "student_id": "u1",
+      "course_id": "c7",
+      "date": "2026-11-10",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "31a5d01a-6868-4034-9d6b-3668149061c8",
+      "student_id": "u1",
+      "course_id": "c3",
+      "date": "2026-11-10",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "31854946-da13-4f62-91ba-9d5294564409",
+      "student_id": "u1",
+      "course_id": "c1791306246075",
+      "date": "2026-11-10",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "ce3d6aea-222e-4c5d-8d43-e9eaf40bddc7",
+      "student_id": "u1",
+      "course_id": "c1",
+      "date": "2026-11-11",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "1b01e242-9357-4434-9bdd-d01bad58e7e6",
+      "student_id": "u1",
+      "course_id": "c2",
+      "date": "2026-11-11",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "18d0b0ad-590d-4056-92b3-20c8f31fed87",
+      "student_id": "u1",
+      "course_id": "c5",
+      "date": "2026-11-11",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "ef27609f-2ac2-41de-93c3-de59e6df56b1",
+      "student_id": "u1",
+      "course_id": "c7",
+      "date": "2026-11-11",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "db6a66a8-d610-48f0-b2ad-97d800eb2a44",
+      "student_id": "u1",
+      "course_id": "c3",
+      "date": "2026-11-11",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "10d59980-4a1e-4483-9c3a-2e5a439ec1a2",
+      "student_id": "u1",
+      "course_id": "c1791306246075",
+      "date": "2026-11-11",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "257aca0a-06b8-4154-b87a-669a598dc4c3",
+      "student_id": "u1",
+      "course_id": "c1",
+      "date": "2026-11-12",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "561f9065-3548-4305-9bb8-a7b8557004ac",
+      "student_id": "u1",
+      "course_id": "c2",
+      "date": "2026-11-12",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "4c1e1c8d-43f2-4fa7-a365-821543a9affb",
+      "student_id": "u1",
+      "course_id": "c5",
+      "date": "2026-11-12",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "5ea80194-eb50-4507-8364-b754652a010f",
+      "student_id": "u1",
+      "course_id": "c7",
+      "date": "2026-11-12",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "365dfe6d-bdf0-4684-b172-8bda2f41900e",
+      "student_id": "u1",
+      "course_id": "c3",
+      "date": "2026-11-12",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "364f2ac3-c7c4-49ab-93fc-ed074ba09b8f",
+      "student_id": "u1",
+      "course_id": "c1791306246075",
+      "date": "2026-11-12",
+      "status": "excused",
+      "source": "leave:l1793873673605",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "c788dc86-36b0-4b7f-9e16-356a649dad89",
+      "student_id": "u1",
+      "course_id": "c1",
+      "date": "2026-11-13",
+      "status": "excused",
+      "college_id": "c-default"
     }
   ],
   "assessments": [
@@ -795,7 +1347,10 @@
       "weightage": 20,
       "faculty_id": "u2",
       "date": "2026-03-15",
-      "college_id": "c-default"
+      "college_id": "c-default",
+      "lo_ids": [
+        "46b6474a-e148-4657-b636-c8ed629a11c4"
+      ]
     },
     {
       "assessment_id": "a2",
@@ -820,6 +1375,50 @@
       "section": "A",
       "exam_mode": "offline",
       "college_id": "c-default"
+    },
+    {
+      "assessment_id": "a1794551839997",
+      "faculty_id": "u2",
+      "weightage": 100,
+      "course_id": "c1",
+      "name": "Live Grading Smoke Test",
+      "type": "theory",
+      "max_marks": 100,
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "assessment_id": "a1794586156800",
+      "faculty_id": "u4",
+      "weightage": 100,
+      "course_id": "c1",
+      "name": "Chart Verify Test",
+      "type": "theory",
+      "max_marks": 100,
+      "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "assessment_id": "a1794587485796",
+      "faculty_id": "u2",
+      "weightage": 25,
+      "course_id": "c1",
+      "name": "Edit Test Quiz (Renamed)",
+      "type": "quiz",
+      "max_marks": 50,
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "assessment_id": "a1794587547875",
+      "faculty_id": "u2",
+      "weightage": 5,
+      "course_id": "c1",
+      "name": "UI Unlocked Test",
+      "type": "quiz",
+      "max_marks": 30,
+      "section": "A",
+      "college_id": "c-default"
     }
   ],
   "marks_entry": [
@@ -828,11 +1427,14 @@
       "student_id": "u1",
       "assessment_id": "a1",
       "course_code": "CS201",
-      "marks_obtained": 42,
+      "marks_obtained": 38,
       "max_marks": 50,
       "grade": "S",
-      "feedback_text": "Excellent",
-      "college_id": "c-default"
+      "feedback_text": "Excellent work — keep focusing on edge cases.",
+      "college_id": "c-default",
+      "previous_marks_obtained": 38,
+      "corrected_by": "u2",
+      "corrected_at": "2026-11-15T05:19:30.207Z"
     },
     {
       "entry_id": "m2",
@@ -842,8 +1444,11 @@
       "marks_obtained": 22,
       "max_marks": 50,
       "grade": "C",
-      "feedback_text": "Needs improvement",
-      "college_id": "c-default"
+      "feedback_text": "Good improvement from last term, keep it up.",
+      "college_id": "c-default",
+      "previous_marks_obtained": 22,
+      "corrected_by": "u2",
+      "corrected_at": "2026-11-15T05:06:09.775Z"
     },
     {
       "entry_id": "m3",
@@ -872,6 +1477,30 @@
       "student_id": "u1",
       "assessment_id": "a1791305106472",
       "marks_obtained": 42,
+      "max_marks": 50,
+      "college_id": "c-default"
+    },
+    {
+      "entry_id": "m1794551851689",
+      "student_id": "u1",
+      "assessment_id": "a1794551839997",
+      "marks_obtained": 95,
+      "max_marks": 100,
+      "college_id": "c-default"
+    },
+    {
+      "entry_id": "m1794586160440",
+      "student_id": "u6",
+      "assessment_id": "a1794586156800",
+      "marks_obtained": 2,
+      "max_marks": 100,
+      "college_id": "c-default"
+    },
+    {
+      "entry_id": "m1794587495298",
+      "student_id": "u1",
+      "assessment_id": "a1794587485796",
+      "marks_obtained": 40,
       "max_marks": 50,
       "college_id": "c-default"
     }
@@ -936,6 +1565,19 @@
       "start_date": "2026-12-10",
       "end_date": "2026-12-12",
       "reason": "Attending an academic conference out of state.",
+      "file_id": null,
+      "college_id": "c-default"
+    },
+    {
+      "leave_id": "l1793873673605",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "status": "approved",
+      "applied_on": "2026-11-05",
+      "leave_type": "Medical",
+      "start_date": "2026-11-05",
+      "end_date": "2026-11-12",
+      "reason": "I got a fracture",
       "file_id": null,
       "college_id": "c-default"
     }
@@ -1101,6 +1743,19 @@
       "created_at": "2026-10-05T08:43:51.944Z",
       "reply_count": 0,
       "college_id": "c-default"
+    },
+    {
+      "post_id": "p1793873868045",
+      "title": "Explain me FDFED",
+      "content": "I am stuck i need help",
+      "author_id": "u1",
+      "author_name": "John Doe",
+      "author_role": "student",
+      "tag": "help",
+      "course_id": "FDFED01",
+      "created_at": "2026-11-05T10:17:48.045Z",
+      "reply_count": 0,
+      "college_id": "c-default"
     }
   ],
   "discussion_replies": [
@@ -1191,6 +1846,14 @@
       "event_name": "Smoke Test Fest (Edited)",
       "date": "2026-12-15",
       "venue": "Main Lawn",
+      "description": "",
+      "college_id": "c-default"
+    },
+    {
+      "event_id": "ev1794841412929",
+      "event_name": "Tenant Isolation Test Event",
+      "date": "2026-11-17",
+      "venue": "Test Hall",
       "description": "",
       "college_id": "c-default"
     }
@@ -1315,6 +1978,17 @@
       "amount": 2500,
       "due_date": "2026-12-31",
       "college_id": "c-default"
+    },
+    {
+      "fee_id": "f1794841283052",
+      "status": "paid",
+      "student_id": "u1",
+      "fee_type": "Tuition Fee",
+      "amount": 47000,
+      "due_date": "2026-12-15",
+      "semester": "3",
+      "college_id": "c-default",
+      "paid_date": "16/11/2026"
     }
   ],
   "submissions": [],
@@ -1608,150 +2282,6 @@
       "college_id": "c-default"
     }
   ],
-  "syllabus_progress": [
-    {
-      "course_id": "c1",
-      "section": "A",
-      "progress": 72,
-      "updated_by": "u2",
-      "updated_at": "2026-08-27",
-      "modules": [
-        {
-          "name": "Module 1 – Arrays & Linked Lists",
-          "progress": 100
-        },
-        {
-          "name": "Module 2 – Stacks & Queues",
-          "progress": 90
-        },
-        {
-          "name": "Module 3 – Trees & BST",
-          "progress": 75
-        },
-        {
-          "name": "Module 4 – Graphs",
-          "progress": 50
-        },
-        {
-          "name": "Module 5 – Hashing",
-          "progress": 45
-        }
-      ],
-      "college_id": "c-default"
-    },
-    {
-      "course_id": "c1",
-      "section": "B",
-      "progress": 65,
-      "updated_by": "u2",
-      "updated_at": "2026-08-27",
-      "modules": [
-        {
-          "name": "Module 1 – Arrays & Linked Lists",
-          "progress": 100
-        },
-        {
-          "name": "Module 2 – Stacks & Queues",
-          "progress": 85
-        },
-        {
-          "name": "Module 3 – Trees & BST",
-          "progress": 60
-        },
-        {
-          "name": "Module 4 – Graphs",
-          "progress": 40
-        },
-        {
-          "name": "Module 5 – Hashing",
-          "progress": 30
-        }
-      ],
-      "college_id": "c-default"
-    },
-    {
-      "course_id": "c2",
-      "section": "A",
-      "progress": 80,
-      "updated_by": "u2",
-      "updated_at": "2026-04-20",
-      "modules": [
-        {
-          "name": "Module 1 – ER Modeling",
-          "progress": 100
-        },
-        {
-          "name": "Module 2 – SQL Queries",
-          "progress": 95
-        },
-        {
-          "name": "Module 3 – Normalization",
-          "progress": 80
-        },
-        {
-          "name": "Module 4 – Transactions",
-          "progress": 55
-        },
-        {
-          "name": "Module 5 – NoSQL",
-          "progress": 50
-        }
-      ],
-      "college_id": "c-default"
-    },
-    {
-      "course_id": "c5",
-      "section": "A",
-      "progress": 55,
-      "updated_by": "u2",
-      "updated_at": "2026-04-22",
-      "modules": [
-        {
-          "name": "Module 1 – OSI Model",
-          "progress": 100
-        },
-        {
-          "name": "Module 2 – TCP/IP",
-          "progress": 70
-        },
-        {
-          "name": "Module 3 – Routing",
-          "progress": 45
-        },
-        {
-          "name": "Module 4 – Security",
-          "progress": 20
-        }
-      ],
-      "college_id": "c-default"
-    },
-    {
-      "course_id": "c7",
-      "section": "A",
-      "progress": 40,
-      "updated_by": "u2",
-      "updated_at": "2026-04-18",
-      "modules": [
-        {
-          "name": "Module 1 – Divide & Conquer",
-          "progress": 100
-        },
-        {
-          "name": "Module 2 – DP",
-          "progress": 50
-        },
-        {
-          "name": "Module 3 – Greedy",
-          "progress": 20
-        },
-        {
-          "name": "Module 4 – Backtracking",
-          "progress": 0
-        }
-      ],
-      "college_id": "c-default"
-    }
-  ],
   "attendance_requests": [
     {
       "request_id": "ar1787053048185",
@@ -1766,6 +2296,272 @@
       "created_at": "2026-08-18T11:37:28.185Z",
       "college_id": "c-default",
       "admin_reason": ""
+    },
+    {
+      "request_id": "ar1793873316605",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "course_id": "c1",
+      "course_code": "CS201",
+      "date": "2026-11-03",
+      "reason": "I awa preent",
+      "file_id": "f02a9343-e523-4bf8-8938-1a1a0a6162ef",
+      "admin_status": "approved",
+      "faculty_status": "granted",
+      "created_at": "2026-11-05T10:08:36.605Z",
+      "college_id": "c-default",
+      "admin_reason": ""
+    },
+    {
+      "request_id": "ar1794317216764_0",
+      "group_id": "arg1794317216764",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "course_id": "c1",
+      "course_code": "CS201",
+      "date": "2026-11-09",
+      "start_date": "2026-11-09",
+      "end_date": "2026-11-13",
+      "scope": "all_courses",
+      "leave_type": "Family Event",
+      "reason": "Family function out of town for a few days",
+      "file_id": null,
+      "admin_status": "approved",
+      "faculty_status": "granted",
+      "created_at": "2026-11-10T13:26:56.764Z",
+      "college_id": "c-default",
+      "admin_reason": ""
+    },
+    {
+      "request_id": "ar1794317216764_1",
+      "group_id": "arg1794317216764",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "course_id": "c2",
+      "course_code": "CS202",
+      "date": "2026-11-09",
+      "start_date": "2026-11-09",
+      "end_date": "2026-11-13",
+      "scope": "all_courses",
+      "leave_type": "Family Event",
+      "reason": "Family function out of town for a few days",
+      "file_id": null,
+      "admin_status": "approved",
+      "faculty_status": "granted",
+      "created_at": "2026-11-10T13:26:56.764Z",
+      "college_id": "c-default",
+      "admin_reason": ""
+    },
+    {
+      "request_id": "ar1794317216764_2",
+      "group_id": "arg1794317216764",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "course_id": "c5",
+      "course_code": "CS401",
+      "date": "2026-11-09",
+      "start_date": "2026-11-09",
+      "end_date": "2026-11-13",
+      "scope": "all_courses",
+      "leave_type": "Family Event",
+      "reason": "Family function out of town for a few days",
+      "file_id": null,
+      "admin_status": "approved",
+      "faculty_status": "granted",
+      "created_at": "2026-11-10T13:26:56.764Z",
+      "college_id": "c-default",
+      "admin_reason": ""
+    },
+    {
+      "request_id": "ar1794317216764_3",
+      "group_id": "arg1794317216764",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "course_id": "c1",
+      "course_code": "CS201",
+      "date": "2026-11-10",
+      "start_date": "2026-11-09",
+      "end_date": "2026-11-13",
+      "scope": "all_courses",
+      "leave_type": "Family Event",
+      "reason": "Family function out of town for a few days",
+      "file_id": null,
+      "admin_status": "pending",
+      "faculty_status": "pending",
+      "created_at": "2026-11-10T13:26:56.764Z",
+      "college_id": "c-default"
+    },
+    {
+      "request_id": "ar1794317216764_4",
+      "group_id": "arg1794317216764",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "course_id": "c5",
+      "course_code": "CS401",
+      "date": "2026-11-10",
+      "start_date": "2026-11-09",
+      "end_date": "2026-11-13",
+      "scope": "all_courses",
+      "leave_type": "Family Event",
+      "reason": "Family function out of town for a few days",
+      "file_id": null,
+      "admin_status": "pending",
+      "faculty_status": "pending",
+      "created_at": "2026-11-10T13:26:56.764Z",
+      "college_id": "c-default"
+    },
+    {
+      "request_id": "ar1794317216764_5",
+      "group_id": "arg1794317216764",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "course_id": "c7",
+      "course_code": "CS403",
+      "date": "2026-11-10",
+      "start_date": "2026-11-09",
+      "end_date": "2026-11-13",
+      "scope": "all_courses",
+      "leave_type": "Family Event",
+      "reason": "Family function out of town for a few days",
+      "file_id": null,
+      "admin_status": "pending",
+      "faculty_status": "pending",
+      "created_at": "2026-11-10T13:26:56.764Z",
+      "college_id": "c-default"
+    },
+    {
+      "request_id": "ar1794317216764_6",
+      "group_id": "arg1794317216764",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "course_id": "c2",
+      "course_code": "CS202",
+      "date": "2026-11-11",
+      "start_date": "2026-11-09",
+      "end_date": "2026-11-13",
+      "scope": "all_courses",
+      "leave_type": "Family Event",
+      "reason": "Family function out of town for a few days",
+      "file_id": null,
+      "admin_status": "pending",
+      "faculty_status": "pending",
+      "created_at": "2026-11-10T13:26:56.764Z",
+      "college_id": "c-default"
+    },
+    {
+      "request_id": "ar1794317216764_7",
+      "group_id": "arg1794317216764",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "course_id": "c5",
+      "course_code": "CS401",
+      "date": "2026-11-11",
+      "start_date": "2026-11-09",
+      "end_date": "2026-11-13",
+      "scope": "all_courses",
+      "leave_type": "Family Event",
+      "reason": "Family function out of town for a few days",
+      "file_id": null,
+      "admin_status": "pending",
+      "faculty_status": "pending",
+      "created_at": "2026-11-10T13:26:56.764Z",
+      "college_id": "c-default"
+    },
+    {
+      "request_id": "ar1794317216765_8",
+      "group_id": "arg1794317216764",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "course_id": "c7",
+      "course_code": "CS403",
+      "date": "2026-11-11",
+      "start_date": "2026-11-09",
+      "end_date": "2026-11-13",
+      "scope": "all_courses",
+      "leave_type": "Family Event",
+      "reason": "Family function out of town for a few days",
+      "file_id": null,
+      "admin_status": "pending",
+      "faculty_status": "pending",
+      "created_at": "2026-11-10T13:26:56.765Z",
+      "college_id": "c-default"
+    },
+    {
+      "request_id": "ar1794317216765_9",
+      "group_id": "arg1794317216764",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "course_id": "c1",
+      "course_code": "CS201",
+      "date": "2026-11-13",
+      "start_date": "2026-11-09",
+      "end_date": "2026-11-13",
+      "scope": "all_courses",
+      "leave_type": "Family Event",
+      "reason": "Family function out of town for a few days",
+      "file_id": null,
+      "admin_status": "approved",
+      "faculty_status": "granted",
+      "created_at": "2026-11-10T13:26:56.765Z",
+      "college_id": "c-default",
+      "admin_reason": ""
+    },
+    {
+      "request_id": "ar1794317216765_10",
+      "group_id": "arg1794317216764",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "course_id": "c2",
+      "course_code": "CS202",
+      "date": "2026-11-13",
+      "start_date": "2026-11-09",
+      "end_date": "2026-11-13",
+      "scope": "all_courses",
+      "leave_type": "Family Event",
+      "reason": "Family function out of town for a few days",
+      "file_id": null,
+      "admin_status": "pending",
+      "faculty_status": "pending",
+      "created_at": "2026-11-10T13:26:56.765Z",
+      "college_id": "c-default"
+    },
+    {
+      "request_id": "ar1794317216765_11",
+      "group_id": "arg1794317216764",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "course_id": "c5",
+      "course_code": "CS401",
+      "date": "2026-11-13",
+      "start_date": "2026-11-09",
+      "end_date": "2026-11-13",
+      "scope": "all_courses",
+      "leave_type": "Family Event",
+      "reason": "Family function out of town for a few days",
+      "file_id": null,
+      "admin_status": "pending",
+      "faculty_status": "pending",
+      "created_at": "2026-11-10T13:26:56.765Z",
+      "college_id": "c-default"
+    },
+    {
+      "request_id": "ar1794317216765_12",
+      "group_id": "arg1794317216764",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "course_id": "c7",
+      "course_code": "CS403",
+      "date": "2026-11-13",
+      "start_date": "2026-11-09",
+      "end_date": "2026-11-13",
+      "scope": "all_courses",
+      "leave_type": "Family Event",
+      "reason": "Family function out of town for a few days",
+      "file_id": null,
+      "admin_status": "pending",
+      "faculty_status": "pending",
+      "created_at": "2026-11-10T13:26:56.765Z",
+      "college_id": "c-default"
     }
   ],
   "resource_bookings": [
@@ -1780,6 +2576,453 @@
       "purpose": "Workshop session.",
       "status": "approved",
       "created_at": "2026-10-06T16:46:53.814Z",
+      "college_id": "c-default"
+    }
+  ],
+  "holidays": [
+    {
+      "holiday_id": "h1",
+      "date": "2026-11-12",
+      "label": "Diwali",
+      "college_id": "c-default"
+    },
+    {
+      "holiday_id": "h2",
+      "date": "2026-12-25",
+      "label": "Christmas",
+      "college_id": "c-default"
+    },
+    {
+      "holiday_id": "h3",
+      "date": "2027-01-01",
+      "label": "New Year",
+      "college_id": "c-default"
+    }
+  ],
+  "program_outcomes": [
+    {
+      "po_id": "po1",
+      "code": "PO1",
+      "description": "Engineering knowledge",
+      "college_id": "c-default"
+    },
+    {
+      "po_id": "po2",
+      "code": "PO2",
+      "description": "Problem analysis",
+      "college_id": "c-default"
+    },
+    {
+      "po_id": "po3",
+      "code": "PO3",
+      "description": "Design/development of solutions",
+      "college_id": "c-default"
+    },
+    {
+      "po_id": "po4",
+      "code": "PO4",
+      "description": "Conduct investigations of complex problems",
+      "college_id": "c-default"
+    },
+    {
+      "po_id": "po5",
+      "code": "PO5",
+      "description": "Modern tool usage",
+      "college_id": "c-default"
+    }
+  ],
+  "learning_outcomes": [
+    {
+      "lo_id": "46b6474a-e148-4657-b636-c8ed629a11c4",
+      "course_id": "c1",
+      "code": "CO1",
+      "description": "Implement tree data structures",
+      "po_mapping": [
+        {
+          "po_id": "po1",
+          "strength": 3
+        }
+      ],
+      "college_id": "c-default"
+    },
+    {
+      "lo_id": "bf0df893-462c-4846-a296-9a68a487f345",
+      "course_id": "c1",
+      "code": "CO2",
+      "description": "Analyze algorithmic complexity",
+      "po_mapping": [],
+      "college_id": "c-default"
+    }
+  ],
+  "topics": [
+    {
+      "topic_id": "c66e6fb4-7405-4a1b-a46f-e3437393ae7a",
+      "course_id": "c1",
+      "title": "Module 1 – Arrays & Linked Lists",
+      "order": 0,
+      "lo_ids": [],
+      "college_id": "c-default"
+    },
+    {
+      "topic_id": "dc16a238-5b01-4c79-bc18-0553e00ac397",
+      "course_id": "c1",
+      "title": "Module 2 – Stacks & Queues",
+      "order": 1,
+      "lo_ids": [],
+      "college_id": "c-default"
+    },
+    {
+      "topic_id": "594a97b7-88c5-426a-9017-b6f386000f27",
+      "course_id": "c1",
+      "title": "Module 3 – Trees & BST",
+      "order": 2,
+      "lo_ids": [],
+      "college_id": "c-default"
+    },
+    {
+      "topic_id": "ca035b72-3307-4ad2-a80f-c0af7a323129",
+      "course_id": "c1",
+      "title": "Module 4 – Graphs",
+      "order": 3,
+      "lo_ids": [],
+      "college_id": "c-default"
+    },
+    {
+      "topic_id": "907b9cde-96e6-436b-b32d-e7a0f5688172",
+      "course_id": "c1",
+      "title": "Module 5 – Hashing",
+      "order": 4,
+      "lo_ids": [],
+      "college_id": "c-default"
+    },
+    {
+      "topic_id": "8f2da0eb-339d-4aa9-8438-18c3ac1676bc",
+      "course_id": "c2",
+      "title": "Module 1 – ER Modeling",
+      "order": 0,
+      "lo_ids": [],
+      "college_id": "c-default"
+    },
+    {
+      "topic_id": "1ff18cae-98cb-4415-a94a-c14048af7586",
+      "course_id": "c2",
+      "title": "Module 2 – SQL Queries",
+      "order": 1,
+      "lo_ids": [],
+      "college_id": "c-default"
+    },
+    {
+      "topic_id": "d571d748-c906-4a48-9f0a-1648b3aa5e79",
+      "course_id": "c2",
+      "title": "Module 3 – Normalization",
+      "order": 2,
+      "lo_ids": [],
+      "college_id": "c-default"
+    },
+    {
+      "topic_id": "242de87a-4995-4cc2-8112-94db3d70296c",
+      "course_id": "c2",
+      "title": "Module 4 – Transactions",
+      "order": 3,
+      "lo_ids": [],
+      "college_id": "c-default"
+    },
+    {
+      "topic_id": "73364f57-1a28-47a3-8b79-b860ce627b0f",
+      "course_id": "c2",
+      "title": "Module 5 – NoSQL",
+      "order": 4,
+      "lo_ids": [],
+      "college_id": "c-default"
+    },
+    {
+      "topic_id": "f2ceee2a-e451-4d1c-8b64-37fc778d80a5",
+      "course_id": "c5",
+      "title": "Module 1 – OSI Model",
+      "order": 0,
+      "lo_ids": [],
+      "college_id": "c-default"
+    },
+    {
+      "topic_id": "b08080f1-da8c-4e2b-a55e-5027942f6a9b",
+      "course_id": "c5",
+      "title": "Module 2 – TCP/IP",
+      "order": 1,
+      "lo_ids": [],
+      "college_id": "c-default"
+    },
+    {
+      "topic_id": "e2059231-b5e8-4ee3-b698-4930c8832c76",
+      "course_id": "c5",
+      "title": "Module 3 – Routing",
+      "order": 2,
+      "lo_ids": [],
+      "college_id": "c-default"
+    },
+    {
+      "topic_id": "172a27a3-c618-4044-8c53-a615e092346e",
+      "course_id": "c5",
+      "title": "Module 4 – Security",
+      "order": 3,
+      "lo_ids": [],
+      "college_id": "c-default"
+    },
+    {
+      "topic_id": "78d976a8-74af-4278-9832-5e62eda692b9",
+      "course_id": "c7",
+      "title": "Module 1 – Divide & Conquer",
+      "order": 0,
+      "lo_ids": [],
+      "college_id": "c-default"
+    },
+    {
+      "topic_id": "275d4d1e-88dd-4316-8b3a-5fcff7832dcd",
+      "course_id": "c7",
+      "title": "Module 2 – DP",
+      "order": 1,
+      "lo_ids": [],
+      "college_id": "c-default"
+    },
+    {
+      "topic_id": "67fa0b84-a59c-4596-ad16-d1d7b75d1774",
+      "course_id": "c7",
+      "title": "Module 3 – Greedy",
+      "order": 2,
+      "lo_ids": [],
+      "college_id": "c-default"
+    },
+    {
+      "topic_id": "9b874eeb-1062-4e17-90fa-fe2f8b084719",
+      "course_id": "c7",
+      "title": "Module 4 – Backtracking",
+      "order": 3,
+      "lo_ids": [],
+      "college_id": "c-default"
+    },
+    {
+      "topic_id": "ab705563-096a-43d9-9a74-1ddde6869667",
+      "course_id": "c1",
+      "title": "Module 6 - Hashing",
+      "order": 5,
+      "lo_ids": [],
+      "college_id": "c-default"
+    }
+  ],
+  "topic_completions": [
+    {
+      "course_id": "c1",
+      "section": "A",
+      "topic_id": "c66e6fb4-7405-4a1b-a46f-e3437393ae7a",
+      "progress": 100,
+      "updated_by": "u2",
+      "updated_at": "2026-08-27",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c1",
+      "section": "A",
+      "topic_id": "dc16a238-5b01-4c79-bc18-0553e00ac397",
+      "progress": 90,
+      "updated_by": "u2",
+      "updated_at": "2026-08-27",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c1",
+      "section": "A",
+      "topic_id": "594a97b7-88c5-426a-9017-b6f386000f27",
+      "progress": 75,
+      "updated_by": "u2",
+      "updated_at": "2026-08-27",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c1",
+      "section": "A",
+      "topic_id": "ca035b72-3307-4ad2-a80f-c0af7a323129",
+      "progress": 50,
+      "updated_by": "u2",
+      "updated_at": "2026-08-27",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c1",
+      "section": "A",
+      "topic_id": "907b9cde-96e6-436b-b32d-e7a0f5688172",
+      "progress": 45,
+      "updated_by": "u2",
+      "updated_at": "2026-08-27",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c1",
+      "section": "B",
+      "topic_id": "c66e6fb4-7405-4a1b-a46f-e3437393ae7a",
+      "progress": 100,
+      "updated_by": "u2",
+      "updated_at": "2026-08-27",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c1",
+      "section": "B",
+      "topic_id": "dc16a238-5b01-4c79-bc18-0553e00ac397",
+      "progress": 85,
+      "updated_by": "u2",
+      "updated_at": "2026-08-27",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c1",
+      "section": "B",
+      "topic_id": "594a97b7-88c5-426a-9017-b6f386000f27",
+      "progress": 60,
+      "updated_by": "u2",
+      "updated_at": "2026-08-27",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c1",
+      "section": "B",
+      "topic_id": "ca035b72-3307-4ad2-a80f-c0af7a323129",
+      "progress": 40,
+      "updated_by": "u2",
+      "updated_at": "2026-08-27",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c1",
+      "section": "B",
+      "topic_id": "907b9cde-96e6-436b-b32d-e7a0f5688172",
+      "progress": 30,
+      "updated_by": "u2",
+      "updated_at": "2026-08-27",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c2",
+      "section": "A",
+      "topic_id": "8f2da0eb-339d-4aa9-8438-18c3ac1676bc",
+      "progress": 100,
+      "updated_by": "u2",
+      "updated_at": "2026-04-20",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c2",
+      "section": "A",
+      "topic_id": "1ff18cae-98cb-4415-a94a-c14048af7586",
+      "progress": 95,
+      "updated_by": "u2",
+      "updated_at": "2026-04-20",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c2",
+      "section": "A",
+      "topic_id": "d571d748-c906-4a48-9f0a-1648b3aa5e79",
+      "progress": 80,
+      "updated_by": "u2",
+      "updated_at": "2026-04-20",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c2",
+      "section": "A",
+      "topic_id": "242de87a-4995-4cc2-8112-94db3d70296c",
+      "progress": 55,
+      "updated_by": "u2",
+      "updated_at": "2026-04-20",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c2",
+      "section": "A",
+      "topic_id": "73364f57-1a28-47a3-8b79-b860ce627b0f",
+      "progress": 50,
+      "updated_by": "u2",
+      "updated_at": "2026-04-20",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c5",
+      "section": "A",
+      "topic_id": "f2ceee2a-e451-4d1c-8b64-37fc778d80a5",
+      "progress": 100,
+      "updated_by": "u2",
+      "updated_at": "2026-04-22",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c5",
+      "section": "A",
+      "topic_id": "b08080f1-da8c-4e2b-a55e-5027942f6a9b",
+      "progress": 70,
+      "updated_by": "u2",
+      "updated_at": "2026-04-22",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c5",
+      "section": "A",
+      "topic_id": "e2059231-b5e8-4ee3-b698-4930c8832c76",
+      "progress": 45,
+      "updated_by": "u2",
+      "updated_at": "2026-04-22",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c5",
+      "section": "A",
+      "topic_id": "172a27a3-c618-4044-8c53-a615e092346e",
+      "progress": 20,
+      "updated_by": "u2",
+      "updated_at": "2026-04-22",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c7",
+      "section": "A",
+      "topic_id": "78d976a8-74af-4278-9832-5e62eda692b9",
+      "progress": 100,
+      "updated_by": "u2",
+      "updated_at": "2026-04-18",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c7",
+      "section": "A",
+      "topic_id": "275d4d1e-88dd-4316-8b3a-5fcff7832dcd",
+      "progress": 50,
+      "updated_by": "u2",
+      "updated_at": "2026-04-18",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c7",
+      "section": "A",
+      "topic_id": "67fa0b84-a59c-4596-ad16-d1d7b75d1774",
+      "progress": 20,
+      "updated_by": "u2",
+      "updated_at": "2026-04-18",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c7",
+      "section": "A",
+      "topic_id": "9b874eeb-1062-4e17-90fa-fe2f8b084719",
+      "progress": 0,
+      "updated_by": "u2",
+      "updated_at": "2026-04-18",
+      "college_id": "c-default"
+    },
+    {
+      "course_id": "c1",
+      "section": "A",
+      "topic_id": "ab705563-096a-43d9-9a74-1ddde6869667",
+      "progress": 55,
+      "updated_by": "u2",
+      "updated_at": "2026-11-10",
       "college_id": "c-default"
     }
   ],
@@ -1801,6 +3044,15 @@
       "type": null,
       "status": "active",
       "created_at": "2026-10-05T08:10:23.669Z"
+    },
+    {
+      "college_id": "col1794837321905",
+      "name": "Real Name Test College",
+      "city": null,
+      "state": null,
+      "type": null,
+      "status": "active",
+      "created_at": "2026-11-16T13:55:21.905Z"
     }
   ],
   "support_threads": [
@@ -1846,6 +3098,21 @@
       "status": "completed",
       "created_at": "2026-10-05T08:09:26.077Z",
       "expires_at": "2026-10-05T09:09:26.077Z"
+    },
+    {
+      "session_id": "os1794837321120",
+      "email": "realname@example.com",
+      "password_hash": null,
+      "first_name": "Priyanka",
+      "last_name": "Mehta",
+      "phone": null,
+      "college_name": "Real Name Test College",
+      "city": null,
+      "state": null,
+      "type": null,
+      "status": "completed",
+      "created_at": "2026-11-16T13:55:21.120Z",
+      "expires_at": "2026-11-16T14:55:21.120Z"
     }
   ],
   "quotes": [
@@ -1907,6 +3174,55 @@
       "status": "accepted",
       "expires_at": "2026-10-05T09:09:26.077Z",
       "created_at": "2026-10-05T08:10:09.931Z"
+    },
+    {
+      "quote_id": "q1794837321770",
+      "session_id": "os1794837321120",
+      "college_id": null,
+      "metrics": {
+        "student_count": 100,
+        "faculty_count": 10,
+        "modules": [],
+        "term_years": 1
+      },
+      "breakdown": {
+        "pricing_version": "v1",
+        "metrics": {
+          "student_count": 100,
+          "faculty_count": 10,
+          "modules": [],
+          "term_years": 1
+        },
+        "lines": [
+          {
+            "label": "Students (100)",
+            "amount_paise": 1200000
+          },
+          {
+            "label": "Faculty (10)",
+            "amount_paise": 200000
+          },
+          {
+            "label": "Minimum contract value applied",
+            "amount_paise": 1100000
+          },
+          {
+            "label": "GST (18%)",
+            "amount_paise": 450000
+          }
+        ],
+        "subtotal_paise": 1400000,
+        "discount_rate": 0,
+        "discount_paise": 0,
+        "after_discount_paise": 1400000,
+        "contract_paise": 2500000,
+        "gst_paise": 450000,
+        "payable_paise": 2950000
+      },
+      "pricing_version": "v1",
+      "status": "accepted",
+      "expires_at": "2026-11-16T14:55:21.120Z",
+      "created_at": "2026-11-16T13:55:21.770Z"
     }
   ],
   "payments": [
@@ -1919,6 +3235,16 @@
       "amount_paise": 9735000,
       "status": "captured",
       "created_at": "2026-10-05T08:10:16.322Z"
+    },
+    {
+      "payment_id": "pay1794837321846",
+      "quote_id": "q1794837321770",
+      "subscription_id": "sub1794837321910",
+      "gateway": "mock",
+      "gateway_order_id": "mock_6dc15a01-a4c4-422f-b2ab-84e03c218020",
+      "amount_paise": 2950000,
+      "status": "captured",
+      "created_at": "2026-11-16T13:55:21.846Z"
     }
   ],
   "subscriptions": [
@@ -1936,6 +3262,19 @@
       "starts_on": "2026-10-05",
       "ends_on": "2027-10-05",
       "created_at": "2026-10-05T08:10:23.696Z"
+    },
+    {
+      "subscription_id": "sub1794837321910",
+      "college_id": "col1794837321905",
+      "quote_id": "q1794837321770",
+      "student_seats": 100,
+      "faculty_seats": 10,
+      "modules": [],
+      "status": "active",
+      "starts_on": "2026-11-16",
+      "ends_on": "2027-11-16",
+      "created_at": "2026-11-16T13:55:21.911Z"
     }
-  ]
+  ],
+  "meetings": []
 }

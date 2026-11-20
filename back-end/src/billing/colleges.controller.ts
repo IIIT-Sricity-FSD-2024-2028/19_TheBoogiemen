@@ -42,6 +42,14 @@ export class CollegesController {
     return { success: true, data: await this.colleges.findAll() };
   }
 
+  // Literal path, registered before ':id' for the same reason 'me' is above.
+  @Get('revenue')
+  @Roles('superadmin')
+  @ApiOperation({ summary: 'Revenue captured per college, and overall' })
+  async revenue() {
+    return { success: true, data: await this.colleges.getRevenueReport() };
+  }
+
   // Literal path, registered before the ':id' route below — Nest matches in
   // registration order, and 'me' would otherwise be captured as an :id and
   // handed to the superadmin-only handler (which would then just 403 it, but

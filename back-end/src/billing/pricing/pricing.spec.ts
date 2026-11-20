@@ -53,14 +53,23 @@ describe('computeQuote', () => {
       expect(two).toBeGreaterThan(one);
     });
 
-    it('a longer term never reduces the pre-discount subtotal it discounts from', () => {
-      // The payable amount itself may fall as the discount grows — that is
-      // the discount working as intended. What must never move is the
-      // subtotal the discount is taken off, which depends only on
-      // students/faculty/modules, not term length.
+    it('a longer term is charged as that many years, not a flat one-year price', () => {
+      // This is a one-time charge covering the whole committed term — there
+      // is no recurring annual billing anywhere in this codebase — so a
+      // 3-year signup's pre-discount subtotal must be 3x a 1-year signup's,
+      // not the same number with a bigger discount subtracted from it.
       const s1 = computeQuote(base({ term_years: 1 })).subtotal_paise;
       const s3 = computeQuote(base({ term_years: 3 })).subtotal_paise;
-      expect(s3).toBe(s1);
+      expect(s3).toBe(s1 * 3);
+    });
+
+    it('a longer term never reduces the payable amount, even after its discount', () => {
+      // The discount (max 25%) must never outweigh the extra years billed.
+      const p1 = computeQuote(base({ term_years: 1 })).payable_paise;
+      const p2 = computeQuote(base({ term_years: 2 })).payable_paise;
+      const p3 = computeQuote(base({ term_years: 3 })).payable_paise;
+      expect(p2).toBeGreaterThan(p1);
+      expect(p3).toBeGreaterThan(p2);
     });
   });
 

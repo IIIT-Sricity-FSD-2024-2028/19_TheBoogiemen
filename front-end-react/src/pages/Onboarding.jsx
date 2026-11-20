@@ -96,7 +96,7 @@ export default function Onboarding() {
     estimateTimer.current = setTimeout(async () => {
       try {
         const res = await apiCall('/billing/estimate', { method: 'POST', body: JSON.stringify(currentMetrics()) });
-        setLivePrice(formatRupees(res.data.payable_paise) + '/yr');
+        setLivePrice(formatRupees(res.data.payable_paise));
       } catch {
         setLivePrice('—');
       }
@@ -142,7 +142,7 @@ export default function Onboarding() {
         body: JSON.stringify({
           email: details.email.trim(),
           password: details.password,
-          first_name: details.first_name.trim() || undefined,
+          first_name: details.first_name.trim(),
           last_name: details.last_name.trim() || undefined,
           phone: details.phone.trim() || undefined,
           college: {
@@ -248,8 +248,8 @@ export default function Onboarding() {
             <form onSubmit={submitDetails}>
               <div className="form-row">
                 <div className="form-group">
-                  <label>First Name</label>
-                  <input type="text" value={details.first_name} onChange={(e) => setDetails({ ...details, first_name: e.target.value })} />
+                  <label>First Name <span style={{ color: '#ef4444' }}>*</span></label>
+                  <input type="text" required value={details.first_name} onChange={(e) => setDetails({ ...details, first_name: e.target.value })} />
                 </div>
                 <div className="form-group">
                   <label>Last Name</label>
@@ -340,7 +340,7 @@ export default function Onboarding() {
             <div className="price-live">
               <div>
                 <div className="amount">{livePrice}</div>
-                <div className="caption">estimated, per year + GST</div>
+                <div className="caption">estimated total for {termYears} year{Number(termYears) > 1 ? 's' : ''} + GST</div>
               </div>
               <div className="caption">Updates as you change the fields above</div>
             </div>

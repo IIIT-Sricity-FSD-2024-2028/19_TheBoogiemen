@@ -57,7 +57,7 @@ export default function Subscription() {
           <div className="value" style={{ fontSize: 16, marginTop: 10 }}>
             {plan ? <StatusPill status={plan.status} label={PLAN_STATUS_LABEL[plan.status]} /> : <StatusPill status="none" label="No active plan" />}
           </div>
-          <div className="sub">{plan?.payable_paise != null ? `${formatRupees(plan.payable_paise)}/yr` : ''}</div>
+          <div className="sub">{plan?.payable_paise != null ? `${formatRupees(plan.payable_paise)} total${plan.term_years ? ` / ${plan.term_years} yr` : ''}` : ''}</div>
         </div>
         <div className="metric-card">
           <div className="label">Student Seats</div>

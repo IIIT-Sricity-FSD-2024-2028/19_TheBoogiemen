@@ -18,7 +18,9 @@ import Dashboard from './Dashboard';
 import AssessmentMapping from './AssessmentMapping';
 import MarkAttendance from './MarkAttendance';
 import StudentOverview from './StudentOverview';
+import ClassPerformance from './ClassPerformance';
 import EventScheduler from './EventScheduler';
+import FacultyMeetingsSection from './FacultyMeetingsSection';
 
 // Two nav items below (Leave Management, Event Scheduler) don't exist in
 // legacy faculty.html's sidebar at all — but both view-sections, both
@@ -93,6 +95,15 @@ export default function FacultyDashboard() {
       ),
     },
     {
+      id: 'class-performance',
+      label: 'Class Performance',
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
+        </svg>
+      ),
+    },
+    {
       id: 'event-scheduler',
       label: 'Event Scheduler',
       icon: (
@@ -123,6 +134,18 @@ export default function FacultyDashboard() {
       ),
     },
     {
+      id: 'meetings',
+      label: 'Student Meetings',
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+      ),
+    },
+    {
       id: 'request-resources',
       label: 'Request Resources',
       onAction: () => setResourceModalOpen(true),
@@ -141,9 +164,11 @@ export default function FacultyDashboard() {
     'assessment-mapping': 'Assessment Mapping',
     'mark-attendance': 'Mark Attendance',
     'student-overview': 'Student Overview',
+    'class-performance': 'Class Performance',
     'event-scheduler': 'Event Scheduler',
     discussion: 'Discussion Forum',
     research: 'Research Projects',
+    meetings: 'Student Advising & Consultations',
     settings: 'Settings',
   };
 
@@ -154,9 +179,11 @@ export default function FacultyDashboard() {
     'assessment-mapping': <AssessmentMapping />,
     'mark-attendance': <MarkAttendance />,
     'student-overview': <StudentOverview />,
+    'class-performance': <ClassPerformance />,
     'event-scheduler': <EventScheduler />,
     discussion: <DiscussionForum />,
     research: <ResearchPanel role="faculty" />,
+    meetings: <FacultyMeetingsSection />,
     settings: <Settings />,
   };
 

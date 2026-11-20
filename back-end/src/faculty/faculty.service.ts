@@ -15,6 +15,14 @@ import {
   writeCollegeId,
 } from '../common/tenancy/scope-to-college';
 import { sectionsTaughtBy, sectionTaughtIn } from '../common/course-sections';
+import { excludeHolidays } from '../common/academic-calendar';
+import { computeCoMastery } from '../common/outcome-mastery';
+import {
+  computeAssessmentClassAverages,
+  computeCGPA,
+  computeCourseGradesForCourse,
+  GRADE_BANDS,
+} from '../common/grading';
 
 @Injectable()
 export class FacultyService {
@@ -59,16 +67,23 @@ export class FacultyService {
     // Section-scoped, not just course-scoped: two sections of the same
     // course can meet at different times with different faculty, so "my
     // timetable" must match this faculty's own (course_id, section) pairs,
-    // not every slot that happens to share a course_id.
+    // or slots where faculty_id was explicitly assigned to this instructor.
     const mySections = sectionsTaughtBy(this.db, userId);
     const slots = this.db.timetable.filter((t) =>
-      mySections.some(
-        (cs) => cs.course_id === t.course_id && cs.section === t.section,
-      ),
+      (t.faculty_id === userId ||
+        mySections.some(
+          (cs) => cs.course_id === t.course_id && cs.section === t.section,
+        )) &&
+      (t.status === undefined || t.status === 'published'),
     );
     const grid = slots.reduce((acc: any, curr) => {
       if (!acc[curr.day]) acc[curr.day] = {};
-      acc[curr.day][curr.time] = curr;
+      if (!acc[curr.day][curr.time]) acc[curr.day][curr.time] = curr;
+      else {
+        if (!Array.isArray(acc[curr.day][curr.time]))
+          acc[curr.day][curr.time] = [acc[curr.day][curr.time]];
+        acc[curr.day][curr.time].push(curr);
+      }
       return acc;
     }, {});
     return {
@@ -78,7 +93,7 @@ export class FacultyService {
     };
   }
 
-  async getMyStudents(facultyId: string) {
+  async getMyStudents(facultyId: string, collegeId: string | null) {
     // Section-scoped: enrollment must match this faculty's own section of
     // the course, not any section of it — a colleague teaching Section B of
     // the same course is not "my" roster.
@@ -96,8 +111,10 @@ export class FacultyService {
     return this.db.students
       .filter((s) => uniqueStudentIds.includes(s.user_id))
       .map((s) => {
-        const records = this.db.attendance_log.filter(
-          (a) => a.student_id === s.user_id,
+        const records = excludeHolidays(
+          this.db,
+          this.db.attendance_log.filter((a) => a.student_id === s.user_id),
+          collegeId,
         );
         // M-02: EXCUSED sessions from approved leave count as attended.
         const attendance = summariseAttendance(records);
@@ -120,20 +137,163 @@ export class FacultyService {
               )
             : null;
 
+        // Real, computed from marks_entry via the relative curve (grading.ts)
+        // — students[].cgpa itself is a static seed value nothing updates.
+        const { cgpa } = computeCGPA(this.db, s.user_id);
+
         return {
           ...s,
+          cgpa,
           attendance_pct,
           excused_sessions: attendance.excused,
           avg_score: avgScore,
           // M-04: shared predicate — this used the same rule expressed inline,
           // which had already drifted from the admin report's `cgpa < 6.5`.
-          is_at_risk: isAtRisk({ cgpa: s.cgpa, attendancePct: attendance_pct }),
+          is_at_risk: isAtRisk({ cgpa, attendancePct: attendance_pct }),
           risk_reasons: riskReasons({
-            cgpa: s.cgpa,
+            cgpa,
             attendancePct: attendance_pct,
           }),
         };
       });
+  }
+
+  async getCourseOutcomeMastery(userId: string, courseId: string) {
+    // Same "do you teach this course at all" gate every other faculty-owned
+    // course resource uses (assessments, syllabus topics, etc.).
+    const mySections = sectionsTaughtBy(this.db, userId).filter(
+      (cs) => cs.course_id === courseId,
+    );
+    if (!mySections.length)
+      throw new ForbiddenException(
+        errorBody(
+          ErrorCode.PRIVILEGE_CEILING,
+          'You are not assigned to any section of this course.',
+        ),
+      );
+
+    const studentIds = [
+      ...new Set(
+        this.db.enrollment
+          .filter((e) =>
+            mySections.some(
+              (cs) => cs.course_id === e.course_id && cs.section === e.section,
+            ),
+          )
+          .map((e) => e.student_id),
+      ),
+    ];
+    const cos = this.db.learning_outcomes.filter((lo: any) => lo.course_id === courseId);
+
+    const rows = studentIds.map((sid) => {
+      const student = this.db.students.find((s) => s.user_id === sid);
+      return {
+        student_id: sid,
+        student_name: student ? `${student.first_name} ${student.last_name || ''}`.trim() : sid,
+        mastery: cos.map((lo: any) => ({
+          lo_id: lo.lo_id,
+          code: lo.code,
+          value: computeCoMastery(this.db, sid, lo.lo_id),
+        })),
+      };
+    });
+
+    return { outcomes: cos.map((lo: any) => ({ lo_id: lo.lo_id, code: lo.code, description: lo.description })), students: rows };
+  }
+
+  /**
+   * Class-wide performance for one course: grade distribution, class
+   * average, per-assessment class average, attendance, and at-risk count —
+   * nothing before this let a faculty member see a course as a whole,
+   * only one student at a time (getMyStudents/getAtRiskStudents).
+   *
+   * Scoped to this faculty's own section(s) of the course throughout — a
+   * colleague's other section of the same course is never counted. The
+   * grade distribution is the one exception worth calling out: it's built
+   * from computeCourseGradesForCourse's WHOLE-COHORT curve (every section
+   * together, by design — see grading.ts), then filtered down to just this
+   * faculty's own students for reporting. That gives each grade here real
+   * meaning (correctly curved against the full class), rather than a second,
+   * statistically-meaningless mini-curve of just this section's 2-3 people.
+   */
+  async getClassPerformance(
+    userId: string,
+    courseId: string,
+    collegeId: string | null,
+  ) {
+    const mySections = sectionsTaughtBy(this.db, userId).filter(
+      (cs) => cs.course_id === courseId,
+    );
+    if (!mySections.length)
+      throw new ForbiddenException(
+        errorBody(
+          ErrorCode.PRIVILEGE_CEILING,
+          'You are not assigned to any section of this course.',
+        ),
+      );
+    const mySectionNames = mySections.map((cs) => cs.section);
+
+    const enrollment = this.db.enrollment.filter(
+      (e) =>
+        e.course_id === courseId &&
+        e.status === 'active' &&
+        mySectionNames.includes(e.section),
+    );
+    const studentIds = [...new Set(enrollment.map((e) => e.student_id))];
+    const totalEnrolled = studentIds.length;
+
+    const allGrades = computeCourseGradesForCourse(this.db, courseId);
+    const myGrades = allGrades.filter((r) => studentIds.includes(r.student_id));
+
+    const gradeDistribution: Record<string, number> = {};
+    for (const band of GRADE_BANDS) gradeDistribution[band.letter] = 0;
+    for (const row of myGrades) gradeDistribution[row.letter]++;
+
+    const classAveragePercentage =
+      myGrades.length > 0
+        ? Math.round(
+            (myGrades.reduce((sum, r) => sum + r.percentage, 0) / myGrades.length) * 100,
+          ) / 100
+        : null;
+
+    const assessments = computeAssessmentClassAverages(this.db, courseId, studentIds);
+
+    const attendancePerStudent = studentIds.map((sid) => {
+      const records = excludeHolidays(
+        this.db,
+        this.db.attendance_log.filter((a) => a.student_id === sid),
+        collegeId,
+      );
+      const summary = summariseAttendance(records);
+      return summary.total > 0 ? summary.percentage : null;
+    });
+    const gradedAttendance = attendancePerStudent.filter(
+      (p): p is number => p !== null,
+    );
+    const classAverageAttendance =
+      gradedAttendance.length > 0
+        ? Math.round(gradedAttendance.reduce((s, p) => s + p, 0) / gradedAttendance.length)
+        : null;
+
+    const atRiskCount = studentIds.filter((sid, i) => {
+      const { cgpa } = computeCGPA(this.db, sid);
+      return isAtRisk({ cgpa, attendancePct: attendancePerStudent[i] });
+    }).length;
+
+    const course = this.db.courses.find((c) => c.course_id === courseId);
+
+    return {
+      course_id: courseId,
+      course_code: course?.course_code || courseId,
+      course_name: course?.course_name || 'Unknown',
+      total_enrolled: totalEnrolled,
+      ungraded_count: totalEnrolled - myGrades.length,
+      grade_distribution: gradeDistribution,
+      class_average_percentage: classAveragePercentage,
+      attendance: { class_average_pct: classAverageAttendance },
+      at_risk_count: atRiskCount,
+      assessments,
+    };
   }
 
   async getTodayAttendance(
@@ -150,6 +310,16 @@ export class FacultyService {
       throw new NotFoundException(
         errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Course not found'),
       );
+
+    // No class is held system-wide on a holiday — this route is always
+    // scoped to "today" (see recordAttendance's own date handling), so a
+    // holiday today means there is nothing to mark, not an empty roster.
+    const todayDate = new Date().toISOString().split('T')[0];
+    const holiday = this.db.holidays.find(
+      (h: any) =>
+        h.date === todayDate && (h.college_id == null || h.college_id === collegeId),
+    );
+    if (holiday) return { holiday: true, label: holiday.label, date: todayDate };
 
     // Section-scoped: a faculty may only mark attendance for the section(s) of
     // this course they were actually assigned — see
@@ -277,13 +447,17 @@ export class FacultyService {
       );
 
       if (existing) {
-        // Approved leave outranks a plain absent mark for the same session.
+        // Approved leave outranks a plain absent mark for the same session —
+        // but this must never look like a silent no-op to the faculty
+        // marking it: `protected: true` tells the caller exactly which
+        // student's mark was kept as Excused instead of being downgraded to
+        // Absent, so the UI can say so instead of just claiming "saved".
         if (
           normalizeAttendanceStatus(existing.status) ===
             ATTENDANCE_STATUS.EXCUSED &&
           status === ATTENDANCE_STATUS.ABSENT
         ) {
-          saved.push(existing);
+          saved.push({ ...existing, protected: true });
           continue;
         }
         existing.status = status;
@@ -353,19 +527,23 @@ export class FacultyService {
 
     return pool
       .map((s) => {
-        const records = this.db.attendance_log.filter(
-          (a) => a.student_id === s.user_id,
+        const records = excludeHolidays(
+          this.db,
+          this.db.attendance_log.filter((a) => a.student_id === s.user_id),
+          collegeId,
         );
         const attendance = summariseAttendance(records);
         const attendance_pct =
           attendance.total > 0 ? attendance.percentage : null;
+        const { cgpa } = computeCGPA(this.db, s.user_id);
         return {
           ...s,
+          cgpa,
           attendance_pct,
           excused_sessions: attendance.excused,
-          is_at_risk: isAtRisk({ cgpa: s.cgpa, attendancePct: attendance_pct }),
+          is_at_risk: isAtRisk({ cgpa, attendancePct: attendance_pct }),
           risk_reasons: riskReasons({
-            cgpa: s.cgpa,
+            cgpa,
             attendancePct: attendance_pct,
           }),
         };

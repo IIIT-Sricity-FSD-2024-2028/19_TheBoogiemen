@@ -12,6 +12,9 @@ import {
 import { ErrorCode, errorBody } from '../common/errors/error-codes';
 import { isSameCollege, scopeToCollege } from '../common/tenancy/scope-to-college';
 import { sectionsOfCourse } from '../common/course-sections';
+import { buildAttendanceCalendar, excludeHolidays } from '../common/academic-calendar';
+import { studentOutcomeReport } from '../common/outcome-mastery';
+import { computeCGPA, computeGradeTrend, predictedFinalGrade } from '../common/grading';
 
 @Injectable()
 export class StudentsService {
@@ -23,12 +26,17 @@ export class StudentsService {
       throw new NotFoundException(
         errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Student not found'),
       );
-    return student;
+    // Real, computed from marks_entry via the relative curve (grading.ts) —
+    // the seeded cgpa field itself is static and never updates.
+    const { cgpa } = computeCGPA(this.db, userId);
+    return { ...student, cgpa };
   }
 
-  async getAttendance(userId: string) {
-    const records = this.db.attendance_log.filter(
-      (a) => a.student_id === userId,
+  async getAttendance(userId: string, collegeId: string | null) {
+    const records = excludeHolidays(
+      this.db,
+      this.db.attendance_log.filter((a) => a.student_id === userId),
+      collegeId,
     );
 
     // Group by course to create summary.
@@ -66,6 +74,32 @@ export class StudentsService {
       totalExcused: overall.excused,
       overallPct: overall.percentage,
     };
+  }
+
+  async getAttendanceCalendar(
+    userId: string,
+    month: string,
+    collegeId: string | null,
+  ) {
+    if (!/^\d{4}-\d{2}$/.test(month))
+      throw new BadRequestException(
+        errorBody(ErrorCode.MALFORMED_REQUEST, 'month must be YYYY-MM'),
+      );
+    return buildAttendanceCalendar(this.db, userId, month, collegeId);
+  }
+
+  async getOutcomes(userId: string) {
+    return studentOutcomeReport(this.db, userId);
+  }
+
+  async getGrades(userId: string) {
+    const { cgpa, courses } = computeCGPA(this.db, userId);
+    const predicted = predictedFinalGrade(this.db, userId);
+    return { cgpa, predictedGrade: predicted?.letter ?? null, courses };
+  }
+
+  async getGradeTrend(userId: string) {
+    return computeGradeTrend(this.db, userId);
   }
 
   async getCourses(userId: string) {
@@ -107,7 +141,11 @@ export class StudentsService {
           ...m,
           assessment_name: assessment?.name,
           course_name: course?.course_name,
-          course_code: m.course_code,
+          // Joined via the assessment, not the raw stored field — a mark
+          // recorded through the real write path (recordMarks in
+          // common.controller.ts) never sets course_code on the row itself,
+          // only older seeded rows carry it directly.
+          course_code: course?.course_code || m.course_code,
         };
       });
   }
@@ -119,16 +157,23 @@ export class StudentsService {
   async getTimetable(userId: string, collegeId: string | null) {
     const student = this.db.students.find((s) => s.user_id === userId);
     const section = student?.section || 'A';
-    // Scoped by college, not just section: "Section A" is not a globally
-    // unique name — two colleges may both have one, and without this a
-    // student could be shown another college's slots for a same-named
-    // section (TENANT_ISOLATION_DIAGNOSIS.md §3, Group B).
+    const enrolledCourseIds = this.db.enrollment
+      .filter((e) => e.student_id === userId && e.status === 'active')
+      .map((e) => e.course_id);
     const slots = scopeToCollege(this.db.timetable, collegeId).filter(
-      (t) => t.section === section,
+      (t) =>
+        t.section === section &&
+        enrolledCourseIds.includes(t.course_id) &&
+        (t.status === undefined || t.status === 'published'),
     );
     const grid = slots.reduce((acc: any, curr) => {
       if (!acc[curr.day]) acc[curr.day] = {};
-      acc[curr.day][curr.time] = curr;
+      if (!acc[curr.day][curr.time]) acc[curr.day][curr.time] = curr;
+      else {
+        if (!Array.isArray(acc[curr.day][curr.time]))
+          acc[curr.day][curr.time] = [acc[curr.day][curr.time]];
+        acc[curr.day][curr.time].push(curr);
+      }
       return acc;
     }, {});
     return {

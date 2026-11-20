@@ -1,8 +1,9 @@
 /**
  * Dashboard — ported from legacy fixes.js renderStudentMeetings() +
  * renderPendingSubmissions() + renderSyllabusTracker() (the student
- * dashboard-view widgets; the predicted-grade box is static demo content
- * in the legacy markup too, not computed).
+ * dashboard-view widgets). The predicted-grade box used to be static demo
+ * content, same as the legacy markup it came from — it's now real, computed
+ * by grading.ts's relative curve via GET /students/me/grades.
  */
 
 import { useEffect, useState } from 'react';
@@ -24,16 +25,7 @@ export default function Dashboard() {
         <p style={{ fontSize: 14, color: '#64748b' }}>Here's your academic progress overview</p>
       </div>
 
-      <div className="predicted-grade-box">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2">
-          <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
-          <polyline points="16 7 22 7 22 13" />
-        </svg>
-        <div>
-          <div className="box-title">Predicted Final Grade</div>
-          <div className="box-subtitle">Based on current performance: <strong>A+</strong></div>
-        </div>
-      </div>
+      <PredictedGradeBox />
 
       <UpcomingMeetings />
       <PendingSubmissions />
@@ -42,14 +34,46 @@ export default function Dashboard() {
   );
 }
 
+function PredictedGradeBox() {
+  const [grades, setGrades] = useState(null);
+
+  useEffect(() => {
+    apiFetch('/students/me/grades')
+      .then(setGrades)
+      .catch(() => setGrades(null));
+  }, []);
+
+  const label = grades?.predictedGrade || 'No data yet';
+
+  return (
+    <div className="predicted-grade-box">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2">
+        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+        <polyline points="16 7 22 7 22 13" />
+      </svg>
+      <div>
+        <div className="box-title">Predicted Final Grade</div>
+        <div className="box-subtitle">Based on current performance: <strong>{label}</strong></div>
+      </div>
+    </div>
+  );
+}
+
 function UpcomingMeetings() {
   const [meetings, setMeetings] = useState(null);
 
   useEffect(() => {
     apiFetch('/meetings')
-      .then((all) => {
+      .then((res) => {
+        const list = Array.isArray(res) ? res : res?.data || [];
         const today = new Date().toISOString().split('T')[0];
-        setMeetings((all || []).filter((m) => m.date >= today));
+        setMeetings(
+          list.filter(
+            (m) =>
+              (m.status === 'SCHEDULED' || !m.status) &&
+              (m.scheduled_date || m.date || m.requested_date) >= today,
+          ),
+        );
       })
       .catch(() => setMeetings([]));
   }, []);
@@ -67,22 +91,38 @@ function UpcomingMeetings() {
         </div>
         <div className="stats-card-body" style={{ padding: 16 }}>
           {meetings.map((m, i) => {
-            const online = m.mode === 'online';
+            const isOnline = (m.meeting_type || m.mode || '').toUpperCase() === 'ONLINE';
+            const mDate = m.scheduled_date || m.date || m.requested_date;
+            const mTime = m.scheduled_start_time || m.time || m.requested_start_time || 'TBD';
+            const mAgenda = m.purpose || m.agenda || m.description;
             return (
               <div key={i} style={{ padding: 14, border: '1px solid #e2e8f0', borderRadius: 10, marginBottom: 10, background: '#fff' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
                   <div>
                     <div style={{ fontWeight: 700, fontSize: 14, color: '#0f172a' }}>Meeting with {m.faculty_name || 'Faculty'}</div>
-                    <div style={{ fontSize: 13, color: '#64748b', marginTop: 3 }}>🗓 {m.date} &nbsp;·&nbsp; ⏰ {m.time || 'TBD'}</div>
-                    <div style={{ marginTop: 5, fontSize: 12, padding: '3px 8px', background: online ? '#eff6ff' : '#f0fdf4', color: online ? '#1e40af' : '#065f46', borderRadius: 6, display: 'inline-block', fontWeight: 600 }}>
-                      {online ? '🌐 Online (Google Meet)' : '🏢 In-Person (Faculty Cabin)'}
+                    <div style={{ fontSize: 13, color: '#64748b', marginTop: 3 }}>🗓 {mDate} &nbsp;·&nbsp; ⏰ {mTime}</div>
+                    <div style={{ marginTop: 5, fontSize: 12, padding: '3px 8px', background: isOnline ? '#eff6ff' : '#f0fdf4', color: isOnline ? '#1e40af' : '#065f46', borderRadius: 6, display: 'inline-block', fontWeight: 600 }}>
+                      {isOnline ? '🌐 Online (Virtual)' : `🏢 In-Person ${m.location ? `(${m.location})` : ''}`}
                     </div>
                   </div>
-                  <span style={{ padding: '4px 10px', background: '#eff6ff', color: '#3730a3', borderRadius: 20, fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap' }}>UPCOMING</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {isOnline && m.meeting_link && (
+                      <a
+                        href={m.meeting_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-primary"
+                        style={{ padding: '4px 10px', fontSize: 12, textDecoration: 'none' }}
+                      >
+                        Join ↗
+                      </a>
+                    )}
+                    <span style={{ padding: '4px 10px', background: '#eff6ff', color: '#3730a3', borderRadius: 20, fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap' }}>UPCOMING</span>
+                  </div>
                 </div>
-                {m.agenda && (
+                {mAgenda && (
                   <div style={{ marginTop: 10, padding: 10, background: '#f8fafc', borderRadius: 6, fontSize: 13, color: '#374151' }}>
-                    <strong>Agenda:</strong> {m.agenda}
+                    <strong>Agenda:</strong> {mAgenda}
                   </div>
                 )}
               </div>
@@ -176,7 +216,9 @@ function PendingSubmissions() {
       })
       .catch(() => setPending([]));
   };
-  useEffect(load, []);
+  // Wrapped, not passed directly — see Team.jsx's fix note: load() returns a
+  // Promise, which React would otherwise try to call as an unmount cleanup.
+  useEffect(() => { load(); }, []);
 
   if (!pending || pending.length === 0) return null;
 
@@ -218,39 +260,33 @@ function SyllabusTracker() {
   const [openCourse, setOpenCourse] = useState(null);
 
   useEffect(() => {
-    Promise.all([
-      apiFetch('/students/me/courses').catch(() => []),
-      apiFetch('/syllabus-progress').catch(() => []),
-      apiFetch('/students/me').catch(() => null),
-    ])
-      .then(([myCourses, allProgress, student]) => {
+    apiFetch('/students/me/courses')
+      .then(async (myCourses) => {
+        const student = await apiFetch('/students/me').catch(() => null);
         const defaultSec = student?.section || 'A';
         setSection(defaultSec);
 
-        if (Array.isArray(myCourses) && myCourses.length > 0) {
-          // Map each enrolled course to its syllabus progress for the student's assigned section
-          const combined = myCourses.map((c) => {
+        // OUTCOMES_TRACKING_PLAN.md: /topic-completions already returns a
+        // course+section's topics merged with their real completion % —
+        // the exact shape the old, inert `modules[]` field only pretended
+        // to provide. One fetch per enrolled course.
+        const combined = await Promise.all(
+          (myCourses || []).map(async (c) => {
             const courseSec = c.section || defaultSec;
-            const sp = (allProgress || []).find(
-              (p) => p.course_id === c.course_id && p.section === courseSec,
-            );
+            const topics = await apiFetch(`/topic-completions?course_id=${c.course_id}&section=${courseSec}`).catch(() => []);
+            const overall = topics.length ? Math.round(topics.reduce((s, t) => s + (t.progress || 0), 0) / topics.length) : 0;
             return {
               course_id: c.course_id,
               course_code: c.course_code || '',
               course_name: c.course_name || '',
               section: courseSec,
               faculty_name: c.faculty_name,
-              progress: sp ? sp.progress : 0,
-              modules: sp?.modules || [],
-              updated_at: sp?.updated_at,
+              progress: overall,
+              modules: topics.map((t) => ({ name: t.title, progress: t.progress })),
             };
-          });
-          setProgress(combined);
-        } else {
-          // Fallback: section-filtered courses from college progress
-          const fallback = (allProgress || []).filter((p) => p.section === defaultSec);
-          setProgress(fallback);
-        }
+          }),
+        );
+        setProgress(combined);
       })
       .catch((e) => setError(e.message));
   }, []);

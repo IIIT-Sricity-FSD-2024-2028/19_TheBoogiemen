@@ -171,6 +171,112 @@ function CreateAssessmentModal({ open, onClose, onCreated }) {
     );
 }
 
+function EditAssessmentModal({ assessment, onClose, onSaved }) {
+    const { showToast } = useNotifications();
+    const [name, setName] = useState('');
+    const [type, setType] = useState('');
+    const [date, setDate] = useState('');
+    const [marks, setMarks] = useState('');
+    const [weightage, setWeightage] = useState('');
+    const [mode, setMode] = useState('offline');
+    const [submitting, setSubmitting] = useState(false);
+    const today = new Date().toISOString().split('T')[0];
+
+    useEffect(() => {
+        if (!assessment) return;
+        setName(assessment.name || '');
+        setType(assessment.type || '');
+        setDate(assessment.date || '');
+        setMarks(assessment.max_marks ?? '');
+        setWeightage(assessment.weightage ?? '');
+        setMode(assessment.exam_mode || 'offline');
+    }, [assessment]);
+
+    const submit = async (e) => {
+        e.preventDefault();
+        if (!name || name.trim().length < 3) return showToast('Assessment name must be at least 3 characters', 'warning');
+        if (!type) return showToast('Please select assessment type', 'warning');
+        if (!date) return showToast('Date is required', 'warning');
+        if (date < today) return showToast('Assessment date cannot be in the past', 'warning');
+        if (!marks || Number(marks) < 1) return showToast('Enter valid max marks (min 1)', 'warning');
+        if (Number(marks) > 1000) return showToast('Max marks cannot exceed 1000', 'warning');
+        if (!weightage || Number(weightage) < 1 || Number(weightage) > 100) return showToast('Weightage must be between 1 and 100', 'warning');
+
+        setSubmitting(true);
+        try {
+            await apiFetch(`/assessments/${assessment.assessment_id}`, {
+                method: 'PATCH',
+                body: JSON.stringify({ name: name.trim(), type, date, max_marks: Number(marks), weightage: Number(weightage), exam_mode: mode }),
+            });
+            showToast('Assessment updated!', 'success');
+            onClose();
+            onSaved();
+        } catch (e2) {
+            showToast('Failed: ' + e2.message, 'error');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    if (!assessment) return null;
+
+    return (
+        <Modal open={!!assessment} onClose={onClose} title="Edit Assessment">
+            <form onSubmit={submit}>
+                <div className="modal-body">
+                    <div className="form-group">
+                        <label>Assessment Name</label>
+                        <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., Mid-term Exam" />
+                    </div>
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label>Type</label>
+                            <select value={type} onChange={(e) => setType(e.target.value)}>
+                                <option value="">Select type</option>
+                                <option value="theory">Theory Exam</option>
+                                <option value="practical">Practical / Lab</option>
+                                <option value="assignment">Assignment</option>
+                                <option value="project">Project</option>
+                            </select>
+                        </div>
+                        <div className="form-group">
+                            <label>Date</label>
+                            <input type="date" min={today} value={date} onChange={(e) => setDate(e.target.value)} />
+                        </div>
+                    </div>
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label>Total Marks</label>
+                            <input type="number" min={1} max={1000} value={marks} onChange={(e) => setMarks(e.target.value)} placeholder="100" />
+                        </div>
+                        <div className="form-group">
+                            <label>Weightage (%)</label>
+                            <input type="number" min={1} max={100} value={weightage} onChange={(e) => setWeightage(e.target.value)} placeholder="20" />
+                        </div>
+                    </div>
+                    <div className="form-group">
+                        <label>Exam Mode</label>
+                        <select value={mode} onChange={(e) => setMode(e.target.value)}>
+                            <option value="offline">Offline (Direct entry)</option>
+                            <option value="online">Online (Students submit first)</option>
+                        </select>
+                    </div>
+                    <div className="form-group">
+                        <label>Course</label>
+                        <input type="text" disabled value={`${assessment.course_code || assessment.course_id || ''}${assessment.section ? ' · Sec ' + assessment.section : ''}`} style={{ background: '#f8fafc', color: '#94a3b8' }} />
+                    </div>
+                </div>
+                <div className="modal-footer">
+                    <button type="submit" className="submit-btn" style={{ flex: 1 }} disabled={submitting}>
+                        {submitting ? 'Saving…' : 'Save Changes'}
+                    </button>
+                    <button type="button" className="btn-cancel" onClick={onClose}>Cancel</button>
+                </div>
+            </form>
+        </Modal>
+    );
+}
+
 function MarksEntryModal({ assessment, onClose, onSaved }) {
     const { user } = useAuth();
     const { showToast, send } = useNotifications();
@@ -178,6 +284,7 @@ function MarksEntryModal({ assessment, onClose, onSaved }) {
     const [submissions, setSubmissions] = useState([]);
     const [existingMarks, setExistingMarks] = useState([]);
     const [values, setValues] = useState({});
+    const [feedbacks, setFeedbacks] = useState({});
     const [errors, setErrors] = useState({});
     const [submitting, setSubmitting] = useState(false);
     const isOnline = assessment?.exam_mode === 'online';
@@ -186,6 +293,7 @@ function MarksEntryModal({ assessment, onClose, onSaved }) {
         if (!assessment) return;
         setStudents(null);
         setValues({});
+        setFeedbacks({});
         setErrors({});
         Promise.all([
             apiFetch('/faculty/me/students'),
@@ -196,22 +304,25 @@ function MarksEntryModal({ assessment, onClose, onSaved }) {
             setSubmissions(subs);
             setExistingMarks(marks || []);
             const init = {};
+            const initFeedback = {};
             (marks || []).forEach((m) => {
                 init[m.student_id] = m.marks_obtained;
+                if (m.feedback_text) initFeedback[m.student_id] = m.feedback_text;
             });
             setValues(init);
+            setFeedbacks(initFeedback);
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [assessment]);
 
     const submit = async () => {
         const maxMarks = assessment.max_marks || 100;
-        const records = [];
+        const creates = [];
+        const corrections = [];
         const nextErrors = {};
         let hasError = false;
 
         for (const [student_id, raw] of Object.entries(values)) {
-            if (existingMarks.some((m) => m.student_id === student_id)) continue; // locked, read-only
             if (raw === '' || raw === undefined || raw === null) continue;
             const val = Number(raw);
             if (isNaN(val) || val < 0 || val > maxMarks) {
@@ -219,31 +330,45 @@ function MarksEntryModal({ assessment, onClose, onSaved }) {
                 hasError = true;
                 continue;
             }
-            records.push({ student_id, assessment_id: assessment.assessment_id, marks_obtained: val, max_marks: maxMarks });
+            const feedback_text = (feedbacks[student_id] || '').trim();
+            const existing = existingMarks.find((m) => m.student_id === student_id);
+            if (!existing) {
+                creates.push({ student_id, assessment_id: assessment.assessment_id, marks_obtained: val, max_marks: maxMarks, feedback_text: feedback_text || undefined });
+            } else {
+                const marksChanged = Number(existing.marks_obtained) !== val;
+                const feedbackChanged = feedback_text !== (existing.feedback_text || '');
+                if (marksChanged || feedbackChanged) {
+                    corrections.push({ entry_id: existing.entry_id, student_id, marks_obtained: val, previous: existing.marks_obtained, feedback_text, marksChanged });
+                } // else fully unchanged — skip, no pointless network call
+            }
         }
 
         setErrors(nextErrors);
         if (hasError) return showToast(`Marks must be between 0 and ${maxMarks}`, 'warning');
-        if (!records.length) return showToast('Enter at least one student mark', 'warning');
+        if (!creates.length && !corrections.length) return showToast('Enter at least one student mark', 'warning');
 
         setSubmitting(true);
         let saved = 0;
-        let locked = 0;
+        let corrected = 0;
         const from = user?.first_name || 'Faculty';
         try {
-            for (const r of records) {
-                try {
-                    await apiFetch('/marks', { method: 'POST', body: JSON.stringify(r) });
-                    saved++;
-                    send(r.student_id, from, `📊 Your marks for "${assessment.name}" have been posted: ${r.marks_obtained}/${maxMarks}. These marks are now locked and final.`, 'marks');
-                } catch (err) {
-                    if (err.message?.includes('locked')) locked++;
-                    else throw err;
-                }
+            for (const r of creates) {
+                await apiFetch('/marks', { method: 'POST', body: JSON.stringify(r) });
+                saved++;
+                send(r.student_id, from, `📊 Your marks for "${assessment.name}" have been posted: ${r.marks_obtained}/${maxMarks}.`, 'marks');
             }
-            let msg = `Marks saved for ${saved} student(s)!`;
-            if (locked > 0) msg += ` (${locked} already locked — skipped)`;
-            showToast(msg + ' Students notified. ✅', 'success');
+            for (const r of corrections) {
+                await apiFetch(`/marks/${r.entry_id}`, { method: 'PATCH', body: JSON.stringify({ marks_obtained: r.marks_obtained, feedback_text: r.feedback_text }) });
+                corrected++;
+                const msg = r.marksChanged
+                    ? `📊 Your marks for "${assessment.name}" were corrected: ${r.previous}/${maxMarks} → ${r.marks_obtained}/${maxMarks}.`
+                    : `📊 Feedback was added to your marks for "${assessment.name}".`;
+                send(r.student_id, from, msg, 'marks');
+            }
+            let msg = [];
+            if (saved) msg.push(`${saved} entered`);
+            if (corrected) msg.push(`${corrected} corrected`);
+            showToast(`Marks saved — ${msg.join(', ')}! Students notified. ✅`, 'success');
             onClose();
             onSaved();
         } catch (e) {
@@ -262,7 +387,7 @@ function MarksEntryModal({ assessment, onClose, onSaved }) {
         >
             <div className="modal-body">
                 <p style={{ fontSize: 12, color: '#64748b', marginBottom: 12 }}>
-                    Enter marks for each student (out of <strong>{assessment?.max_marks || 100}</strong>)
+                    Enter marks for each student (out of <strong>{assessment?.max_marks || 100}</strong>). Already-entered marks can be edited to correct them.
                 </p>
                 <div style={{ maxHeight: 320, overflowY: 'auto' }}>
                     {students === null ? (
@@ -279,7 +404,8 @@ function MarksEntryModal({ assessment, onClose, onSaved }) {
                                 const submitted = isOnline ? !!sub : true;
                                 const locked = existingMarks.find((m) => m.student_id === s.user_id);
                                 return (
-                                    <div key={s.user_id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f1f5f9' }}>
+                                    <div key={s.user_id} style={{ padding: '10px 0', borderBottom: '1px solid #f1f5f9' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                         <div>
                                             <div style={{ fontWeight: 600, fontSize: 14 }}>{s.first_name} {s.last_name || ''}</div>
                                             <div style={{ fontSize: isOnline ? 11 : 12, color: '#64748b', marginTop: 2, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
@@ -314,7 +440,7 @@ function MarksEntryModal({ assessment, onClose, onSaved }) {
                                             max={assessment?.max_marks || 100}
                                             placeholder={`/ ${assessment?.max_marks || 100}`}
                                             value={values[s.user_id] ?? ''}
-                                            disabled={!!locked || (isOnline && !submitted)}
+                                            disabled={isOnline && !submitted}
                                             onChange={(e) => setValues((v) => ({ ...v, [s.user_id]: e.target.value }))}
                                             style={{
                                                 width: 90,
@@ -327,6 +453,17 @@ function MarksEntryModal({ assessment, onClose, onSaved }) {
                                                 color: locked ? '#166534' : undefined,
                                             }}
                                         />
+                                    </div>
+                                    {(values[s.user_id] ?? '') !== '' && (
+                                        <input
+                                            type="text"
+                                            placeholder="Feedback for this student (optional)"
+                                            value={feedbacks[s.user_id] ?? ''}
+                                            disabled={isOnline && !submitted}
+                                            onChange={(e) => setFeedbacks((f) => ({ ...f, [s.user_id]: e.target.value }))}
+                                            style={{ width: '100%', marginTop: 8, padding: 7, border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 12, boxSizing: 'border-box' }}
+                                        />
+                                    )}
                                     </div>
                                 );
                             })}
@@ -344,8 +481,69 @@ function MarksEntryModal({ assessment, onClose, onSaved }) {
     );
 }
 
-function AssessmentCard({ assessment, onEnterMarks }) {
+/**
+ * OUTCOMES_TRACKING_PLAN.md: which Course Outcomes this assessment
+ * measures — whole-assessment granularity (the whole mark counts toward
+ * every CO checked here), not per-question.
+ */
+function OutcomesModal({ assessment, onClose, onSaved }) {
+    const { showToast } = useNotifications();
+    const [courseOutcomes, setCourseOutcomes] = useState(null);
+    const [selected, setSelected] = useState([]);
+
+    useEffect(() => {
+        if (!assessment) return;
+        setSelected(assessment.lo_ids || []);
+        apiFetch(`/learning-outcomes?course_id=${assessment.course_id}`)
+            .then(setCourseOutcomes)
+            .catch(() => setCourseOutcomes([]));
+    }, [assessment]);
+
+    const toggle = (loId) => {
+        setSelected((s) => (s.includes(loId) ? s.filter((x) => x !== loId) : [...s, loId]));
+    };
+
+    const save = async () => {
+        try {
+            await apiFetch(`/assessments/${assessment.assessment_id}/outcomes`, {
+                method: 'PUT',
+                body: JSON.stringify({ lo_ids: selected }),
+            });
+            showToast('Outcomes updated', 'success');
+            onClose();
+            onSaved();
+        } catch (e) {
+            showToast('Failed: ' + e.message, 'error');
+        }
+    };
+
+    return (
+        <Modal open={!!assessment} onClose={onClose} title={`Outcomes — ${assessment?.name || ''}`} maxWidth={420}>
+            <div className="modal-body">
+                {courseOutcomes === null ? (
+                    <div style={{ textAlign: 'center', color: '#64748b', padding: 12 }}>Loading...</div>
+                ) : courseOutcomes.length === 0 ? (
+                    <p style={{ color: '#64748b', fontSize: 13 }}>This course has no Course Outcomes defined yet — add some from the Dashboard's Syllabus panel first.</p>
+                ) : (
+                    courseOutcomes.map((lo) => (
+                        <label key={lo.lo_id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 8, cursor: 'pointer' }}>
+                            <input type="checkbox" checked={selected.includes(lo.lo_id)} onChange={() => toggle(lo.lo_id)} style={{ marginTop: 3 }} />
+                            <span style={{ fontSize: 13 }}><strong>{lo.code}</strong> — {lo.description}</span>
+                        </label>
+                    ))
+                )}
+            </div>
+            <div className="modal-footer">
+                <button onClick={save} className="submit-btn" style={{ flex: 1 }}>Save</button>
+                <button className="btn-cancel" onClick={onClose}>Cancel</button>
+            </div>
+        </Modal>
+    );
+}
+
+function AssessmentCard({ assessment, onEnterMarks, onManageOutcomes, onEdit, onDelete }) {
     const a = assessment;
+    const outcomeCount = (a.lo_ids || []).length;
     return (
         <div style={{ padding: 20, border: '1px solid #e2e8f0', borderRadius: 12, marginBottom: 12, background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.04)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
@@ -363,10 +561,27 @@ function AssessmentCard({ assessment, onEnterMarks }) {
                 </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ fontSize: 13, color: '#64748b' }}>Max Marks: <strong>{a.max_marks || 100}</strong></div>
-                <button onClick={onEnterMarks} style={{ padding: '8px 16px', background: '#6366f1', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600, letterSpacing: 0.2 }}>
-                    ✎ Enter Marks
-                </button>
+                <div style={{ fontSize: 13, color: '#64748b' }}>Max Marks: <strong>{a.max_marks || 100}</strong> &nbsp;·&nbsp; Weightage: <strong>{a.weightage ?? 10}%</strong></div>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    {a.has_marks ? (
+                        <span style={{ fontSize: 12, color: '#94a3b8', fontStyle: 'italic' }}>🔒 Locked — marks recorded</span>
+                    ) : (
+                        <>
+                            <button onClick={onEdit} style={{ padding: '8px 14px', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+                                ✎ Edit
+                            </button>
+                            <button onClick={onDelete} style={{ padding: '8px 14px', background: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+                                🗑 Delete
+                            </button>
+                        </>
+                    )}
+                    <button onClick={onManageOutcomes} style={{ padding: '8px 14px', background: outcomeCount ? '#eef2ff' : '#f1f5f9', color: outcomeCount ? '#4338ca' : '#64748b', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+                        🎯 Outcomes{outcomeCount ? ` (${outcomeCount})` : ''}
+                    </button>
+                    <button onClick={onEnterMarks} style={{ padding: '8px 16px', background: '#6366f1', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600, letterSpacing: 0.2 }}>
+                        ✎ Enter Marks
+                    </button>
+                </div>
             </div>
         </div>
     );
@@ -374,15 +589,28 @@ function AssessmentCard({ assessment, onEnterMarks }) {
 
 export default function AssessmentMapping() {
     const { user } = useAuth();
+    const { showToast } = useNotifications();
     const [assessments, setAssessments] = useState(undefined);
     const [createOpen, setCreateOpen] = useState(false);
     const [marksTarget, setMarksTarget] = useState(null);
+    const [outcomesTarget, setOutcomesTarget] = useState(null);
+    const [editTarget, setEditTarget] = useState(null);
 
     const load = () => apiFetch(`/assessments?faculty_id=${user?.user_id}`).then(setAssessments).catch(() => setAssessments([]));
 
     useEffect(() => {
         load();
     }, []);
+
+    const deleteAssessment = async (a) => {
+        try {
+            await apiFetch(`/assessments/${a.assessment_id}`, { method: 'DELETE' });
+            showToast('Assessment deleted.', 'success');
+            load();
+        } catch (e) {
+            showToast('Failed: ' + e.message, 'error');
+        }
+    };
 
     return (
         <>
@@ -397,11 +625,22 @@ export default function AssessmentMapping() {
                         <div style={{ fontSize: 13, marginTop: 4 }}>Click "+ Create Assessment" to add one</div>
                     </div>
                 ) : (
-                    assessments.map((a) => <AssessmentCard key={a.assessment_id} assessment={a} onEnterMarks={() => setMarksTarget(a)} />)
+                    assessments.map((a) => (
+                        <AssessmentCard
+                            key={a.assessment_id}
+                            assessment={a}
+                            onEnterMarks={() => setMarksTarget(a)}
+                            onManageOutcomes={() => setOutcomesTarget(a)}
+                            onEdit={() => setEditTarget(a)}
+                            onDelete={() => deleteAssessment(a)}
+                        />
+                    ))
                 )}
             </div>
             <CreateAssessmentModal open={createOpen} onClose={() => setCreateOpen(false)} onCreated={load} />
             <MarksEntryModal assessment={marksTarget} onClose={() => setMarksTarget(null)} onSaved={load} />
+            <OutcomesModal assessment={outcomesTarget} onClose={() => setOutcomesTarget(null)} onSaved={load} />
+            <EditAssessmentModal assessment={editTarget} onClose={() => setEditTarget(null)} onSaved={load} />
         </>
     );
 }

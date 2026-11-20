@@ -178,7 +178,12 @@ export default function StudentOverview() {
       })
       .catch(() => setStudents([]));
   };
-  useEffect(load, []);
+  // Wrapped, not passed directly: load() returns a Promise, and an effect
+  // callback must return undefined or a cleanup function — passing load
+  // itself made React try to call that Promise as cleanup on unmount,
+  // crashing with "TypeError: ... is not a function" (see Team.jsx's
+  // identical fix for this).
+  useEffect(() => { load(); }, []);
 
   const filtered = useMemo(() => {
     if (!students) return [];

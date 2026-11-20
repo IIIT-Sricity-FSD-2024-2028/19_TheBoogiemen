@@ -40,6 +40,7 @@ function AttendanceForm() {
   const [students, setStudents] = useState(null); // null = nothing loaded, [] = loaded empty
   const [statuses, setStatuses] = useState({}); // user_id -> 'present' | 'absent'
   const [submitting, setSubmitting] = useState(false);
+  const [holiday, setHoliday] = useState(null);
   const today = new Date().toISOString().split('T')[0];
 
   useEffect(() => {
@@ -69,9 +70,15 @@ function AttendanceForm() {
       return;
     }
     setStudents(null);
+    setHoliday(null);
     const query = section ? `?section=${encodeURIComponent(section)}` : '';
     apiFetch(`/faculty/attendance/today/${courseId}${query}`)
       .then((data) => {
+        if (data.holiday) {
+          setHoliday(data);
+          setStudents([]);
+          return;
+        }
         setStudents(data.students || []);
         const init = {};
         (data.students || []).forEach((s) => {
@@ -105,7 +112,7 @@ function AttendanceForm() {
 
     setSubmitting(true);
     try {
-      await apiFetch('/faculty/attendance', {
+      const res = await apiFetch('/faculty/attendance', {
         method: 'POST',
         body: JSON.stringify({
           course_id: courseId,
@@ -115,7 +122,25 @@ function AttendanceForm() {
         }),
       });
       const secLabel = section ? ` (Section ${section})` : '';
-      showToast(`Attendance saved for ${records.length} students!${secLabel} (Date: ${today})`, 'success');
+      // A student already on approved leave for this session can't be
+      // downgraded to Absent (faculty.service.ts's recordAttendance) — say so
+      // explicitly instead of a blanket "saved" that implies every mark was
+      // applied exactly as selected. showToast only ever holds one message at
+      // a time, so this must be a single call, not two in a row — the second
+      // would overwrite the first before it ever rendered.
+      const protectedNames = (res?.records || [])
+        .filter((r) => r.protected)
+        .map((r) => students?.find((s) => s.user_id === r.student_id))
+        .filter(Boolean)
+        .map((s) => `${s.first_name} ${s.last_name || ''}`.trim());
+      if (protectedNames.length) {
+        showToast(
+          `Saved. ${protectedNames.join(', ')} ${protectedNames.length === 1 ? 'has' : 'have'} approved leave for this session — kept as Excused, not marked Absent.`,
+          'warning',
+        );
+      } else {
+        showToast(`Attendance saved for ${records.length} students!${secLabel} (Date: ${today})`, 'success');
+      }
     } catch (e) {
       showToast('Failed: ' + e.message, 'error');
     } finally {
@@ -185,6 +210,13 @@ function AttendanceForm() {
         </div>
       </div>
 
+      {holiday ? (
+        <div style={{ textAlign: 'center', padding: 40, background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: 10, color: '#64748b' }}>
+          <div style={{ fontSize: 36, marginBottom: 10 }}>🎉</div>
+          <div style={{ fontWeight: 700, fontSize: 15 }}>No class today — {holiday.label}</div>
+          <div style={{ fontSize: 13, marginTop: 4 }}>Nothing to mark; this date is a declared holiday.</div>
+        </div>
+      ) : (
       <div style={{ border: '1px solid #e2e8f0', borderRadius: 10, overflow: 'hidden' }}>
         <table className="crud-table" style={{ margin: 0 }}>
           <thead>
@@ -241,9 +273,12 @@ function AttendanceForm() {
           </tbody>
         </table>
       </div>
+      )}
+      {!holiday && (
       <button className="submit-btn" style={{ marginTop: 20, width: '100%' }} onClick={submit} disabled={submitting}>
         {submitting ? 'Saving…' : '✓ Save Attendance'}
       </button>
+      )}
     </>
   );
 }

@@ -24,6 +24,9 @@ import { FacultyModule } from './faculty/faculty.module';
 import { AdminModule } from './admin/admin.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { BillingModule } from './billing/billing.module';
+import { HolidaysModule } from './holidays/holidays.module';
+import { OutcomesModule } from './outcomes/outcomes.module';
+import { MeetingModule } from './modules/meeting/meeting.meeting.module';
 
 @Module({
   imports: [
@@ -39,6 +42,9 @@ import { BillingModule } from './billing/billing.module';
     AdminModule,
     UploadsModule,
     BillingModule,
+    HolidaysModule,
+    OutcomesModule,
+    MeetingModule,
   ],
   controllers: [AppController],
   providers: [
