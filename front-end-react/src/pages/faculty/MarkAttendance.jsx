@@ -9,13 +9,22 @@
  * validated against "must equal today" and the actual POST body always
  * sends today's date regardless of what's selected — the picker is
  * effectively just required-but-ignored friction in the original too.
+ *
+ * Redux migration (Dev 4): course dropdown reuses the shared
+ * facultyCoursesSlice (promoted out of classPerformance once this file
+ * became its second consumer); the today's-roster fetch and submit live in
+ * markAttendanceSlice/Thunks; attendance-request grant reuses the shared
+ * attendanceRequestsSlice (also consumed by Dashboard.jsx's ActionRequired).
  */
 
 import { useEffect, useState } from 'react';
-import { apiFetch } from '../../api/client';
 import { downloadDocument } from '../../api/uploads';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationsContext';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchFacultyCourses } from '../../features/facultyCourses/facultyCoursesThunks';
+import { fetchTodayRoster, submitAttendance } from '../../features/markAttendance/markAttendanceThunks';
+import { fetchAttendanceRequests, grantAttendanceRequest } from '../../features/attendanceRequests/attendanceRequestsThunks';
 
 export default function MarkAttendance() {
   return (
@@ -32,22 +41,21 @@ export default function MarkAttendance() {
 }
 
 function AttendanceForm() {
+  const dispatch = useAppDispatch();
   const { showToast } = useNotifications();
-  const [courses, setCourses] = useState(null);
+  const courses = useAppSelector((state) => state.facultyCourses.items);
+  const { students: rosterStudents, holiday } = useAppSelector((state) => state.markAttendance);
   const [courseId, setCourseId] = useState('');
   const [section, setSection] = useState('');
   const [date, setDate] = useState('');
-  const [students, setStudents] = useState(null); // null = nothing loaded, [] = loaded empty
   const [statuses, setStatuses] = useState({}); // user_id -> 'present' | 'absent'
   const [submitting, setSubmitting] = useState(false);
-  const [holiday, setHoliday] = useState(null);
+  const students = courseId ? rosterStudents : null; // null = nothing loaded, [] = loaded empty
   const today = new Date().toISOString().split('T')[0];
 
   useEffect(() => {
-    apiFetch('/faculty/me/courses')
-      .then(setCourses)
-      .catch(() => setCourses([]));
-  }, []);
+    dispatch(fetchFacultyCourses());
+  }, [dispatch]);
 
   const selectedCourse = courses?.find((c) => c.course_id === courseId);
   const mySections = selectedCourse?.sections || (selectedCourse?.section ? [selectedCourse.section] : []);
@@ -62,32 +70,21 @@ function AttendanceForm() {
     } else if (mySections.length > 1 && !mySections.includes(section)) {
       setSection(mySections[0]);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId, selectedCourse]);
 
   useEffect(() => {
-    if (!courseId) {
-      setStudents(null);
-      return;
-    }
-    setStudents(null);
-    setHoliday(null);
-    const query = section ? `?section=${encodeURIComponent(section)}` : '';
-    apiFetch(`/faculty/attendance/today/${courseId}${query}`)
-      .then((data) => {
-        if (data.holiday) {
-          setHoliday(data);
-          setStudents([]);
-          return;
-        }
-        setStudents(data.students || []);
-        const init = {};
-        (data.students || []).forEach((s) => {
-          init[s.user_id] = s.today_status !== 'absent' ? 'present' : 'absent';
-        });
-        setStatuses(init);
-      })
-      .catch(() => setStudents([]));
-  }, [courseId, section]);
+    if (!courseId) return;
+    dispatch(fetchTodayRoster({ courseId, section })).then((action) => {
+      const data = action.payload;
+      if (!data || data.holiday) return;
+      const init = {};
+      (data.students || []).forEach((s) => {
+        init[s.user_id] = s.today_status !== 'absent' ? 'present' : 'absent';
+      });
+      setStatuses(init);
+    });
+  }, [dispatch, courseId, section]);
 
   const markAll = (status) => {
     if (!students || students.length === 0) return showToast('Load students first by selecting a course', 'warning');
@@ -112,15 +109,7 @@ function AttendanceForm() {
 
     setSubmitting(true);
     try {
-      const res = await apiFetch('/faculty/attendance', {
-        method: 'POST',
-        body: JSON.stringify({
-          course_id: courseId,
-          ...(section ? { section } : {}),
-          date: today,
-          records,
-        }),
-      });
+      const res = await dispatch(submitAttendance({ courseId, section, date: today, records })).unwrap();
       const secLabel = section ? ` (Section ${section})` : '';
       // A student already on approved leave for this session can't be
       // downgraded to Absent (faculty.service.ts's recordAttendance) — say so
@@ -284,18 +273,20 @@ function AttendanceForm() {
 }
 
 function AttendanceRequests() {
+  const dispatch = useAppDispatch();
   const { user } = useAuth();
   const { showToast, send } = useNotifications();
-  const [requests, setRequests] = useState(undefined);
+  const requests = useAppSelector((state) => state.attendanceRequests.items);
 
-  const load = () => apiFetch('/attendance-requests').then(setRequests).catch(() => setRequests([]));
+  const load = () => dispatch(fetchAttendanceRequests());
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const grant = async (id, studentId) => {
     try {
-      await apiFetch(`/attendance-request/${id}/mark`, { method: 'PATCH' });
+      await dispatch(grantAttendanceRequest(id)).unwrap();
       send(studentId, user?.first_name || 'Faculty', '✅ Your attendance has been granted by faculty!', 'info');
       showToast('Attendance granted! Student notified.', 'success');
       load();

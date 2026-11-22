@@ -14,7 +14,8 @@
 import { useEffect, useState } from 'react';
 import { Bar, BarChart, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { fetchFacultyCourses, fetchClassPerformanceForCourse } from '../../features/classPerformance/classPerformanceThunks';
+import { fetchFacultyCourses } from '../../features/facultyCourses/facultyCoursesThunks';
+import { fetchClassPerformanceForCourse } from '../../features/classPerformance/classPerformanceThunks';
 import { downloadCsv } from '../../utils/csv';
 
 const GRADE_COLOR = {
@@ -71,7 +72,7 @@ function classAverageForOutcome(report, loId) {
 
 export default function ClassPerformance() {
   const dispatch = useAppDispatch();
-  const courses = useAppSelector((state) => state.classPerformance.courses);
+  const courses = useAppSelector((state) => state.facultyCourses.items);
   const [courseId, setCourseId] = useState('');
   const forCourse = useAppSelector((state) => state.classPerformance.byCourse[courseId]);
   const performance = forCourse?.performance;

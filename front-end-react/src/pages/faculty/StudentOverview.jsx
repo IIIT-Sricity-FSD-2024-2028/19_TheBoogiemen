@@ -3,20 +3,37 @@
  * renderStudentCards() + filterStudentOverview() + sendFacultyBroadcast() +
  * openAssignBTPModal() + submitAssignBTP() (faculty.html's
  * student-overview-view).
+ *
+ * Redux migration (Dev 4): both AssignBTPModal and the default export's own
+ * load() combine the shared usersSlice (/admin/users) and
+ * facultyStudentsSlice (/faculty/me/students) — same two sources
+ * Dashboard.jsx's Metrics/Intervention already fetch, deduped into those
+ * same slices rather than a third copy of the same data.
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { apiFetch } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationsContext';
 import Modal from '../../components/shared/Modal';
 import SendAlertModal from '../../components/shared/SendAlertModal';
 import MeetingModal from '../../components/shared/MeetingModal';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchAllUsers } from '../../features/users/usersThunks';
+import { fetchFacultyStudents } from '../../features/facultyStudents/facultyStudentsThunks';
+import { createResearch } from '../../features/research/researchThunks';
+
+function useSettled(...statuses) {
+  return statuses.every((s) => s === 'succeeded' || s === 'failed');
+}
 
 function AssignBTPModal({ open, onClose, onAssigned }) {
+  const dispatch = useAppDispatch();
   const { user } = useAuth();
   const { showToast, send } = useNotifications();
-  const [students, setStudents] = useState(null);
+  const allUsers = useAppSelector((state) => state.users.items);
+  const usersStatus = useAppSelector((state) => state.users.status);
+  const facultyStudents = useAppSelector((state) => state.facultyStudents.items);
+  const facultyStudentsStatus = useAppSelector((state) => state.facultyStudents.status);
   const [studentId, setStudentId] = useState('');
   const [title, setTitle] = useState('');
   const [abstract, setAbstract] = useState('');
@@ -27,22 +44,25 @@ function AssignBTPModal({ open, onClose, onAssigned }) {
     setStudentId('');
     setTitle('');
     setAbstract('');
-    Promise.all([apiFetch('/admin/users'), apiFetch('/faculty/me/students').catch(() => [])])
-      .then(([allUsers, profiles]) => {
+    dispatch(fetchAllUsers());
+    dispatch(fetchFacultyStudents());
+  }, [open, dispatch]);
+
+  const settled = useSettled(usersStatus, facultyStudentsStatus);
+  const students = !settled
+    ? null
+    : (() => {
         const profileMap = {};
-        (profiles || []).forEach((p) => {
+        (facultyStudents || []).forEach((p) => {
           profileMap[p.user_id] = p;
         });
-        const list = (allUsers || [])
+        return (allUsers || [])
           .filter((u) => u.role === 'student')
           .map((s) => {
             const p = profileMap[s.user_id] || {};
             return { id: s.user_id, name: `${p.first_name || s.first_name || s.username || ''} ${p.last_name || s.last_name || ''}`.trim() };
           });
-        setStudents(list);
-      })
-      .catch(() => setStudents([]));
-  }, [open]);
+      })();
 
   const submit = async (e) => {
     e.preventDefault();
@@ -51,7 +71,7 @@ function AssignBTPModal({ open, onClose, onAssigned }) {
 
     setSubmitting(true);
     try {
-      await apiFetch('/research', { method: 'POST', body: JSON.stringify({ student_id: studentId, title: title.trim(), abstract: abstract.trim(), status: 'active', progress: 0 }) });
+      await dispatch(createResearch({ student_id: studentId, title: title.trim(), abstract: abstract.trim(), status: 'active', progress: 0 })).unwrap();
       const from = user?.first_name || 'Faculty';
       send(studentId, from, `📚 BTP Project Assigned: "${title.trim()}". Open your Research Projects section to view details and submit your work.`, 'info');
       showToast('BTP Project assigned to student! Student has been notified. ✅', 'success');
@@ -143,9 +163,13 @@ function StudentCard({ student, onAlert, onMeeting }) {
 }
 
 export default function StudentOverview() {
+  const dispatch = useAppDispatch();
   const { user } = useAuth();
   const { showToast, broadcast } = useNotifications();
-  const [students, setStudents] = useState(undefined);
+  const allUsers = useAppSelector((state) => state.users.items);
+  const usersStatus = useAppSelector((state) => state.users.status);
+  const facultyStudents = useAppSelector((state) => state.facultyStudents.items);
+  const facultyStudentsStatus = useAppSelector((state) => state.facultyStudents.status);
   const [search, setSearch] = useState('');
   const [broadcastMsg, setBroadcastMsg] = useState('');
   const [meetingOpen, setMeetingOpen] = useState(false);
@@ -154,36 +178,37 @@ export default function StudentOverview() {
   const [meetingTarget, setMeetingTarget] = useState(null);
 
   const load = () => {
-    Promise.all([apiFetch('/admin/users').catch(() => []), apiFetch('/faculty/me/students').catch(() => [])])
-      .then(([allUsers, profileStudents]) => {
-        const profileMap = {};
-        (profileStudents || []).forEach((s) => {
-          profileMap[s.user_id] = s;
-        });
-        const list = (allUsers || [])
-          .filter((u) => u.role === 'student')
-          .map((u) => {
-            const p = profileMap[u.user_id] || {};
-            return {
-              user_id: u.user_id,
-              first_name: p.first_name || u.first_name || u.username || 'Student',
-              last_name: p.last_name || u.last_name || '',
-              cgpa: p.cgpa || null,
-              branch: p.branch || p.department || '',
-              attendance_pct: p.attendance_pct === null || p.attendance_pct === undefined ? null : p.attendance_pct,
-              is_at_risk: !!p.is_at_risk,
-            };
-          });
-        setStudents(list);
-      })
-      .catch(() => setStudents([]));
+    dispatch(fetchAllUsers());
+    dispatch(fetchFacultyStudents());
   };
-  // Wrapped, not passed directly: load() returns a Promise, and an effect
-  // callback must return undefined or a cleanup function — passing load
-  // itself made React try to call that Promise as cleanup on unmount,
-  // crashing with "TypeError: ... is not a function" (see Team.jsx's
-  // identical fix for this).
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const settled = useSettled(usersStatus, facultyStudentsStatus);
+  const students = useMemo(() => {
+    if (!settled) return undefined;
+    const profileMap = {};
+    (facultyStudents || []).forEach((s) => {
+      profileMap[s.user_id] = s;
+    });
+    return (allUsers || [])
+      .filter((u) => u.role === 'student')
+      .map((u) => {
+        const p = profileMap[u.user_id] || {};
+        return {
+          user_id: u.user_id,
+          first_name: p.first_name || u.first_name || u.username || 'Student',
+          last_name: p.last_name || u.last_name || '',
+          cgpa: p.cgpa || null,
+          branch: p.branch || p.department || '',
+          attendance_pct: p.attendance_pct === null || p.attendance_pct === undefined ? null : p.attendance_pct,
+          is_at_risk: !!p.is_at_risk,
+        };
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settled, allUsers, facultyStudents]);
 
   const filtered = useMemo(() => {
     if (!students) return [];

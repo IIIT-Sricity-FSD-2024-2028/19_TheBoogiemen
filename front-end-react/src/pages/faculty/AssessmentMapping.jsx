@@ -5,23 +5,39 @@
  * marksEntryModal, including the "already-locked marks show read-only"
  * follow-up patch — originally a second `window.openMarksModal` definition
  * monkey-patching the first in fixes.js; folded into one function here).
+ *
+ * Redux migration (Dev 4): assessments/marksEntry are this file's own new
+ * slices; courses reuses Dev 3's coursesSlice; learning outcomes reuses
+ * Dev 3's (now-extended) learningOutcomesSlice.
  */
 import { useEffect, useState } from 'react';
-import { apiFetch } from '../../api/client';
 import { downloadDocument } from '../../api/uploads';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationsContext';
 import Modal from '../../components/shared/Modal';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchCourses } from '../../features/courses/coursesThunks';
+import {
+  fetchAssessments,
+  createAssessment,
+  updateAssessment,
+  deleteAssessment as deleteAssessmentThunk,
+  updateAssessmentOutcomes,
+} from '../../features/assessments/assessmentsThunks';
+import { fetchMarksEntryData, createMark, correctMark } from '../../features/marksEntry/marksEntryThunks';
+import { fetchLearningOutcomes } from '../../features/learningOutcomes/learningOutcomesThunks';
 
 function CreateAssessmentModal({ open, onClose, onCreated }) {
+    const dispatch = useAppDispatch();
     const { user } = useAuth();
     const { showToast } = useNotifications();
+    const courses = useAppSelector((state) => state.courses.items);
+    const coursesStatus = useAppSelector((state) => state.courses.status);
     const [name, setName] = useState('');
     const [type, setType] = useState('');
     const [date, setDate] = useState('');
     const [marks, setMarks] = useState('');
     const [mode, setMode] = useState('offline');
-    const [courses, setCourses] = useState(null);
     const [courseId, setCourseId] = useState('');
     const [section, setSection] = useState('');
     const [submitting, setSubmitting] = useState(false);
@@ -44,9 +60,8 @@ function CreateAssessmentModal({ open, onClose, onCreated }) {
         setMode('offline');
         setCourseId('');
         setSection('');
-        apiFetch('/courses')
-            .then(setCourses)
-            .catch(() => setCourses([]));
+        dispatch(fetchCourses());
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open]);
 
     // A course can have several sections, each with a different faculty —
@@ -74,10 +89,9 @@ function CreateAssessmentModal({ open, onClose, onCreated }) {
 
         setSubmitting(true);
         try {
-            await apiFetch('/assessments', {
-                method: 'POST',
-                body: JSON.stringify({ name: name.trim(), type, date, max_marks: Number(marks), course_id: courseId, section, exam_mode: mode }),
-            });
+            await dispatch(createAssessment({
+                name: name.trim(), type, date, max_marks: Number(marks), course_id: courseId, section, exam_mode: mode,
+            })).unwrap();
             showToast('Assessment created!', 'success');
             onClose();
             onCreated();
@@ -138,7 +152,7 @@ function CreateAssessmentModal({ open, onClose, onCreated }) {
                         <div className="form-group">
                             <label>Course</label>
                             <select value={courseId} onChange={(e) => setCourseId(e.target.value)}>
-                                <option value="">{courses === null ? 'Loading courses…' : 'Select course'}</option>
+                                <option value="">{coursesStatus !== 'succeeded' ? 'Loading courses…' : 'Select course'}</option>
                                 {courses?.map((c) => (
                                     <option key={c.course_id} value={c.course_id}>{c.course_code} – {c.course_name}</option>
                                 ))}
@@ -172,6 +186,7 @@ function CreateAssessmentModal({ open, onClose, onCreated }) {
 }
 
 function EditAssessmentModal({ assessment, onClose, onSaved }) {
+    const dispatch = useAppDispatch();
     const { showToast } = useNotifications();
     const [name, setName] = useState('');
     const [type, setType] = useState('');
@@ -204,10 +219,10 @@ function EditAssessmentModal({ assessment, onClose, onSaved }) {
 
         setSubmitting(true);
         try {
-            await apiFetch(`/assessments/${assessment.assessment_id}`, {
-                method: 'PATCH',
-                body: JSON.stringify({ name: name.trim(), type, date, max_marks: Number(marks), weightage: Number(weightage), exam_mode: mode }),
-            });
+            await dispatch(updateAssessment({
+                id: assessment.assessment_id,
+                payload: { name: name.trim(), type, date, max_marks: Number(marks), weightage: Number(weightage), exam_mode: mode },
+            })).unwrap();
             showToast('Assessment updated!', 'success');
             onClose();
             onSaved();
@@ -278,11 +293,13 @@ function EditAssessmentModal({ assessment, onClose, onSaved }) {
 }
 
 function MarksEntryModal({ assessment, onClose, onSaved }) {
+    const dispatch = useAppDispatch();
     const { user } = useAuth();
     const { showToast, send } = useNotifications();
-    const [students, setStudents] = useState(null);
-    const [submissions, setSubmissions] = useState([]);
-    const [existingMarks, setExistingMarks] = useState([]);
+    const entry = useAppSelector((state) => (assessment ? state.marksEntry.byAssessment[assessment.assessment_id] : undefined));
+    const students = entry?.students ?? null;
+    const submissions = entry?.submissions ?? [];
+    const existingMarks = entry?.existingMarks ?? [];
     const [values, setValues] = useState({});
     const [feedbacks, setFeedbacks] = useState({});
     const [errors, setErrors] = useState({});
@@ -291,21 +308,14 @@ function MarksEntryModal({ assessment, onClose, onSaved }) {
 
     useEffect(() => {
         if (!assessment) return;
-        setStudents(null);
         setValues({});
         setFeedbacks({});
         setErrors({});
-        Promise.all([
-            apiFetch('/faculty/me/students'),
-            isOnline ? apiFetch('/submissions').catch(() => []) : Promise.resolve([]),
-            apiFetch(`/marks?assessment_id=${assessment.assessment_id}`).catch(() => []),
-        ]).then(([s, subs, marks]) => {
-            setStudents(s);
-            setSubmissions(subs);
-            setExistingMarks(marks || []);
+        dispatch(fetchMarksEntryData(assessment)).then((action) => {
+            const marks = action.payload?.existingMarks || [];
             const init = {};
             const initFeedback = {};
-            (marks || []).forEach((m) => {
+            marks.forEach((m) => {
                 init[m.student_id] = m.marks_obtained;
                 if (m.feedback_text) initFeedback[m.student_id] = m.feedback_text;
             });
@@ -353,12 +363,12 @@ function MarksEntryModal({ assessment, onClose, onSaved }) {
         const from = user?.first_name || 'Faculty';
         try {
             for (const r of creates) {
-                await apiFetch('/marks', { method: 'POST', body: JSON.stringify(r) });
+                await dispatch(createMark(r)).unwrap();
                 saved++;
                 send(r.student_id, from, `📊 Your marks for "${assessment.name}" have been posted: ${r.marks_obtained}/${maxMarks}.`, 'marks');
             }
             for (const r of corrections) {
-                await apiFetch(`/marks/${r.entry_id}`, { method: 'PATCH', body: JSON.stringify({ marks_obtained: r.marks_obtained, feedback_text: r.feedback_text }) });
+                await dispatch(correctMark({ entryId: r.entry_id, marksObtained: r.marks_obtained, feedbackText: r.feedback_text })).unwrap();
                 corrected++;
                 const msg = r.marksChanged
                     ? `📊 Your marks for "${assessment.name}" were corrected: ${r.previous}/${maxMarks} → ${r.marks_obtained}/${maxMarks}.`
@@ -487,16 +497,16 @@ function MarksEntryModal({ assessment, onClose, onSaved }) {
  * every CO checked here), not per-question.
  */
 function OutcomesModal({ assessment, onClose, onSaved }) {
+    const dispatch = useAppDispatch();
     const { showToast } = useNotifications();
-    const [courseOutcomes, setCourseOutcomes] = useState(null);
+    const courseOutcomes = useAppSelector((state) => (assessment ? state.learningOutcomes.byCourse[assessment.course_id] : undefined)) ?? null;
     const [selected, setSelected] = useState([]);
 
     useEffect(() => {
         if (!assessment) return;
         setSelected(assessment.lo_ids || []);
-        apiFetch(`/learning-outcomes?course_id=${assessment.course_id}`)
-            .then(setCourseOutcomes)
-            .catch(() => setCourseOutcomes([]));
+        dispatch(fetchLearningOutcomes(assessment.course_id));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [assessment]);
 
     const toggle = (loId) => {
@@ -505,10 +515,7 @@ function OutcomesModal({ assessment, onClose, onSaved }) {
 
     const save = async () => {
         try {
-            await apiFetch(`/assessments/${assessment.assessment_id}/outcomes`, {
-                method: 'PUT',
-                body: JSON.stringify({ lo_ids: selected }),
-            });
+            await dispatch(updateAssessmentOutcomes({ id: assessment.assessment_id, loIds: selected })).unwrap();
             showToast('Outcomes updated', 'success');
             onClose();
             onSaved();
@@ -588,23 +595,25 @@ function AssessmentCard({ assessment, onEnterMarks, onManageOutcomes, onEdit, on
 }
 
 export default function AssessmentMapping() {
+    const dispatch = useAppDispatch();
     const { user } = useAuth();
     const { showToast } = useNotifications();
-    const [assessments, setAssessments] = useState(undefined);
+    const assessments = useAppSelector((state) => state.assessments.items);
     const [createOpen, setCreateOpen] = useState(false);
     const [marksTarget, setMarksTarget] = useState(null);
     const [outcomesTarget, setOutcomesTarget] = useState(null);
     const [editTarget, setEditTarget] = useState(null);
 
-    const load = () => apiFetch(`/assessments?faculty_id=${user?.user_id}`).then(setAssessments).catch(() => setAssessments([]));
+    const load = () => dispatch(fetchAssessments(user?.user_id));
 
     useEffect(() => {
         load();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const deleteAssessment = async (a) => {
+    const handleDelete = async (a) => {
         try {
-            await apiFetch(`/assessments/${a.assessment_id}`, { method: 'DELETE' });
+            await dispatch(deleteAssessmentThunk(a.assessment_id)).unwrap();
             showToast('Assessment deleted.', 'success');
             load();
         } catch (e) {
@@ -632,7 +641,7 @@ export default function AssessmentMapping() {
                             onEnterMarks={() => setMarksTarget(a)}
                             onManageOutcomes={() => setOutcomesTarget(a)}
                             onEdit={() => setEditTarget(a)}
-                            onDelete={() => deleteAssessment(a)}
+                            onDelete={() => handleDelete(a)}
                         />
                     ))
                 )}

@@ -1,10 +1,6 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { apiFetch } from '../../api/client';
 
-export const fetchFacultyCourses = createAsyncThunk('classPerformance/fetchCourses', () =>
-  apiFetch('/faculty/me/courses'),
-);
-
 /**
  * Combines two endpoints exactly as the pre-Redux page's own Promise.all
  * did — including the asymmetric error handling: a failed /outcomes fetch

@@ -1335,6 +1335,22 @@
       "date": "2026-11-13",
       "status": "excused",
       "college_id": "c-default"
+    },
+    {
+      "log_id": "abe1c2fc-5697-4657-ad95-5bbf8d8f4237",
+      "student_id": "u1",
+      "course_id": "c2",
+      "date": "2026-08-18",
+      "status": "excused",
+      "college_id": "c-default"
+    },
+    {
+      "log_id": "4401837f-1ea3-404c-bdc0-63b0da2564b5",
+      "student_id": "u1",
+      "course_id": "c1",
+      "date": "2026-11-17",
+      "status": "present",
+      "college_id": "c-default"
     }
   ],
   "assessments": [
@@ -1503,6 +1519,18 @@
       "marks_obtained": 40,
       "max_marks": 50,
       "college_id": "c-default"
+    },
+    {
+      "entry_id": "m1794898509633",
+      "student_id": "u1",
+      "assessment_id": "a1794587547875",
+      "marks_obtained": 28,
+      "max_marks": 30,
+      "college_id": "c-default",
+      "previous_marks_obtained": 25,
+      "corrected_by": "u2",
+      "corrected_at": "2026-11-17T06:55:45.894Z",
+      "feedback_text": ""
     }
   ],
   "leave_applications": [
@@ -1580,6 +1608,19 @@
       "reason": "I got a fracture",
       "file_id": null,
       "college_id": "c-default"
+    },
+    {
+      "leave_id": "l1794898870785",
+      "student_id": "u2",
+      "student_name": "faculty",
+      "status": "pending",
+      "applied_on": "2026-11-17",
+      "leave_type": "Personal",
+      "start_date": "2026-11-19",
+      "end_date": "2026-11-20",
+      "reason": "Testing the migrated faculty leave apply flow end to end.",
+      "file_id": null,
+      "college_id": "c-default"
     }
   ],
   "research_projects": [
@@ -1648,6 +1689,26 @@
       "project_id": "rp1791305193830",
       "title": "Smoke Test BTP Project",
       "abstract": "Automated verification of the assign-BTP flow.",
+      "supervisor_id": "u2",
+      "supervisor_name": "Jane Smith",
+      "student_id": "u1",
+      "student_name": "John Doe",
+      "status": "active",
+      "progress": 0,
+      "students": [
+        {
+          "user_id": "u1",
+          "first_name": "John"
+        }
+      ],
+      "uploads": [],
+      "milestones": [],
+      "college_id": "c-default"
+    },
+    {
+      "project_id": "rp1794898802366",
+      "title": "Redux Migration Verification Project",
+      "abstract": "",
       "supervisor_id": "u2",
       "supervisor_name": "Jane Smith",
       "student_id": "u1",
@@ -2300,7 +2361,7 @@
       "date": "2026-08-18",
       "reason": "43f343434g5g [Document: Class_Zero (1) (1).pdf]",
       "admin_status": "approved",
-      "faculty_status": "pending",
+      "faculty_status": "granted",
       "created_at": "2026-08-18T11:37:28.185Z",
       "college_id": "c-default",
       "admin_reason": ""

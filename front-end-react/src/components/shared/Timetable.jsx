@@ -3,15 +3,19 @@
  * renderFacultyTimetable() / renderTimetableGrid(). One component, the
  * `role` prop picks the endpoint — the grid-building logic itself never
  * differed between the two in the legacy code.
+ *
+ * Redux migration (Dev 4): keyed by role in timetableSlice — `role` is a
+ * fixed prop per page (never changes after mount for a given instance),
+ * so the byRole keying alone is enough to keep two different consumers
+ * (student vs. faculty dashboards) from ever stomping each other; no
+ * per-instance cancelled-flag race is possible since role doesn't change.
+ * Also read by Dashboard.jsx's Metrics (faculty's own weekly slot count)
+ * off the same byRole.faculty bucket — one fetch, two readers.
  */
 
-import { useEffect, useState } from 'react';
-import { apiFetch } from '../../api/client';
-
-const ENDPOINT_BY_ROLE = {
-  student: '/student-timetable',
-  faculty: '/faculty/me/timetable',
-};
+import { useEffect } from 'react';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchTimetable } from '../../features/timetable/timetableThunks';
 
 const DAY_LABELS = { MON: 'Monday', TUE: 'Tuesday', WED: 'Wednesday', THU: 'Thursday', FRI: 'Friday' };
 const DAY_SHORT = { MON: 'Mon', TUE: 'Tue', WED: 'Wed', THU: 'Thu', FRI: 'Fri' };
@@ -36,18 +40,14 @@ function formatTime(t) {
 }
 
 export default function Timetable({ role }) {
-  const [data, setData] = useState(undefined); // undefined = loading
-  const [error, setError] = useState(null);
+  const dispatch = useAppDispatch();
+  const entry = useAppSelector((state) => state.timetable.byRole[role]);
+  const data = entry?.data; // undefined = loading
+  const error = entry?.error;
 
   useEffect(() => {
-    let cancelled = false;
-    apiFetch(ENDPOINT_BY_ROLE[role])
-      .then((res) => !cancelled && setData(res))
-      .catch((e) => !cancelled && setError(e.message));
-    return () => {
-      cancelled = true;
-    };
-  }, [role]);
+    dispatch(fetchTimetable(role));
+  }, [dispatch, role]);
 
   if (error) return <p style={{ color: '#ef4444' }}>Failed to load timetable: {error}</p>;
   if (data === undefined) return null;
