@@ -1,17 +1,20 @@
 /**
- * learningOutcomesSlice.js — REDUX_MIGRATION_PLAN.md §2 names this as part
- * of Dev 3's domain ownership, but no Dev-3-owned file currently fetches
- * `/learning-outcomes` (its real callers — AssessmentMapping.jsx,
- * faculty/Dashboard.jsx's OutcomesModal — belong to Dev 4's track). Built
- * here as infrastructure only, same situation Dev 1's createFetchThunk.js
- * was in until a later phase consumed it, ready for whichever page's
- * migration needs it next.
+ * learningOutcomesSlice.js — built read-only in Dev 3's pass (no consumer
+ * yet at the time); now extended with create/delete/po-mapping since
+ * Dashboard.jsx's CourseOutcomesModal (Dev 4's track) is the first real
+ * consumer and needs more than a read. AssessmentMapping.jsx's
+ * OutcomesModal only ever needed the read half, unchanged.
  *
  * Keyed by courseId, same reasoning as classPerformanceSlice's byCourse —
  * this endpoint is always scoped to one course, never fetched unscoped.
  */
 import { createSlice } from '@reduxjs/toolkit';
-import { fetchLearningOutcomes } from './learningOutcomesThunks';
+import {
+  fetchLearningOutcomes,
+  createLearningOutcome,
+  deleteLearningOutcome,
+  setLearningOutcomePoMapping,
+} from './learningOutcomesThunks';
 
 const initialState = {
   byCourse: {}, // courseId -> LearningOutcome[]
@@ -35,6 +38,24 @@ const learningOutcomesSlice = createSlice({
       .addCase(fetchLearningOutcomes.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.error.message;
+      })
+      .addCase(createLearningOutcome.fulfilled, (state, action) => {
+        const courseId = action.meta.arg.courseId;
+        (state.byCourse[courseId] ??= []).push(action.payload);
+      })
+      .addCase(deleteLearningOutcome.fulfilled, (state, action) => {
+        const { loId, courseId } = action.payload;
+        if (state.byCourse[courseId]) {
+          state.byCourse[courseId] = state.byCourse[courseId].filter((lo) => lo.lo_id !== loId);
+        }
+      })
+      .addCase(setLearningOutcomePoMapping.fulfilled, (state, action) => {
+        const { courseId, lo } = action.payload;
+        const list = state.byCourse[courseId];
+        if (list) {
+          const idx = list.findIndex((x) => x.lo_id === lo.lo_id);
+          if (idx !== -1) list[idx] = lo;
+        }
       });
   },
 });

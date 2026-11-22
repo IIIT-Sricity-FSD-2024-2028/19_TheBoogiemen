@@ -20,6 +20,18 @@ import learningOutcomesReducer from '../features/learningOutcomes/learningOutcom
 import institutionalReportsReducer from '../features/institutionalReports/institutionalReportsSlice';
 import attendanceRegisterReducer from '../features/attendanceRegister/attendanceRegisterSlice';
 import classPerformanceReducer from '../features/classPerformance/classPerformanceSlice';
+import facultyCoursesReducer from '../features/facultyCourses/facultyCoursesSlice';
+import facultyStudentsReducer from '../features/facultyStudents/facultyStudentsSlice';
+import usersReducer from '../features/users/usersSlice';
+import attendanceRequestsReducer from '../features/attendanceRequests/attendanceRequestsSlice';
+import researchReducer from '../features/research/researchSlice';
+import topicsReducer from '../features/topics/topicsSlice';
+import topicCompletionsReducer from '../features/topicCompletions/topicCompletionsSlice';
+import timetableReducer from '../features/timetable/timetableSlice';
+import markAttendanceReducer from '../features/markAttendance/markAttendanceSlice';
+import facultyLeaveReducer from '../features/facultyLeave/facultyLeaveSlice';
+import assessmentsReducer from '../features/assessments/assessmentsSlice';
+import marksEntryReducer from '../features/marksEntry/marksEntrySlice';
 import { getUser } from '../api/client';
 
 export const store = configureStore({
@@ -33,6 +45,18 @@ export const store = configureStore({
     institutionalReports: institutionalReportsReducer,
     attendanceRegister: attendanceRegisterReducer,
     classPerformance: classPerformanceReducer,
+    facultyCourses: facultyCoursesReducer,
+    facultyStudents: facultyStudentsReducer,
+    users: usersReducer,
+    attendanceRequests: attendanceRequestsReducer,
+    research: researchReducer,
+    topics: topicsReducer,
+    topicCompletions: topicCompletionsReducer,
+    timetable: timetableReducer,
+    markAttendance: markAttendanceReducer,
+    facultyLeave: facultyLeaveReducer,
+    assessments: assessmentsReducer,
+    marksEntry: marksEntryReducer,
   },
   middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(notificationsPersistenceMiddleware),
   // Hydrates from localStorage once, at real app boot — same effect as the
