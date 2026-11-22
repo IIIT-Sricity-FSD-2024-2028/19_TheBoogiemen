@@ -10,7 +10,9 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { apiFetch } from '../../api/client';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchCourses } from '../../features/courses/coursesThunks';
+import { fetchAttendanceRegister } from '../../features/attendanceRegister/attendanceRegisterThunks';
 
 // Mirrors RISK_THRESHOLDS.MIN_ATTENDANCE_PCT in back-end/src/common/academic-rules.ts
 // — same threshold InstitutionalReports.jsx's meter already keys off of.
@@ -79,33 +81,32 @@ function PerCourseChart({ records }) {
 
 export default function AttendanceRegister() {
   const { from: defaultFrom, to: defaultTo } = monthBounds();
-  const [courses, setCourses] = useState(null);
+  const dispatch = useAppDispatch();
+  const courses = useAppSelector((state) => (state.courses.status === 'idle' || state.courses.status === 'loading' ? null : state.courses.items));
+  const { records, summary, status: dataStatus, error } = useAppSelector((state) => state.attendanceRegister);
   const [courseId, setCourseId] = useState('');
   const [section, setSection] = useState('');
   const [dateFrom, setDateFrom] = useState(defaultFrom);
   const [dateTo, setDateTo] = useState(defaultTo);
   const [status, setStatus] = useState('');
-  const [data, setData] = useState(undefined);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
-    apiFetch('/courses').then(setCourses).catch(() => setCourses([]));
-  }, []);
+    dispatch(fetchCourses());
+  }, [dispatch]);
 
   const sections = courses?.find((c) => c.course_id === courseId)?.sections || [];
 
   useEffect(() => {
-    const params = new URLSearchParams();
-    if (courseId) params.set('course_id', courseId);
-    if (section) params.set('section', section);
-    if (dateFrom) params.set('date_from', dateFrom);
-    if (dateTo) params.set('date_to', dateTo);
-    if (status) params.set('status', status);
-    setData(undefined);
-    apiFetch(`/attendance-register?${params.toString()}`)
-      .then(setData)
-      .catch((e) => setError(e.message));
-  }, [courseId, section, dateFrom, dateTo, status]);
+    dispatch(fetchAttendanceRegister({ courseId, section, dateFrom, dateTo, status }));
+  }, [dispatch, courseId, section, dateFrom, dateTo, status]);
+
+  // `data` keeps the same shape the JSX below already expects (`data.summary`,
+  // `data.records`), staying undefined on failure too — same as the
+  // pre-Redux page's own catch handler, which never called setData() on
+  // error, only setError(). Defining it here on 'failed' would let a
+  // first-ever failed fetch's null summary/records reach `data.summary.present`
+  // below and throw, instead of just rendering the error message.
+  const data = dataStatus === 'succeeded' ? { records: records || [], summary } : undefined;
 
   return (
     <div className="stats-card">
