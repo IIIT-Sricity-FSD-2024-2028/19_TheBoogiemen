@@ -69,7 +69,11 @@ function hasClassOn(
 ): boolean {
   const dow = weekdayOf(date);
   return db.timetable.some(
-    (t: any) => t.course_id === courseId && t.section === section && t.day === dow,
+    (t: any) =>
+      t.course_id === courseId &&
+      t.section === section &&
+      t.day === dow &&
+      (t.status === undefined || t.status === 'published'),
   );
 }
 
@@ -159,7 +163,11 @@ export function buildAttendanceCalendar(
     const dow = WEEKDAY_CODES[d.getUTCDay()];
     const scheduled = mySections.filter((e: any) =>
       db.timetable.some(
-        (t: any) => t.course_id === e.course_id && t.section === e.section && t.day === dow,
+        (t: any) =>
+          t.course_id === e.course_id &&
+          t.section === e.section &&
+          t.day === dow &&
+          (t.status === undefined || t.status === 'published'),
       ),
     );
     const dayRecords = recordsByDate.get(date) || [];

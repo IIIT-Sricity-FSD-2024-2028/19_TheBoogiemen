@@ -157,16 +157,23 @@ export class StudentsService {
   async getTimetable(userId: string, collegeId: string | null) {
     const student = this.db.students.find((s) => s.user_id === userId);
     const section = student?.section || 'A';
-    // Scoped by college, not just section: "Section A" is not a globally
-    // unique name — two colleges may both have one, and without this a
-    // student could be shown another college's slots for a same-named
-    // section (TENANT_ISOLATION_DIAGNOSIS.md §3, Group B).
+    const enrolledCourseIds = this.db.enrollment
+      .filter((e) => e.student_id === userId && e.status === 'active')
+      .map((e) => e.course_id);
     const slots = scopeToCollege(this.db.timetable, collegeId).filter(
-      (t) => t.section === section,
+      (t) =>
+        t.section === section &&
+        enrolledCourseIds.includes(t.course_id) &&
+        (t.status === undefined || t.status === 'published'),
     );
     const grid = slots.reduce((acc: any, curr) => {
       if (!acc[curr.day]) acc[curr.day] = {};
-      acc[curr.day][curr.time] = curr;
+      if (!acc[curr.day][curr.time]) acc[curr.day][curr.time] = curr;
+      else {
+        if (!Array.isArray(acc[curr.day][curr.time]))
+          acc[curr.day][curr.time] = [acc[curr.day][curr.time]];
+        acc[curr.day][curr.time].push(curr);
+      }
       return acc;
     }, {});
     return {

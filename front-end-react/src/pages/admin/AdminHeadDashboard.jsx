@@ -23,6 +23,7 @@ import AttendanceOverride from './AttendanceOverride';
 import AttendanceRegister from './AttendanceRegister';
 import Holidays from './Holidays';
 import ProgramOutcomes from './ProgramOutcomes';
+import TimetableManagement from './TimetableManagement';
 
 const NAV_ITEMS = [
   {
@@ -147,6 +148,7 @@ const TITLES = {
   dashboard: 'Dashboard',
   'institutional-reports': 'Institutional Reports',
   'event-scheduler': 'Event Scheduler',
+  'timetable-management': 'Academic Timetable',
   'course-management': 'Course Management',
   'resource-management': 'Resources',
   'fee-compliance': 'Fee Compliance',
@@ -167,6 +169,7 @@ export default function AdminHeadDashboard() {
     dashboard: <Dashboard onNavigate={setActiveView} />,
     'institutional-reports': <InstitutionalReports />,
     'event-scheduler': <EventScheduler />,
+    'timetable-management': <TimetableManagement />,
     'course-management': <CourseManagement />,
     'resource-management': <ResourceManagement />,
     'fee-compliance': <FeeCompliance />,

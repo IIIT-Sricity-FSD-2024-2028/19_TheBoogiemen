@@ -19,6 +19,7 @@ import {
   IsString,
   Matches,
   MaxLength,
+  MinLength,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -34,11 +35,14 @@ export class OnboardingStartDto {
   @Matches(PASSWORD_POLICY, { message: PASSWORD_POLICY_MESSAGE })
   password: string;
 
-  @ApiPropertyOptional({ example: 'Anita' })
-  @IsOptional()
+  // Required — same fix as SpocDetailsDto (create-college.dto.ts): an empty
+  // name here used to silently become the email's local-part via
+  // createCollegeAndSpoc()'s old fallback.
+  @ApiProperty({ example: 'Anita' })
   @IsString()
+  @MinLength(1)
   @MaxLength(80)
-  first_name?: string;
+  first_name: string;
 
   @ApiPropertyOptional({ example: 'Rao' })
   @IsOptional()
