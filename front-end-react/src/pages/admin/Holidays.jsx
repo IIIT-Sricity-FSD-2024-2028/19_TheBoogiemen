@@ -5,34 +5,38 @@
  * student's percentage is ever penalized for one, and a merged
  * leave/attendance-request spanning one simply skips it) — this page is
  * just where that fact gets declared.
+ *
+ * REDUX_MIGRATION_PLAN.md Phase 3: migrated to holidaysSlice. create/delete
+ * no longer refetch the whole list — the slice applies each mutation's own
+ * response directly (see holidaysSlice.js's comment for why that's safe).
  */
 
 import { useEffect, useState } from 'react';
-import { apiFetch } from '../../api/client';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { useNotifications } from '../../context/NotificationsContext';
+import { fetchHolidays, createHoliday, deleteHoliday } from '../../features/holidays/holidaysThunks';
 
 export default function Holidays() {
   const { showToast } = useNotifications();
-  const [holidays, setHolidays] = useState(undefined);
+  const dispatch = useAppDispatch();
+  const holidays = useAppSelector((state) => (state.holidays.status === 'idle' || state.holidays.status === 'loading' ? undefined : state.holidays.items));
   const [date, setDate] = useState('');
   const [label, setLabel] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const load = () => apiFetch('/holidays').then(setHolidays).catch(() => setHolidays([]));
-  // Wrapped, not passed directly — see Team.jsx's fix note: load() returns a
-  // Promise, which React would otherwise try to call as an unmount cleanup.
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    dispatch(fetchHolidays());
+  }, [dispatch]);
 
   const add = async (e) => {
     e.preventDefault();
     if (!date || !label.trim()) return showToast('Date and label are both required', 'warning');
     setSubmitting(true);
     try {
-      await apiFetch('/holidays', { method: 'POST', body: JSON.stringify({ date, label: label.trim() }) });
+      await dispatch(createHoliday({ date, label: label.trim() })).unwrap();
       showToast('Holiday added!', 'success');
       setDate('');
       setLabel('');
-      load();
     } catch (e2) {
       showToast('Failed: ' + e2.message, 'error');
     } finally {
@@ -42,9 +46,8 @@ export default function Holidays() {
 
   const remove = async (id) => {
     try {
-      await apiFetch(`/holidays/${id}`, { method: 'DELETE' });
+      await dispatch(deleteHoliday(id)).unwrap();
       showToast('Holiday removed', 'success');
-      load();
     } catch (e) {
       showToast('Failed: ' + e.message, 'error');
     }

@@ -5,21 +5,14 @@ import * as path from 'path';
 
 @Injectable()
 export class InMemoryDbService implements OnModuleInit {
-  private resolveDataPath(): string {
-    const candidates = [
-      path.join(process.cwd(), 'data', 'mock-db.json'),
-      path.join(process.cwd(), 'back-end', 'data', 'mock-db.json'),
-      path.join(__dirname, '..', '..', '..', 'data', 'mock-db.json'),
-      path.join(__dirname, '..', '..', 'data', 'mock-db.json'),
-      path.join(__dirname, '..', 'data', 'mock-db.json'),
-    ];
-    for (const p of candidates) {
-      if (fs.existsSync(p)) return p;
-    }
-    return path.join(process.cwd(), 'data', 'mock-db.json');
-  }
-
-  private readonly dataPath = this.resolveDataPath();
+  private readonly dataPath = path.join(
+    __dirname,
+    '..',
+    '..',
+    '..',
+    'data',
+    'mock-db.json',
+  );
   private isLoaded = false;
 
   public departments = this.createProxyArray([]);

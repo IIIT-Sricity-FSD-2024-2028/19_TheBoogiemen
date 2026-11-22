@@ -16,11 +16,11 @@ describe('AppController (e2e)', () => {
     await app.init();
   });
 
-  it('/ (GET) redirects to /login', () => {
+  it('/ (GET)', () => {
     return request(app.getHttpServer())
       .get('/')
-      .expect(302)
-      .expect('Location', '/login');
+      .expect(200)
+      .expect('Hello World!');
   });
 
   afterEach(async () => {

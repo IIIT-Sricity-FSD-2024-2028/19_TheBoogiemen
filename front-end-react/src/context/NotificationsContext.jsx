@@ -1,26 +1,46 @@
 /**
  * NotificationsContext — REDUX_MIGRATION_PLAN.md Phase 2 facade.
  *
- * useNotifications() keeps the exact same API as before, but the data now
- * lives in the notifications slice (features/notifications). localStorage
- * write-through and cross-tab sync are handled by the middleware there.
+ * `useNotifications()` now reads/writes the Redux `notificationsSlice`
+ * (features/notifications) — same hook name, same returned shape
+ * (`toast, showToast, forUser, getUnreadBC, unread, send, broadcast,
+ * broadcastAll, markRead, markBCRead, clearAll`) — so all 34 call sites
+ * across the app are UNCHANGED.
  *
- * Broadcasts are still stamped with the sender's college_id and filtered by
- * the viewer's college_id — that's now read from the auth slice here, so
- * none of the call sites change. NotificationsProvider is a pass-through
- * until Phase 4 removes it from App.jsx.
+ * `NotificationsProvider` is now an inert pass-through, same reasoning as
+ * AuthContext.jsx's: persistence and cross-tab sync both moved to
+ * store/index.js (a middleware + a listener registered once at module
+ * load, not once per provider mount — equivalent today, but means this
+ * component can be deleted in Phase 4 without losing either).
+ *
+ * TOAST TIMER NOTE: the pre-Redux provider held its pending-dismiss timer
+ * in a `useRef`, safe because the provider mounts exactly once for the
+ * whole app. A facade hook has no such guarantee — `useNotifications()` is
+ * called from 34 different components, so a `useRef` here would give each
+ * CALLER its own independent timer instead of the one shared timer the
+ * original behavior depends on (newest toast cancels any still-pending
+ * dismissal, regardless of which component triggered either one). A
+ * module-scope variable is the equivalent of the old ref: this module, like
+ * any ES module, is evaluated once and shared by every importer — so it's
+ * the direct one-for-one replacement, not a new design.
  */
 import { useCallback } from 'react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { useAuth } from './AuthContext';
 import {
-  readJSON,
-  visibleToViewer,
-  send as sendAction,
-  broadcast as broadcastAction,
-  markRead as markReadAction,
-  clearPersonal,
-  showToast as showToastAction,
+  personalReceived,
+  broadcastReceived,
+  personalMarkedRead,
+  personalCleared,
+  toastShown,
+  toastCleared,
 } from '../features/notifications/notificationsSlice';
+import { visibleToViewer, readBCReadIds, writeBCReadIds } from '../features/notifications/notificationsStorage';
+
+let toastTimerId = null;
+
+const timeLabel = () =>
+  new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 
 export function NotificationsProvider({ children }) {
   return children;
@@ -28,60 +48,85 @@ export function NotificationsProvider({ children }) {
 
 export function useNotifications() {
   const dispatch = useAppDispatch();
-  const collegeId = useAppSelector((state) => state.auth.user?.college_id ?? null);
+  const { user } = useAuth();
+  const collegeId = user?.college_id ?? null;
+
+  const toast = useAppSelector((state) => state.notifications.toast);
   const personal = useAppSelector((state) => state.notifications.personal);
   const broadcasts = useAppSelector((state) => state.notifications.broadcasts);
-  const toast = useAppSelector((state) => state.notifications.toast);
 
-  const showToast = useCallback((msg, type) => dispatch(showToastAction(msg, type)), [dispatch]);
+  const showToast = useCallback((msg, type = 'success') => {
+    clearTimeout(toastTimerId);
+    dispatch(toastShown({ id: Date.now(), msg, type }));
+    toastTimerId = setTimeout(() => dispatch(toastCleared()), 3500);
+  }, [dispatch]);
 
   const forUser = useCallback((uid) => personal.filter((n) => n.to === uid), [personal]);
 
-  const unread = useCallback((uid) => forUser(uid).filter((n) => !n.read).length, [forUser]);
-
-  const visibleIds = useCallback(
-    (role) =>
-      broadcasts
-        .filter((b) => (b.forRole === 'all' || b.forRole === role) && visibleToViewer(b, collegeId))
-        .map((b) => b.id),
-    [broadcasts, collegeId],
-  );
-
   const getUnreadBC = useCallback(
     (role) => {
-      const readIds = readJSON(`bp_bc_read_${role}`, []);
+      const readIds = readBCReadIds(role);
       return broadcasts.filter(
-        (b) => (b.forRole === 'all' || b.forRole === role) && visibleToViewer(b, collegeId) && !readIds.includes(b.id),
+        (b) =>
+          (b.forRole === 'all' || b.forRole === role) &&
+          visibleToViewer(b, collegeId) &&
+          !readIds.includes(b.id),
       );
     },
     [broadcasts, collegeId],
   );
 
+  const unread = useCallback((uid) => forUser(uid).filter((n) => !n.read).length, [forUser]);
+
   const send = useCallback(
-    (toUserId, fromName, message, type) => dispatch(sendAction(toUserId, fromName, message, type)),
+    (toUserId, fromName, message, type = 'alert') => {
+      const ts = Date.now();
+      dispatch(
+        personalReceived({ id: ts, to: toUserId, from: fromName, message, type, read: false, time: timeLabel(), timestamp: ts }),
+      );
+    },
     [dispatch],
   );
 
   const broadcast = useCallback(
-    (targetRole, fromName, message, type) => dispatch(broadcastAction(targetRole, collegeId, fromName, message, type)),
+    (targetRole, fromName, message, type = 'info') => {
+      const ts = Date.now();
+      dispatch(
+        broadcastReceived({ id: ts, forRole: targetRole, collegeId, from: fromName, message, type, time: timeLabel(), timestamp: ts }),
+      );
+    },
     [dispatch, collegeId],
   );
 
-  const broadcastAll = useCallback((fromName, message, type) => broadcast('all', fromName, message, type), [broadcast]);
+  const broadcastAll = useCallback(
+    (fromName, message, type = 'info') => broadcast('all', fromName, message, type),
+    [broadcast],
+  );
 
-  const markRead = useCallback((uid) => dispatch(markReadAction(uid)), [dispatch]);
+  const markRead = useCallback((uid) => dispatch(personalMarkedRead(uid)), [dispatch]);
 
+  // Not Redux state — the "read" marker was never part of React state
+  // pre-Redux either, only a direct localStorage write. See
+  // notificationsStorage.js's own comment for why that stays as-is.
   const markBCRead = useCallback(
-    (role) => localStorage.setItem(`bp_bc_read_${role}`, JSON.stringify(visibleIds(role))),
-    [visibleIds],
+    (role) => {
+      const ids = broadcasts
+        .filter((b) => (b.forRole === 'all' || b.forRole === role) && visibleToViewer(b, collegeId))
+        .map((b) => b.id);
+      writeBCReadIds(role, ids);
+    },
+    [broadcasts, collegeId],
   );
 
   const clearAll = useCallback(
     (role) => {
-      dispatch(clearPersonal());
-      markBCRead(role);
+      dispatch(personalCleared());
+      const ids = broadcasts
+        .filter((b) => (b.forRole === 'all' || b.forRole === role) && visibleToViewer(b, collegeId))
+        .map((b) => b.id);
+      writeBCReadIds(role, ids);
     },
-    [dispatch, markBCRead],
+    [dispatch, broadcasts, collegeId],
   );
 
   return {
