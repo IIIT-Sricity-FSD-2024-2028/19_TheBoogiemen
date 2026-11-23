@@ -3,7 +3,7 @@
  * notifications feature is built on. Centralized here so the slice's
  * initial-state hydration (store/index.js), the cross-tab `storage`
  * listener (store/index.js), and the facade's read-side logic
- * (context/NotificationsContext.jsx) all agree on the same keys and the
+ * (features/notifications/useNotifications.js) all agree on the same keys and the
  * same expiry/visibility rules — ported byte-for-byte from the pre-Redux
  * NotificationsContext.jsx so none of that behavior drifts.
  */

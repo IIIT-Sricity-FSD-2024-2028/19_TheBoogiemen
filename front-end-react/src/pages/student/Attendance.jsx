@@ -11,11 +11,13 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { apiFetch } from '../../api/client';
 import { uploadFile } from '../../api/uploads';
 import { downloadCsv } from '../../utils/csv';
-import { useNotifications } from '../../context/NotificationsContext';
+import { useNotifications } from '../../features/notifications/useNotifications';
 import Modal from '../../components/shared/Modal';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchMyAttendance, fetchAttendanceCalendar, createAttendanceRequest } from '../../features/studentAttendance/studentAttendanceThunks';
+import { fetchMyCourses } from '../../features/studentCourses/studentCoursesThunks';
 
 // Same 75% convention admin/AttendanceRegister.jsx's PerCourseChart already uses.
 const MIN_ATTENDANCE_PCT = 75;
@@ -42,16 +44,14 @@ function shiftMonth(month, delta) {
 }
 
 function AttendanceHeatmap() {
+  const dispatch = useAppDispatch();
   const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7));
-  const [days, setDays] = useState(null);
+  const days = useAppSelector((state) => state.studentAttendance.byMonth[month]) ?? null;
   const [selected, setSelected] = useState(null);
 
   useEffect(() => {
-    setDays(null);
-    apiFetch(`/students/me/attendance-calendar?month=${month}`)
-      .then(setDays)
-      .catch(() => setDays([]));
-  }, [month]);
+    dispatch(fetchAttendanceCalendar(month));
+  }, [dispatch, month]);
 
   // Calendar cells need a leading blank for every weekday before the 1st.
   const leadingBlanks = useMemo(() => {
@@ -129,10 +129,11 @@ function AttendanceHeatmap() {
 const LEAVE_TYPES = ['Medical', 'Personal', 'Event', 'Family Event', 'Other'];
 
 function AttendanceRequestModal({ open, onClose }) {
+  const dispatch = useAppDispatch();
   const { showToast, broadcast } = useNotifications();
   const today = new Date().toISOString().split('T')[0];
   const [scope, setScope] = useState('course');
-  const [courses, setCourses] = useState(null);
+  const courses = useAppSelector((state) => state.studentCourses.items);
   const [courseId, setCourseId] = useState('');
   const [startDate, setStartDate] = useState(today);
   const [endDate, setEndDate] = useState(today);
@@ -144,16 +145,13 @@ function AttendanceRequestModal({ open, onClose }) {
   useEffect(() => {
     if (!open) return;
     setScope('course');
-    setCourses(null);
     setCourseId('');
     setStartDate(today);
     setEndDate(today);
     setLeaveType('');
     setReason('');
     setFile(null);
-    apiFetch('/students/me/courses')
-      .then(setCourses)
-      .catch(() => setCourses([]));
+    dispatch(fetchMyCourses());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
@@ -166,18 +164,15 @@ function AttendanceRequestModal({ open, onClose }) {
     setSubmitting(true);
     try {
       const uploaded = file ? await uploadFile(file, 'attendance_request') : null;
-      const res = await apiFetch('/attendance-request', {
-        method: 'POST',
-        body: JSON.stringify({
-          scope,
-          course_id: scope === 'course' ? courseId : undefined,
-          start_date: startDate,
-          end_date: endDate,
-          leave_type: leaveType || undefined,
-          reason: reason.trim(),
-          file_id: uploaded?.file_id ?? null,
-        }),
-      });
+      const res = await dispatch(createAttendanceRequest({
+        scope,
+        course_id: scope === 'course' ? courseId : undefined,
+        start_date: startDate,
+        end_date: endDate,
+        leave_type: leaveType || undefined,
+        reason: reason.trim(),
+        file_id: uploaded?.file_id ?? null,
+      })).unwrap();
       const count = res?.data?.requests?.length ?? 0;
       broadcast('admin', 'Student', `📝 Attendance request submitted (${count} session${count === 1 ? '' : 's'}). Please review.`, 'alert');
       showToast(`Request submitted for ${count} session${count === 1 ? '' : 's'}! Admin will review.`, 'success');
@@ -261,15 +256,14 @@ function AttendanceRequestModal({ open, onClose }) {
 }
 
 export default function Attendance() {
-  const [data, setData] = useState(undefined);
-  const [error, setError] = useState(null);
+  const dispatch = useAppDispatch();
+  const data = useAppSelector((state) => state.studentAttendance.data);
+  const error = useAppSelector((state) => state.studentAttendance.error);
   const [requestOpen, setRequestOpen] = useState(false);
 
   useEffect(() => {
-    apiFetch('/students/me/attendance')
-      .then(setData)
-      .catch((e) => setError(e.message));
-  }, []);
+    dispatch(fetchMyAttendance());
+  }, [dispatch]);
 
   const exportCsv = () => {
     const lines = [

@@ -8,10 +8,13 @@
  */
 
 import { useEffect, useState } from 'react';
-import { apiFetch } from '../../api/client';
-import { useAuth } from '../../context/AuthContext';
-import { useNotifications } from '../../context/NotificationsContext';
+import { useAuth } from '../../features/auth/useAuth';
+import { useNotifications } from '../../features/notifications/useNotifications';
 import Modal from '../../components/shared/Modal';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchCourses, createCourse, updateCourseSections } from '../../features/courses/coursesThunks';
+import { fetchAllUsers } from '../../features/users/usersThunks';
+import { enrollStudent } from '../../features/enrollment/enrollmentThunks';
 
 /** Repeatable (section name, faculty) rows — shared by Add Course and Manage Sections. */
 function SectionRows({ rows, setRows, facultyList }) {
@@ -61,13 +64,16 @@ function readSectionRows(rows, showToast) {
 }
 
 function CreateCourseModal({ open, onClose, onCreated }) {
+  const dispatch = useAppDispatch();
   const { showToast } = useNotifications();
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [credits, setCredits] = useState('4');
   const [semester, setSemester] = useState('1');
   const [rows, setRows] = useState([]);
-  const [facultyList, setFacultyList] = useState(null);
+  const allUsers = useAppSelector((state) => state.users.items);
+  const usersStatus = useAppSelector((state) => state.users.status);
+  const facultyList = usersStatus === 'succeeded' || usersStatus === 'failed' ? allUsers.filter((u) => u.role === 'faculty') : null;
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -77,10 +83,8 @@ function CreateCourseModal({ open, onClose, onCreated }) {
     setCredits('4');
     setSemester('1');
     setRows([]);
-    apiFetch('/admin/users')
-      .then((users) => setFacultyList(users.filter((u) => u.role === 'faculty')))
-      .catch(() => setFacultyList([]));
-  }, [open]);
+    dispatch(fetchAllUsers());
+  }, [open, dispatch]);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -91,10 +95,7 @@ function CreateCourseModal({ open, onClose, onCreated }) {
 
     setSubmitting(true);
     try {
-      await apiFetch('/courses', {
-        method: 'POST',
-        body: JSON.stringify({ course_name: name.trim(), course_code: code.trim().toUpperCase(), credits: Number(credits) || null, semester: Number(semester) || null, sections }),
-      });
+      await dispatch(createCourse({ course_name: name.trim(), course_code: code.trim().toUpperCase(), credits: Number(credits) || null, semester: Number(semester) || null, sections })).unwrap();
       showToast('Course created!', 'success');
       onClose();
       onCreated();
@@ -144,18 +145,19 @@ function CreateCourseModal({ open, onClose, onCreated }) {
 }
 
 function ManageSectionsModal({ course, onClose, onSaved }) {
+  const dispatch = useAppDispatch();
   const { showToast } = useNotifications();
   const [rows, setRows] = useState([]);
-  const [facultyList, setFacultyList] = useState(null);
+  const allUsers = useAppSelector((state) => state.users.items);
+  const usersStatus = useAppSelector((state) => state.users.status);
+  const facultyList = usersStatus === 'succeeded' || usersStatus === 'failed' ? allUsers.filter((u) => u.role === 'faculty') : null;
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (!course) return;
     setRows(course.sections || []);
-    apiFetch('/admin/users')
-      .then((users) => setFacultyList(users.filter((u) => u.role === 'faculty')))
-      .catch(() => setFacultyList([]));
-  }, [course]);
+    dispatch(fetchAllUsers());
+  }, [course, dispatch]);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -163,7 +165,7 @@ function ManageSectionsModal({ course, onClose, onSaved }) {
     if (sections === null) return;
     setSubmitting(true);
     try {
-      await apiFetch(`/courses/${course.course_id}/sections`, { method: 'PUT', body: JSON.stringify({ sections }) });
+      await dispatch(updateCourseSections({ courseId: course.course_id, sections })).unwrap();
       showToast('Sections updated!', 'success');
       onClose();
       onSaved();
@@ -193,10 +195,15 @@ function ManageSectionsModal({ course, onClose, onSaved }) {
 }
 
 function EnrollStudentModal({ open, onClose }) {
+  const dispatch = useAppDispatch();
   const { user } = useAuth();
   const { showToast, send } = useNotifications();
-  const [students, setStudents] = useState(null);
-  const [courses, setCourses] = useState(null);
+  const allUsers = useAppSelector((state) => state.users.items);
+  const usersStatus = useAppSelector((state) => state.users.status);
+  const students = usersStatus === 'succeeded' || usersStatus === 'failed' ? allUsers.filter((u) => u.role === 'student') : null;
+  const allCourses = useAppSelector((state) => state.courses.items);
+  const coursesStatus = useAppSelector((state) => state.courses.status);
+  const courses = coursesStatus === 'succeeded' || coursesStatus === 'failed' ? allCourses : null;
   const [studentId, setStudentId] = useState('');
   const [courseId, setCourseId] = useState('');
   const [section, setSection] = useState('');
@@ -207,13 +214,9 @@ function EnrollStudentModal({ open, onClose }) {
     setStudentId('');
     setCourseId('');
     setSection('');
-    apiFetch('/admin/users')
-      .then((users) => setStudents(users.filter((u) => u.role === 'student')))
-      .catch(() => setStudents([]));
-    apiFetch('/courses')
-      .then(setCourses)
-      .catch(() => setCourses([]));
-  }, [open]);
+    dispatch(fetchAllUsers());
+    dispatch(fetchCourses());
+  }, [open, dispatch]);
 
   const sectionOptions = courses?.find((c) => c.course_id === courseId)?.sections || [];
 
@@ -226,7 +229,7 @@ function EnrollStudentModal({ open, onClose }) {
 
     setSubmitting(true);
     try {
-      await apiFetch('/enrollment', { method: 'POST', body: JSON.stringify({ student_id: studentId, course_id: courseId, section }) });
+      await dispatch(enrollStudent({ student_id: studentId, course_id: courseId, section })).unwrap();
       const from = user?.first_name || 'Academic Head';
       send(studentId, from, `📖 You have been enrolled in a new course by ${from}. Check your "My Courses" section for details.`, 'info');
       showToast('Student enrolled successfully! Student has been notified. ✅', 'success');
@@ -293,14 +296,18 @@ function EnrollStudentModal({ open, onClose }) {
 }
 
 export default function CourseManagement() {
-  const [courses, setCourses] = useState(undefined);
+  const dispatch = useAppDispatch();
+  const allCourses = useAppSelector((state) => state.courses.items);
+  const coursesStatus = useAppSelector((state) => state.courses.status);
+  const courses = coursesStatus === 'succeeded' || coursesStatus === 'failed' ? allCourses : undefined;
   const [createOpen, setCreateOpen] = useState(false);
   const [enrollOpen, setEnrollOpen] = useState(false);
   const [sectionsTarget, setSectionsTarget] = useState(null);
 
-  const load = () => apiFetch('/courses').then(setCourses).catch(() => setCourses([]));
+  const load = () => dispatch(fetchCourses());
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

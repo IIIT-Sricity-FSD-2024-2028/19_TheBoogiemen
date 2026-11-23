@@ -17,8 +17,8 @@
  */
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { useNotifications } from '../../context/NotificationsContext';
+import { useAuth } from '../../features/auth/useAuth';
+import { useNotifications } from '../../features/notifications/useNotifications';
 import SendAlertModal from '../../components/shared/SendAlertModal';
 import MeetingModal from '../../components/shared/MeetingModal';
 import Modal from '../../components/shared/Modal';

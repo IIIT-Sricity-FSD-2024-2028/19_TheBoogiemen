@@ -1,31 +1,18 @@
-import { useState, useEffect } from 'react';
-import { apiFetch } from '../../api/client';
+import { useEffect } from 'react';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchMyCourses } from '../../features/studentCourses/studentCoursesThunks';
 
 export default function Courses() {
-  const [courses, setCourses] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const loadCourses = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await apiFetch('/students/me/courses');
-      setCourses(data || []);
-    } catch (err) {
-      console.error('Failed to load courses:', err);
-      setError('Failed to load courses. Please try again later.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const dispatch = useAppDispatch();
+  const courses = useAppSelector((state) => state.studentCourses.items) || [];
+  const status = useAppSelector((state) => state.studentCourses.status);
 
   useEffect(() => {
-    loadCourses();
-  }, []);
+    dispatch(fetchMyCourses());
+  }, [dispatch]);
 
-  if (loading) return <div className="loading-spinner">Loading courses...</div>;
-  if (error) return <div className="error-message">{error}</div>;
+  if (status === 'idle' || status === 'loading') return <div className="loading-spinner">Loading courses...</div>;
+  if (status === 'failed') return <div className="error-message">Failed to load courses. Please try again later.</div>;
 
   return (
     <div className="stats-card">

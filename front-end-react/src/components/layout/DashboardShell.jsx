@@ -5,14 +5,15 @@
  * <body>. One shell, parameterized by props, instead of five copies.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { apiFetch } from '../../api/client';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../features/auth/useAuth';
 import useBodyClass from '../../hooks/useBodyClass';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import NotificationBell from './NotificationBell';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchLicensedModules } from '../../features/licensedModules/licensedModulesThunks';
 
 export default function DashboardShell({
   brandSubtitle,
@@ -29,15 +30,14 @@ export default function DashboardShell({
   useBodyClass('dashboard-body');
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
 
   // null = not loaded yet / lookup failed — Sidebar treats that as "show
   // everything" (see its own comment).
-  const [licensedModules, setLicensedModules] = useState(null);
+  const licensedModules = useAppSelector((state) => state.licensedModules.modules);
   useEffect(() => {
-    apiFetch('/billing/colleges/me/modules')
-      .then((res) => setLicensedModules(res?.data?.modules || null))
-      .catch(() => {});
-  }, []);
+    dispatch(fetchLicensedModules());
+  }, [dispatch]);
 
   const handleLogout = async () => {
     await logout();

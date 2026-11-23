@@ -1,22 +1,16 @@
 /**
- * NotificationsContext — REDUX_MIGRATION_PLAN.md Phase 2 facade.
- *
- * `useNotifications()` now reads/writes the Redux `notificationsSlice`
- * (features/notifications) — same hook name, same returned shape
- * (`toast, showToast, forUser, getUnreadBC, unread, send, broadcast,
- * broadcastAll, markRead, markBCRead, clearAll`) — so all 34 call sites
- * across the app are UNCHANGED.
- *
- * `NotificationsProvider` is now an inert pass-through, same reasoning as
- * AuthContext.jsx's: persistence and cross-tab sync both moved to
- * store/index.js (a middleware + a listener registered once at module
- * load, not once per provider mount — equivalent today, but means this
- * component can be deleted in Phase 4 without losing either).
+ * useNotifications — REDUX_MIGRATION_PLAN.md Phase 4: moved out of
+ * context/NotificationsContext.jsx now that nothing needs the
+ * Context-Provider shape anymore (NotificationsProvider was already an
+ * inert pass-through since Phase 2 — persistence and cross-tab sync both
+ * live in store/index.js, not in a provider's mount lifecycle). Same hook
+ * name, same returned shape, so every call site only needed its import
+ * path updated, not its usage.
  *
  * TOAST TIMER NOTE: the pre-Redux provider held its pending-dismiss timer
- * in a `useRef`, safe because the provider mounts exactly once for the
+ * in a `useRef`, safe because the provider mounted exactly once for the
  * whole app. A facade hook has no such guarantee — `useNotifications()` is
- * called from 34 different components, so a `useRef` here would give each
+ * called from 30+ different components, so a `useRef` here would give each
  * CALLER its own independent timer instead of the one shared timer the
  * original behavior depends on (newest toast cancels any still-pending
  * dismissal, regardless of which component triggered either one). A
@@ -25,8 +19,8 @@
  * the direct one-for-one replacement, not a new design.
  */
 import { useCallback } from 'react';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { useAuth } from './AuthContext';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { useAuth } from '../auth/useAuth';
 import {
   personalReceived,
   broadcastReceived,
@@ -34,17 +28,13 @@ import {
   personalCleared,
   toastShown,
   toastCleared,
-} from '../features/notifications/notificationsSlice';
-import { visibleToViewer, readBCReadIds, writeBCReadIds } from '../features/notifications/notificationsStorage';
+} from './notificationsSlice';
+import { visibleToViewer, readBCReadIds, writeBCReadIds } from './notificationsStorage';
 
 let toastTimerId = null;
 
 const timeLabel = () =>
   new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
-
-export function NotificationsProvider({ children }) {
-  return children;
-}
 
 export function useNotifications() {
   const dispatch = useAppDispatch();

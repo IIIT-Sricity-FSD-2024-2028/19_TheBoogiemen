@@ -8,8 +8,12 @@
  * port and the legacy markup it came from.
  */
 
-import { useEffect, useState } from 'react';
-import { apiFetch } from '../../api/client';
+import { useEffect } from 'react';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchOverview } from '../../features/institutionalReports/institutionalReportsThunks';
+import { fetchAllLeaves } from '../../features/adminLeave/adminLeaveThunks';
+import { fetchAttendanceRequests } from '../../features/attendanceRequests/attendanceRequestsThunks';
+import { fetchResourceBookings } from '../../features/resourceBookings/resourceBookingsThunks';
 
 export default function Dashboard({ onNavigate }) {
   return (
@@ -22,16 +26,15 @@ export default function Dashboard({ onNavigate }) {
 }
 
 function Metrics({ onNavigate }) {
-  const [counts, setCounts] = useState({ students: 0, faculty: 0, courses: 0, attainment: 'No data yet' });
+  const dispatch = useAppDispatch();
+  const summary = useAppSelector((state) => state.institutionalReports.overview);
+  const counts = summary
+    ? { students: summary.total_students, faculty: summary.total_faculty, courses: summary.total_courses, attainment: summary.avg_co_attainment }
+    : { students: 0, faculty: 0, courses: 0, attainment: 'No data yet' };
 
   useEffect(() => {
-    apiFetch('/reports/overview')
-      .then((data) => {
-        const s = data.summary;
-        setCounts({ students: s.total_students, faculty: s.total_faculty, courses: s.total_courses, attainment: s.avg_co_attainment });
-      })
-      .catch(() => {});
-  }, []);
+    dispatch(fetchOverview());
+  }, [dispatch]);
 
   return (
     <div className="metrics-grid">
@@ -60,14 +63,13 @@ function Metrics({ onNavigate }) {
 }
 
 function SystemOverview() {
-  const [summary, setSummary] = useState(undefined);
-  const [error, setError] = useState(null);
+  const dispatch = useAppDispatch();
+  const summary = useAppSelector((state) => state.institutionalReports.overview);
+  const error = useAppSelector((state) => state.institutionalReports.error);
 
   useEffect(() => {
-    apiFetch('/reports/overview')
-      .then((data) => setSummary(data.summary))
-      .catch((e) => setError(e.message));
-  }, []);
+    dispatch(fetchOverview());
+  }, [dispatch]);
 
   return (
     <div className="stats-card" style={{ marginTop: 20 }}>
@@ -75,7 +77,7 @@ function SystemOverview() {
       <div className="stats-card-body" style={{ padding: 24, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         {error ? (
           <p style={{ color: '#ef4444', gridColumn: '1/-1' }}>Failed: {error}</p>
-        ) : summary === undefined ? null : (
+        ) : summary === null ? null : (
           <>
             <Stat label="Total Students" value={summary.total_students} />
             <Stat label="Total Faculty" value={summary.total_faculty} />
@@ -100,24 +102,31 @@ function Stat({ label, value, color }) {
 }
 
 function ActionRequired({ onNavigate }) {
-  const [items, setItems] = useState(undefined);
+  const dispatch = useAppDispatch();
+  const { items: leaves, status: leavesStatus } = useAppSelector((state) => state.adminLeave);
+  const { items: attReqs, status: attStatus } = useAppSelector((state) => state.attendanceRequests);
+  const { items: bookings, status: bookingsStatus } = useAppSelector((state) => state.resourceBookings);
 
   useEffect(() => {
-    Promise.all([apiFetch('/leave').catch(() => []), apiFetch('/attendance-requests').catch(() => []), apiFetch('/resource-bookings').catch(() => [])])
-      .then(([leaves, attReqs, bookings]) => {
-        const pendLeaves = leaves.filter((l) => l.status === 'pending').length;
-        const pendAtt = attReqs.filter((r) => r.admin_status === 'pending').length;
-        const pendBook = bookings.filter((b) => b.status === 'pending').length;
-        const list = [];
-        if (pendLeaves) list.push({ icon: '🗓️', text: `${pendLeaves} leave(s) pending approval`, view: 'leave-management' });
-        if (pendAtt) list.push({ icon: '📝', text: `${pendAtt} attendance request(s) pending`, view: 'attendance-override' });
-        if (pendBook) list.push({ icon: '🏢', text: `${pendBook} resource booking(s) pending`, view: 'resource-management' });
-        setItems(list);
-      })
-      .catch(() => setItems([]));
-  }, []);
+    dispatch(fetchAllLeaves());
+    dispatch(fetchAttendanceRequests());
+    dispatch(fetchResourceBookings());
+  }, [dispatch]);
 
-  if (items === undefined) return null;
+  // Wait for all three to settle before computing anything, same as the
+  // pre-Redux page's own Promise.all — each slice's own rejected handler
+  // already degrades to an empty array, matching that Promise.all's own
+  // per-fetch .catch(() => []).
+  const settled = (s) => s === 'succeeded' || s === 'failed';
+  if (!settled(leavesStatus) || !settled(attStatus) || !settled(bookingsStatus)) return null;
+
+  const pendLeaves = (leaves || []).filter((l) => l.status === 'pending').length;
+  const pendAtt = (attReqs || []).filter((r) => r.admin_status === 'pending').length;
+  const pendBook = (bookings || []).filter((b) => b.status === 'pending').length;
+  const items = [];
+  if (pendLeaves) items.push({ icon: '🗓️', text: `${pendLeaves} leave(s) pending approval`, view: 'leave-management' });
+  if (pendAtt) items.push({ icon: '📝', text: `${pendAtt} attendance request(s) pending`, view: 'attendance-override' });
+  if (pendBook) items.push({ icon: '🏢', text: `${pendBook} resource booking(s) pending`, view: 'resource-management' });
 
   return (
     <div style={{ marginTop: 20 }}>

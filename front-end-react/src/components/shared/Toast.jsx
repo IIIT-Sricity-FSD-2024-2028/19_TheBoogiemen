@@ -4,7 +4,7 @@
  * Mounted once at the app root so it's visible from any page.
  */
 
-import { useNotifications } from '../../context/NotificationsContext';
+import { useNotifications } from '../../features/notifications/useNotifications';
 
 const COLORS = {
   error: '#ef4444',

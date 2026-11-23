@@ -6,7 +6,7 @@
  * send/broadcast/markRead — those were never async either. `Date.now()`/
  * `toLocaleString()` timestamping happens in the FACADE (the action
  * creator's caller), not in a reducer, so the reducer stays a pure function
- * of (state, already-built entry) — see context/NotificationsContext.jsx.
+ * of (state, already-built entry) — see features/notifications/useNotifications.js.
  */
 import { createSlice } from '@reduxjs/toolkit';
 

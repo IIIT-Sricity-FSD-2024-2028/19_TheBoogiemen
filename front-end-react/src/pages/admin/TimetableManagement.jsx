@@ -1,13 +1,25 @@
 import { useEffect, useState, useCallback } from 'react';
-import { apiFetch } from '../../api/client';
-import { useNotifications } from '../../context/NotificationsContext';
+import { useNotifications } from '../../features/notifications/useNotifications';
 import Modal from '../../components/shared/Modal';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchCourses } from '../../features/courses/coursesThunks';
+import { fetchAllUsers } from '../../features/users/usersThunks';
+import { fetchResources } from '../../features/resources/resourcesThunks';
+import {
+  fetchTimetable as fetchTimetableData,
+  validateTimetable,
+  saveTimetableSlot,
+  deleteTimetableSlot,
+  publishTimetable,
+  generateTimetable,
+} from '../../features/timetableManagement/timetableManagementThunks';
 
 const DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI'];
 const TIMES = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00'];
 const TYPES = ['lecture', 'lab', 'tutorial'];
 
 export default function TimetableManagement() {
+  const dispatch = useAppDispatch();
   const { showToast } = useNotifications();
 
   // Filters & State
@@ -17,11 +29,12 @@ export default function TimetableManagement() {
   const [academicYear, setAcademicYear] = useState('2024-2025');
 
   // Loaded Data
-  const [timetableData, setTimetableData] = useState(null);
-  const [courses, setCourses] = useState([]);
-  const [facultyList, setFacultyList] = useState([]);
-  const [resources, setResources] = useState([]);
-  const [validationReport, setValidationReport] = useState(null);
+  const timetableData = useAppSelector((state) => state.timetableManagement.data);
+  const validationReport = useAppSelector((state) => state.timetableManagement.validationReport);
+  const courses = useAppSelector((state) => state.courses.items);
+  const allUsers = useAppSelector((state) => state.users.items);
+  const facultyList = allUsers.filter((u) => u.role === 'faculty');
+  const resources = useAppSelector((state) => state.resources.items) || [];
   const [loading, setLoading] = useState(false);
 
   // Slot Edit / Create Modal State
@@ -45,39 +58,21 @@ export default function TimetableManagement() {
   const fetchTimetable = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await apiFetch(`/timetable?section=${section}&status=all`);
-      setTimetableData(res);
-
-      // Validate
-      const valRes = await apiFetch('/timetable/validate', {
-        method: 'POST',
-        body: JSON.stringify({ section }),
-      });
-      setValidationReport(valRes);
+      await dispatch(fetchTimetableData({ section })).unwrap();
+      await dispatch(validateTimetable({ section })).unwrap();
     } catch (err) {
       showToast('Failed to load timetable: ' + err.message, 'error');
     } finally {
       setLoading(false);
     }
-  }, [section, showToast]);
+  }, [section, showToast, dispatch]);
 
   // Initial metadata loading
   useEffect(() => {
-    apiFetch('/courses')
-      .then((res) => setCourses(Array.isArray(res) ? res : res?.data || []))
-      .catch(() => setCourses([]));
-
-    apiFetch('/admin/users')
-      .then((res) => {
-        const list = Array.isArray(res) ? res : [];
-        setFacultyList(list.filter((u) => u.role === 'faculty'));
-      })
-      .catch(() => setFacultyList([]));
-
-    apiFetch('/resources')
-      .then((res) => setResources(Array.isArray(res) ? res : res?.data || []))
-      .catch(() => setResources([]));
-  }, []);
+    dispatch(fetchCourses());
+    dispatch(fetchAllUsers());
+    dispatch(fetchResources());
+  }, [dispatch]);
 
   useEffect(() => {
     fetchTimetable();
@@ -131,10 +126,7 @@ export default function TimetableManagement() {
         force,
       };
 
-      const res = await apiFetch('/timetable/slot', {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      });
+      const res = await dispatch(saveTimetableSlot(payload)).unwrap();
 
       if (!res.success && res.hasConflicts) {
         const confirmForce = window.confirm(
@@ -162,7 +154,7 @@ export default function TimetableManagement() {
   const handleDeleteSlot = async (slotId) => {
     if (!window.confirm('Are you sure you want to delete this class session?')) return;
     try {
-      await apiFetch(`/timetable/slot/${slotId}`, { method: 'DELETE' });
+      await dispatch(deleteTimetableSlot(slotId)).unwrap();
       showToast('Class session removed. 🗑️', 'info');
       setSlotModalOpen(false);
       fetchTimetable();
@@ -182,10 +174,7 @@ export default function TimetableManagement() {
     }
 
     try {
-      const res = await apiFetch('/timetable/publish', {
-        method: 'POST',
-        body: JSON.stringify({ section, force }),
-      });
+      const res = await dispatch(publishTimetable({ section, force })).unwrap();
       showToast(res.message || 'Timetable published! Students & faculty can now view it. 🚀', 'success');
       fetchTimetable();
     } catch (err) {
@@ -197,15 +186,12 @@ export default function TimetableManagement() {
   const handleGenerate = async () => {
     setGenerating(true);
     try {
-      const res = await apiFetch('/timetable/generate', {
-        method: 'POST',
-        body: JSON.stringify({
-          section,
-          semester: Number(semester),
-          academic_year: academicYear,
-          clearExistingDrafts: clearDraftsOnGen,
-        }),
-      });
+      const res = await dispatch(generateTimetable({
+        section,
+        semester: Number(semester),
+        academic_year: academicYear,
+        clearExistingDrafts: clearDraftsOnGen,
+      })).unwrap();
 
       if (res.success) {
         showToast(res.message || 'Draft sessions generated! 📅', 'success');

@@ -6,13 +6,15 @@
  */
 
 import { useState } from 'react';
-import { apiFetch } from '../../api/client';
-import { useAuth } from '../../context/AuthContext';
-import { useNotifications } from '../../context/NotificationsContext';
+import { useAuth } from '../../features/auth/useAuth';
+import { useNotifications } from '../../features/notifications/useNotifications';
+import { useAppDispatch } from '../../store/hooks';
+import { changePassword } from '../../features/auth/authThunks';
 
 const PASSWORD_RE = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
 export default function Settings() {
+  const dispatch = useAppDispatch();
   const { user } = useAuth();
   const { showToast } = useNotifications();
   const [current, setCurrent] = useState('');
@@ -29,10 +31,7 @@ export default function Settings() {
       return showToast('Password needs 8+ characters with an uppercase, lowercase, number and special character', 'warning');
     }
     try {
-      await apiFetch('/auth/change-password', {
-        method: 'POST',
-        body: JSON.stringify({ current_password: current, new_password: newPass }),
-      });
+      await dispatch(changePassword({ currentPassword: current, newPassword: newPass })).unwrap();
       showToast('Password updated! Use it the next time you sign in.', 'success');
       setCurrent('');
       setNewPass('');

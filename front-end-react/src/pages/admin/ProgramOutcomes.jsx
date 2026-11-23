@@ -11,7 +11,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { useNotifications } from '../../context/NotificationsContext';
+import { useNotifications } from '../../features/notifications/useNotifications';
 import { fetchProgramOutcomes, createProgramOutcome, deleteProgramOutcome } from '../../features/programOutcomes/programOutcomesThunks';
 
 export default function ProgramOutcomes() {
