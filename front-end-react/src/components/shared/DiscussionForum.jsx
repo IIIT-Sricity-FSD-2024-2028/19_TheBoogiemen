@@ -4,12 +4,15 @@
  * role-agnostic in the legacy code already (same markup/behavior on
  * student.html and faculty.html, just a different container id) — no
  * `role` prop needed here, unlike Leave/Research/Timetable.
+ *
+ * Redux migration (Dev 5): discussionsSlice/Thunks.
  */
 
 import { useEffect, useState } from 'react';
-import { apiFetch } from '../../api/client';
 import { useNotifications } from '../../context/NotificationsContext';
 import Modal from './Modal';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchDiscussions, fetchDiscussionThread, createDiscussion, postReply } from '../../features/discussions/discussionsThunks';
 
 function ThreadRow({ post, onOpen }) {
   const date = post.created_at ? new Date(post.created_at).toLocaleDateString() : '';
@@ -29,6 +32,7 @@ function ThreadRow({ post, onOpen }) {
 }
 
 function NewThreadModal({ open, onClose, onPosted }) {
+  const dispatch = useAppDispatch();
   const { showToast } = useNotifications();
   const [title, setTitle] = useState('');
   const [tag, setTag] = useState('general');
@@ -53,10 +57,7 @@ function NewThreadModal({ open, onClose, onPosted }) {
     if (!content.trim() || content.trim().length < 10) return showToast('Content must be at least 10 characters', 'warning');
     setSubmitting(true);
     try {
-      await apiFetch('/discussions', {
-        method: 'POST',
-        body: JSON.stringify({ title: title.trim(), content: content.trim(), tag, course_id: courseId.trim() }),
-      });
+      await dispatch(createDiscussion({ title: title.trim(), content: content.trim(), tag, course_id: courseId.trim() })).unwrap();
       showToast('Discussion posted!', 'success');
       handleClose();
       onPosted();
@@ -107,18 +108,18 @@ function NewThreadModal({ open, onClose, onPosted }) {
 }
 
 function ThreadDetailModal({ postId, onClose, onReplied }) {
+  const dispatch = useAppDispatch();
   const { showToast } = useNotifications();
-  const [post, setPost] = useState(null);
+  const post = useAppSelector((state) => (postId ? state.discussions.byId[postId] : undefined)) ?? null;
   const [reply, setReply] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (!postId) return;
-    setPost(null);
     setReply('');
-    apiFetch(`/discussions/${postId}`)
-      .then(setPost)
-      .catch((e) => showToast('Failed to load thread: ' + e.message, 'error'));
+    dispatch(fetchDiscussionThread(postId)).then((action) => {
+      if (action.error) showToast('Failed to load thread: ' + action.error.message, 'error');
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [postId]);
 
@@ -126,7 +127,7 @@ function ThreadDetailModal({ postId, onClose, onReplied }) {
     if (!reply.trim()) return showToast('Please write a reply', 'warning');
     setSubmitting(true);
     try {
-      await apiFetch(`/discussions/${postId}/replies`, { method: 'POST', body: JSON.stringify({ content: reply.trim() }) });
+      await dispatch(postReply({ postId, content: reply.trim() })).unwrap();
       showToast('Reply posted!', 'success');
       onClose();
       onReplied();
@@ -179,14 +180,18 @@ function ThreadDetailModal({ postId, onClose, onReplied }) {
 }
 
 export default function DiscussionForum() {
-  const [posts, setPosts] = useState(undefined);
+  const dispatch = useAppDispatch();
+  const posts = useAppSelector((state) => state.discussions.items);
   const [newThreadOpen, setNewThreadOpen] = useState(false);
   const [openPostId, setOpenPostId] = useState(null);
   const { showToast } = useNotifications();
 
-  const load = () => apiFetch('/discussions').then(setPosts).catch((e) => showToast('Failed to load discussions: ' + e.message, 'error'));
+  const load = () => dispatch(fetchDiscussions()).then((action) => {
+    if (action.error) showToast('Failed to load discussions: ' + action.error.message, 'error');
+  });
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

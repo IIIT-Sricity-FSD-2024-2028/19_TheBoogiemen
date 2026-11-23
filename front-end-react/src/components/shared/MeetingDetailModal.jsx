@@ -1,7 +1,9 @@
+/** Redux migration (Dev 5): meetingsSlice/Thunks. */
 import { useState } from 'react';
 import Modal from './Modal';
-import { apiFetch } from '../../api/client';
 import { useNotifications } from '../../context/NotificationsContext';
+import { useAppDispatch } from '../../store/hooks';
+import { acceptMeeting, denyMeeting, acceptRescheduleProposal, declineRescheduleProposal, cancelMeeting } from '../../features/meetings/meetingsThunks';
 
 const STATUS_CONFIG = {
   PENDING: { label: 'Pending Approval', color: '#b45309', bg: '#fef3c7', border: '#fcd34d' },
@@ -22,6 +24,7 @@ export default function MeetingDetailModal({
   onOpenReschedule,
   onOpenComplete,
 }) {
+  const dispatch = useAppDispatch();
   const { showToast, send } = useNotifications();
   const [acting, setActing] = useState(false);
 
@@ -41,17 +44,17 @@ export default function MeetingDetailModal({
   const handleFacultyAccept = async () => {
     setActing(true);
     try {
-      await apiFetch(`/meetings/${meeting.meeting_id}/accept`, {
-        method: 'PATCH',
-        body: JSON.stringify({
+      await dispatch(acceptMeeting({
+        meetingId: meeting.meeting_id,
+        payload: {
           scheduledDate: meeting.requested_date,
           scheduledStartTime: meeting.requested_start_time,
           scheduledEndTime: meeting.requested_end_time,
           meetingType: meeting.meeting_type,
           meetingLink: meeting.meeting_link,
           location: meeting.location,
-        }),
-      });
+        },
+      })).unwrap();
       showToast('Meeting request accepted! Confirmed on schedule.', 'success');
       send(
         meeting.student_id,
@@ -75,10 +78,7 @@ export default function MeetingDetailModal({
 
     setActing(true);
     try {
-      await apiFetch(`/meetings/${meeting.meeting_id}/deny`, {
-        method: 'PATCH',
-        body: JSON.stringify({ reason: reason || 'Faculty is currently unavailable' }),
-      });
+      await dispatch(denyMeeting({ meetingId: meeting.meeting_id, reason: reason || 'Faculty is currently unavailable' })).unwrap();
       showToast('Meeting declined.', 'info');
       send(
         meeting.student_id,
@@ -99,7 +99,7 @@ export default function MeetingDetailModal({
   const handleStudentAcceptProposed = async () => {
     setActing(true);
     try {
-      await apiFetch(`/meetings/${meeting.meeting_id}/accept-reschedule`, { method: 'PATCH' });
+      await dispatch(acceptRescheduleProposal(meeting.meeting_id)).unwrap();
       showToast('Proposed time accepted! Meeting is confirmed.', 'success');
       send(
         meeting.faculty_id,
@@ -120,7 +120,7 @@ export default function MeetingDetailModal({
   const handleStudentDeclineProposed = async () => {
     setActing(true);
     try {
-      await apiFetch(`/meetings/${meeting.meeting_id}/decline-reschedule`, { method: 'PATCH' });
+      await dispatch(declineRescheduleProposal(meeting.meeting_id)).unwrap();
       showToast('Proposal declined. Meeting status restored.', 'info');
       send(
         meeting.faculty_id,
@@ -142,10 +142,7 @@ export default function MeetingDetailModal({
     if (!window.confirm('Are you sure you want to cancel this meeting?')) return;
     setActing(true);
     try {
-      await apiFetch(`/meetings/${meeting.meeting_id}/cancel`, {
-        method: 'PATCH',
-        body: JSON.stringify({ reason: 'Cancelled by user' }),
-      });
+      await dispatch(cancelMeeting({ meetingId: meeting.meeting_id, reason: 'Cancelled by user' })).unwrap();
       showToast('Meeting cancelled.', 'info');
       onRefresh?.();
       onClose();

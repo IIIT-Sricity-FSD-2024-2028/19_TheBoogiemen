@@ -32,6 +32,18 @@ import markAttendanceReducer from '../features/markAttendance/markAttendanceSlic
 import facultyLeaveReducer from '../features/facultyLeave/facultyLeaveSlice';
 import assessmentsReducer from '../features/assessments/assessmentsSlice';
 import marksEntryReducer from '../features/marksEntry/marksEntrySlice';
+import academicMetricsReducer from '../features/academicMetrics/academicMetricsSlice';
+import eventsReducer from '../features/events/eventsSlice';
+import resourcesReducer from '../features/resources/resourcesSlice';
+import resourceBookingsReducer from '../features/resourceBookings/resourceBookingsSlice';
+import feesReducer from '../features/fees/feesSlice';
+import discussionsReducer from '../features/discussions/discussionsSlice';
+import adminLeaveReducer from '../features/adminLeave/adminLeaveSlice';
+import billingReducer from '../features/billing/billingSlice';
+import myCollegeReducer from '../features/myCollege/myCollegeSlice';
+import supportThreadReducer from '../features/supportThread/supportThreadSlice';
+import meetingsReducer from '../features/meetings/meetingsSlice';
+import submissionsReducer from '../features/submissions/submissionsSlice';
 import { getUser } from '../api/client';
 
 export const store = configureStore({
@@ -57,6 +69,18 @@ export const store = configureStore({
     facultyLeave: facultyLeaveReducer,
     assessments: assessmentsReducer,
     marksEntry: marksEntryReducer,
+    academicMetrics: academicMetricsReducer,
+    events: eventsReducer,
+    resources: resourcesReducer,
+    resourceBookings: resourceBookingsReducer,
+    fees: feesReducer,
+    discussions: discussionsReducer,
+    adminLeave: adminLeaveReducer,
+    billing: billingReducer,
+    myCollege: myCollegeReducer,
+    supportThread: supportThreadReducer,
+    meetings: meetingsReducer,
+    submissions: submissionsReducer,
   },
   middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(notificationsPersistenceMiddleware),
   // Hydrates from localStorage once, at real app boot — same effect as the

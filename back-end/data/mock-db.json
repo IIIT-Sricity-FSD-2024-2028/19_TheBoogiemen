@@ -156,6 +156,17 @@
       "role": "student",
       "college_id": "c-default",
       "password_hash": "$2b$12$U.YR4Z0wfx5X0D/g6cNanOdJYNXjtZeVPxi9OCIo28nWteztgZbXu"
+    },
+    {
+      "user_id": "u1794900918894",
+      "username": "Dev5Hired",
+      "first_name": "Dev5Hired",
+      "last_name": "",
+      "email": "dev5.hired.admin@example.com",
+      "phone": "",
+      "role": "admin",
+      "college_id": "c-default",
+      "password_hash": "$2b$12$lkdfN8AHJYwT0KwiEFB1nOnzItjcc/d.a6o9H37pGzWwd1UVmsWVq"
     }
   ],
   "students": [
@@ -1613,7 +1624,7 @@
       "leave_id": "l1794898870785",
       "student_id": "u2",
       "student_name": "faculty",
-      "status": "pending",
+      "status": "approved",
       "applied_on": "2026-11-17",
       "leave_type": "Personal",
       "start_date": "2026-11-19",
@@ -1815,7 +1826,7 @@
       "tag": "help",
       "course_id": "FDFED01",
       "created_at": "2026-11-05T10:17:48.045Z",
-      "reply_count": 0,
+      "reply_count": 1,
       "college_id": "c-default"
     }
   ],
@@ -1858,6 +1869,16 @@
       "author_role": "student",
       "content": "Replying to confirm the reply path works too.",
       "created_at": "2026-10-05T08:43:59.934Z",
+      "college_id": "c-default"
+    },
+    {
+      "reply_id": "r1794900728902",
+      "post_id": "p1793873868045",
+      "author_id": "u1",
+      "author_name": "John Doe",
+      "author_role": "student",
+      "content": "Dev5 reply verification.",
+      "created_at": "2026-11-17T07:32:08.902Z",
       "college_id": "c-default"
     }
   ],
@@ -1925,6 +1946,14 @@
       "venue": "Hall X",
       "description": "",
       "college_id": "c-default"
+    },
+    {
+      "event_id": "ev1794900599950",
+      "event_name": "Dev5 Verification Event",
+      "date": "2026-11-22",
+      "venue": "Test Venue",
+      "description": "",
+      "college_id": "c-default"
     }
   ],
   "resources": [
@@ -1952,7 +1981,7 @@
       "type": "Hall",
       "capacity": 20,
       "location": "Admin Block",
-      "status": "available",
+      "status": "in_use",
       "college_id": "c-default"
     },
     {
@@ -2040,13 +2069,14 @@
     },
     {
       "fee_id": "f1791306379849",
-      "status": "pending",
+      "status": "paid",
       "student_id": "u1",
       "semester": "3",
       "fee_type": "Lab Fee",
       "amount": 2500,
       "due_date": "2026-12-31",
-      "college_id": "c-default"
+      "college_id": "c-default",
+      "paid_date": "17/11/2026"
     },
     {
       "fee_id": "f1794841283052",
@@ -3150,6 +3180,24 @@
       "sender_role": "superadmin",
       "content": "Thanks for reaching out, we are looking into it.",
       "created_at": "2026-10-09T13:06:22.535Z"
+    },
+    {
+      "message_id": "sm1794900871623cuv6",
+      "thread_id": "st1791547318114",
+      "sender_id": "u5",
+      "sender_name": "superadmin",
+      "sender_role": "superadmin",
+      "content": "Dev5 superadmin reply verification",
+      "created_at": "2026-11-17T07:34:31.623Z"
+    },
+    {
+      "message_id": "sm1794900939631y15k",
+      "thread_id": "st1791547318114",
+      "sender_id": "u-spoc-demo",
+      "sender_name": "Priya Menon",
+      "sender_role": "spoc",
+      "content": "Dev5 spoc send verification",
+      "created_at": "2026-11-17T07:35:39.631Z"
     }
   ],
   "onboarding_sessions": [
@@ -3345,5 +3393,51 @@
       "created_at": "2026-11-16T13:55:21.911Z"
     }
   ],
-  "meetings": []
+  "meetings": [
+    {
+      "meeting_id": "7a4e9661-dff2-484f-afb9-44863c3035f7",
+      "student_id": "u1",
+      "faculty_id": "u2",
+      "college_id": "c-default",
+      "purpose": "Dev5 verification meeting request agenda",
+      "description": "Dev5 verification meeting request agenda",
+      "requested_date": "2026-11-20",
+      "requested_start_time": "10:00",
+      "requested_end_time": "10:30",
+      "status": "COMPLETED",
+      "meeting_type": "ONLINE",
+      "meeting_platform": "GOOGLE_MEET",
+      "meeting_link": "https://meet.google.com/new",
+      "meeting_history": [
+        {
+          "timestamp": "2026-11-17T07:32:46.862Z",
+          "action": "REQUEST_CREATED",
+          "actor": "u1",
+          "details": "Student submitted meeting request"
+        },
+        {
+          "timestamp": "2026-11-17T07:33:27.313Z",
+          "action": "FACULTY_ACCEPTED",
+          "actor": "u2",
+          "details": "Accepted for 2026-11-20 10:00-10:30"
+        },
+        {
+          "timestamp": "2026-11-17T07:33:43.294Z",
+          "action": "MEETING_COMPLETED",
+          "actor": "u2",
+          "details": "Meeting completed with outcome: Dev5 outcome verification"
+        }
+      ],
+      "created_at": "2026-11-17T07:32:46.862Z",
+      "updated_at": "2026-11-17T07:33:43.294Z",
+      "scheduled_date": "2026-11-20",
+      "scheduled_start_time": "10:00",
+      "scheduled_end_time": "10:30",
+      "faculty_remarks": "",
+      "discussion_notes": "",
+      "outcome": "Dev5 outcome verification",
+      "action_items": "",
+      "completion_timestamp": "2026-11-17T07:33:43.293Z"
+    }
+  ]
 }

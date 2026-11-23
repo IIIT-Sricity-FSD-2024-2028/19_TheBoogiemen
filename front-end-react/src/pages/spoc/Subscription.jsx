@@ -7,10 +7,14 @@
  * The legacy page overrode .metrics-grid to a fixed 3 columns for its 4
  * cards (which actually wraps oddly); the shared .metrics-grid's own
  * auto-fit already lays out 4 cards cleanly, so that override isn't ported.
+ *
+ * Redux migration (Dev 5): myCollegeSlice, shared with Team.jsx's admin
+ * roster — one slice, promoted the moment a real second consumer appeared.
  */
 
-import { useEffect, useState } from 'react';
-import { apiFetch } from '../../api/client';
+import { useEffect } from 'react';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchMyCollege } from '../../features/myCollege/myCollegeThunks';
 
 const PLAN_STATUS_LABEL = { active: 'Active', expiring_soon: 'Expiring soon', expired: 'Expired' };
 const MODULE_LABEL = { research: 'Research', fees: 'Fees', forum: 'Discussion Forum', analytics: 'Analytics' };
@@ -36,13 +40,12 @@ function formatRupees(paise) {
 }
 
 export default function Subscription() {
-  const [college, setCollege] = useState(undefined);
+  const dispatch = useAppDispatch();
+  const college = useAppSelector((state) => state.myCollege.data);
 
   useEffect(() => {
-    apiFetch('/billing/colleges/me')
-      .then((res) => setCollege(res?.data))
-      .catch(() => setCollege(null));
-  }, []);
+    dispatch(fetchMyCollege());
+  }, [dispatch]);
 
   if (college === undefined) return null;
   if (!college) return <p style={{ color: '#ef4444', padding: '12px 0' }}>Failed to load subscription.</p>;

@@ -1,9 +1,12 @@
+/** Redux migration (Dev 5): meetingsSlice/Thunks. */
 import { useState, useEffect } from 'react';
 import Modal from './Modal';
-import { apiFetch } from '../../api/client';
 import { useNotifications } from '../../context/NotificationsContext';
+import { useAppDispatch } from '../../store/hooks';
+import { completeMeeting } from '../../features/meetings/meetingsThunks';
 
 export default function CompleteMeetingModal({ open, meeting, onClose, onRefresh }) {
+  const dispatch = useAppDispatch();
   const { showToast, send } = useNotifications();
   const [outcome, setOutcome] = useState('');
   const [discussionNotes, setDiscussionNotes] = useState('');
@@ -29,15 +32,15 @@ export default function CompleteMeetingModal({ open, meeting, onClose, onRefresh
 
     setSubmitting(true);
     try {
-      await apiFetch(`/meetings/${meeting.meeting_id}/complete`, {
-        method: 'PATCH',
-        body: JSON.stringify({
+      await dispatch(completeMeeting({
+        meetingId: meeting.meeting_id,
+        payload: {
           outcome: outcome.trim(),
           discussionNotes: discussionNotes.trim(),
           actionItems: actionItems.trim(),
           facultyRemarks: facultyRemarks.trim(),
-        }),
-      });
+        },
+      })).unwrap();
 
       showToast('Meeting completed and outcomes recorded! 🎓', 'success');
       send(

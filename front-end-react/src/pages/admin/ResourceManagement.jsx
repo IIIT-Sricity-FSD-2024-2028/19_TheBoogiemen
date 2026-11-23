@@ -4,15 +4,22 @@
  * resourceModal) plus renderAdminResourceBookings() + approveBooking(), the
  * latter injected into resource-management-view at runtime by fixes.js
  * (same pattern documented in faculty/Dashboard.jsx's notes).
+ *
+ * Redux migration (Dev 5): resourcesSlice + resourceBookingsSlice, the
+ * latter also shared with components/shared/ResourceBookingModal.jsx
+ * (faculty's own request-a-booking flow).
  */
 
 import { useEffect, useState } from 'react';
-import { apiFetch } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationsContext';
 import Modal from '../../components/shared/Modal';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchResources, createResource, updateResourceStatus } from '../../features/resources/resourcesThunks';
+import { fetchResourceBookings, decideResourceBooking } from '../../features/resourceBookings/resourceBookingsThunks';
 
 function AddResourceModal({ open, onClose, onCreated }) {
+  const dispatch = useAppDispatch();
   const { showToast } = useNotifications();
   const [name, setName] = useState('');
   const [type, setType] = useState('Lab');
@@ -34,10 +41,7 @@ function AddResourceModal({ open, onClose, onCreated }) {
     if (!type) return showToast('Please select a resource type', 'warning');
     setSubmitting(true);
     try {
-      await apiFetch('/resources', {
-        method: 'POST',
-        body: JSON.stringify({ name: name.trim(), type, capacity: capacity ? Number(capacity) : null, location: location.trim() || null }),
-      });
+      await dispatch(createResource({ name: name.trim(), type, capacity: capacity ? Number(capacity) : null, location: location.trim() || null })).unwrap();
       showToast('Resource added!', 'success');
       onClose();
       onCreated();
@@ -88,18 +92,20 @@ function AddResourceModal({ open, onClose, onCreated }) {
 }
 
 function ResourceBookingRequests({ onResourcesChanged }) {
+  const dispatch = useAppDispatch();
   const { user } = useAuth();
   const { showToast, send, broadcast } = useNotifications();
-  const [bookings, setBookings] = useState(undefined);
+  const bookings = useAppSelector((state) => state.resourceBookings.items);
 
-  const load = () => apiFetch('/resource-bookings').then(setBookings).catch(() => setBookings([]));
+  const load = () => dispatch(fetchResourceBookings());
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const decide = async (b, status) => {
     try {
-      await apiFetch(`/resource-booking/${b.booking_id}`, { method: 'PATCH', body: JSON.stringify({ status }) });
+      await dispatch(decideResourceBooking({ id: b.booking_id, status })).unwrap();
       const from = user?.first_name || user?.username || 'Admin';
       send(b.requested_by, from, status === 'approved' ? `✅ Your booking for "${b.resource_name}" has been APPROVED by ${from}.` : `❌ Your booking for "${b.resource_name}" was REJECTED by ${from}.`, status === 'approved' ? 'info' : 'alert');
       // Cross-notify the other oversight role.
@@ -148,23 +154,24 @@ function ResourceBookingRequests({ onResourcesChanged }) {
 }
 
 export default function ResourceManagement() {
+  const dispatch = useAppDispatch();
   const { showToast, broadcastAll } = useNotifications();
   const { user } = useAuth();
-  const [resources, setResources] = useState(undefined);
+  const resources = useAppSelector((state) => state.resources.items);
   const [addOpen, setAddOpen] = useState(false);
 
-  const load = () => apiFetch('/resources').then(setResources).catch(() => setResources([]));
+  const load = () => dispatch(fetchResources());
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const toggle = async (r) => {
     const status = r.status === 'available' ? 'in_use' : 'available';
     try {
-      await apiFetch(`/resources/${r.resource_id}`, { method: 'PUT', body: JSON.stringify({ status }) });
+      await dispatch(updateResourceStatus({ id: r.resource_id, status })).unwrap();
       const from = user?.first_name || 'Admin';
       broadcastAll(from, `🏢 Resource "${r.name || 'Facility'}" is ${status === 'in_use' ? 'now in use' : 'now available'}.`, 'info');
-      load();
     } catch {
       showToast('Failed', 'error');
     }

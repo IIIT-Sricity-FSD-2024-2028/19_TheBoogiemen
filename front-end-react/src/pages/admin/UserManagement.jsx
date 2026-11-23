@@ -1,10 +1,20 @@
 import { useEffect, useState } from 'react';
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { apiFetch } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationsContext';
 import { downloadCsv } from '../../utils/csv';
 import Modal from '../../components/shared/Modal';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchCourses } from '../../features/courses/coursesThunks';
+import { fetchAcademicMetrics } from '../../features/academicMetrics/academicMetricsThunks';
+import {
+  fetchAllUsers,
+  createUser,
+  updateUserProfile,
+  updateUserRole,
+  deleteUser,
+  bulkOnboardUsers,
+} from '../../features/users/usersThunks';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -24,27 +34,25 @@ return (
  * field of its own (GET /metrics/academic derives it from enrollment ->
  * course.semester), so the semester dropdown's options come from the
  * courses that actually have one, not a hardcoded 1-8 list.
+ *
+ * Redux migration (Dev 5): courses dropdown reuses Dev 3's coursesSlice;
+ * the filtered metrics view is academicMetricsSlice (its own
+ * requestId stale-guard, same shape as attendanceRegisterSlice).
  */
 function AcademicMetrics() {
-const [courses, setCourses] = useState(null);
+const dispatch = useAppDispatch();
+const courses = useAppSelector((state) => state.courses.items);
+const metrics = useAppSelector((state) => state.academicMetrics.data);
 const [courseId, setCourseId] = useState('');
 const [semester, setSemester] = useState('');
-const [metrics, setMetrics] = useState(undefined);
 
 useEffect(() => {
-apiFetch('/courses').then(setCourses).catch(() => setCourses([]));
-}, []);
+dispatch(fetchCourses());
+}, [dispatch]);
 
 useEffect(() => {
-setMetrics(undefined);
-const params = new URLSearchParams();
-if (courseId) params.set('course_id', courseId);
-if (semester) params.set('semester', semester);
-const qs = params.toString();
-apiFetch(`/metrics/academic${qs ? '?' + qs : ''}`)
-.then(setMetrics)
-.catch(() => setMetrics(null));
-}, [courseId, semester]);
+dispatch(fetchAcademicMetrics({ courseId, semester }));
+}, [dispatch, courseId, semester]);
 
 if (metrics === null) return null;
 
@@ -152,6 +160,7 @@ return (
 }
 
 function AddUserModal({ open, onClose, onCreated }) {
+const dispatch = useAppDispatch();
 const { showToast, send } = useNotifications();
 const [firstName, setFirstName] = useState('');
 const [lastName, setLastName] = useState('');
@@ -177,24 +186,21 @@ if (!password || password.length < 8) return showToast('Password must be at leas
 if (!role) return showToast('Please select a role', 'warning');
 setSubmitting(true);
 try {
-await apiFetch('/users', {
-  method: 'POST',
-  body: JSON.stringify({
-    first_name: firstName.trim(),
-    last_name: lastName.trim() || undefined,
-    email: email.trim(),
-    password,
-    role,
-  }),
-});
+await dispatch(createUser({
+  first_name: firstName.trim(),
+  last_name: lastName.trim() || undefined,
+  email: email.trim(),
+  password,
+  role,
+})).unwrap();
 showToast('User created! They can now log in.', 'success');
 onClose();
 onCreated();
 // Welcome notification, sent once we can look up the new user's id.
 setTimeout(async () => {
 try {
-const users = await apiFetch('/admin/users');
-const nu = users.find((u) => u.email === email.trim());
+const action = await dispatch(fetchAllUsers());
+const nu = (action.payload || []).find((u) => u.email === email.trim());
 if (nu) send(nu.user_id, 'Admin', `Welcome to BarelyPassing! Your account (${role}) is ready.`, 'info');
 } catch {
 // Best-effort the account is already created either way.
@@ -262,6 +268,7 @@ faculty: ['first_name', 'last_name', 'email', 'phone', 'designation', 'departmen
  * match, no synonym guessing needed).
  */
 function BulkOnboardModal({ open, onClose, onDone }) {
+const dispatch = useAppDispatch();
 const { showToast } = useNotifications();
 const [role, setRole] = useState('student');
 const [file, setFile] = useState(null);
@@ -284,9 +291,7 @@ if (!file) return showToast('Choose a CSV file first', 'warning');
 setSubmitting(true);
 setResult(null);
 try {
-const formData = new FormData();
-formData.append('file', file);
-const res = await apiFetch(`/users/bulk-onboard?role=${role}`, { method: 'POST', body: formData });
+const res = await dispatch(bulkOnboardUsers({ role, file })).unwrap();
 setResult(res.data);
 showToast(`${res.data.created} created, ${res.data.skipped} skipped.`, res.data.created > 0 ? 'success' : 'warning');
 onDone();
@@ -379,6 +384,7 @@ Upload a roster CSV — a Google Form export works directly if its question titl
 }
 
 function EditUserModal({ user, onClose, onSaved }) {
+const dispatch = useAppDispatch();
 const { showToast } = useNotifications();
 const [username, setUsername] = useState('');
 const [email, setEmail] = useState('');
@@ -395,12 +401,12 @@ setRole(user.role);
 const submit = async () => {
 setSubmitting(true);
 try {
-// Profile fields and role are separate calls â€” the server rejects a
+// Profile fields and role are separate calls — the server rejects a
 // `role` key on the profile route so a routine edit can never carry a
 // privilege change, and the role endpoint applies its own ceiling.
-await apiFetch(`/users/${user.user_id}`, { method: 'PUT', body: JSON.stringify({ username, email }) });
+await dispatch(updateUserProfile({ id: user.user_id, payload: { username, email } })).unwrap();
 if (role && role !== user.role) {
-await apiFetch(`/users/${user.user_id}/role`, { method: 'PATCH', body: JSON.stringify({ role }) });
+await dispatch(updateUserRole({ id: user.user_id, role })).unwrap();
 }
 showToast('User updated!', 'success');
 onClose();
@@ -433,7 +439,7 @@ return (
 </div>
 <div className="modal-footer">
 <button className="submit-btn" style={{ flex: 1 }} onClick={submit} disabled={submitting}>
-{submitting ? 'Savingâ€¦' : 'Save Changes'}
+{submitting ? 'Saving…' : 'Save Changes'}
 </button>
 <button className="btn-cancel" onClick={onClose}>Cancel</button>
 </div>
@@ -442,23 +448,26 @@ return (
 }
 
 export default function UserManagement() {
+const dispatch = useAppDispatch();
 const { showToast } = useNotifications();
 const { user } = useAuth();
-const [users, setUsers] = useState(undefined);
+const users = useAppSelector((state) => state.users.items);
+const usersStatus = useAppSelector((state) => state.users.status);
 const [addOpen, setAddOpen] = useState(false);
 const [bulkOpen, setBulkOpen] = useState(false);
 const [editTarget, setEditTarget] = useState(null);
 
-const load = () => apiFetch('/admin/users').then(setUsers).catch(() => setUsers([]));
+const load = () => dispatch(fetchAllUsers());
 
 useEffect(() => {
 load();
+// eslint-disable-next-line react-hooks/exhaustive-deps
 }, []);
 
 /**
 * Mirror of the backend's canDeleteRole() privilege ceiling, for the UI only.
 * Hides the Delete button on rows the actor is not allowed to remove. The
-* server enforces the same rule regardless â€” this is defense-in-depth.
+* server enforces the same rule regardless — this is defense-in-depth.
 */
 const canDelete = (targetRole) => {
 const actorRole = user?.role;
@@ -471,9 +480,8 @@ return targetRole === 'student' || targetRole === 'faculty';
 const remove = async (id) => {
 if (!window.confirm('Are you sure you want to delete this user?')) return;
 try {
-await apiFetch(`/users/${id}`, { method: 'DELETE' });
+await dispatch(deleteUser(id)).unwrap();
 showToast('User deleted!', 'success');
-load();
 } catch (e) {
 showToast('Failed: ' + e.message, 'error');
 }
@@ -494,7 +502,7 @@ return (
 </div>
 </div>
 <div className="stats-card-body">
-{users === undefined ? (
+{usersStatus === 'idle' || usersStatus === 'loading' ? (
 <div style={{ textAlign: 'center', color: '#64748b', padding: 20 }}>Loading...</div>
 ) : (
 <table className="crud-table">

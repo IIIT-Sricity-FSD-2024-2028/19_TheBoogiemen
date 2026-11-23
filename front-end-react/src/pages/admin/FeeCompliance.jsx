@@ -3,21 +3,30 @@
  * payFee() + openAddFeeModal()/submitAddFee() + openBulkSemFeeModal()/
  * submitBulkSemFee() + openEditFeeModal()/submitEditFee() (super-user.html's
  * addFeeModal/bulkSemFeeModal/editFeeModal).
+ *
+ * Redux migration (Dev 5): feesSlice for /fees (summary+fees always
+ * refetched together after any mutation, never spliced — the summary is
+ * server-computed across every record); the student-name lookup reuses
+ * the shared usersSlice rather than a private /admin/users fetch.
  */
 
 import { useEffect, useState } from 'react';
-import { apiFetch } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationsContext';
 import Modal from '../../components/shared/Modal';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchAllUsers } from '../../features/users/usersThunks';
+import { fetchFees, payFee, createFee, updateFee } from '../../features/fees/feesThunks';
 
 const SEMESTERS = [1, 2, 3, 4, 5, 6, 7, 8];
 const FEE_TYPES = ['Tuition Fee', 'Exam Fee', 'Hostel Fee', 'Lab Fee', 'Library Fee', 'Bus Fee', 'Other'];
 
 function AddFeeModal({ target, onClose, onAdded }) {
+  const dispatch = useAppDispatch();
   const { user } = useAuth();
   const { showToast, send } = useNotifications();
-  const [students, setStudents] = useState(null);
+  const allUsers = useAppSelector((state) => state.users.items);
+  const usersStatus = useAppSelector((state) => state.users.status);
   const [studentId, setStudentId] = useState('');
   const [semester, setSemester] = useState('');
   const [feeType, setFeeType] = useState('');
@@ -25,6 +34,7 @@ function AddFeeModal({ target, onClose, onAdded }) {
   const [due, setDue] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const today = new Date().toISOString().split('T')[0];
+  const students = usersStatus === 'succeeded' || usersStatus === 'failed' ? allUsers.filter((u) => u.role === 'student') : null;
 
   useEffect(() => {
     if (!target) return;
@@ -33,10 +43,8 @@ function AddFeeModal({ target, onClose, onAdded }) {
     setFeeType('');
     setAmount('');
     setDue('');
-    apiFetch('/admin/users')
-      .then((users) => setStudents(users.filter((u) => u.role === 'student')))
-      .catch(() => setStudents([]));
-  }, [target]);
+    dispatch(fetchAllUsers());
+  }, [target, dispatch]);
 
   const submit = async () => {
     let valid = true;
@@ -50,7 +58,7 @@ function AddFeeModal({ target, onClose, onAdded }) {
 
     setSubmitting(true);
     try {
-      await apiFetch('/fees', { method: 'POST', body: JSON.stringify({ student_id: studentId, semester, fee_type: feeType, amount: Number(amount), due_date: due, status: 'pending' }) });
+      await dispatch(createFee({ student_id: studentId, semester, fee_type: feeType, amount: Number(amount), due_date: due, status: 'pending' })).unwrap();
       const from = user?.first_name || 'Admin';
       send(studentId, from, `💳 New fee: ${feeType} ₹${amount} due ${due} (Sem ${semester}).`, 'fee');
       showToast('Fee added! Student notified. ✅', 'success');
@@ -113,6 +121,7 @@ function AddFeeModal({ target, onClose, onAdded }) {
 }
 
 function BulkSemFeeModal({ open, onClose, onAdded }) {
+  const dispatch = useAppDispatch();
   const { user } = useAuth();
   const { showToast, send } = useNotifications();
   const [semester, setSemester] = useState('');
@@ -140,8 +149,8 @@ function BulkSemFeeModal({ open, onClose, onAdded }) {
 
     setSubmitting(true);
     try {
-      const users = await apiFetch('/admin/users');
-      const students = users.filter((u) => u.role === 'student');
+      const action = await dispatch(fetchAllUsers());
+      const students = (action.payload || []).filter((u) => u.role === 'student');
       if (!students.length) {
         showToast('No students found', 'warning');
         return;
@@ -150,7 +159,7 @@ function BulkSemFeeModal({ open, onClose, onAdded }) {
       const from = user?.first_name || 'Admin';
       for (const s of students) {
         try {
-          await apiFetch('/fees', { method: 'POST', body: JSON.stringify({ student_id: s.user_id, semester, fee_type: feeType, amount: Number(amount), due_date: due, status: 'pending' }) });
+          await dispatch(createFee({ student_id: s.user_id, semester, fee_type: feeType, amount: Number(amount), due_date: due, status: 'pending' })).unwrap();
           send(s.user_id, from, `💳 Sem ${semester} fee: ${feeType} ₹${amount} due ${due}. Pay on time.`, 'fee');
           created++;
         } catch {
@@ -211,6 +220,7 @@ function BulkSemFeeModal({ open, onClose, onAdded }) {
 }
 
 function EditFeeModal({ fee, onClose, onSaved }) {
+  const dispatch = useAppDispatch();
   const { user } = useAuth();
   const { showToast, send } = useNotifications();
   const [feeType, setFeeType] = useState('');
@@ -235,7 +245,7 @@ function EditFeeModal({ fee, onClose, onSaved }) {
       // status is never sent here — it's a protected field the backend now
       // ignores on this route anyway (see updateFee's own comment): editing
       // a fee's terms must never silently revert an already-PAID one.
-      await apiFetch(`/fees/${fee.fee_id}`, { method: 'PUT', body: JSON.stringify({ fee_type: feeType, amount: Number(amount), due_date: due, semester }) });
+      await dispatch(updateFee({ id: fee.fee_id, payload: { fee_type: feeType, amount: Number(amount), due_date: due, semester } })).unwrap();
       const from = user?.first_name || 'Admin';
       if (fee.studentId) send(fee.studentId, from, `💳 Fee updated: ${feeType} ₹${amount} due ${due} (Sem ${semester || 'N/A'}).`, 'fee');
       showToast('Fee updated! Student notified. ✅', 'success');
@@ -348,33 +358,33 @@ function StudentFeeGroup({ studentId, fees, student, onPay, onAddFee, onEditFee 
 }
 
 export default function FeeCompliance() {
+  const dispatch = useAppDispatch();
   const { showToast, send } = useNotifications();
   const { user } = useAuth();
-  const [fees, setFees] = useState(undefined);
-  const [summary, setSummary] = useState({ overdue: 0, compliance_rate: '0%' });
-  const [students, setStudents] = useState({});
+  const fees = useAppSelector((state) => state.fees.fees);
+  const summary = useAppSelector((state) => state.fees.summary);
+  const allUsers = useAppSelector((state) => state.users.items);
   const [addTarget, setAddTarget] = useState(null); // { studentId } | null
   const [bulkOpen, setBulkOpen] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
 
   const load = () => {
-    Promise.all([apiFetch('/fees'), apiFetch('/admin/users').catch(() => [])]).then(([data, allUsers]) => {
-      setSummary(data.summary || { overdue: 0, compliance_rate: '0%' });
-      const map = {};
-      allUsers.filter((u) => u.role === 'student').forEach((u) => {
-        map[u.user_id] = { name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.username, email: u.email };
-      });
-      setStudents(map);
-      setFees(data.fees || []);
-    }).catch(() => setFees([]));
+    dispatch(fetchFees());
+    dispatch(fetchAllUsers());
   };
-  // Wrapped, not passed directly — see Team.jsx's fix note: load() returns a
-  // Promise, which React would otherwise try to call as an unmount cleanup.
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const students = {};
+  allUsers.filter((u) => u.role === 'student').forEach((u) => {
+    students[u.user_id] = { name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.username, email: u.email };
+  });
 
   const pay = async (fee, studentId) => {
     try {
-      await apiFetch(`/fees/${fee.fee_id}/pay`, { method: 'PATCH' });
+      await dispatch(payFee(fee.fee_id)).unwrap();
       showToast('Fee marked as paid!', 'success');
       const from = user?.first_name || 'Admin';
       send(studentId, from, `💳 Your ${fee.fee_type || 'fee'} ₹${fee.amount || ''} marked PAID by ${from}. No further action needed.`, 'fee');

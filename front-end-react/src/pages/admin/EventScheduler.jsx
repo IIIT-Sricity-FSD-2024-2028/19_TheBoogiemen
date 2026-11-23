@@ -4,18 +4,23 @@
  * (super-user.html's eventModal/editEventModal). Full CRUD — unlike
  * faculty's read-only Event Scheduler (a separate component; the two
  * actually differ in the legacy app, not just by permission).
+ *
+ * Redux migration (Dev 5): eventsSlice/Thunks, same shared domain
+ * faculty/EventScheduler.jsx reads read-only.
  */
 
 import { useEffect, useState } from 'react';
-import { apiFetch } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationsContext';
 import Modal from '../../components/shared/Modal';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchEvents, createEvent, updateEvent, deleteEvent } from '../../features/events/eventsThunks';
 
 const HOURS = Array.from({ length: 12 }, (_, i) => String(i + 1));
 const MINUTES = ['00', '15', '30', '45'];
 
 function ScheduleEventModal({ open, onClose, onCreated }) {
+  const dispatch = useAppDispatch();
   const { user } = useAuth();
   const { showToast, broadcastAll } = useNotifications();
   const [name, setName] = useState('');
@@ -49,7 +54,7 @@ function ScheduleEventModal({ open, onClose, onCreated }) {
     const timeDisplay = hour && minute ? ` at ${hour}:${minute} ${period}` : '';
     setSubmitting(true);
     try {
-      await apiFetch('/events', { method: 'POST', body: JSON.stringify({ event_name: name.trim(), date, venue: venue.trim(), description: desc.trim() }) });
+      await dispatch(createEvent({ event_name: name.trim(), date, venue: venue.trim(), description: desc.trim() })).unwrap();
       showToast('Event created! All users notified. ✅', 'success');
       const from = user?.first_name || user?.username || 'Admin';
       broadcastAll(from, `🎉 New Event: "${name.trim()}" on ${date}${timeDisplay} — ${venue.trim()}`, 'event');
@@ -115,6 +120,7 @@ function ScheduleEventModal({ open, onClose, onCreated }) {
 }
 
 function EditEventModal({ event, onClose, onSaved }) {
+  const dispatch = useAppDispatch();
   const { showToast } = useNotifications();
   const [name, setName] = useState('');
   const [date, setDate] = useState('');
@@ -134,7 +140,7 @@ function EditEventModal({ event, onClose, onSaved }) {
     if (date < today) return showToast('Cannot set event to a past date', 'warning');
     setSubmitting(true);
     try {
-      await apiFetch(`/events/${event.event_id}`, { method: 'PUT', body: JSON.stringify({ event_name: name, date, venue }) });
+      await dispatch(updateEvent({ id: event.event_id, payload: { event_name: name, date, venue } })).unwrap();
       showToast('Event updated!', 'success');
       onClose();
       onSaved();
@@ -174,22 +180,23 @@ function EditEventModal({ event, onClose, onSaved }) {
 }
 
 export default function EventScheduler() {
+  const dispatch = useAppDispatch();
   const { showToast } = useNotifications();
-  const [events, setEvents] = useState(undefined);
+  const events = useAppSelector((state) => state.events.items);
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
 
-  const load = () => apiFetch('/events').then(setEvents).catch(() => setEvents([]));
+  const load = () => dispatch(fetchEvents());
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const remove = async (id) => {
     if (!window.confirm('Are you sure you want to delete this event?')) return;
     try {
-      await apiFetch(`/events/${id}`, { method: 'DELETE' });
+      await dispatch(deleteEvent(id)).unwrap();
       showToast('Event deleted!', 'success');
-      load();
     } catch (e) {
       showToast('Failed: ' + e.message, 'error');
     }
