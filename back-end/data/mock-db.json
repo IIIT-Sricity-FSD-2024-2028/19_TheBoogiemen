@@ -1644,7 +1644,7 @@
       "student_name": "John Doe",
       "status": "active",
       "abstract": "Implementing a decentralized ledger for securing university diplomas.",
-      "progress": 50,
+      "progress": 55,
       "students": [
         {
           "user_id": "u1",
@@ -1673,7 +1673,7 @@
       ],
       "college_id": "c-default",
       "submission_notes": "completed the attack mitigation",
-      "faculty_feedback": "Good progress!"
+      "faculty_feedback": "Great progress this week on the mitigation work."
     },
     {
       "project_id": "rp2",
@@ -2379,6 +2379,23 @@
       "type": "lab",
       "section": "B",
       "college_id": "c-default"
+    },
+    {
+      "slot_id": "t1794983701971",
+      "day": "MON",
+      "time": "12:00",
+      "course_id": "c1791660079788",
+      "course_code": "AUDIT101",
+      "course_name": "Audit Test Course",
+      "section": "A",
+      "room": "Smoke Test Room",
+      "type": "lecture",
+      "faculty_id": "u2",
+      "faculty_name": "Jane Smith",
+      "status": "draft",
+      "college_id": "c-default",
+      "semester": 3,
+      "branch": "CS"
     }
   ],
   "attendance_requests": [

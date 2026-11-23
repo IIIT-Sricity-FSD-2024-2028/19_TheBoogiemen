@@ -9,12 +9,14 @@
  */
 
 import { useState } from 'react';
-import { apiFetch } from '../../api/client';
-import { useNotifications } from '../../context/NotificationsContext';
+import { useNotifications } from '../../features/notifications/useNotifications';
+import { useAppDispatch } from '../../store/hooks';
+import { resetPassword } from '../../features/auth/authThunks';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function ForgotPasswordModal({ open, onClose }) {
+  const dispatch = useAppDispatch();
   const { showToast } = useNotifications();
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState('');
@@ -67,10 +69,7 @@ export default function ForgotPasswordModal({ open, onClose }) {
       return;
     }
     try {
-      await apiFetch('/auth/reset-password', {
-        method: 'POST',
-        body: JSON.stringify({ email, new_password: newPass }),
-      });
+      await dispatch(resetPassword({ email, newPassword: newPass })).unwrap();
       showToast('Password reset successfully! Please log in. ✅', 'success');
       handleClose();
     } catch {

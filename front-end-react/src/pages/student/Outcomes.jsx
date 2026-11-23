@@ -7,9 +7,10 @@
  * student's own mastery % (GET /students/me/outcomes).
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { apiFetch } from '../../api/client';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchMyOutcomes } from '../../features/studentOutcomes/studentOutcomesThunks';
 
 function masteryColor(value) {
   if (value === null || value === undefined) return { bg: '#f1f5f9', fg: '#94a3b8' };
@@ -37,14 +38,13 @@ function OutcomeCell({ code, label, value }) {
 }
 
 export default function Outcomes() {
-  const [report, setReport] = useState(undefined);
-  const [error, setError] = useState(null);
+  const dispatch = useAppDispatch();
+  const report = useAppSelector((state) => state.studentOutcomes.report);
+  const error = useAppSelector((state) => state.studentOutcomes.error);
 
   useEffect(() => {
-    apiFetch('/students/me/outcomes')
-      .then(setReport)
-      .catch((e) => setError(e.message));
-  }, []);
+    dispatch(fetchMyOutcomes());
+  }, [dispatch]);
 
   if (error) return <p style={{ color: '#ef4444' }}>Failed to load outcomes: {error}</p>;
   if (!report) return null;

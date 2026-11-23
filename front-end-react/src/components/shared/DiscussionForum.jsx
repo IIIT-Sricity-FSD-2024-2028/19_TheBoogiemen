@@ -9,7 +9,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { useNotifications } from '../../context/NotificationsContext';
+import { useNotifications } from '../../features/notifications/useNotifications';
 import Modal from './Modal';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { fetchDiscussions, fetchDiscussionThread, createDiscussion, postReply } from '../../features/discussions/discussionsThunks';

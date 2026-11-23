@@ -7,13 +7,17 @@
  */
 
 import { useEffect, useState } from 'react';
-import { apiFetch } from '../../api/client';
 import { uploadFile } from '../../api/uploads';
-import { useAuth } from '../../context/AuthContext';
-import { useNotifications } from '../../context/NotificationsContext';
+import { useAuth } from '../../features/auth/useAuth';
+import { useNotifications } from '../../features/notifications/useNotifications';
 import Modal from '../../components/shared/Modal';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { fetchPendingSubmissions, createSubmission } from '../../features/submissions/submissionsThunks';
+import { fetchMyGrades } from '../../features/studentGrades/studentGradesThunks';
+import { fetchMyMeetings } from '../../features/meetings/meetingsThunks';
+import { fetchMyCourses } from '../../features/studentCourses/studentCoursesThunks';
+import { fetchMyProfile } from '../../features/studentProfile/studentProfileThunks';
+import { fetchMySyllabusProgress } from '../../features/studentSyllabus/studentSyllabusThunks';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -37,13 +41,12 @@ export default function Dashboard() {
 }
 
 function PredictedGradeBox() {
-  const [grades, setGrades] = useState(null);
+  const dispatch = useAppDispatch();
+  const grades = useAppSelector((state) => state.studentGrades.grades);
 
   useEffect(() => {
-    apiFetch('/students/me/grades')
-      .then(setGrades)
-      .catch(() => setGrades(null));
-  }, []);
+    dispatch(fetchMyGrades());
+  }, [dispatch]);
 
   const label = grades?.predictedGrade || 'No data yet';
 
@@ -62,23 +65,19 @@ function PredictedGradeBox() {
 }
 
 function UpcomingMeetings() {
-  const [meetings, setMeetings] = useState(null);
+  const dispatch = useAppDispatch();
+  const allMeetings = useAppSelector((state) => state.meetings.items);
 
   useEffect(() => {
-    apiFetch('/meetings')
-      .then((res) => {
-        const list = Array.isArray(res) ? res : res?.data || [];
-        const today = new Date().toISOString().split('T')[0];
-        setMeetings(
-          list.filter(
-            (m) =>
-              (m.status === 'SCHEDULED' || !m.status) &&
-              (m.scheduled_date || m.date || m.requested_date) >= today,
-          ),
-        );
-      })
-      .catch(() => setMeetings([]));
-  }, []);
+    dispatch(fetchMyMeetings());
+  }, [dispatch]);
+
+  const today = new Date().toISOString().split('T')[0];
+  const meetings = allMeetings === null ? null : allMeetings.filter(
+    (m) =>
+      (m.status === 'SCHEDULED' || !m.status) &&
+      (m.scheduled_date || m.date || m.requested_date) >= today,
+  );
 
   if (!meetings || meetings.length === 0) return null;
 
@@ -249,42 +248,29 @@ function PendingSubmissions() {
 }
 
 function SyllabusTracker() {
-  const [progress, setProgress] = useState(undefined);
+  const dispatch = useAppDispatch();
+  const progress = useAppSelector((state) => state.studentSyllabus.progress);
   const [section, setSection] = useState('A');
   const [error, setError] = useState(null);
   const [openCourse, setOpenCourse] = useState(null);
 
   useEffect(() => {
-    apiFetch('/students/me/courses')
-      .then(async (myCourses) => {
-        const student = await apiFetch('/students/me').catch(() => null);
+    (async () => {
+      try {
+        const myCourses = await dispatch(fetchMyCourses()).unwrap();
+        const student = await dispatch(fetchMyProfile()).unwrap().catch(() => null);
         const defaultSec = student?.section || 'A';
         setSection(defaultSec);
-
         // OUTCOMES_TRACKING_PLAN.md: /topic-completions already returns a
         // course+section's topics merged with their real completion % —
         // the exact shape the old, inert `modules[]` field only pretended
         // to provide. One fetch per enrolled course.
-        const combined = await Promise.all(
-          (myCourses || []).map(async (c) => {
-            const courseSec = c.section || defaultSec;
-            const topics = await apiFetch(`/topic-completions?course_id=${c.course_id}&section=${courseSec}`).catch(() => []);
-            const overall = topics.length ? Math.round(topics.reduce((s, t) => s + (t.progress || 0), 0) / topics.length) : 0;
-            return {
-              course_id: c.course_id,
-              course_code: c.course_code || '',
-              course_name: c.course_name || '',
-              section: courseSec,
-              faculty_name: c.faculty_name,
-              progress: overall,
-              modules: topics.map((t) => ({ name: t.title, progress: t.progress })),
-            };
-          }),
-        );
-        setProgress(combined);
-      })
-      .catch((e) => setError(e.message));
-  }, []);
+        await dispatch(fetchMySyllabusProgress({ courses: myCourses, defaultSection: defaultSec })).unwrap();
+      } catch (e) {
+        setError(e.message);
+      }
+    })();
+  }, [dispatch]);
 
   return (
     <div className="stats-card">

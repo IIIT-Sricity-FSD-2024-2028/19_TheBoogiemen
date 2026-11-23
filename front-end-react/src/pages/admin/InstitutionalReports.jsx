@@ -11,7 +11,7 @@ import { useEffect } from 'react';
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { apiFetch } from '../../api/client';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { useNotifications } from '../../context/NotificationsContext';
+import { useNotifications } from '../../features/notifications/useNotifications';
 import { fetchAtRisk, fetchOverview } from '../../features/institutionalReports/institutionalReportsThunks';
 import Meter from '../../components/shared/Meter';
 import { downloadCsv } from '../../utils/csv';

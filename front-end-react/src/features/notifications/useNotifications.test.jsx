@@ -1,21 +1,21 @@
 /**
- * NotificationsContext.test.jsx — the facade itself, rendered against a
+ * useNotifications.test.jsx — the facade itself, rendered against a
  * real store (not the reducer in isolation — see notificationsSlice.test.js
  * for that). Covers the two things that only exist at this layer:
  *  1. College-scoped broadcast read/write end to end through useAuth() +
  *     useNotifications() together, the same way a real component uses both.
  *  2. The shared module-scope toast timer — the one piece of behavior that
  *     breaks if someone "simplifies" it back into a useRef per the comment
- *     in NotificationsContext.jsx.
+ *     in useNotifications.js.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { configureStore } from '@reduxjs/toolkit';
 import { Provider } from 'react-redux';
 import { renderHook, act } from '@testing-library/react';
-import authReducer from '../features/auth/authSlice';
-import notificationsReducer from '../features/notifications/notificationsSlice';
-import { useAuth } from './AuthContext';
-import { useNotifications } from './NotificationsContext';
+import authReducer from '../auth/authSlice';
+import notificationsReducer from './notificationsSlice';
+import { useAuth } from '../auth/useAuth';
+import { useNotifications } from './useNotifications';
 
 function buildStore(user) {
   return configureStore({

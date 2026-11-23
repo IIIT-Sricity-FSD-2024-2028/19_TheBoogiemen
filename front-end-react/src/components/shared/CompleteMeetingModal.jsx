@@ -1,7 +1,7 @@
 /** Redux migration (Dev 5): meetingsSlice/Thunks. */
 import { useState, useEffect } from 'react';
 import Modal from './Modal';
-import { useNotifications } from '../../context/NotificationsContext';
+import { useNotifications } from '../../features/notifications/useNotifications';
 import { useAppDispatch } from '../../store/hooks';
 import { completeMeeting } from '../../features/meetings/meetingsThunks';
 
