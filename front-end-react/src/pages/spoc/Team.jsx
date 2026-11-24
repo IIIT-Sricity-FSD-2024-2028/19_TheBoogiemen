@@ -38,9 +38,13 @@ function HireAdminModal({ open, onClose, onHired }) {
   const submit = async (e) => {
     e.preventDefault();
 
-    // Client-side validation: catch short passwords before they hit the
-    // backend's @MinLength(8) constraint, which would return a 400 that
+    // Client-side validation: catch these before they hit the backend's
+    // @IsNotEmpty()/@MinLength(8) constraints, which would return a 400 that
     // the catch block below surfaces as a generic error toast.
+    if (!firstName.trim()) {
+      showToast('First name is required', 'warning');
+      return;
+    }
     if (password.length < 8) {
       showToast('Password must be at least 8 characters', 'warning');
       return;
@@ -67,8 +71,8 @@ function HireAdminModal({ open, onClose, onHired }) {
           </p>
           <div className="form-row">
             <div className="form-group">
-              <label>First Name</label>
-              <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+              <label>First Name <span style={{ color: '#ef4444' }}>*</span></label>
+              <input type="text" required value={firstName} onChange={(e) => setFirstName(e.target.value)} />
             </div>
             <div className="form-group">
               <label>Last Name</label>

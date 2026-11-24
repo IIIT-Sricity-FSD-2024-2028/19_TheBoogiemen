@@ -20,16 +20,31 @@ import { computeCGPA, computeGradeTrend, predictedFinalGrade } from '../common/g
 export class StudentsService {
   constructor(private db: InMemoryDbService) {}
 
+  /**
+   * The real, computed CGPA (marks_entry via the relative curve, grading.ts)
+   * always wins once it exists. Only when NOT ONE course is gradeable yet
+   * does this fall back to students[].cgpa — an admin-provided starting
+   * baseline (e.g. bulk-onboard's roster CSV, for a transfer student's prior
+   * CGPA), shown only to that student's own profile/grades view until real
+   * coursework replaces it. Every aggregate/faculty/admin view (institutional
+   * metrics, faculty workload, class performance — common.controller.ts,
+   * faculty.service.ts) deliberately calls computeCGPA() directly instead of
+   * this helper and must keep doing so: a starting baseline is not a real
+   * grade and must never be averaged into a cohort statistic as if it were.
+   */
+  private resolveOwnCgpa(student: { cgpa?: unknown }, computedCgpa: number | null): number | null {
+    if (computedCgpa !== null) return computedCgpa;
+    return typeof student.cgpa === 'number' && student.cgpa > 0 ? student.cgpa : null;
+  }
+
   async getProfile(userId: string) {
     const student = this.db.students.find((s) => s.user_id === userId);
     if (!student)
       throw new NotFoundException(
         errorBody(ErrorCode.RESOURCE_NOT_FOUND, 'Student not found'),
       );
-    // Real, computed from marks_entry via the relative curve (grading.ts) —
-    // the seeded cgpa field itself is static and never updates.
-    const { cgpa } = computeCGPA(this.db, userId);
-    return { ...student, cgpa };
+    const { cgpa: computedCgpa } = computeCGPA(this.db, userId);
+    return { ...student, cgpa: this.resolveOwnCgpa(student, computedCgpa) };
   }
 
   async getAttendance(userId: string, collegeId: string | null) {
@@ -93,9 +108,14 @@ export class StudentsService {
   }
 
   async getGrades(userId: string) {
-    const { cgpa, courses } = computeCGPA(this.db, userId);
+    const { cgpa: computedCgpa, courses } = computeCGPA(this.db, userId);
     const predicted = predictedFinalGrade(this.db, userId);
-    return { cgpa, predictedGrade: predicted?.letter ?? null, courses };
+    const student = this.db.students.find((s) => s.user_id === userId);
+    return {
+      cgpa: this.resolveOwnCgpa(student ?? {}, computedCgpa),
+      predictedGrade: predicted?.letter ?? null,
+      courses,
+    };
   }
 
   async getGradeTrend(userId: string) {

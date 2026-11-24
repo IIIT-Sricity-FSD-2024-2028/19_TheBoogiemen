@@ -147,11 +147,16 @@ email: string;
 @IsIn(ASSIGNABLE_ROLES as unknown as string[])
 role: AssignableRole;
 
-@ApiPropertyOptional({ example: 'Jane' })
-@IsOptional()
+// Required: a SPOC hiring an admin (Team.jsx's HireAdminModal) previously
+// left this optional, so a nameless admin account was accepted and silently
+// defaulted to "New" in createUser() below — a real, if minor, loophole.
+// Every other POST /users caller (AddUserModal) already enforces this
+// client-side; this makes the server agree instead of trusting that.
+@ApiProperty({ example: 'Jane' })
+@IsNotEmpty()
 @IsString()
 @MaxLength(80)
-first_name?: string;
+first_name: string;
 
 @ApiPropertyOptional({ example: 'Roe' })
 @IsOptional()

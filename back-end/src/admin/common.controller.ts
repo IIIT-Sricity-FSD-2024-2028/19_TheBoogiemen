@@ -1622,7 +1622,25 @@ return scopeToCollege(this.db.users, collegeId).map(sanitizeUser);
 @Roles('admin', 'head', 'superadmin', 'faculty')
 @ApiOperation({ summary: 'Get all users for admin management panel' })
 async getAllUsers(@CurrentUserCollegeId() collegeId: string | null) {
-return scopeToCollege(this.db.users, collegeId).map(sanitizeUser);
+// Enriched with branch (students) / designation (faculty) so
+// UserManagement.jsx's type+branch filters have something to filter on —
+// the base `users` row sanitizeUser() works from carries neither. This
+// join is read-only and NOT mirrored on the create/update/role mutation
+// endpoints below (those keep returning the bare sanitizeUser shape) —
+// safe only because UserManagement.jsx already does a full
+// fetchAllUsers() refetch after every create/edit, so the enrichment is
+// never actually left stale in the one UI that reads it.
+const students = this.db.students as any[];
+const faculty = this.db.faculty as any[];
+return scopeToCollege(this.db.users, collegeId).map((u: any) => {
+const safe: any = sanitizeUser(u);
+if (u.role === 'student') {
+safe.branch = students.find((s) => s.user_id === u.user_id)?.branch || null;
+} else if (u.role === 'faculty') {
+safe.designation = faculty.find((f) => f.user_id === u.user_id)?.designation || null;
+}
+return safe;
+});
 }
 
 @Post('users')
@@ -1720,7 +1738,11 @@ first_name: firstName,
 last_name: body.last_name || '',
 branch: 'CSE',
 batch: '2024-2028',
-cgpa: 7.0,
+// null, not a placeholder number — StudentsService.getProfile()/getGrades()
+// now surface a non-null students[].cgpa as a real starting baseline (see
+// bulk-onboard's own cgpa field) until the student has real computed
+// grades. A fake 7.0 here would show up as if it meant something.
+cgpa: null,
 section: 'A',
 email: newEmail,
 join_date: new Date().toISOString().split('T')[0],
@@ -1881,8 +1903,15 @@ first_name: fields.first_name,
 last_name: fields.last_name || '',
 branch: fields.branch || 'Unspecified',
 batch: fields.batch || '',
-cgpa: fields.cgpa ? Number(fields.cgpa) : 0,
-section: fields.section || 'A',
+// null (not 0) when the roster didn't give one — StudentsService reads
+// this as "no admin-provided starting CGPA yet", same as a brand-new
+// account with nothing on record; 0 would read as a real, very bad grade.
+cgpa: fields.cgpa ? Number(fields.cgpa) : null,
+// No section — it isn't decided at roster-upload time (a real section
+// assignment happens later). Every read site that matches on section
+// already falls back to 'A' when one isn't set yet (see e.g.
+// common.controller.ts's own `student?.section || 'A'` reads), so
+// leaving this unset here is consistent with that convention, not a gap.
 email,
 join_date: new Date().toISOString().split('T')[0],
 dob: '2005-01-01',

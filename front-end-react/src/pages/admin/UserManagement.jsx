@@ -255,7 +255,7 @@ return (
 }
 
 const TEMPLATE_HEADERS = {
-student: ['first_name', 'last_name', 'email', 'phone', 'branch', 'batch', 'section', 'cgpa'],
+student: ['first_name', 'last_name', 'email', 'phone', 'branch', 'batch', 'cgpa'],
 faculty: ['first_name', 'last_name', 'email', 'phone', 'designation', 'department_id'],
 };
 
@@ -456,6 +456,9 @@ const usersStatus = useAppSelector((state) => state.users.status);
 const [addOpen, setAddOpen] = useState(false);
 const [bulkOpen, setBulkOpen] = useState(false);
 const [editTarget, setEditTarget] = useState(null);
+const [roleFilter, setRoleFilter] = useState('');
+const [branchFilter, setBranchFilter] = useState('');
+const [search, setSearch] = useState('');
 
 const load = () => dispatch(fetchAllUsers());
 
@@ -463,6 +466,27 @@ useEffect(() => {
 load();
 // eslint-disable-next-line react-hooks/exhaustive-deps
 }, []);
+
+// Branch only means anything once "Student" is picked — clear it on any
+// other type so switching away and back doesn't silently reapply a stale
+// branch the user never re-chose.
+useEffect(() => {
+setBranchFilter('');
+}, [roleFilter]);
+
+// Options are derived from whatever's actually loaded, not hardcoded — a
+// type/branch with no users right now just doesn't show up as a choice,
+// instead of offering a filter that's guaranteed to find nothing.
+const roleOptions = [...new Set(users.map((u) => u.role))].sort();
+const branchOptions = [...new Set(users.filter((u) => u.role === 'student' && u.branch).map((u) => u.branch))].sort();
+
+const filteredUsers = users.filter((u) => {
+if (roleFilter && u.role !== roleFilter) return false;
+if (roleFilter === 'student' && branchFilter && u.branch !== branchFilter) return false;
+const q = search.trim().toLowerCase();
+if (q && !(u.username?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q))) return false;
+return true;
+});
 
 /**
 * Mirror of the backend's canDeleteRole() privilege ceiling, for the UI only.
@@ -502,19 +526,54 @@ return (
 </div>
 </div>
 <div className="stats-card-body">
+<div style={{ display: 'flex', gap: 16, marginBottom: 20, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+<div>
+<label style={{ fontSize: 12, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>User Type</label>
+<select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} style={{ padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 13, minWidth: 160 }}>
+<option value="">All Types</option>
+{roleOptions.map((r) => (
+<option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
+))}
+</select>
+</div>
+{roleFilter === 'student' && (
+<div>
+<label style={{ fontSize: 12, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>Branch</label>
+<select value={branchFilter} onChange={(e) => setBranchFilter(e.target.value)} style={{ padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 13, minWidth: 160 }}>
+<option value="">All Branches</option>
+{branchOptions.map((b) => (
+<option key={b} value={b}>{b}</option>
+))}
+</select>
+</div>
+)}
+<div style={{ flex: 1, minWidth: 200 }}>
+<label style={{ fontSize: 12, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>Search</label>
+<input
+type="text"
+value={search}
+onChange={(e) => setSearch(e.target.value)}
+placeholder="Search by name or email…"
+style={{ padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 13, width: '100%' }}
+/>
+</div>
+</div>
 {usersStatus === 'idle' || usersStatus === 'loading' ? (
 <div style={{ textAlign: 'center', color: '#64748b', padding: 20 }}>Loading...</div>
+) : filteredUsers.length === 0 ? (
+<div style={{ textAlign: 'center', color: '#64748b', padding: 20 }}>No users match these filters.</div>
 ) : (
 <table className="crud-table">
 <thead>
-<tr><th>Username</th><th>Email</th><th>Role</th><th style={{ textAlign: 'right' }}>Actions</th></tr>
+<tr><th>Username</th><th>Email</th><th>Role</th><th>Details</th><th style={{ textAlign: 'right' }}>Actions</th></tr>
 </thead>
 <tbody>
-{users.map((u) => (
+{filteredUsers.map((u) => (
 <tr key={u.user_id}>
 <td>{u.username}</td>
 <td>{u.email}</td>
 <td><span style={{ fontSize: 11, padding: '3px 8px', background: '#e2e8f0', borderRadius: 4, textTransform: 'uppercase' }}>{u.role}</span></td>
+<td style={{ color: '#64748b' }}>{u.role === 'student' ? (u.branch || '—') : u.role === 'faculty' ? (u.designation || '—') : '—'}</td>
 <td style={{ textAlign: 'right' }}>
 <button onClick={() => setEditTarget(u)} style={{ padding: '4px 8px', marginRight: 4, background: '#e2e8f0', border: 'none', borderRadius: 4, cursor: 'pointer' }}>Edit</button>
 {canDelete(u.role) ? (
