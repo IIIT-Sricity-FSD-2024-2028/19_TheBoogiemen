@@ -214,6 +214,14 @@ errorBody(ErrorCode.DUPLICATE_RESOURCE, 'Course code already exists'),
 // what replaceCourseSections() below validates field by field.
 const { sections, faculty_id, faculty_name, ...courseFields } = body;
 const courseId = `c${Date.now()}`;
+// Build + validate the section rows BEFORE touching this.db.courses. A bad
+// section list (duplicate section name, missing faculty, etc.) must reject
+// the whole request with nothing persisted â€” previously the course was
+// pushed first and this validation ran after, so a rejected request still
+// left a section-less course behind: the client saw the error and never
+// added it to Redux state, but the very next full refetch (e.g. a page
+// reload) read it straight back out of the DB as if it had been created.
+const sectionRows = this.buildCourseSectionRows(courseId, sections, collegeId);
 const newCourse = {
 course_id: courseId,
 ...courseFields,
@@ -222,12 +230,8 @@ college_id: collegeId,
 this.db.courses.push(newCourse);
 // Confirmed: a course may be created with zero sections and staffed
 // later via PUT /courses/:id/sections â€” sections is optional here.
-const createdSections = this.replaceCourseSections(
-courseId,
-sections,
-collegeId,
-);
-return { success: true, data: { ...newCourse, sections: createdSections } };
+this.commitCourseSections(courseId, sectionRows);
+return { success: true, data: { ...newCourse, sections: sectionRows } };
 }
 
 @Put('courses/:id/sections')
@@ -253,17 +257,34 @@ return { success: true, data: { ...course, sections } };
 * Full-replace, not incremental add/remove: one call sets a course's
 * entire section list, matching how PUT already works elsewhere in this
 * file rather than adding a CRUD sprawl for a small sub-resource. Used by
-* both createCourse() (initial sections, may be empty) and
-* updateCourseSections() (later reassignment).
+* updateCourseSections() (later reassignment) as build-then-commit in one
+* step; createCourse() calls buildCourseSectionRows()/commitCourseSections()
+* separately instead, with the course's own this.db.courses.push() sitting
+* between them, so a validation failure here never leaves a course record
+* behind with no sections (see createCourse()'s own comment).
 */
 private replaceCourseSections(
 courseId: string,
 rawSections: any,
 collegeId: string | null,
 ): any[] {
+const rows = this.buildCourseSectionRows(courseId, rawSections, collegeId);
+this.commitCourseSections(courseId, rows);
+return rows;
+}
+
+/** Validates a raw `sections` payload and builds the course_sections rows
+ *  it describes â€” throws on the first invalid/duplicate/unknown-faculty
+ *  entry, without touching this.db at all beyond read-only lookups. Safe to
+ *  call before any other mutation for the same request. */
+private buildCourseSectionRows(
+courseId: string,
+rawSections: any,
+collegeId: string | null,
+): any[] {
 const requested = Array.isArray(rawSections) ? rawSections : [];
 const seenSections = new Set<string>();
-const rows = requested.map((s: any) => {
+return requested.map((s: any) => {
 const section = String(s?.section ?? '').trim();
 if (!section || !s?.faculty_id)
 throw new BadRequestException(
@@ -311,12 +332,18 @@ faculty_name,
 college_id: collegeId,
 };
 });
+}
+
+/** Commits rows already built by buildCourseSectionRows() â€” the only part
+ *  of a sections replace that actually mutates this.db. Kept separate so
+ *  createCourse() can build+validate first and only ever call this once a
+ *  course record has successfully been created. */
+private commitCourseSections(courseId: string, rows: any[]): void {
 for (let i = this.db.course_sections.length - 1; i >= 0; i--) {
 if (this.db.course_sections[i].course_id === courseId)
 this.db.course_sections.splice(i, 1);
 }
 if (rows.length) this.db.course_sections.push(...rows);
-return rows;
 }
 
 // â”€â”€ Timetable â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
