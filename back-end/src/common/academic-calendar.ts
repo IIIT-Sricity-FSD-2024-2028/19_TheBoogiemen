@@ -11,7 +11,7 @@
  */
 
 import { InMemoryDbService } from '../database/in-memory-db.service';
-import { ATTENDANCE_STATUS, normalizeAttendanceStatus } from './academic-rules';
+import { AttendanceStatus, ATTENDANCE_STATUS, normalizeAttendanceStatus } from './academic-rules';
 
 export interface Holiday {
   holiday_id: string;
@@ -75,6 +75,62 @@ function hasClassOn(
       t.day === dow &&
       (t.status === undefined || t.status === 'published'),
   );
+}
+
+/**
+ * Every session status for one (student, course) pair, on the same
+ * "scheduled-but-unmarked counts as present" convention buildAttendanceCalendar
+ * already uses for the heatmap below — a day the heatmap paints green must
+ * never go uncounted here, or the two halves of the same attendance page
+ * visibly disagree about the same data (a real bug this once was: the
+ * per-subject totals used to count ONLY rows that literally exist in
+ * attendance_log, so any class day faculty hadn't explicitly marked was
+ * invisible to the present/absent/total numbers even though the heatmap
+ * right above them already showed it as Present).
+ *
+ * Bounded to [earliest recorded session for this course, today] — there's no
+ * stored course/semester start date to anchor an earlier walk, and a course
+ * with zero recorded sessions yet has nothing to synthesise a history from
+ * (the caller shows that course as a real, all-zero row instead).
+ */
+export function courseAttendanceStatuses(
+  db: InMemoryDbService,
+  studentId: string,
+  courseId: string,
+  section: string,
+  collegeId: string | null,
+): AttendanceStatus[] {
+  const recorded = db.attendance_log.filter(
+    (a: any) => a.student_id === studentId && a.course_id === courseId,
+  );
+  if (!recorded.length) return [];
+
+  const today = new Date().toISOString().split('T')[0];
+  const minDate = recorded.reduce(
+    (min: string, r: any) => (r.date < min ? r.date : min),
+    recorded[0].date,
+  );
+  const holidays = holidayDateSet(db, collegeId);
+  const recordedByDate = new Map(recorded.map((r: any) => [r.date, r]));
+  const dates = new Set<string>(recorded.map((r: any) => r.date));
+
+  for (
+    const d = new Date(`${minDate}T00:00:00Z`);
+    d.toISOString().split('T')[0] <= today;
+    d.setUTCDate(d.getUTCDate() + 1)
+  ) {
+    const date = d.toISOString().split('T')[0];
+    if (holidays.has(date)) continue;
+    if (hasClassOn(db, courseId, section, date)) dates.add(date);
+  }
+
+  return [...dates]
+    .filter((date) => !holidays.has(date))
+    .map((date) => {
+      const rec = recordedByDate.get(date);
+      // Matches buildAttendanceCalendar's own "not yet marked" default.
+      return rec ? normalizeAttendanceStatus(rec.status) : ATTENDANCE_STATUS.PRESENT;
+    });
 }
 
 /**

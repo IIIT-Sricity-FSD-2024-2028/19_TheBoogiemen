@@ -7,6 +7,7 @@
 
 import {
   buildAttendanceCalendar,
+  courseAttendanceStatuses,
   excludeHolidays,
   expandClassDates,
   holidayDateSet,
@@ -85,6 +86,42 @@ describe('expandClassDates', () => {
     // 2026-11-14 is a Saturday, 2026-11-15 a Sunday.
     const pairs = expandClassDates(db, ['2026-11-14', '2026-11-15'], [{ course_id: 'c1', section: 'A' }], 'c1');
     expect(pairs).toEqual([]);
+  });
+});
+
+describe('courseAttendanceStatuses', () => {
+  it('counts a scheduled day with no attendance_log row as present, matching the heatmap default', () => {
+    // Course meets every Monday; only the first Monday was ever explicitly
+    // marked. The two later Mondays have no attendance_log row at all, but
+    // the heatmap (buildAttendanceCalendar) would paint them green anyway —
+    // the per-subject summary must count them the same way, not ignore them.
+    const db = dbWith({
+      timetable: [{ course_id: 'c1', section: 'A', day: 'MON', status: 'published' }],
+      attendance_log: [
+        { student_id: 's1', course_id: 'c1', date: '2026-11-02', status: 'present' },
+      ],
+    });
+    const statuses = courseAttendanceStatuses(db, 's1', 'c1', 'A', null);
+    expect(statuses.filter((s) => s === 'present').length).toBeGreaterThan(1);
+    expect(statuses.every((s) => s === 'present')).toBe(true);
+  });
+
+  it('returns nothing for a course with zero recorded sessions yet (shown as an all-zero row by the caller)', () => {
+    const db = dbWith({ timetable: [{ course_id: 'c1', section: 'A', day: 'MON' }] });
+    expect(courseAttendanceStatuses(db, 's1', 'c1', 'A', null)).toEqual([]);
+  });
+
+  it('excludes a recorded date that is now a declared holiday, while still counting later sessions', () => {
+    const db = dbWith({
+      holidays: [{ holiday_id: 'h1', date: '2026-11-09', label: 'Holiday', college_id: null }],
+      timetable: [{ course_id: 'c1', section: 'A', day: 'MON' }],
+      attendance_log: [{ student_id: 's1', course_id: 'c1', date: '2026-11-09', status: 'absent' }],
+    });
+    // The only recorded row (an absence) lands on a now-declared holiday and
+    // must be dropped entirely — it must not survive as an absence, nor flip
+    // to a synthesised present, since it should never have counted at all.
+    const statuses = courseAttendanceStatuses(db, 's1', 'c1', 'A', null);
+    expect(statuses).not.toContain('absent');
   });
 });
 

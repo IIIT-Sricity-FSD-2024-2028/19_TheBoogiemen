@@ -74,13 +74,13 @@ function AttendanceHeatmap() {
           <div style={{ textAlign: 'center', color: '#64748b', padding: 20 }}>Loading...</div>
         ) : (
           <>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 6, marginBottom: 10 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 26px)', gap: 4, marginBottom: 6, justifyContent: 'center' }}>
               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-                <div key={d} style={{ textAlign: 'center', fontSize: 11, fontWeight: 700, color: '#94a3b8' }}>{d}</div>
+                <div key={d} style={{ textAlign: 'center', fontSize: 9, fontWeight: 700, color: '#94a3b8' }}>{d[0]}</div>
               ))}
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 6 }}>
-              {Array.from({ length: leadingBlanks }).map((_, i) => <div key={`b${i}`} />)}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 26px)', gap: 4, justifyContent: 'center' }}>
+              {Array.from({ length: leadingBlanks }).map((_, i) => <div key={`b${i}`} style={{ width: 26, height: 26 }} />)}
               {days.map((day) => {
                 const canOpen = day.dayStatus !== 'no-class' && day.dayStatus !== 'holiday';
                 const color = DAY_STATUS_COLOR[day.dayStatus];
@@ -89,15 +89,13 @@ function AttendanceHeatmap() {
                     key={day.date}
                     type="button"
                     onClick={() => canOpen && setSelected(day)}
-                    title={day.dayStatus === 'holiday' ? day.label : STATUS_LABEL[day.dayStatus]}
+                    title={`${day.date} — ${day.dayStatus === 'holiday' ? day.label : STATUS_LABEL[day.dayStatus]}`}
                     style={{
-                      aspectRatio: '1', borderRadius: 8, border: 'none', cursor: canOpen ? 'pointer' : 'default',
-                      background: color.bg, color: color.fg, fontSize: 12, fontWeight: 700,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      width: 26, height: 26, borderRadius: 4, border: 'none', cursor: canOpen ? 'pointer' : 'default',
+                      background: color.bg, color: color.fg, fontSize: 0,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
                     }}
-                  >
-                    {Number(day.date.slice(-2))}
-                  </button>
+                  />
                 );
               })}
             </div>
