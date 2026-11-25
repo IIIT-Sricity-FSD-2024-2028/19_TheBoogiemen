@@ -24,7 +24,6 @@ export const CANONICAL_COLUMNS = [
   'password',
   'branch',
   'batch',
-  'section',
   'cgpa',
   'designation',
   'department_id',
@@ -77,11 +76,6 @@ const SYNONYMS: Record<string, CanonicalColumn> = {
   year: 'batch',
   batch_year: 'batch',
   graduating_year: 'batch',
-
-  section: 'section',
-  class: 'section',
-  div: 'section',
-  division: 'section',
 
   cgpa: 'cgpa',
   gpa: 'cgpa',

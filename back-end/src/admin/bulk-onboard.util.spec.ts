@@ -19,7 +19,6 @@ describe('mapRowToCanonicalFields', () => {
         'Email Address': 'priya@example.com',
         'Mobile Number': '9876543210',
         Branch: 'CS',
-        Section: 'B',
       },
       unrecognized,
     );
@@ -29,9 +28,18 @@ describe('mapRowToCanonicalFields', () => {
       email: 'priya@example.com',
       phone: '9876543210',
       branch: 'CS',
-      section: 'B',
     });
     expect(unrecognized.size).toBe(0);
+  });
+
+  it('reports a "Section" column as unrecognized — section is no longer a bulk-onboard field', () => {
+    const unrecognized = new Set<string>();
+    const fields = mapRowToCanonicalFields(
+      { 'First Name': 'Priya', Email: 'priya@example.com', Section: 'B' },
+      unrecognized,
+    );
+    expect(fields).toEqual({ first_name: 'Priya', email: 'priya@example.com' });
+    expect(unrecognized.has('Section')).toBe(true);
   });
 
   it('splits a bare "Name" column into first/last when no first_name column exists', () => {
