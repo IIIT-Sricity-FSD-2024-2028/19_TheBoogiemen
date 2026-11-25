@@ -16,6 +16,7 @@ import { uploadFile, downloadDocument } from '../../api/uploads';
 import { useAuth } from '../../features/auth/useAuth';
 import { useNotifications } from '../../features/notifications/useNotifications';
 import Modal from './Modal';
+import AssignBTPModal from './AssignBTPModal';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { fetchResearch, updateResearchProgress } from '../../features/research/researchThunks';
 
@@ -375,6 +376,7 @@ export default function ResearchPanel({ role }) {
     const projects = useAppSelector((state) => state.research.items);
     const [uploadTarget, setUploadTarget] = useState(null);       // student
     const [progressTarget, setProgressTarget] = useState(null);   // faculty
+    const [assignOpen, setAssignOpen] = useState(false);          // faculty — create + assign a new project
 
     const load = () => dispatch(fetchResearch());
 
@@ -407,23 +409,38 @@ export default function ResearchPanel({ role }) {
     }
 
     // ── Faculty branch ──────────────────────────────────────────────────
-    if (!projects.length) {
-        return <p style={{ color: '#64748b', textAlign: 'center' }}>No research projects.</p>;
-    }
-
     return (
         <>
-            {projects.map((p) => (
-                <FacultyProjectCard
-                    key={p.project_id}
-                    project={p}
-                    onOpenProgress={() => setProgressTarget(p)}
-                />
-            ))}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 14 }}>
+                <button
+                    onClick={() => setAssignOpen(true)}
+                    style={{ padding: '10px 18px', background: '#faf5ff', color: '#7c3aed', border: '1px solid #e9d5ff', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 700 }}
+                >
+                    📚 Assign New BTP Project
+                </button>
+            </div>
+
+            {!projects.length ? (
+                <p style={{ color: '#64748b', textAlign: 'center' }}>No research projects.</p>
+            ) : (
+                projects.map((p) => (
+                    <FacultyProjectCard
+                        key={p.project_id}
+                        project={p}
+                        onOpenProgress={() => setProgressTarget(p)}
+                    />
+                ))
+            )}
+
             <FacultyBTPProgressModal
                 project={progressTarget}
                 onClose={() => setProgressTarget(null)}
                 onSaved={load}
+            />
+            <AssignBTPModal
+                open={assignOpen}
+                onClose={() => setAssignOpen(false)}
+                onAssigned={load}
             />
         </>
     );
