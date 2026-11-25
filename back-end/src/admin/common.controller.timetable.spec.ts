@@ -229,3 +229,41 @@ describe('CommonController.generateTimetable — section is per-course, not a pa
     expect(facultyBySectionB).toBe(true);
   });
 });
+
+describe('CommonController.getStudentTimetable — published sessions actually reach the student', () => {
+  it("shows a published session for a course/section the student is enrolled in, even when it differs from the student's generic home-section field", async () => {
+    // The student's own students[].section ("home section") says 'A', but
+    // their actual enrollment in c1 is under Section 'B' — a perfectly
+    // normal case now that different courses are independently sectioned
+    // (course_sections). The published slot is for c1/Section B.
+    const db = fakeDb({
+      students: [{ user_id: 'stu1', section: 'A', college_id: 'c-default' }],
+      enrollment: [{ enrollment_id: 'e1', student_id: 'stu1', course_id: 'c1', status: 'active', section: 'B', college_id: 'c-default' }],
+      timetable: [
+        { slot_id: 't1', day: 'MON', time: '09:00', course_id: 'c1', section: 'B', status: 'published', college_id: 'c-default' },
+      ],
+    });
+    const controller = new CommonController(db, {} as any);
+
+    const res: any = await controller.getStudentTimetable('stu1', 'c-default');
+
+    expect(res.grid.MON['09:00'].slot_id).toBe('t1');
+  });
+
+  it('does not show a session for a DIFFERENT section of a course the student is not enrolled in that way', async () => {
+    const db = fakeDb({
+      students: [{ user_id: 'stu1', section: 'A', college_id: 'c-default' }],
+      enrollment: [{ enrollment_id: 'e1', student_id: 'stu1', course_id: 'c1', status: 'active', section: 'A', college_id: 'c-default' }],
+      timetable: [
+        { slot_id: 't-mine', day: 'MON', time: '09:00', course_id: 'c1', section: 'A', status: 'published', college_id: 'c-default' },
+        { slot_id: 't-not-mine', day: 'TUE', time: '09:00', course_id: 'c1', section: 'B', status: 'published', college_id: 'c-default' },
+      ],
+    });
+    const controller = new CommonController(db, {} as any);
+
+    const res: any = await controller.getStudentTimetable('stu1', 'c-default');
+
+    expect(res.grid.MON['09:00'].slot_id).toBe('t-mine');
+    expect(res.grid.TUE).toBeUndefined();
+  });
+});

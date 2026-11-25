@@ -3114,15 +3114,21 @@ async getStudentTimetable(
 @CurrentUserId() userId: string,
 @CurrentUserCollegeId() collegeId: string | null,
 ) {
-const student = this.db.students.find((s) => s.user_id === userId);
-const section = student?.section || 'A';
-const enrolledCourseIds = this.db.enrollment
-.filter((e) => e.student_id === userId && e.status === 'active')
-.map((e) => e.course_id);
+// Each enrollment row already carries its OWN section (a student can be
+// in a different section for different courses, since a course's
+// sections are each independently staffed via course_sections — see
+// generateTimetable's own comment). Previously this matched every
+// enrolled course's slots against students[].section, a single generic
+// "home section" field — so a published session for a course/section the
+// student was genuinely enrolled in could still never show up here if it
+// didn't happen to equal that one blanket field. Matching each course
+// against that SAME course's own enrollment section fixes it.
+const myEnrollment = this.db.enrollment.filter(
+(e) => e.student_id === userId && e.status === 'active',
+);
 const slots = scopeToCollege(this.db.timetable, collegeId).filter(
 (t) =>
-  t.section === section &&
-  enrolledCourseIds.includes(t.course_id) &&
+  myEnrollment.some((e) => e.course_id === t.course_id && e.section === t.section) &&
   (t.status === undefined || t.status === 'published'),
 );
 return { grid: buildTimetableGrid(slots), ...TIMETABLE_AXES };
