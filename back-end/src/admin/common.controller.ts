@@ -1,6 +1,7 @@
 import {
   validateSlotConflicts,
   validateWeeklyHourRequirements,
+  resolveSlotSemester,
   TIMETABLE_DAYS,
   TIMETABLE_TIMES,
 } from '../common/timetable-validation';
@@ -353,11 +354,17 @@ if (rows.length) this.db.course_sections.push(...rows);
 async getTimetable(
   @Query('section') section: string = 'A',
   @Query('status') status: string,
+  @Query('semester') semesterRaw: string | undefined,
   @CurrentUserCollegeId() collegeId: string | null,
   @CurrentUserRole() role: string,
 ) {
+  // Section letters are reused across semesters (every term has its own
+  // "Section A"/"B"/"C"), so section alone doesn't identify one cohort's
+  // timetable — when the caller knows which semester it wants, scope to it.
+  // Omitted entirely for back-compat with any caller that doesn't send one.
+  const semester = semesterRaw ? Number(semesterRaw) : undefined;
   let slots = scopeToCollege(this.db.timetable, collegeId).filter(
-    (t) => t.section === section,
+    (t) => t.section === section && (semester === undefined || resolveSlotSemester(this.db, t) === semester),
   );
   // Student & Faculty only see published slots unless admin/head
   if (role === 'student' || (role === 'faculty' && status !== 'all')) {
@@ -493,20 +500,28 @@ async deleteSlot(
 @Roles('head', 'admin', 'superadmin')
 @ApiOperation({ summary: 'Validate section timetable for conflicts and contact hour requirements' })
 async validateTimetable(
-  @Body() body: { section: string; course_id?: string },
+  @Body() body: { section: string; semester?: number; course_id?: string },
   @CurrentUserCollegeId() collegeId: string | null,
 ) {
   const section = body.section || 'A';
+  const semester = body.semester;
   const slots = scopeToCollege(this.db.timetable, collegeId).filter(
-    (t) => t.section === section,
+    (t) => t.section === section && (semester === undefined || resolveSlotSemester(this.db, t) === semester),
   );
 
+  // candidateSlots deliberately NOT narrowed to this section's own slots:
+  // a room or faculty member can double-book across *different* sections
+  // too, and that's exactly the kind of conflict a full "Validate" pass
+  // should catch, same as a single slot save already does by not passing
+  // candidateSlots at all (see createOrUpdateSlot above). Narrowing it here
+  // previously meant a timetable could "validate clean" while genuinely
+  // double-booking a room or faculty member that belonged to another
+  // section's own schedule.
   const allConflicts: any[] = [];
   slots.forEach((s) => {
     const c = validateSlotConflicts(this.db, s, {
       excludeSlotId: s.slot_id,
       collegeId,
-      candidateSlots: slots,
     });
     if (c.length > 0) allConflicts.push({ slot: s, conflicts: c });
   });
@@ -531,12 +546,13 @@ async validateTimetable(
 @Roles('head', 'admin', 'superadmin')
 @ApiOperation({ summary: 'Publish draft timetable for a section after validation' })
 async publishTimetable(
-  @Body() body: { section: string; force?: boolean },
+  @Body() body: { section: string; semester?: number; force?: boolean },
   @CurrentUserCollegeId() collegeId: string | null,
 ) {
   const section = body.section || 'A';
+  const semester = body.semester;
   const slots = scopeToCollege(this.db.timetable, collegeId).filter(
-    (t) => t.section === section,
+    (t) => t.section === section && (semester === undefined || resolveSlotSemester(this.db, t) === semester),
   );
 
   if (slots.length === 0) {
@@ -545,13 +561,15 @@ async publishTimetable(
     );
   }
 
-  // Validate all slots
+  // Validate all slots — candidateSlots deliberately not narrowed to this
+  // section/semester alone, same reasoning as validateTimetable above: a
+  // room or faculty double-booking against another section must still
+  // block publish, not just an in-section clash.
   const allConflicts: any[] = [];
   slots.forEach((s) => {
     const c = validateSlotConflicts(this.db, s, {
       excludeSlotId: s.slot_id,
       collegeId,
-      candidateSlots: slots,
     });
     if (c.length > 0) allConflicts.push(...c);
   });
@@ -582,18 +600,34 @@ async publishTimetable(
 @Roles('head', 'admin', 'superadmin')
 @ApiOperation({ summary: 'Deterministic automated timetable draft generation with conflict avoidance' })
 async generateTimetable(
-  @Body() body: { section: string; semester?: number; academic_year?: string; clearExistingDrafts?: boolean },
+  @Body()
+  body: {
+    section: string;
+    semester?: number;
+    academic_year?: string;
+    branch?: string;
+    clearExistingDrafts?: boolean;
+  },
   @CurrentUserCollegeId() actorCollegeId: string | null,
 ) {
   const section = body.section || 'A';
   const collegeId = writeCollegeId(actorCollegeId);
   const semester = body.semester;
+  const branch = body.branch || 'CS';
 
   if (body.clearExistingDrafts) {
-    // Clear only draft slots for this section and college
+    // Clear only draft slots for this section AND semester (when given) —
+    // section letters repeat every term ("Section A" exists in every
+    // semester), so clearing by section alone wiped out a different
+    // semester's drafts for the same section letter too.
     for (let i = this.db.timetable.length - 1; i >= 0; i--) {
       const t = this.db.timetable[i];
-      if (t.section === section && t.status === 'draft' && isSameCollege(t, collegeId)) {
+      if (
+        t.section === section &&
+        t.status === 'draft' &&
+        isSameCollege(t, collegeId) &&
+        (semester === undefined || resolveSlotSemester(this.db, t) === semester)
+      ) {
         this.db.timetable.splice(i, 1);
       }
     }
@@ -619,18 +653,29 @@ async generateTimetable(
     };
   }
 
-  // Candidate pool of existing slots
+  // Candidate pool of existing slots — intentionally college-wide, not
+  // scoped to this section/semester: ROOM_OCCUPIED/FACULTY_BUSY conflicts
+  // inside validateSlotConflicts must still be checked against every other
+  // section's real schedule, only SECTION_OVERLAP itself is semester-aware.
   const candidatePool: any[] = [...scopeToCollege(this.db.timetable, collegeId)];
   const newlyGenerated: any[] = [];
   const days = TIMETABLE_DAYS;
   const times = TIMETABLE_TIMES;
 
-  // Available room resources
+  // Available room resources, excluding anything out of service. Previously
+  // this picked exactly one lecture room and one lab room up front and used
+  // only those for every course in the whole run — with several courses all
+  // competing for the SAME single room, most of a college's real room
+  // capacity went unused and generation ran out of free day/time slots far
+  // sooner than it needed to. Now every eligible room of the right type is
+  // tried at each candidate day/time, not just one fixed default.
   const availableRooms = scopeToCollege(this.db.resources, collegeId).filter(
-    (r) => r.type === 'Room' || r.type === 'Hall' || r.type === 'Lab',
+    (r) => (r.type === 'Room' || r.type === 'Hall' || r.type === 'Lab') && r.status !== 'maintenance',
   );
-  const defaultLectureRoom = availableRooms.find((r) => r.type !== 'Lab')?.name || '101';
-  const defaultLabRoom = availableRooms.find((r) => r.type === 'Lab')?.name || 'Lab 1';
+  const lectureRooms = availableRooms.filter((r) => r.type !== 'Lab').map((r) => r.name);
+  const labRooms = availableRooms.filter((r) => r.type === 'Lab').map((r) => r.name);
+  if (lectureRooms.length === 0) lectureRooms.push('TBA');
+  if (labRooms.length === 0) labRooms.push('TBA');
 
   for (const course of coursesToSchedule) {
     const req = validateWeeklyHourRequirements(this.db, course.course_id, section, candidatePool);
@@ -642,44 +687,67 @@ async generateTimetable(
     const fac = facultyId ? (this.db.faculty as any[]).find((f) => f.user_id === facultyId) : null;
     const facultyName = fac ? `${fac.first_name || ''} ${fac.last_name || ''}`.trim() : undefined;
 
-    // Allocate required hours across available days and times without conflict
+    // A course's actual lab/lecture mix, when the course itself records
+    // one — this was previously guessed from the course's name/code (a
+    // course code check as loose as "contains the letter L anywhere" wrongly
+    // flagged most ordinary courses as needing a lab for their last hour).
+    // Falls back to "the last hour is a lab" only when the course genuinely
+    // says so by name; otherwise every hour generates as a lecture.
+    const explicitLabHours = Number((course as any).lab_hours) || 0;
+    const nameImpliesLab = /\blab\b/i.test(course.course_name || '');
+    const alreadyScheduledLabHours = candidatePool.filter(
+      (s) => s.course_id === course.course_id && s.section === section && s.type === 'lab',
+    ).length;
+
+    // Allocate required hours across available days, times, and rooms
+    // without conflict.
     for (const day of days) {
       if (hoursNeeded <= 0) break;
       for (const time of times) {
         if (hoursNeeded <= 0) break;
 
-        const isLab = hoursNeeded === 1 && (course.course_name?.toLowerCase().includes('lab') || course.course_code?.toLowerCase().includes('l'));
-        const targetRoom = isLab ? defaultLabRoom : defaultLectureRoom;
+        const newlyScheduledLabHours = req.expectedContactHours - req.scheduledHours - hoursNeeded;
+        const isLab =
+          explicitLabHours > 0
+            ? alreadyScheduledLabHours + newlyScheduledLabHours < explicitLabHours
+            : hoursNeeded === 1 && nameImpliesLab;
+        const candidateRooms = isLab ? labRooms : lectureRooms;
 
-        const slotDraft = {
-          slot_id: `t_gen_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-          day,
-          time,
-          course_id: course.course_id,
-          course_code: course.course_code,
-          course_name: course.course_name,
-          section,
-          room: targetRoom,
-          type: (isLab ? 'lab' : 'lecture') as any,
-          faculty_id: facultyId,
-          faculty_name: facultyName,
-          status: 'draft' as const,
-          college_id: collegeId,
-          semester: course.semester || 1,
-          branch: 'CS',
-        };
+        let placed = false;
+        for (const targetRoom of candidateRooms) {
+          const slotDraft = {
+            slot_id: `t_gen_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+            day,
+            time,
+            course_id: course.course_id,
+            course_code: course.course_code,
+            course_name: course.course_name,
+            section,
+            room: targetRoom,
+            type: (isLab ? 'lab' : 'lecture') as any,
+            faculty_id: facultyId,
+            faculty_name: facultyName,
+            status: 'draft' as const,
+            college_id: collegeId,
+            semester: course.semester || 1,
+            branch,
+          };
 
-        const conflicts = validateSlotConflicts(this.db, slotDraft as any, {
-          collegeId,
-          candidateSlots: candidatePool,
-        });
+          const conflicts = validateSlotConflicts(this.db, slotDraft as any, {
+            collegeId,
+            candidateSlots: candidatePool,
+          });
 
-        if (conflicts.length === 0) {
-          candidatePool.push(slotDraft);
-          newlyGenerated.push(slotDraft);
-          this.db.timetable.push(slotDraft);
-          hoursNeeded--;
+          if (conflicts.length === 0) {
+            candidatePool.push(slotDraft);
+            newlyGenerated.push(slotDraft);
+            this.db.timetable.push(slotDraft);
+            hoursNeeded--;
+            placed = true;
+            break;
+          }
         }
+        if (!placed) continue;
       }
     }
   }

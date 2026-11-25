@@ -58,14 +58,14 @@ export default function TimetableManagement() {
   const fetchTimetable = useCallback(async () => {
     setLoading(true);
     try {
-      await dispatch(fetchTimetableData({ section })).unwrap();
-      await dispatch(validateTimetable({ section })).unwrap();
+      await dispatch(fetchTimetableData({ section, semester: Number(semester) })).unwrap();
+      await dispatch(validateTimetable({ section, semester: Number(semester) })).unwrap();
     } catch (err) {
       showToast('Failed to load timetable: ' + err.message, 'error');
     } finally {
       setLoading(false);
     }
-  }, [section, showToast, dispatch]);
+  }, [section, semester, showToast, dispatch]);
 
   // Initial metadata loading
   useEffect(() => {
@@ -84,7 +84,7 @@ export default function TimetableManagement() {
     setModalDay(day);
     setModalTime(time);
     setModalCourseId(courses[0]?.course_id || '');
-    setModalRoom(resources.find((r) => r.type !== 'Lab')?.name || '101');
+    setModalRoom(resources.find((r) => r.type !== 'Lab')?.name || '');
     setModalType('lecture');
     setModalFacultyId('');
     setModalStatus('draft');
@@ -133,7 +133,11 @@ export default function TimetableManagement() {
           `Scheduling Conflict Detected:\n\n${res.message}\n\nDo you want to override and save anyway?`,
         );
         if (confirmForce) {
-          return handleSaveSlot(null, true);
+          // Awaited, not just returned — otherwise this function's own
+          // `finally` below flips submittingSlot back to false immediately,
+          // before the forced retry's request has actually resolved,
+          // letting a second click fire mid-flight.
+          return await handleSaveSlot(null, true);
         } else {
           setSubmittingSlot(false);
           return;
@@ -174,7 +178,7 @@ export default function TimetableManagement() {
     }
 
     try {
-      const res = await dispatch(publishTimetable({ section, force })).unwrap();
+      const res = await dispatch(publishTimetable({ section, semester: Number(semester), force })).unwrap();
       showToast(res.message || 'Timetable published! Students & faculty can now view it. 🚀', 'success');
       fetchTimetable();
     } catch (err) {
@@ -190,6 +194,7 @@ export default function TimetableManagement() {
         section,
         semester: Number(semester),
         academic_year: academicYear,
+        branch,
         clearExistingDrafts: clearDraftsOnGen,
       })).unwrap();
 
@@ -510,16 +515,16 @@ export default function TimetableManagement() {
               <div className="form-group">
                 <label style={{ fontWeight: 600 }}>Room / Laboratory</label>
                 <select value={modalRoom} onChange={(e) => setModalRoom(e.target.value)} className="form-control">
-                  <option value="101">Room 101 (Lecture)</option>
-                  <option value="102">Room 102 (Lecture)</option>
-                  <option value="103">Room 103 (Lecture)</option>
-                  <option value="201">Room 201 (Lecture)</option>
-                  <option value="Lab 1">Lab 1 (Computing)</option>
-                  <option value="Lab 2">Lab 2 (Hardware)</option>
+                  <option value="">— Unassigned (TBA) —</option>
                   {resources.map((r) => (
                     <option key={r.resource_id} value={r.name}>{r.name} ({r.type})</option>
                   ))}
                 </select>
+                {/* Room/type/capacity conflict checks (back-end validateSlotConflicts)
+                    only ever fire when the chosen name matches a real resources[]
+                    record — these used to be 6 hardcoded placeholder names ("Room
+                    101", "Lab 1", ...) that matched no real resource at all, so
+                    picking one silently skipped every one of those checks. */}
               </div>
               <div className="form-group">
                 <label style={{ fontWeight: 600 }}>Session Type</label>

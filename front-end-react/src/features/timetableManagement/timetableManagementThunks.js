@@ -10,12 +10,17 @@ import { apiFetch } from '../../api/client';
  * admin/common.controller.ts directly — no {success,data} envelope
  * anywhere in this group), so thunks pass the response straight through.
  */
-export const fetchTimetable = createAsyncThunk('timetableManagement/fetch', ({ section }) =>
-  apiFetch(`/timetable?section=${section}&status=all`),
+// Section letters repeat every semester (every term has its own "Section
+// A"/"B"/"C"), so `section` alone doesn't identify one cohort's timetable —
+// `semester` is what actually disambiguates which one this is. Optional on
+// the backend for callers that don't have one, but this admin-authoring
+// surface always does, so it's always sent here.
+export const fetchTimetable = createAsyncThunk('timetableManagement/fetch', ({ section, semester }) =>
+  apiFetch(`/timetable?section=${section}&status=all${semester ? `&semester=${semester}` : ''}`),
 );
 
-export const validateTimetable = createAsyncThunk('timetableManagement/validate', ({ section }) =>
-  apiFetch('/timetable/validate', { method: 'POST', body: JSON.stringify({ section }) }),
+export const validateTimetable = createAsyncThunk('timetableManagement/validate', ({ section, semester }) =>
+  apiFetch('/timetable/validate', { method: 'POST', body: JSON.stringify({ section, semester }) }),
 );
 
 // Doesn't splice into state — the component always calls fetchTimetable()
@@ -32,8 +37,8 @@ export const deleteTimetableSlot = createAsyncThunk('timetableManagement/deleteS
   apiFetch(`/timetable/slot/${slotId}`, { method: 'DELETE' }),
 );
 
-export const publishTimetable = createAsyncThunk('timetableManagement/publish', ({ section, force }) =>
-  apiFetch('/timetable/publish', { method: 'POST', body: JSON.stringify({ section, force }) }),
+export const publishTimetable = createAsyncThunk('timetableManagement/publish', ({ section, semester, force }) =>
+  apiFetch('/timetable/publish', { method: 'POST', body: JSON.stringify({ section, semester, force }) }),
 );
 
 export const generateTimetable = createAsyncThunk('timetableManagement/generate', (payload) =>
