@@ -133,6 +133,27 @@ export class AuthService {
 
     return { success: true };
   }
+
+  /**
+   * Pre-login forgot-password flow: the caller already proved ownership of
+   * the email client-side (ForgotPasswordModal's own code-verification step —
+   * a demo stand-in, not a real email send, left as-is per that component's
+   * own doc comment), so there is no "current password" to check here.
+   *
+   * Deliberately returns the same outcome whether or not `email` belongs to
+   * a real account — same anti-enumeration stance login() already takes, so
+   * this endpoint can't be used to probe which emails are registered.
+   */
+  async resetPassword(email: string, newPass: string) {
+    const target = normalizeEmail(email);
+    const user = this.db.users.find((u) => normalizeEmail(u.email) === target);
+    if (user) {
+      user.password_hash = await this.passwordService.hash(newPass);
+      delete user.password;
+      this.db.persist();
+    }
+    return { success: true };
+  }
 }
 
 /**

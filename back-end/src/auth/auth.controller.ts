@@ -18,7 +18,7 @@ import {
   ApiBody,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { LoginDto, ChangePasswordDto } from '../common/dto/app.dto';
+import { LoginDto, ChangePasswordDto, ResetPasswordDto } from '../common/dto/app.dto';
 import { InMemoryDbService } from '../database/in-memory-db.service';
 import { Public } from './public.decorator';
 import { CurrentUserId } from '../common/decorators/current-user.decorator';
@@ -163,6 +163,23 @@ export class AuthController {
         ),
       );
     }
+  }
+
+  @Post('reset-password')
+  @Public()
+  @ApiOperation({ summary: 'Reset a forgotten password (pre-login flow)' })
+  @ApiBody({ type: ResetPasswordDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Always succeeds — does not reveal whether the email is registered',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid email or password format' })
+  async resetPassword(@Body() body: ResetPasswordDto) {
+    await this.authService.resetPassword(body.email, body.new_password);
+    // No user id to log here on purpose — same no-enumeration stance as
+    // login()'s own warn log above.
+    this.logger.info({ outcome: 'reset_password_requested' }, 'Password reset requested');
+    return { success: true, message: 'Password reset successfully' };
   }
 
   @Post('logout')

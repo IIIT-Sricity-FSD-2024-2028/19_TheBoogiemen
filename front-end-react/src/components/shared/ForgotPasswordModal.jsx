@@ -14,6 +14,11 @@ import { useAppDispatch } from '../../store/hooks';
 import { resetPassword } from '../../features/auth/authThunks';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Same policy Settings.jsx's own change-password form enforces, and that the
+// backend enforces server-side on both /auth/change-password and
+// /auth/reset-password — a forgotten-password reset must not be a way to set
+// a weaker password than a logged-in user is allowed to.
+const PASSWORD_RE = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
 export default function ForgotPasswordModal({ open, onClose }) {
   const dispatch = useAppDispatch();
@@ -60,8 +65,8 @@ export default function ForgotPasswordModal({ open, onClose }) {
   };
 
   const submitNewPassword = async () => {
-    if (!newPass || newPass.length < 6) {
-      showToast('Password must be at least 6 characters', 'warning');
+    if (!PASSWORD_RE.test(newPass)) {
+      showToast('Password needs 8+ characters with an uppercase, lowercase, number and special character', 'warning');
       return;
     }
     if (newPass !== confPass) {
@@ -158,8 +163,8 @@ export default function ForgotPasswordModal({ open, onClose }) {
                   type="password"
                   value={newPass}
                   onChange={(e) => setNewPass(e.target.value)}
-                  placeholder="Minimum 6 characters"
-                  minLength={6}
+                  placeholder="8+ chars, upper, lower, number, special"
+                  minLength={8}
                 />
               </div>
               <div className="form-group">

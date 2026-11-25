@@ -34,3 +34,18 @@ export class ChangePasswordDto {
   @Matches(PASSWORD_POLICY, { message: PASSWORD_POLICY_MESSAGE })
   new_password: string;
 }
+
+export class ResetPasswordDto {
+  @ApiProperty({ example: 'student@example.com' })
+  @IsEmail()
+  email: string;
+
+  // Same policy change-password enforces — a forgotten-password reset must
+  // not be a back door into a weaker password than a logged-in user is
+  // allowed to set for themselves.
+  @ApiProperty({ description: PASSWORD_POLICY_MESSAGE })
+  @IsNotEmpty()
+  @MinLength(8)
+  @Matches(PASSWORD_POLICY, { message: PASSWORD_POLICY_MESSAGE })
+  new_password: string;
+}

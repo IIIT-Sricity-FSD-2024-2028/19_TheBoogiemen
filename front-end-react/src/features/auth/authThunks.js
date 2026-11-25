@@ -63,11 +63,10 @@ export const changePassword = createAsyncThunk('auth/changePassword', ({ current
   }),
 );
 
-// Pre-login flow (ForgotPasswordModal) — calls /auth/reset-password, which
-// does not exist anywhere in the backend (only /auth/change-password does,
-// an authenticated route). This 404s today in the pre-Redux code too; a
-// pre-existing product bug, not something this migration introduces or
-// fixes — ported faithfully as-is.
+// Pre-login flow (ForgotPasswordModal) — calls /auth/reset-password, a public
+// route with the same password policy change-password enforces. Always
+// resolves success regardless of whether the email is registered, matching
+// the backend's own anti-enumeration stance.
 export const resetPassword = createAsyncThunk('auth/resetPassword', ({ email, newPassword }) =>
   apiFetch('/auth/reset-password', { method: 'POST', body: JSON.stringify({ email, new_password: newPassword }) }),
 );
