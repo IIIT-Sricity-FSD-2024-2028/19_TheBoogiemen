@@ -175,15 +175,18 @@ export class StudentsService {
   }
 
   async getTimetable(userId: string, collegeId: string | null) {
-    const student = this.db.students.find((s) => s.user_id === userId);
-    const section = student?.section || 'A';
-    const enrolledCourseIds = this.db.enrollment
-      .filter((e) => e.student_id === userId && e.status === 'active')
-      .map((e) => e.course_id);
+    // Same fix as common.controller.ts's getStudentTimetable (the route the
+    // frontend actually calls, /student-timetable) — kept consistent here
+    // too since this is the exact same bug: each enrollment row carries its
+    // OWN section, which can differ per course, so matching against
+    // students[].section (one blanket "home section" field) could hide a
+    // published session for a course the student is genuinely enrolled in.
+    const myEnrollment = this.db.enrollment.filter(
+      (e) => e.student_id === userId && e.status === 'active',
+    );
     const slots = scopeToCollege(this.db.timetable, collegeId).filter(
       (t) =>
-        t.section === section &&
-        enrolledCourseIds.includes(t.course_id) &&
+        myEnrollment.some((e) => e.course_id === t.course_id && e.section === t.section) &&
         (t.status === undefined || t.status === 'published'),
     );
     const grid = slots.reduce((acc: any, curr) => {
@@ -198,7 +201,6 @@ export class StudentsService {
     }, {});
     return {
       grid,
-      section,
       days: ['MON', 'TUE', 'WED', 'THU', 'FRI'],
       times: ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00'],
     };

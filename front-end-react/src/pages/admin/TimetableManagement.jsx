@@ -22,8 +22,11 @@ export default function TimetableManagement() {
   const dispatch = useAppDispatch();
   const { showToast } = useNotifications();
 
-  // Filters & State
-  const [section, setSection] = useState('A');
+  // Filters & State — deliberately no page-wide "Section" filter: a
+  // course's sections are its own concern (course_sections), and different
+  // branches' courses don't share one global "Section A/B/C". The grid
+  // shows every section at once, scoped only by Semester; which section a
+  // given class session is for is picked per-slot in the Add/Edit modal.
   const [branch, setBranch] = useState('CS');
   const [semester, setSemester] = useState('3');
   const [academicYear, setAcademicYear] = useState('2024-2025');
@@ -43,6 +46,7 @@ export default function TimetableManagement() {
   const [modalDay, setModalDay] = useState('MON');
   const [modalTime, setModalTime] = useState('09:00');
   const [modalCourseId, setModalCourseId] = useState('');
+  const [modalSection, setModalSection] = useState('');
   const [modalRoom, setModalRoom] = useState('');
   const [modalType, setModalType] = useState('lecture');
   const [modalFacultyId, setModalFacultyId] = useState('');
@@ -58,14 +62,14 @@ export default function TimetableManagement() {
   const fetchTimetable = useCallback(async () => {
     setLoading(true);
     try {
-      await dispatch(fetchTimetableData({ section })).unwrap();
-      await dispatch(validateTimetable({ section })).unwrap();
+      await dispatch(fetchTimetableData({ semester: Number(semester) })).unwrap();
+      await dispatch(validateTimetable({ semester: Number(semester) })).unwrap();
     } catch (err) {
       showToast('Failed to load timetable: ' + err.message, 'error');
     } finally {
       setLoading(false);
     }
-  }, [section, showToast, dispatch]);
+  }, [semester, showToast, dispatch]);
 
   // Initial metadata loading
   useEffect(() => {
@@ -78,15 +82,31 @@ export default function TimetableManagement() {
     fetchTimetable();
   }, [fetchTimetable]);
 
+  // A course's own section/faculty assignments (course_sections), already
+  // folded into each course by GET /courses — this is what lets the Add/Edit
+  // modal offer "which section of THIS course" rather than assuming one
+  // page-wide section applies to every course.
+  const sectionsForCourse = (courseId) => courses.find((c) => c.course_id === courseId)?.sections || [];
+
+  // Picking a course resets Section/Faculty to that course's own first
+  // assigned section, rather than leaving a stale selection from whatever
+  // course was previously chosen.
+  const applyCourseDefaults = (courseId) => {
+    const secs = sectionsForCourse(courseId);
+    setModalSection(secs[0]?.section || '');
+    setModalFacultyId(secs[0]?.faculty_id || '');
+  };
+
   // Open modal for new slot at a specific day/time
   const openNewSlotModal = (day, time) => {
     setSelectedSlot(null);
     setModalDay(day);
     setModalTime(time);
-    setModalCourseId(courses[0]?.course_id || '');
-    setModalRoom(resources.find((r) => r.type !== 'Lab')?.name || '101');
+    const firstCourseId = courses[0]?.course_id || '';
+    setModalCourseId(firstCourseId);
+    applyCourseDefaults(firstCourseId);
+    setModalRoom(resources.find((r) => r.type !== 'Lab')?.name || '');
     setModalType('lecture');
-    setModalFacultyId('');
     setModalStatus('draft');
     setSlotModalOpen(true);
   };
@@ -97,6 +117,7 @@ export default function TimetableManagement() {
     setModalDay(slot.day);
     setModalTime(slot.time);
     setModalCourseId(slot.course_id);
+    setModalSection(slot.section || '');
     setModalRoom(slot.room || '');
     setModalType(slot.type || 'lecture');
     setModalFacultyId(slot.faculty_id || '');
@@ -108,6 +129,7 @@ export default function TimetableManagement() {
   const handleSaveSlot = async (e, force = false) => {
     if (e) e.preventDefault();
     if (!modalCourseId) return showToast('Please select a course', 'warning');
+    if (!modalSection) return showToast('Please select which section this class is for', 'warning');
 
     setSubmittingSlot(true);
     try {
@@ -116,7 +138,7 @@ export default function TimetableManagement() {
         day: modalDay,
         time: modalTime,
         course_id: modalCourseId,
-        section,
+        section: modalSection,
         room: modalRoom,
         type: modalType,
         faculty_id: modalFacultyId || undefined,
@@ -133,7 +155,11 @@ export default function TimetableManagement() {
           `Scheduling Conflict Detected:\n\n${res.message}\n\nDo you want to override and save anyway?`,
         );
         if (confirmForce) {
-          return handleSaveSlot(null, true);
+          // Awaited, not just returned — otherwise this function's own
+          // `finally` below flips submittingSlot back to false immediately,
+          // before the forced retry's request has actually resolved,
+          // letting a second click fire mid-flight.
+          return await handleSaveSlot(null, true);
         } else {
           setSubmittingSlot(false);
           return;
@@ -174,7 +200,7 @@ export default function TimetableManagement() {
     }
 
     try {
-      const res = await dispatch(publishTimetable({ section, force })).unwrap();
+      const res = await dispatch(publishTimetable({ semester: Number(semester), force })).unwrap();
       showToast(res.message || 'Timetable published! Students & faculty can now view it. 🚀', 'success');
       fetchTimetable();
     } catch (err) {
@@ -187,9 +213,9 @@ export default function TimetableManagement() {
     setGenerating(true);
     try {
       const res = await dispatch(generateTimetable({
-        section,
         semester: Number(semester),
         academic_year: academicYear,
+        branch,
         clearExistingDrafts: clearDraftsOnGen,
       })).unwrap();
 
@@ -211,17 +237,19 @@ export default function TimetableManagement() {
   const allSlots = timetableData?.slots || [];
   const publishedCount = allSlots.filter((s) => s.status === 'published' || s.status === undefined).length;
   const draftCount = allSlots.filter((s) => s.status === 'draft').length;
+  const isNewSlot = selectedSlot === null;
+  const modalCourseSections = sectionsForCourse(modalCourseId);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      {/* Top Header & Section Selector */}
+      {/* Top Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
             Academic Timetable Management
           </h2>
           <p style={{ color: '#64748b', fontSize: '0.9rem', margin: '4px 0 0' }}>
-            Configure weekly course hour requirements, allocate classrooms, detect conflicts, and publish section schedules.
+            Configure weekly course hour requirements, allocate classrooms, detect conflicts, and publish schedules across every section.
           </p>
         </div>
 
@@ -248,19 +276,6 @@ export default function TimetableManagement() {
 
       {/* Cohort & Filter Controls */}
       <div style={{ display: 'flex', gap: '12px', background: '#fff', padding: '1rem', borderRadius: '10px', border: '1px solid #e2e8f0', flexWrap: 'wrap', alignItems: 'center' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Section</label>
-          <select
-            value={section}
-            onChange={(e) => setSection(e.target.value)}
-            style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontWeight: 700, minWidth: '90px' }}
-          >
-            <option value="A">Section A</option>
-            <option value="B">Section B</option>
-            <option value="C">Section C</option>
-          </select>
-        </div>
-
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Semester</label>
           <select
@@ -336,12 +351,12 @@ export default function TimetableManagement() {
       {validationReport?.hourReports && validationReport.hourReports.length > 0 && (
         <div style={{ background: '#fff', borderRadius: '10px', border: '1px solid #e2e8f0', padding: '1rem' }}>
           <h4 style={{ margin: '0 0 10px', fontSize: '0.95rem', fontWeight: 700, color: '#334155' }}>
-            Weekly Course Contact Hour Coverage (Section {section})
+            Weekly Course Contact Hour Coverage (Semester {semester})
           </h4>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
             {validationReport.hourReports.map((hr) => (
               <div
-                key={hr.course_id}
+                key={`${hr.course_id}-${hr.section}`}
                 style={{
                   padding: '8px 12px',
                   borderRadius: '6px',
@@ -350,7 +365,9 @@ export default function TimetableManagement() {
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <strong style={{ fontSize: '0.9rem', color: '#0f172a' }}>{hr.course_code}</strong>
+                  <strong style={{ fontSize: '0.9rem', color: '#0f172a' }}>
+                    {hr.course_code} <span style={{ fontWeight: 600, color: '#64748b' }}>· Sec {hr.section}</span>
+                  </strong>
                   <span style={{ fontSize: '0.75rem', fontWeight: 700, color: hr.isComplete ? '#15803d' : '#c2410c' }}>
                     {hr.scheduledHours}/{hr.expectedContactHours} hrs
                   </span>
@@ -420,46 +437,61 @@ export default function TimetableManagement() {
                           + Add
                         </div>
                       ) : (
-                        slots.map((s) => {
-                          const isDraft = s.status === 'draft';
-                          return (
-                            <div
-                              key={s.slot_id}
-                              onClick={() => openEditSlotModal(s)}
-                              style={{
-                                padding: '8px 10px',
-                                borderRadius: '6px',
-                                background: isDraft ? '#fffbeb' : s.type === 'lab' ? '#fef3c7' : '#eff6ff',
-                                border: `1px solid ${isDraft ? '#fcd34d' : s.type === 'lab' ? '#f59e0b' : '#3b82f6'}`,
-                                borderLeft: `4px solid ${isDraft ? '#f59e0b' : s.type === 'lab' ? '#d97706' : '#2563eb'}`,
-                                cursor: 'pointer',
-                                marginBottom: '4px',
-                                boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-                              }}
-                            >
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <strong style={{ fontSize: '0.85rem', color: '#0f172a' }}>{s.course_code || s.course_id}</strong>
-                                {isDraft && (
-                                  <span style={{ fontSize: '0.65rem', background: '#f59e0b', color: '#fff', padding: '1px 4px', borderRadius: '3px', fontWeight: 700 }}>
-                                    DRAFT
-                                  </span>
+                        <>
+                          {slots.map((s) => {
+                            const isDraft = s.status === 'draft';
+                            return (
+                              <div
+                                key={s.slot_id}
+                                onClick={() => openEditSlotModal(s)}
+                                style={{
+                                  padding: '8px 10px',
+                                  borderRadius: '6px',
+                                  background: isDraft ? '#fffbeb' : s.type === 'lab' ? '#fef3c7' : '#eff6ff',
+                                  border: `1px solid ${isDraft ? '#fcd34d' : s.type === 'lab' ? '#f59e0b' : '#3b82f6'}`,
+                                  borderLeft: `4px solid ${isDraft ? '#f59e0b' : s.type === 'lab' ? '#d97706' : '#2563eb'}`,
+                                  cursor: 'pointer',
+                                  marginBottom: '4px',
+                                  boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                                }}
+                              >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <strong style={{ fontSize: '0.85rem', color: '#0f172a' }}>{s.course_code || s.course_id}</strong>
+                                  {isDraft && (
+                                    <span style={{ fontSize: '0.65rem', background: '#f59e0b', color: '#fff', padding: '1px 4px', borderRadius: '3px', fontWeight: 700 }}>
+                                      DRAFT
+                                    </span>
+                                  )}
+                                </div>
+                                <div style={{ fontSize: '0.75rem', color: '#475569', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                  {s.course_name} <span style={{ color: '#94a3b8' }}>· Sec {s.section}</span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#64748b', marginTop: '4px' }}>
+                                  <span>📍 {s.room}</span>
+                                  <span>{s.type}</span>
+                                </div>
+                                {s.faculty_name && (
+                                  <div style={{ fontSize: '0.7rem', color: '#2563eb', marginTop: '2px' }}>
+                                    👤 {s.faculty_name}
+                                  </div>
                                 )}
                               </div>
-                              <div style={{ fontSize: '0.75rem', color: '#475569', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                {s.course_name}
-                              </div>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#64748b', marginTop: '4px' }}>
-                                <span>📍 {s.room}</span>
-                                <span>{s.type}</span>
-                              </div>
-                              {s.faculty_name && (
-                                <div style={{ fontSize: '0.7rem', color: '#2563eb', marginTop: '2px' }}>
-                                  👤 {s.faculty_name}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })
+                            );
+                          })}
+                          <div
+                            onClick={() => openNewSlotModal(d, t)}
+                            title="Click to schedule another class session at this same day/time (e.g. a different section)"
+                            style={{
+                              fontSize: '0.7rem',
+                              color: '#94a3b8',
+                              textAlign: 'center',
+                              padding: '2px',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            + Add another
+                          </div>
+                        </>
                       )}
                     </td>
                   );
@@ -479,24 +511,50 @@ export default function TimetableManagement() {
       >
         <form onSubmit={handleSaveSlot} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
           <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', overflowY: 'auto', flex: 1, minHeight: 0, padding: '1.25rem 1.5rem' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div className="form-group">
-                <label style={{ fontWeight: 600 }}>Day of Week</label>
-                <select value={modalDay} onChange={(e) => setModalDay(e.target.value)} className="form-control">
-                  {DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
-                </select>
+            {isNewSlot ? (
+              // Day/Time came from the exact grid cell that was clicked —
+              // no point offering a dropdown to change what's already
+              // obvious from where "+ Add" was clicked.
+              <div
+                style={{
+                  padding: '10px 14px',
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '6px',
+                  fontSize: '0.9rem',
+                  color: '#334155',
+                }}
+              >
+                Scheduling for <strong>{modalDay}, {modalTime}</strong>
               </div>
-              <div className="form-group">
-                <label style={{ fontWeight: 600 }}>Time Slot</label>
-                <select value={modalTime} onChange={(e) => setModalTime(e.target.value)} className="form-control">
-                  {TIMES.map((t) => <option key={t} value={t}>{t}</option>)}
-                </select>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="form-group">
+                  <label style={{ fontWeight: 600 }}>Day of Week</label>
+                  <select value={modalDay} onChange={(e) => setModalDay(e.target.value)} className="form-control">
+                    {DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label style={{ fontWeight: 600 }}>Time Slot</label>
+                  <select value={modalTime} onChange={(e) => setModalTime(e.target.value)} className="form-control">
+                    {TIMES.map((t) => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="form-group">
               <label style={{ fontWeight: 600 }}>Course <span style={{ color: '#ef4444' }}>*</span></label>
-              <select value={modalCourseId} onChange={(e) => setModalCourseId(e.target.value)} className="form-control" required>
+              <select
+                value={modalCourseId}
+                onChange={(e) => {
+                  setModalCourseId(e.target.value);
+                  applyCourseDefaults(e.target.value);
+                }}
+                className="form-control"
+                required
+              >
                 <option value="">— Select Course —</option>
                 {courses.map((c) => (
                   <option key={c.course_id} value={c.course_id}>
@@ -506,20 +564,51 @@ export default function TimetableManagement() {
               </select>
             </div>
 
+            <div className="form-group">
+              <label style={{ fontWeight: 600 }}>
+                Section <span style={{ color: '#ef4444' }}>*</span>
+              </label>
+              <select
+                value={modalSection}
+                onChange={(e) => {
+                  setModalSection(e.target.value);
+                  const cs = modalCourseSections.find((s) => s.section === e.target.value);
+                  if (cs) setModalFacultyId(cs.faculty_id || '');
+                }}
+                className="form-control"
+                required
+                disabled={modalCourseSections.length === 0}
+              >
+                {modalCourseSections.length === 0 ? (
+                  <option value="">No sections assigned to this course yet — add one in Course Management</option>
+                ) : (
+                  modalCourseSections.map((s) => (
+                    <option key={s.section} value={s.section}>
+                      Section {s.section} — {s.faculty_name || s.faculty_id}
+                    </option>
+                  ))
+                )}
+              </select>
+              {/* A course's sections (and which faculty teaches each one) are
+                  owned by Course Management's "Manage Sections", not picked
+                  freely here — this only lets you choose which of a course's
+                  already-assigned sections this particular class is for. */}
+            </div>
+
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <div className="form-group">
                 <label style={{ fontWeight: 600 }}>Room / Laboratory</label>
                 <select value={modalRoom} onChange={(e) => setModalRoom(e.target.value)} className="form-control">
-                  <option value="101">Room 101 (Lecture)</option>
-                  <option value="102">Room 102 (Lecture)</option>
-                  <option value="103">Room 103 (Lecture)</option>
-                  <option value="201">Room 201 (Lecture)</option>
-                  <option value="Lab 1">Lab 1 (Computing)</option>
-                  <option value="Lab 2">Lab 2 (Hardware)</option>
+                  <option value="">— Unassigned (TBA) —</option>
                   {resources.map((r) => (
                     <option key={r.resource_id} value={r.name}>{r.name} ({r.type})</option>
                   ))}
                 </select>
+                {/* Room/type/capacity conflict checks (back-end validateSlotConflicts)
+                    only ever fire when the chosen name matches a real resources[]
+                    record — these used to be 6 hardcoded placeholder names ("Room
+                    101", "Lab 1", ...) that matched no real resource at all, so
+                    picking one silently skipped every one of those checks. */}
               </div>
               <div className="form-group">
                 <label style={{ fontWeight: 600 }}>Session Type</label>
@@ -586,12 +675,12 @@ export default function TimetableManagement() {
       <Modal
         open={generateModalOpen}
         onClose={() => setGenerateModalOpen(false)}
-        title="⚡ Auto-Generate Section Timetable Draft"
+        title="⚡ Auto-Generate Semester Timetable Draft"
         maxWidth="500px"
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1.25rem 1.5rem' }}>
           <p style={{ color: '#475569', fontSize: '0.9rem', margin: 0 }}>
-            This will calculate required contact hours for all courses assigned to <strong>Section {section}</strong> (Semester {semester}) and automatically place class sessions into non-conflicting room, time, and faculty slots.
+            This will calculate required contact hours for every section of every course in <strong>Semester {semester}</strong> and automatically place class sessions into non-conflicting room, time, and faculty slots.
           </p>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px', background: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0' }}>

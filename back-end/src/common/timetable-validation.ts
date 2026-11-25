@@ -47,6 +47,27 @@ export const TIMETABLE_TIMES = [
 ];
 
 /**
+ * A slot's "real" semester is its course's semester, not whatever (if
+ * anything) was stamped onto the slot's own `semester` field at save time —
+ * that field is a denormalized display copy, and plenty of existing seed
+ * rows never got one written at all. Resolving through course_id instead of
+ * trusting the stamp is what makes the section-overlap check below actually
+ * distinguish "Section A of Semester 3" from "Section A of Semester 5":
+ * department sections are commonly reused per-semester (A/B/C every term),
+ * so `section` alone is not a unique cohort key.
+ */
+export function resolveSlotSemester(
+  db: InMemoryDbService,
+  s: Partial<TimetableSlot>,
+): number | undefined {
+  if (s.course_id) {
+    const course = (db.courses as any[]).find((c) => c.course_id === s.course_id);
+    if (course?.semester != null) return course.semester;
+  }
+  return s.semester;
+}
+
+/**
  * Validates a prospective or draft slot against existing slots and constraints.
  */
 export function validateSlotConflicts(
@@ -77,9 +98,17 @@ export function validateSlotConflicts(
 
   if (!day || !time) return conflicts;
 
-  // 1. Same section overlap at the same day & time
+  // 1. Same section overlap at the same day & time — scoped to the same
+  // semester too (see resolveSlotSemester's own comment): "Section A" of
+  // Semester 3 and "Section A" of Semester 5 are different cohorts that can
+  // legitimately share a time slot, even though they share a section letter.
+  const slotSemester = resolveSlotSemester(db, slot);
   const sectionOverlap = otherSlots.find(
-    (s) => s.day === day && s.time === time && s.section === section,
+    (s) =>
+      s.day === day &&
+      s.time === time &&
+      s.section === section &&
+      resolveSlotSemester(db, s) === slotSemester,
   );
   if (sectionOverlap) {
     conflicts.push({
@@ -237,6 +266,7 @@ export function validateWeeklyHourRequirements(
 ): {
   course_id: string;
   course_code: string;
+  section: string;
   credits: number;
   expectedContactHours: number;
   scheduledHours: number;
@@ -276,6 +306,7 @@ export function validateWeeklyHourRequirements(
   return {
     course_id: courseId,
     course_code: courseCode,
+    section,
     credits,
     expectedContactHours,
     scheduledHours,
