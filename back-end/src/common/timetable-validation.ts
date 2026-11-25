@@ -266,6 +266,7 @@ export function validateWeeklyHourRequirements(
 ): {
   course_id: string;
   course_code: string;
+  section: string;
   credits: number;
   expectedContactHours: number;
   scheduledHours: number;
@@ -305,6 +306,7 @@ export function validateWeeklyHourRequirements(
   return {
     course_id: courseId,
     course_code: courseCode,
+    section,
     credits,
     expectedContactHours,
     scheduledHours,

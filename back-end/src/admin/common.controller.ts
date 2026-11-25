@@ -350,21 +350,22 @@ if (rows.length) this.db.course_sections.push(...rows);
 // â”€â”€ Timetable â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 @Get('timetable')
 @Roles('student', 'faculty', 'admin', 'head', 'superadmin')
-@ApiOperation({ summary: 'Get timetable grid for a section' })
+@ApiOperation({ summary: "Get a semester's whole timetable grid, across every section" })
 async getTimetable(
-  @Query('section') section: string = 'A',
   @Query('status') status: string,
   @Query('semester') semesterRaw: string | undefined,
   @CurrentUserCollegeId() collegeId: string | null,
   @CurrentUserRole() role: string,
 ) {
-  // Section letters are reused across semesters (every term has its own
-  // "Section A"/"B"/"C"), so section alone doesn't identify one cohort's
-  // timetable — when the caller knows which semester it wants, scope to it.
-  // Omitted entirely for back-compat with any caller that doesn't send one.
+  // A course's sections are its own concern (course_sections) — different
+  // sections of different courses routinely meet at the same day/time, so
+  // this view is never scoped down to one section letter. Semester is the
+  // real cohort key (section letters repeat every term; see
+  // resolveSlotSemester's own comment) — omitted entirely for back-compat
+  // with any caller that doesn't send one.
   const semester = semesterRaw ? Number(semesterRaw) : undefined;
   let slots = scopeToCollege(this.db.timetable, collegeId).filter(
-    (t) => t.section === section && (semester === undefined || resolveSlotSemester(this.db, t) === semester),
+    (t) => semester === undefined || resolveSlotSemester(this.db, t) === semester,
   );
   // Student & Faculty only see published slots unless admin/head
   if (role === 'student' || (role === 'faculty' && status !== 'all')) {
@@ -375,7 +376,6 @@ async getTimetable(
   return {
     grid: buildTimetableGrid(slots),
     slots,
-    section,
     ...TIMETABLE_AXES,
   };
 }
@@ -498,25 +498,21 @@ async deleteSlot(
 
 @Post('timetable/validate')
 @Roles('head', 'admin', 'superadmin')
-@ApiOperation({ summary: 'Validate section timetable for conflicts and contact hour requirements' })
+@ApiOperation({ summary: "Validate a semester's whole timetable (every section) for conflicts and contact hour requirements" })
 async validateTimetable(
-  @Body() body: { section: string; semester?: number; course_id?: string },
+  @Body() body: { semester?: number },
   @CurrentUserCollegeId() collegeId: string | null,
 ) {
-  const section = body.section || 'A';
   const semester = body.semester;
   const slots = scopeToCollege(this.db.timetable, collegeId).filter(
-    (t) => t.section === section && (semester === undefined || resolveSlotSemester(this.db, t) === semester),
+    (t) => semester === undefined || resolveSlotSemester(this.db, t) === semester,
   );
 
-  // candidateSlots deliberately NOT narrowed to this section's own slots:
-  // a room or faculty member can double-book across *different* sections
+  // candidateSlots deliberately NOT narrowed to this semester's own slots:
+  // a room or faculty member can double-book across *different* semesters
   // too, and that's exactly the kind of conflict a full "Validate" pass
   // should catch, same as a single slot save already does by not passing
-  // candidateSlots at all (see createOrUpdateSlot above). Narrowing it here
-  // previously meant a timetable could "validate clean" while genuinely
-  // double-booking a room or faculty member that belonged to another
-  // section's own schedule.
+  // candidateSlots at all (see createOrUpdateSlot above).
   const allConflicts: any[] = [];
   slots.forEach((s) => {
     const c = validateSlotConflicts(this.db, s, {
@@ -526,15 +522,17 @@ async validateTimetable(
     if (c.length > 0) allConflicts.push({ slot: s, conflicts: c });
   });
 
-  // Check weekly hour requirements for courses in this section
-  const sectionCourseIds = [...new Set(slots.map((s) => s.course_id))];
-  const hourReports = sectionCourseIds.map((cid) =>
-    validateWeeklyHourRequirements(this.db, cid, section, slots),
-  );
+  // Weekly hour requirements are per (course, section), not per course
+  // alone — a course's different sections are independently staffed and
+  // scheduled, and can be at different points of completion.
+  const courseSectionKeys = [...new Set(slots.map((s) => `${s.course_id}::${s.section}`))];
+  const hourReports = courseSectionKeys.map((key) => {
+    const sep = key.indexOf('::');
+    return validateWeeklyHourRequirements(this.db, key.slice(0, sep), key.slice(sep + 2), slots);
+  });
 
   return {
     success: true,
-    section,
     totalSlots: slots.length,
     conflicts: allConflicts,
     hourReports,
@@ -544,27 +542,29 @@ async validateTimetable(
 
 @Post('timetable/publish')
 @Roles('head', 'admin', 'superadmin')
-@ApiOperation({ summary: 'Publish draft timetable for a section after validation' })
+@ApiOperation({ summary: "Publish a semester's draft timetable (every section) after validation" })
 async publishTimetable(
-  @Body() body: { section: string; semester?: number; force?: boolean },
+  @Body() body: { semester?: number; force?: boolean },
   @CurrentUserCollegeId() collegeId: string | null,
 ) {
-  const section = body.section || 'A';
   const semester = body.semester;
   const slots = scopeToCollege(this.db.timetable, collegeId).filter(
-    (t) => t.section === section && (semester === undefined || resolveSlotSemester(this.db, t) === semester),
+    (t) => semester === undefined || resolveSlotSemester(this.db, t) === semester,
   );
 
   if (slots.length === 0) {
     throw new BadRequestException(
-      errorBody(ErrorCode.BUSINESS_RULE_VIOLATION, `No slots scheduled for Section ${section}`),
+      errorBody(
+        ErrorCode.BUSINESS_RULE_VIOLATION,
+        semester !== undefined ? `No slots scheduled for Semester ${semester}` : 'No slots scheduled',
+      ),
     );
   }
 
   // Validate all slots — candidateSlots deliberately not narrowed to this
-  // section/semester alone, same reasoning as validateTimetable above: a
-  // room or faculty double-booking against another section must still
-  // block publish, not just an in-section clash.
+  // semester alone, same reasoning as validateTimetable above: a room or
+  // faculty double-booking against another semester's schedule must still
+  // block publish, not just an in-semester clash.
   const allConflicts: any[] = [];
   slots.forEach((s) => {
     const c = validateSlotConflicts(this.db, s, {
@@ -591,18 +591,17 @@ async publishTimetable(
 
   return {
     success: true,
-    message: `Section ${section} timetable published successfully (${slots.length} class sessions)`,
+    message: `Timetable${semester !== undefined ? ` for Semester ${semester}` : ''} published successfully (${slots.length} class sessions, every section)`,
     publishedCount: slots.length,
   };
 }
 
 @Post('timetable/generate')
 @Roles('head', 'admin', 'superadmin')
-@ApiOperation({ summary: 'Deterministic automated timetable draft generation with conflict avoidance' })
+@ApiOperation({ summary: "Deterministic automated timetable draft generation for a semester's every section, with conflict avoidance" })
 async generateTimetable(
   @Body()
   body: {
-    section: string;
     semester?: number;
     academic_year?: string;
     branch?: string;
@@ -610,20 +609,17 @@ async generateTimetable(
   },
   @CurrentUserCollegeId() actorCollegeId: string | null,
 ) {
-  const section = body.section || 'A';
   const collegeId = writeCollegeId(actorCollegeId);
   const semester = body.semester;
   const branch = body.branch || 'CS';
 
   if (body.clearExistingDrafts) {
-    // Clear only draft slots for this section AND semester (when given) —
-    // section letters repeat every term ("Section A" exists in every
-    // semester), so clearing by section alone wiped out a different
-    // semester's drafts for the same section letter too.
+    // Clears every section's drafts for this semester (when given) — a
+    // course's sections aren't a page-wide filter, so "clear and
+    // regenerate" naturally means every section, not one hardcoded letter.
     for (let i = this.db.timetable.length - 1; i >= 0; i--) {
       const t = this.db.timetable[i];
       if (
-        t.section === section &&
         t.status === 'draft' &&
         isSameCollege(t, collegeId) &&
         (semester === undefined || resolveSlotSemester(this.db, t) === semester)
@@ -633,42 +629,44 @@ async generateTimetable(
     }
   }
 
-  // Find all applicable courses for this section
+  // Every course offered this semester, paired with EVERY section it
+  // actually has assigned (course_sections) — a course's sections are its
+  // own concern, not a single page-wide section filter. Two different
+  // sections of the same course are scheduled independently below, each
+  // against its own weekly-hour requirement and its own assigned faculty.
   let coursesToSchedule = scopeToCollege(this.db.courses, collegeId);
   if (semester) {
     coursesToSchedule = coursesToSchedule.filter((c) => c.semester === semester);
   }
+  const courseSectionPairs = coursesToSchedule.flatMap((course) =>
+    sectionsOfCourse(this.db, course.course_id).map((cs) => ({ course, cs })),
+  );
 
-  // Filter courses that have this section offered
-  coursesToSchedule = coursesToSchedule.filter((c) => {
-    const cs = sectionsOfCourse(this.db, c.course_id);
-    return cs.some((s) => s.section === section);
-  });
-
-  if (coursesToSchedule.length === 0) {
+  if (courseSectionPairs.length === 0) {
     return {
       success: false,
-      message: `No courses found with Section ${section} assigned`,
+      message:
+        semester !== undefined
+          ? `No courses with any section assigned were found for Semester ${semester}`
+          : 'No courses with any section assigned were found',
       generatedSlots: 0,
     };
   }
 
   // Candidate pool of existing slots — intentionally college-wide, not
-  // scoped to this section/semester: ROOM_OCCUPIED/FACULTY_BUSY conflicts
-  // inside validateSlotConflicts must still be checked against every other
-  // section's real schedule, only SECTION_OVERLAP itself is semester-aware.
+  // scoped to this semester: ROOM_OCCUPIED/FACULTY_BUSY conflicts inside
+  // validateSlotConflicts must still be checked against every other
+  // semester's real schedule, only SECTION_OVERLAP itself is semester-aware.
   const candidatePool: any[] = [...scopeToCollege(this.db.timetable, collegeId)];
   const newlyGenerated: any[] = [];
   const days = TIMETABLE_DAYS;
   const times = TIMETABLE_TIMES;
 
-  // Available room resources, excluding anything out of service. Previously
-  // this picked exactly one lecture room and one lab room up front and used
-  // only those for every course in the whole run — with several courses all
-  // competing for the SAME single room, most of a college's real room
-  // capacity went unused and generation ran out of free day/time slots far
-  // sooner than it needed to. Now every eligible room of the right type is
-  // tried at each candidate day/time, not just one fixed default.
+  // Available room resources, excluding anything out of service. Every
+  // eligible room of the right type is tried at each candidate day/time,
+  // not just one fixed default, so multiple sections meeting at the same
+  // time can each land in a different real room instead of competing for
+  // (and starving each other out of) just one.
   const availableRooms = scopeToCollege(this.db.resources, collegeId).filter(
     (r) => (r.type === 'Room' || r.type === 'Hall' || r.type === 'Lab') && r.status !== 'maintenance',
   );
@@ -677,13 +675,13 @@ async generateTimetable(
   if (lectureRooms.length === 0) lectureRooms.push('TBA');
   if (labRooms.length === 0) labRooms.push('TBA');
 
-  for (const course of coursesToSchedule) {
+  for (const { course, cs } of courseSectionPairs) {
+    const section = cs.section;
     const req = validateWeeklyHourRequirements(this.db, course.course_id, section, candidatePool);
     let hoursNeeded = req.expectedContactHours - req.scheduledHours;
     if (hoursNeeded <= 0) continue;
 
-    const cs = sectionsOfCourse(this.db, course.course_id).find((s) => s.section === section);
-    const facultyId = cs?.faculty_id;
+    const facultyId = cs.faculty_id;
     const fac = facultyId ? (this.db.faculty as any[]).find((f) => f.user_id === facultyId) : null;
     const facultyName = fac ? `${fac.first_name || ''} ${fac.last_name || ''}`.trim() : undefined;
 
@@ -756,7 +754,7 @@ async generateTimetable(
 
   return {
     success: true,
-    message: `Generated ${newlyGenerated.length} draft class session(s) for Section ${section}`,
+    message: `Generated ${newlyGenerated.length} draft class session(s)${semester !== undefined ? ` for Semester ${semester}` : ''}, across every section`,
     generatedSlots: newlyGenerated.length,
     slots: newlyGenerated,
   };

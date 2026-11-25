@@ -17,6 +17,13 @@
  *    up front and reused only those for the whole run, so multiple courses
  *    needing the same time slot competed for one room instead of using
  *    whichever of the college's real registered rooms was actually free.
+ * 4. A single page-wide "section" was never a real scoping concept — a
+ *    course's sections are its own concern (course_sections), and
+ *    different branches' courses don't share one global "Section A/B/C".
+ *    Every timetable endpoint now scopes by semester alone; `section` is
+ *    purely a per-slot attribute, and generateTimetable schedules every
+ *    (course, section) pair for the semester in one pass, not one
+ *    hardcoded section letter at a time.
  */
 import { CommonController } from './common.controller';
 import { InMemoryDbService } from '../database/in-memory-db.service';
@@ -64,7 +71,7 @@ describe('CommonController — timetable semester scoping', () => {
     const controller = new CommonController(db, {} as any);
 
     await controller.generateTimetable(
-      { section: 'A', semester: 3, clearExistingDrafts: true },
+      { semester: 3, clearExistingDrafts: true },
       'c-default',
     );
 
@@ -132,7 +139,7 @@ describe('CommonController.generateTimetable — lab heuristic', () => {
     });
     const controller = new CommonController(db, {} as any);
 
-    const res: any = await controller.generateTimetable({ section: 'A', semester: 3 }, 'c-default');
+    const res: any = await controller.generateTimetable({ semester: 3 }, 'c-default');
 
     expect(res.generatedSlots).toBe(1);
     expect(res.slots[0].type).toBe('lecture');
@@ -146,7 +153,7 @@ describe('CommonController.generateTimetable — lab heuristic', () => {
     });
     const controller = new CommonController(db, {} as any);
 
-    const res: any = await controller.generateTimetable({ section: 'A', semester: 3 }, 'c-default');
+    const res: any = await controller.generateTimetable({ semester: 3 }, 'c-default');
 
     expect(res.generatedSlots).toBe(1);
     expect(res.slots[0].type).toBe('lab');
@@ -157,8 +164,10 @@ describe('CommonController.generateTimetable — room rotation', () => {
   it('uses more than one registered room instead of funnelling every section into a single default room', async () => {
     // Two different SECTIONS (not the same section — a single section can
     // never legitimately double-book itself at one day/time, that's
-    // SECTION_OVERLAP correctly refusing it) each with their own course,
-    // each needing just one hour, competing for the same room pool.
+    // SECTION_OVERLAP correctly refusing it) each with their own course and
+    // faculty, each needing just one hour, generated in the SAME call —
+    // generateTimetable no longer takes a section at all, it schedules
+    // every (course, section) pair for the semester in one pass.
     const db = fakeDb({
       courses: [
         { course_id: 'c1', course_name: 'Data Structures', course_code: 'CS201', credits: 1, semester: 3, college_id: 'c-default' },
@@ -176,22 +185,47 @@ describe('CommonController.generateTimetable — room rotation', () => {
     });
     const controller = new CommonController(db, {} as any);
 
-    const resA: any = await controller.generateTimetable({ section: 'A', semester: 3 }, 'c-default');
-    const resB: any = await controller.generateTimetable({ section: 'B', semester: 3 }, 'c-default');
+    const res: any = await controller.generateTimetable({ semester: 3 }, 'c-default');
 
-    expect(resA.generatedSlots).toBe(1);
-    expect(resB.generatedSlots).toBe(1);
-    // Section A claims the first room at MON 09:00. With the single-
-    // default-room bug, Section B's generation would find that room busy at
-    // MON 09:00 and push itself to a LATER time instead of trying Room 102,
-    // which is free at that same early slot.
-    expect(resA.slots[0].day).toBe('MON');
-    expect(resA.slots[0].time).toBe('09:00');
-    expect(resB.slots[0].day).toBe('MON');
-    expect(resB.slots[0].time).toBe('09:00');
-    expect(resB.slots[0].room).not.toBe(resA.slots[0].room);
+    expect(res.generatedSlots).toBe(2);
+    // Section A's course claims the first room at MON 09:00. With the
+    // single-default-room bug, Section B's course would find that room
+    // busy at MON 09:00 and push itself to a LATER time instead of trying
+    // Room 102, which is free at that same early slot.
+    expect(res.slots[0].day).toBe('MON');
+    expect(res.slots[0].time).toBe('09:00');
+    expect(res.slots[1].day).toBe('MON');
+    expect(res.slots[1].time).toBe('09:00');
+    expect(res.slots[1].room).not.toBe(res.slots[0].room);
     // The maintenance-flagged hall must never be handed out.
-    expect(resA.slots[0].room).not.toBe('Under Repair Hall');
-    expect(resB.slots[0].room).not.toBe('Under Repair Hall');
+    expect(res.slots[0].room).not.toBe('Under Repair Hall');
+    expect(res.slots[1].room).not.toBe('Under Repair Hall');
+  });
+});
+
+describe('CommonController.generateTimetable — section is per-course, not a page-wide filter', () => {
+  it('schedules EVERY section of a course independently in one call, not just one hardcoded section letter', async () => {
+    // One course, two sections, two different faculty — both sections'
+    // weekly hours must be generated in a single call with no section
+    // filter at all.
+    const db = fakeDb({
+      courses: [{ course_id: 'c1', course_name: 'Database Systems', course_code: 'CS202', credits: 2, semester: 3, college_id: 'c-default' }],
+      course_sections: [
+        { course_section_id: 'cs1', course_id: 'c1', section: 'A', faculty_id: 'fac1', college_id: 'c-default' },
+        { course_section_id: 'cs2', course_id: 'c1', section: 'B', faculty_id: 'fac2', college_id: 'c-default' },
+      ],
+      resources: [{ resource_id: 'r1', name: 'Room 101', type: 'Room', status: 'available', college_id: 'c-default' }],
+    });
+    const controller = new CommonController(db, {} as any);
+
+    const res: any = await controller.generateTimetable({ semester: 3 }, 'c-default');
+
+    expect(res.generatedSlots).toBe(4); // 2 credit-hours x 2 sections
+    const sectionsGenerated = new Set(res.slots.map((s: any) => s.section));
+    expect(sectionsGenerated).toEqual(new Set(['A', 'B']));
+    const facultyBySectionA = res.slots.filter((s: any) => s.section === 'A').every((s: any) => s.faculty_id === 'fac1');
+    const facultyBySectionB = res.slots.filter((s: any) => s.section === 'B').every((s: any) => s.faculty_id === 'fac2');
+    expect(facultyBySectionA).toBe(true);
+    expect(facultyBySectionB).toBe(true);
   });
 });
