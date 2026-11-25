@@ -32,72 +32,124 @@ const DAY_STATUS_COLOR = {
 
 const STATUS_LABEL = { present: 'Present', absent: 'Absent', excused: 'Excused', holiday: 'Holiday', 'no-class': 'No class' };
 
-function monthLabel(month) {
-  const [y, m] = month.split('-').map(Number);
-  return new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+const CELL = 20;
+const GAP = 3;
+const WEEKDAY_LABELS = ['', 'Mon', '', 'Wed', '', 'Fri', '']; // GitHub shows only alternating labels — full 7 would crowd a 20px row.
+
+/** The `count` calendar months ending with the current one, oldest first — same 'YYYY-MM' key fetchAttendanceCalendar/byMonth already use. */
+function trailingMonths(count) {
+  const now = new Date();
+  const months = [];
+  for (let i = count - 1; i >= 0; i--) {
+    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1));
+    months.push(`${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`);
+  }
+  return months;
 }
 
-function shiftMonth(month, delta) {
-  const [y, m] = month.split('-').map(Number);
-  const d = new Date(Date.UTC(y, m - 1 + delta, 1));
-  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+function shortMonthLabel(dateStr) {
+  return new Date(`${dateStr}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' });
 }
+
+const HEATMAP_MONTHS = 12;
 
 function AttendanceHeatmap() {
   const dispatch = useAppDispatch();
-  const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7));
-  const days = useAppSelector((state) => state.studentAttendance.byMonth[month]) ?? null;
+  const months = useMemo(() => trailingMonths(HEATMAP_MONTHS), []);
+  const byMonth = useAppSelector((state) => state.studentAttendance.byMonth);
   const [selected, setSelected] = useState(null);
 
   useEffect(() => {
-    dispatch(fetchAttendanceCalendar(month));
-  }, [dispatch, month]);
+    months.forEach((m) => dispatch(fetchAttendanceCalendar(m)));
+  }, [dispatch, months]);
 
-  // Calendar cells need a leading blank for every weekday before the 1st.
-  const leadingBlanks = useMemo(() => {
-    if (!days?.length) return 0;
-    return new Date(`${days[0].date}T00:00:00Z`).getUTCDay();
-  }, [days]);
+  const loaded = months.every((m) => byMonth[m]);
+
+  // One continuous day sequence across all fetched months, then regrouped
+  // into Sun–Sat columns — the same trick github.com's own contribution
+  // graph uses: pad the front so day 1 lands on its real weekday, pad the
+  // back to a full week, then slice every 7 into one column.
+  const weeks = useMemo(() => {
+    if (!loaded) return [];
+    const allDays = months.flatMap((m) => byMonth[m]);
+    if (!allDays.length) return [];
+    const leading = new Date(`${allDays[0].date}T00:00:00Z`).getUTCDay();
+    const cells = [...Array(leading).fill(null), ...allDays];
+    while (cells.length % 7 !== 0) cells.push(null);
+    const result = [];
+    for (let i = 0; i < cells.length; i += 7) result.push(cells.slice(i, i + 7));
+    return result;
+  }, [loaded, months, byMonth]);
+
+  // Label the first column whose week contains the 1st of a month.
+  const monthLabelByColumn = useMemo(() => {
+    const labels = {};
+    weeks.forEach((week, col) => {
+      const firstOfMonth = week.find((d) => d?.date.endsWith('-01'));
+      if (firstOfMonth) labels[col] = shortMonthLabel(firstOfMonth.date);
+    });
+    return labels;
+  }, [weeks]);
+
+  const gridWidth = weeks.length * (CELL + GAP);
 
   return (
     <div className="stats-card" style={{ marginBottom: 20 }}>
       <div className="stats-card-header">
         <h3>Attendance Heatmap</h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button onClick={() => setMonth((m) => shiftMonth(m, -1))} style={{ padding: '4px 10px', border: '1px solid #e2e8f0', borderRadius: 6, background: '#fff', cursor: 'pointer' }}>‹</button>
-          <span style={{ fontSize: 13, fontWeight: 700, minWidth: 130, textAlign: 'center' }}>{monthLabel(month)}</span>
-          <button onClick={() => setMonth((m) => shiftMonth(m, 1))} style={{ padding: '4px 10px', border: '1px solid #e2e8f0', borderRadius: 6, background: '#fff', cursor: 'pointer' }}>›</button>
-        </div>
+        <span style={{ fontSize: 12, color: '#94a3b8' }}>Last {HEATMAP_MONTHS} months</span>
       </div>
       <div className="stats-card-body" style={{ padding: 20 }}>
-        {days === null ? (
+        {!loaded ? (
           <div style={{ textAlign: 'center', color: '#64748b', padding: 20 }}>Loading...</div>
         ) : (
           <>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 26px)', gap: 4, marginBottom: 6, justifyContent: 'center' }}>
-              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-                <div key={d} style={{ textAlign: 'center', fontSize: 9, fontWeight: 700, color: '#94a3b8' }}>{d[0]}</div>
-              ))}
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 26px)', gap: 4, justifyContent: 'center' }}>
-              {Array.from({ length: leadingBlanks }).map((_, i) => <div key={`b${i}`} style={{ width: 26, height: 26 }} />)}
-              {days.map((day) => {
-                const canOpen = day.dayStatus !== 'no-class' && day.dayStatus !== 'holiday';
-                const color = DAY_STATUS_COLOR[day.dayStatus];
-                return (
-                  <button
-                    key={day.date}
-                    type="button"
-                    onClick={() => canOpen && setSelected(day)}
-                    title={`${day.date} — ${day.dayStatus === 'holiday' ? day.label : STATUS_LABEL[day.dayStatus]}`}
-                    style={{
-                      width: 26, height: 26, borderRadius: 4, border: 'none', cursor: canOpen ? 'pointer' : 'default',
-                      background: color.bg, color: color.fg, fontSize: 0,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
-                    }}
-                  />
-                );
-              })}
+            <div style={{ display: 'flex', gap: 6 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: GAP, paddingTop: 16, flexShrink: 0 }}>
+                {WEEKDAY_LABELS.map((label, i) => (
+                  <div key={i} style={{ height: CELL, display: 'flex', alignItems: 'center', fontSize: 9, fontWeight: 700, color: '#94a3b8' }}>
+                    {label}
+                  </div>
+                ))}
+              </div>
+              <div style={{ overflowX: 'auto', paddingBottom: 4 }}>
+                <div style={{ position: 'relative', height: 14, width: gridWidth, marginBottom: 2 }}>
+                  {Object.entries(monthLabelByColumn).map(([col, label]) => (
+                    <span key={col} style={{ position: 'absolute', left: Number(col) * (CELL + GAP), fontSize: 10, fontWeight: 700, color: '#64748b' }}>
+                      {label}
+                    </span>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', gap: GAP, width: gridWidth }}>
+                  {weeks.map((week, col) => (
+                    <div key={col} style={{ display: 'flex', flexDirection: 'column', gap: GAP }}>
+                      {week.map((day, row) =>
+                        day ? (
+                          <button
+                            key={day.date}
+                            type="button"
+                            onClick={() => {
+                              const canOpen = day.dayStatus !== 'no-class' && day.dayStatus !== 'holiday';
+                              if (canOpen) setSelected(day);
+                            }}
+                            title={`${day.date} — ${day.dayStatus === 'holiday' ? day.label : STATUS_LABEL[day.dayStatus]}`}
+                            style={{
+                              width: CELL, height: CELL, borderRadius: 4, border: 'none',
+                              cursor: day.dayStatus !== 'no-class' && day.dayStatus !== 'holiday' ? 'pointer' : 'default',
+                              background: DAY_STATUS_COLOR[day.dayStatus].bg, color: DAY_STATUS_COLOR[day.dayStatus].fg,
+                              fontSize: 8.5, fontWeight: 700, lineHeight: `${CELL}px`, padding: 0,
+                            }}
+                          >
+                            {Number(day.date.slice(-2))}
+                          </button>
+                        ) : (
+                          <div key={`b${col}-${row}`} style={{ width: CELL, height: CELL }} />
+                        ),
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
             <div style={{ display: 'flex', gap: 14, marginTop: 16, flexWrap: 'wrap' }}>
               {Object.entries(STATUS_LABEL).map(([key, label]) => (
