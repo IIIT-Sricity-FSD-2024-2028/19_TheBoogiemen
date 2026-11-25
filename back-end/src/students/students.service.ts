@@ -4,15 +4,11 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InMemoryDbService } from '../database/in-memory-db.service';
-import {
-  ATTENDANCE_STATUS,
-  normalizeAttendanceStatus,
-  summariseAttendance,
-} from '../common/academic-rules';
+import { summariseAttendance } from '../common/academic-rules';
 import { ErrorCode, errorBody } from '../common/errors/error-codes';
 import { isSameCollege, scopeToCollege } from '../common/tenancy/scope-to-college';
 import { sectionsOfCourse } from '../common/course-sections';
-import { buildAttendanceCalendar, excludeHolidays } from '../common/academic-calendar';
+import { buildAttendanceCalendar, courseAttendanceStatuses } from '../common/academic-calendar';
 import { studentOutcomeReport } from '../common/outcome-mastery';
 import { computeCGPA, computeGradeTrend, predictedFinalGrade } from '../common/grading';
 
@@ -48,28 +44,33 @@ export class StudentsService {
   }
 
   async getAttendance(userId: string, collegeId: string | null) {
-    const records = excludeHolidays(
-      this.db,
-      this.db.attendance_log.filter((a) => a.student_id === userId),
-      collegeId,
+    // Built from every ACTIVE enrollment, not just courses that happen to
+    // have an attendance_log row — a course faculty hasn't taken attendance
+    // for yet must still show up (as a real 0/0 row), not vanish from the
+    // list entirely.
+    const myEnrollment = this.db.enrollment.filter(
+      (e) => e.student_id === userId && e.status === 'active',
     );
 
-    // Group by course to create summary.
     // M-02: a session excused by approved leave counts as attended, so a student
     // is no longer penalised for absence the institution itself authorised.
-    const byCourse: Record<string, any[]> = {};
-    records.forEach((r) => {
-      (byCourse[r.course_id] ||= []).push(r);
-    });
-
-    const summary = Object.entries(byCourse).map(([course_id, rows]) => {
-      const c = this.db.courses.find(
-        (course) => course.course_id === course_id,
-      );
-      const stats = summariseAttendance(rows);
+    //
+    // Per-course statuses are synthesised the same way the heatmap
+    // (buildAttendanceCalendar) already computes a month — any class day on
+    // the timetable with no explicit attendance_log row defaults to Present,
+    // not "doesn't count". Summing raw attendance_log rows alone used to
+    // disagree with the heatmap shown right above this summary on the same
+    // page: a day painted green there (Present, unmarked) was invisible to
+    // the present/total counts here.
+    const allStatuses: { status: string }[] = [];
+    const summary = myEnrollment.map((e) => {
+      const c = this.db.courses.find((course) => course.course_id === e.course_id);
+      const statuses = courseAttendanceStatuses(this.db, userId, e.course_id, e.section, collegeId);
+      statuses.forEach((status) => allStatuses.push({ status }));
+      const stats = summariseAttendance(statuses.map((status) => ({ status })));
       return {
-        course_id,
-        course_code: c?.course_code || course_id,
+        course_id: e.course_id,
+        course_code: c?.course_code || e.course_id,
         course_name: c?.course_name || 'Unknown',
         present: stats.present,
         absent: stats.absent,
@@ -79,11 +80,10 @@ export class StudentsService {
       };
     });
 
-    const overall = summariseAttendance(records);
+    const overall = summariseAttendance(allStatuses);
 
     return {
       summary,
-      records,
       totalPresent: overall.present,
       totalAbsent: overall.absent,
       totalExcused: overall.excused,

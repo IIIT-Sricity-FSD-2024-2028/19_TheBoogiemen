@@ -7,6 +7,7 @@
 
 import {
   buildAttendanceCalendar,
+  courseAttendanceStatuses,
   excludeHolidays,
   expandClassDates,
   holidayDateSet,
@@ -85,6 +86,104 @@ describe('expandClassDates', () => {
     // 2026-11-14 is a Saturday, 2026-11-15 a Sunday.
     const pairs = expandClassDates(db, ['2026-11-14', '2026-11-15'], [{ course_id: 'c1', section: 'A' }], 'c1');
     expect(pairs).toEqual([]);
+  });
+});
+
+describe('courseAttendanceStatuses', () => {
+  it('counts a scheduled day with no attendance_log row as present, matching the heatmap default', () => {
+    // Course meets every Monday; only the first Monday was ever explicitly
+    // marked. The two later Mondays have no attendance_log row at all, but
+    // the heatmap (buildAttendanceCalendar) would paint them green anyway —
+    // the per-subject summary must count them the same way, not ignore them.
+    const db = dbWith({
+      timetable: [{ course_id: 'c1', section: 'A', day: 'MON', status: 'published' }],
+      attendance_log: [
+        { student_id: 's1', course_id: 'c1', date: '2026-11-02', status: 'present' },
+      ],
+    });
+    const statuses = courseAttendanceStatuses(db, 's1', 'c1', 'A', null);
+    expect(statuses.filter((s) => s === 'present').length).toBeGreaterThan(1);
+    expect(statuses.every((s) => s === 'present')).toBe(true);
+  });
+
+  it('returns nothing for a course with zero recorded sessions yet (shown as an all-zero row by the caller)', () => {
+    const db = dbWith({ timetable: [{ course_id: 'c1', section: 'A', day: 'MON' }] });
+    expect(courseAttendanceStatuses(db, 's1', 'c1', 'A', null)).toEqual([]);
+  });
+
+  it('excludes a recorded date that is now a declared holiday, while still counting later sessions', () => {
+    const db = dbWith({
+      holidays: [{ holiday_id: 'h1', date: '2026-11-09', label: 'Holiday', college_id: null }],
+      timetable: [{ course_id: 'c1', section: 'A', day: 'MON' }],
+      attendance_log: [{ student_id: 's1', course_id: 'c1', date: '2026-11-09', status: 'absent' }],
+    });
+    // The only recorded row (an absence) lands on a now-declared holiday and
+    // must be dropped entirely — it must not survive as an absence, nor flip
+    // to a synthesised present, since it should never have counted at all.
+    const statuses = courseAttendanceStatuses(db, 's1', 'c1', 'A', null);
+    expect(statuses).not.toContain('absent');
+  });
+});
+
+describe('buildAttendanceCalendar — tracking-start anchoring', () => {
+  it('never paints a scheduled day Present for a course that has zero recorded sessions ever', () => {
+    // Regression: the heatmap used to default ANY scheduled day to Present
+    // regardless of whether attendance had ever actually been taken for that
+    // course, while the per-subject summary (courseAttendanceStatuses)
+    // already refused to count a course with zero records. Once the heatmap
+    // started spanning many months, that mismatch became directly visible:
+    // the calendar painted a course green for months the summary showed
+    // nothing for.
+    const db = dbWith({
+      enrollment: [{ student_id: 's1', course_id: 'c1', section: 'A', status: 'active' }],
+      timetable: [{ course_id: 'c1', section: 'A', day: 'MON' }],
+      attendance_log: [], // never tracked
+      courses: [{ course_id: 'c1', course_code: 'CS101' }],
+    });
+
+    const days = buildAttendanceCalendar(db, 's1', '2026-11', 'c1');
+    const mon9 = days.find((d) => d.date === '2026-11-09')!; // a Monday this course meets on
+    expect(mon9.dayStatus).toBe('no-class');
+    expect(mon9.courses).toEqual([]);
+  });
+
+  it('does not synthesise Present before a course\'s own first recorded session, but does from that date on', () => {
+    const db = dbWith({
+      enrollment: [{ student_id: 's1', course_id: 'c1', section: 'A', status: 'active' }],
+      timetable: [{ course_id: 'c1', section: 'A', day: 'MON' }],
+      // Tracking for c1 only began on 2026-11-09 (a Monday); 2026-11-02 is
+      // the prior Monday, which the timetable also says this course meets.
+      attendance_log: [{ student_id: 's1', course_id: 'c1', date: '2026-11-09', status: 'present' }],
+      courses: [{ course_id: 'c1', course_code: 'CS101' }],
+    });
+
+    const days = buildAttendanceCalendar(db, 's1', '2026-11', 'c1');
+    const beforeStart = days.find((d) => d.date === '2026-11-02')!;
+    const atStart = days.find((d) => d.date === '2026-11-09')!;
+    expect(beforeStart.dayStatus).toBe('no-class');
+    expect(atStart.dayStatus).toBe('present');
+  });
+
+  it('does not let one course\'s tracking history leak a Present default onto a second, never-tracked course', () => {
+    const db = dbWith({
+      enrollment: [
+        { student_id: 's1', course_id: 'c1', section: 'A', status: 'active' },
+        { student_id: 's1', course_id: 'c2', section: 'A', status: 'active' },
+      ],
+      timetable: [
+        { course_id: 'c1', section: 'A', day: 'MON' },
+        { course_id: 'c2', section: 'A', day: 'MON' },
+      ],
+      attendance_log: [{ student_id: 's1', course_id: 'c1', date: '2026-11-09', status: 'present' }],
+      courses: [
+        { course_id: 'c1', course_code: 'CS101' },
+        { course_id: 'c2', course_code: 'CS102' },
+      ],
+    });
+
+    const days = buildAttendanceCalendar(db, 's1', '2026-11', 'c1');
+    const mon9 = days.find((d) => d.date === '2026-11-09')!;
+    expect(mon9.courses).toEqual([{ course_id: 'c1', course_code: 'CS101', status: 'present' }]);
   });
 });
 

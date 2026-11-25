@@ -11,7 +11,7 @@
  */
 
 import { InMemoryDbService } from '../database/in-memory-db.service';
-import { ATTENDANCE_STATUS, normalizeAttendanceStatus } from './academic-rules';
+import { AttendanceStatus, ATTENDANCE_STATUS, normalizeAttendanceStatus } from './academic-rules';
 
 export interface Holiday {
   holiday_id: string;
@@ -75,6 +75,86 @@ function hasClassOn(
       t.day === dow &&
       (t.status === undefined || t.status === 'published'),
   );
+}
+
+/**
+ * The earliest date `courseId` has ever had a real attendance_log row for
+ * this student, per course — or `undefined` for a course that has never
+ * been tracked at all. This is the anchor both buildAttendanceCalendar (the
+ * heatmap) and courseAttendanceStatuses (the per-subject summary) use for
+ * "how far back do we synthesise a present default": without it, the
+ * heatmap painted a course's entire requested range green — even months
+ * before faculty ever took attendance for it — while the summary (correctly)
+ * counted nothing before that point, so the two visibly disagreed about the
+ * exact same data.
+ */
+function courseTrackingStarts(
+  db: InMemoryDbService,
+  studentId: string,
+): Map<string, string> {
+  const starts = new Map<string, string>();
+  for (const a of db.attendance_log as any[]) {
+    if (a.student_id !== studentId) continue;
+    const cur = starts.get(a.course_id);
+    if (!cur || a.date < cur) starts.set(a.course_id, a.date);
+  }
+  return starts;
+}
+
+/**
+ * Every session status for one (student, course) pair, on the same
+ * "scheduled-but-unmarked counts as present" convention buildAttendanceCalendar
+ * already uses for the heatmap below — a day the heatmap paints green must
+ * never go uncounted here, or the two halves of the same attendance page
+ * visibly disagree about the same data (a real bug this once was: the
+ * per-subject totals used to count ONLY rows that literally exist in
+ * attendance_log, so any class day faculty hadn't explicitly marked was
+ * invisible to the present/absent/total numbers even though the heatmap
+ * right above them already showed it as Present).
+ *
+ * Bounded to [earliest recorded session for this course, today] — there's no
+ * stored course/semester start date to anchor an earlier walk, and a course
+ * with zero recorded sessions yet has nothing to synthesise a history from
+ * (the caller shows that course as a real, all-zero row instead).
+ */
+export function courseAttendanceStatuses(
+  db: InMemoryDbService,
+  studentId: string,
+  courseId: string,
+  section: string,
+  collegeId: string | null,
+): AttendanceStatus[] {
+  const recorded = db.attendance_log.filter(
+    (a: any) => a.student_id === studentId && a.course_id === courseId,
+  );
+  if (!recorded.length) return [];
+
+  const today = new Date().toISOString().split('T')[0];
+  const minDate = recorded.reduce(
+    (min: string, r: any) => (r.date < min ? r.date : min),
+    recorded[0].date,
+  );
+  const holidays = holidayDateSet(db, collegeId);
+  const recordedByDate = new Map(recorded.map((r: any) => [r.date, r]));
+  const dates = new Set<string>(recorded.map((r: any) => r.date));
+
+  for (
+    const d = new Date(`${minDate}T00:00:00Z`);
+    d.toISOString().split('T')[0] <= today;
+    d.setUTCDate(d.getUTCDate() + 1)
+  ) {
+    const date = d.toISOString().split('T')[0];
+    if (holidays.has(date)) continue;
+    if (hasClassOn(db, courseId, section, date)) dates.add(date);
+  }
+
+  return [...dates]
+    .filter((date) => !holidays.has(date))
+    .map((date) => {
+      const rec = recordedByDate.get(date);
+      // Matches buildAttendanceCalendar's own "not yet marked" default.
+      return rec ? normalizeAttendanceStatus(rec.status) : ATTENDANCE_STATUS.PRESENT;
+    });
 }
 
 /**
@@ -142,6 +222,7 @@ export function buildAttendanceCalendar(
   const mySections = db.enrollment.filter(
     (e: any) => e.student_id === studentId && e.status === 'active',
   );
+  const trackingStarts = courseTrackingStarts(db, studentId);
   const recordsByDate = new Map<string, any[]>();
   db.attendance_log
     .filter((a: any) => a.student_id === studentId)
@@ -161,15 +242,21 @@ export function buildAttendanceCalendar(
     }
 
     const dow = WEEKDAY_CODES[d.getUTCDay()];
-    const scheduled = mySections.filter((e: any) =>
-      db.timetable.some(
+    const scheduled = mySections.filter((e: any) => {
+      // Never synthesise a default for a course before the first date it was
+      // ever actually tracked — a course with zero recorded sessions (or
+      // whose tracking only began recently) must not have fabricated
+      // "present" history painted for months no one ever took attendance.
+      const start = trackingStarts.get(e.course_id);
+      if (!start || date < start) return false;
+      return db.timetable.some(
         (t: any) =>
           t.course_id === e.course_id &&
           t.section === e.section &&
           t.day === dow &&
           (t.status === undefined || t.status === 'published'),
-      ),
-    );
+      );
+    });
     const dayRecords = recordsByDate.get(date) || [];
     // A real attendance record must never be hidden behind "no class today"
     // just because the seeded timetable has no slot for that course on this
