@@ -12,6 +12,7 @@ import { apiFetch } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationsContext';
 import Modal from '../../components/shared/Modal';
+import TimetableManagement from './TimetableManagement';
 
 /** Repeatable (section name, faculty) rows — shared by Add Course and Manage Sections. */
 function SectionRows({ rows, setRows, facultyList }) {
@@ -293,6 +294,7 @@ function EnrollStudentModal({ open, onClose }) {
 }
 
 export default function CourseManagement() {
+  const [activeTab, setActiveTab] = useState('courses'); // 'courses' | 'timetable'
   const [courses, setCourses] = useState(undefined);
   const [createOpen, setCreateOpen] = useState(false);
   const [enrollOpen, setEnrollOpen] = useState(false);
@@ -305,61 +307,114 @@ export default function CourseManagement() {
 
   return (
     <>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 700 }}>Course Management</h2>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button
-            onClick={() => setEnrollOpen(true)}
-            style={{ padding: '9px 18px', background: '#f0fdf4', color: '#15803d', border: '1px solid #bbf7d0', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}
-          >
-            📖 Enroll Student
-          </button>
-          <button className="page-action-btn" onClick={() => setCreateOpen(true)}>+ Add Course</button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Course Management</h2>
+          <div style={{ display: 'flex', background: '#f1f5f9', padding: 4, borderRadius: 8, border: '1px solid #e2e8f0' }}>
+            <button
+              type="button"
+              onClick={() => setActiveTab('courses')}
+              style={{
+                padding: '6px 14px',
+                fontSize: 13,
+                fontWeight: 600,
+                borderRadius: 6,
+                border: 'none',
+                cursor: 'pointer',
+                background: activeTab === 'courses' ? '#fff' : 'transparent',
+                color: activeTab === 'courses' ? '#0f172a' : '#64748b',
+                boxShadow: activeTab === 'courses' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+              }}
+            >
+              📚 Courses & Sections
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('timetable')}
+              style={{
+                padding: '6px 14px',
+                fontSize: 13,
+                fontWeight: 600,
+                borderRadius: 6,
+                border: 'none',
+                cursor: 'pointer',
+                background: activeTab === 'timetable' ? '#fff' : 'transparent',
+                color: activeTab === 'timetable' ? '#0f172a' : '#64748b',
+                boxShadow: activeTab === 'timetable' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+              }}
+            >
+              📅 Timetable & Slots
+            </button>
+          </div>
         </div>
+        {activeTab === 'courses' && (
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button
+              onClick={() => setEnrollOpen(true)}
+              style={{ padding: '9px 18px', background: '#f0fdf4', color: '#15803d', border: '1px solid #bbf7d0', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}
+            >
+              📖 Enroll Student
+            </button>
+            <button className="page-action-btn" onClick={() => setCreateOpen(true)}>+ Add Course</button>
+          </div>
+        )}
       </div>
-      <div className="stats-card">
-        <div className="stats-card-header"><h3>Courses</h3></div>
-        <div className="stats-card-body" style={{ padding: 24 }}>
-          {courses === undefined ? (
-            'Loading…'
-          ) : courses.length === 0 ? (
-            <p style={{ color: '#64748b', textAlign: 'center' }}>No courses yet.</p>
-          ) : (
-            courses.map((c) => {
-              const sections = c.sections || [];
-              return (
-                <div key={c.course_id} style={{ padding: 16, border: '1px solid #e2e8f0', borderRadius: 8, marginBottom: 12 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div style={{ flex: 1 }}>
-                      <h4 style={{ margin: 0, fontSize: 15 }}>
-                        {c.course_name} <span style={{ color: '#64748b', fontWeight: 500 }}>({c.course_code})</span>
-                      </h4>
-                      <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>{c.credits || '—'} credits &bull; Semester {c.semester || '—'}</div>
-                      <div style={{ marginTop: 8 }}>
-                        {sections.length === 0 ? (
-                          <span style={{ color: '#b45309', fontSize: 12 }}>No sections assigned yet</span>
-                        ) : (
-                          sections.map((s) => (
-                            <span key={s.section} style={{ display: 'inline-block', background: '#eff6ff', color: '#1e40af', padding: '3px 10px', borderRadius: 6, fontSize: 12, margin: '2px 6px 2px 0' }}>
-                              Sec {s.section} — {s.faculty_name || s.faculty_id}
-                            </span>
-                          ))
-                        )}
+
+      {activeTab === 'timetable' ? (
+        <TimetableManagement />
+      ) : (
+        <div className="stats-card">
+          <div className="stats-card-header"><h3>Courses</h3></div>
+          <div className="stats-card-body" style={{ padding: 24 }}>
+            {courses === undefined ? (
+              'Loading…'
+            ) : courses.length === 0 ? (
+              <p style={{ color: '#64748b', textAlign: 'center' }}>No courses yet.</p>
+            ) : (
+              courses.map((c) => {
+                const sections = c.sections || [];
+                return (
+                  <div key={c.course_id} style={{ padding: 16, border: '1px solid #e2e8f0', borderRadius: 8, marginBottom: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div style={{ flex: 1 }}>
+                        <h4 style={{ margin: 0, fontSize: 15 }}>
+                          {c.course_name} <span style={{ color: '#64748b', fontWeight: 500 }}>({c.course_code})</span>
+                        </h4>
+                        <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>{c.credits || '—'} credits &bull; Semester {c.semester || '—'}</div>
+                        <div style={{ marginTop: 8 }}>
+                          {sections.length === 0 ? (
+                            <span style={{ color: '#b45309', fontSize: 12 }}>No sections assigned yet</span>
+                          ) : (
+                            sections.map((s) => (
+                              <span key={s.section} style={{ display: 'inline-block', background: '#eff6ff', color: '#1e40af', padding: '3px 10px', borderRadius: 6, fontSize: 12, margin: '2px 6px 2px 0' }}>
+                                Sec {s.section} — {s.faculty_name || s.faculty_id}
+                              </span>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button
+                          onClick={() => setSectionsTarget(c)}
+                          style={{ padding: '6px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer', border: '1px solid #e2e8f0', borderRadius: 6, background: '#fff' }}
+                        >
+                          Manage Sections
+                        </button>
+                        <button
+                          onClick={() => setActiveTab('timetable')}
+                          style={{ padding: '6px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer', border: '1px solid #c7d2fe', borderRadius: 6, background: '#eef2ff', color: '#4338ca' }}
+                        >
+                          View/Edit Timetable
+                        </button>
                       </div>
                     </div>
-                    <button
-                      onClick={() => setSectionsTarget(c)}
-                      style={{ padding: '6px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer', border: '1px solid #e2e8f0', borderRadius: 6, background: '#fff' }}
-                    >
-                      Manage Sections
-                    </button>
                   </div>
-                </div>
-              );
-            })
-          )}
+                );
+              })
+            )}
+          </div>
         </div>
-      </div>
+      )}
       <CreateCourseModal open={createOpen} onClose={() => setCreateOpen(false)} onCreated={load} />
       <ManageSectionsModal course={sectionsTarget} onClose={() => setSectionsTarget(null)} onSaved={load} />
       <EnrollStudentModal open={enrollOpen} onClose={() => setEnrollOpen(false)} />

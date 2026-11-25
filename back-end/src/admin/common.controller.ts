@@ -313,7 +313,268 @@ async getTimetable(
 const slots = scopeToCollege(this.db.timetable, collegeId).filter(
 (t) => t.section === section,
 );
-return { grid: buildTimetableGrid(slots), ...TIMETABLE_AXES };
+return { grid: buildTimetableGrid(slots), slots, ...TIMETABLE_AXES };
+}
+
+@Post('timetable/slots')
+@Roles('admin', 'head', 'superadmin')
+@ApiOperation({ summary: 'Create a timetable slot' })
+@ApiBody({ schema: { type: 'object', additionalProperties: true } })
+async createTimetableSlot(
+@Body() body: any,
+@CurrentUserCollegeId() actorCollegeId: string | null,
+) {
+const { course_id, section, day, time, room, type } = body;
+if (!course_id || !section || !day || !time) {
+throw new BadRequestException(
+errorBody(
+ErrorCode.BUSINESS_RULE_VIOLATION,
+'course_id, section, day, and time are required',
+),
+);
+}
+const collegeId = writeCollegeId(actorCollegeId);
+const course = this.db.courses.find((c) => c.course_id === course_id);
+if (!isSameCollege(course, collegeId)) notFoundInMyCollege('Course');
+
+const courseSections = sectionsOfCourse(this.db, course_id);
+const assignedSection = courseSections.find((cs) => cs.section === section);
+if (!assignedSection) {
+throw new BadRequestException(
+errorBody(
+ErrorCode.BUSINESS_RULE_VIOLATION,
+`Section "${section}" is not assigned to course "${course.course_name}"`,
+),
+);
+}
+
+const collegeSlots = scopeToCollege(this.db.timetable, collegeId);
+
+// Rule: number of hours per week = number of credits
+if (course.credits != null && course.credits > 0) {
+const existingCourseHours = collegeSlots.filter(
+(s) => s.course_id === course_id && s.section === section,
+).length;
+if (existingCourseHours >= course.credits) {
+throw new BadRequestException(
+errorBody(
+ErrorCode.BUSINESS_RULE_VIOLATION,
+`Cannot exceed course limit: ${course.course_name} has ${course.credits} credits (${course.credits} hours/week for Section ${section}). Already scheduled: ${existingCourseHours} hours.`,
+),
+);
+}
+}
+
+// Conflict Check 1: Section conflict (Section already has a class at this day/time)
+const sectionConflict = collegeSlots.find(
+(s) => s.section === section && s.day === day && s.time === time,
+);
+if (sectionConflict) {
+throw new BadRequestException(
+errorBody(
+ErrorCode.BUSINESS_RULE_VIOLATION,
+`Section ${section} already has ${sectionConflict.course_code || 'a class'} scheduled on ${day} at ${time}`,
+),
+);
+}
+
+// Conflict Check 2: Room conflict (Room already booked at this day/time)
+if (room && room.trim()) {
+const roomConflict = collegeSlots.find(
+(s) =>
+s.day === day &&
+s.time === time &&
+s.room &&
+s.room.trim().toLowerCase() === room.trim().toLowerCase(),
+);
+if (roomConflict) {
+throw new BadRequestException(
+errorBody(
+ErrorCode.BUSINESS_RULE_VIOLATION,
+`Room "${room}" is already booked for ${roomConflict.course_code || 'another class'} on ${day} at ${time}`,
+),
+);
+}
+}
+
+// Conflict Check 3: Faculty conflict (The faculty teaching this section is already teaching another section/course at this day/time)
+if (assignedSection.faculty_id) {
+const facultyAssigned = sectionsTaughtBy(this.db, assignedSection.faculty_id);
+const facultyConflict = collegeSlots.find(
+(s) =>
+s.day === day &&
+s.time === time &&
+facultyAssigned.some(
+(cs) => cs.course_id === s.course_id && cs.section === s.section,
+),
+);
+if (facultyConflict) {
+throw new BadRequestException(
+errorBody(
+ErrorCode.BUSINESS_RULE_VIOLATION,
+`Faculty (${assignedSection.faculty_name || 'assigned'}) is already teaching ${facultyConflict.course_code} (Sec ${facultyConflict.section}) on ${day} at ${time}`,
+),
+);
+}
+}
+
+const newSlot = {
+slot_id: `t${Date.now()}`,
+day,
+time,
+course_id,
+course_code: course.course_code,
+course_name: course.course_name,
+room: room?.trim() || '',
+type: type || 'lecture',
+section,
+college_id: collegeId,
+};
+this.db.timetable.push(newSlot);
+this.db.persist?.();
+return { success: true, data: newSlot };
+}
+
+@Put('timetable/slots/:id')
+@Roles('admin', 'head', 'superadmin')
+@ApiOperation({ summary: 'Update a timetable slot' })
+@ApiBody({ schema: { type: 'object', additionalProperties: true } })
+async updateTimetableSlot(
+@Param('id') slotId: string,
+@Body() body: any,
+@CurrentUserCollegeId() actorCollegeId: string | null,
+) {
+const collegeId = writeCollegeId(actorCollegeId);
+const slotIndex = this.db.timetable.findIndex((s) => s.slot_id === slotId);
+if (slotIndex === -1) notFoundInMyCollege('Timetable slot');
+const existingSlot = this.db.timetable[slotIndex];
+if (!isSameCollege(existingSlot, collegeId)) notFoundInMyCollege('Timetable slot');
+
+const course_id = body.course_id || existingSlot.course_id;
+const section = body.section || existingSlot.section;
+const day = body.day || existingSlot.day;
+const time = body.time || existingSlot.time;
+const room = body.room !== undefined ? body.room : existingSlot.room;
+const type = body.type || existingSlot.type;
+
+const course = this.db.courses.find((c) => c.course_id === course_id);
+if (!isSameCollege(course, collegeId)) notFoundInMyCollege('Course');
+
+const courseSections = sectionsOfCourse(this.db, course_id);
+const assignedSection = courseSections.find((cs) => cs.section === section);
+if (!assignedSection) {
+throw new BadRequestException(
+errorBody(
+ErrorCode.BUSINESS_RULE_VIOLATION,
+`Section "${section}" is not assigned to course "${course.course_name}"`,
+),
+);
+}
+
+const collegeSlots = scopeToCollege(this.db.timetable, collegeId).filter(
+(s) => s.slot_id !== slotId,
+);
+
+// Rule: number of hours per week = number of credits
+if (course.credits != null && course.credits > 0) {
+const existingCourseHours = collegeSlots.filter(
+(s) => s.course_id === course_id && s.section === section,
+).length;
+if (existingCourseHours >= course.credits) {
+throw new BadRequestException(
+errorBody(
+ErrorCode.BUSINESS_RULE_VIOLATION,
+`Cannot exceed course limit: ${course.course_name} has ${course.credits} credits (${course.credits} hours/week for Section ${section}). Already scheduled: ${existingCourseHours} hours.`,
+),
+);
+}
+}
+
+// Conflict Check 1: Section conflict
+const sectionConflict = collegeSlots.find(
+(s) => s.section === section && s.day === day && s.time === time,
+);
+if (sectionConflict) {
+throw new BadRequestException(
+errorBody(
+ErrorCode.BUSINESS_RULE_VIOLATION,
+`Section ${section} already has ${sectionConflict.course_code || 'a class'} scheduled on ${day} at ${time}`,
+),
+);
+}
+
+// Conflict Check 2: Room conflict
+if (room && room.trim()) {
+const roomConflict = collegeSlots.find(
+(s) =>
+s.day === day &&
+s.time === time &&
+s.room &&
+s.room.trim().toLowerCase() === room.trim().toLowerCase(),
+);
+if (roomConflict) {
+throw new BadRequestException(
+errorBody(
+ErrorCode.BUSINESS_RULE_VIOLATION,
+`Room "${room}" is already booked for ${roomConflict.course_code || 'another class'} on ${day} at ${time}`,
+),
+);
+}
+}
+
+// Conflict Check 3: Faculty conflict
+if (assignedSection.faculty_id) {
+const facultyAssigned = sectionsTaughtBy(this.db, assignedSection.faculty_id);
+const facultyConflict = collegeSlots.find(
+(s) =>
+s.day === day &&
+s.time === time &&
+facultyAssigned.some(
+(cs) => cs.course_id === s.course_id && cs.section === s.section,
+),
+);
+if (facultyConflict) {
+throw new BadRequestException(
+errorBody(
+ErrorCode.BUSINESS_RULE_VIOLATION,
+`Faculty (${assignedSection.faculty_name || 'assigned'}) is already teaching ${facultyConflict.course_code} (Sec ${facultyConflict.section}) on ${day} at ${time}`,
+),
+);
+}
+}
+
+const updated = {
+...existingSlot,
+day,
+time,
+course_id,
+course_code: course.course_code,
+course_name: course.course_name,
+room: room ? room.trim() : '',
+type,
+section,
+};
+this.db.timetable[slotIndex] = updated;
+this.db.persist?.();
+return { success: true, data: updated };
+}
+
+@Delete('timetable/slots/:id')
+@Roles('admin', 'head', 'superadmin')
+@ApiOperation({ summary: 'Delete a timetable slot' })
+async deleteTimetableSlot(
+@Param('id') slotId: string,
+@CurrentUserCollegeId() actorCollegeId: string | null,
+) {
+const collegeId = writeCollegeId(actorCollegeId);
+const slotIndex = this.db.timetable.findIndex((s) => s.slot_id === slotId);
+if (slotIndex === -1) notFoundInMyCollege('Timetable slot');
+const slot = this.db.timetable[slotIndex];
+if (!isSameCollege(slot, collegeId)) notFoundInMyCollege('Timetable slot');
+
+this.db.timetable.splice(slotIndex, 1);
+this.db.persist?.();
+return { success: true, message: 'Timetable slot deleted' };
 }
 
 @Get('timetable/faculty')

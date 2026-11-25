@@ -112,6 +112,17 @@
       "role": "admin",
       "college_id": "c-default",
       "password_hash": "$2b$12$b8AdsDj1oTb4CHX6O7Zr6.r41FqWFh7b.cjjmg4zkIxiWfB.3zpEm"
+    },
+    {
+      "user_id": "u1795582512414",
+      "username": "student3",
+      "first_name": "student3",
+      "last_name": "",
+      "email": "student3@example.com",
+      "phone": "",
+      "role": "student",
+      "college_id": "c-default",
+      "password_hash": "$2b$12$trVS/4F14cMOU/FI/P28B.9kVcjj/b5fwA/OxINarxVxGTDt5fZdq"
     }
   ],
   "students": [
@@ -153,6 +164,20 @@
       "section": "A",
       "email": "smoketest.user@example.com",
       "join_date": "2026-10-06",
+      "dob": "2005-01-01",
+      "phone": "",
+      "college_id": "c-default"
+    },
+    {
+      "user_id": "u1795582512414",
+      "first_name": "student3",
+      "last_name": "",
+      "branch": "CSE",
+      "batch": "2024-2028",
+      "cgpa": 7,
+      "section": "A",
+      "email": "student3@example.com",
+      "join_date": "2026-11-25",
       "dob": "2005-01-01",
       "phone": "",
       "college_id": "c-default"
@@ -446,6 +471,24 @@
       "year_id": "2026",
       "status": "active",
       "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "enrollment_id": "e1795582600684",
+      "student_id": "u1795582512414",
+      "course_id": "c1",
+      "year_id": "2026",
+      "status": "active",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "enrollment_id": "e1795582613002",
+      "student_id": "u1795582512414",
+      "course_id": "c3",
+      "year_id": "2026",
+      "status": "active",
+      "section": "A",
       "college_id": "c-default"
     }
   ],
@@ -1605,6 +1648,54 @@
       "room": "Lab 2",
       "type": "lab",
       "section": "B",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t1795582529983",
+      "day": "MON",
+      "time": "15:00",
+      "course_id": "c3",
+      "course_code": "CS301",
+      "course_name": "Algorithms (DSA)",
+      "room": "",
+      "type": "lecture",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t1795582544075",
+      "day": "TUE",
+      "time": "15:00",
+      "course_id": "c3",
+      "course_code": "CS301",
+      "course_name": "Algorithms (DSA)",
+      "room": "",
+      "type": "lecture",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t1795582561153",
+      "day": "THU",
+      "time": "15:00",
+      "course_id": "c3",
+      "course_code": "CS301",
+      "course_name": "Algorithms (DSA)",
+      "room": "",
+      "type": "lecture",
+      "section": "A",
+      "college_id": "c-default"
+    },
+    {
+      "slot_id": "t1795582573241",
+      "day": "WED",
+      "time": "15:00",
+      "course_id": "c3",
+      "course_code": "CS301",
+      "course_name": "Algorithms (DSA)",
+      "room": "",
+      "type": "lab",
+      "section": "A",
       "college_id": "c-default"
     }
   ],
